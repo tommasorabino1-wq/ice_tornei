@@ -22,8 +22,7 @@ fetch(API_URL)
   })
   .catch(err => {
     console.error(err);
-    container.innerHTML =
-      "<p>Errore nel caricamento dei tornei.</p>";
+    container.innerHTML = "<p>Errore nel caricamento dei tornei.</p>";
   });
 
 // ===============================
@@ -33,9 +32,9 @@ function renderTournaments(tournaments) {
   container.innerHTML = "";
 
   tournaments.forEach(t => {
+    // A) la card è un DIV normale
     const card = document.createElement("div");
     card.className = "tournament-card";
-
 
     // Stato torneo
     let statusLabel = "";
@@ -45,6 +44,7 @@ function renderTournaments(tournaments) {
 
     const iscrizioniAperte = t.status === "open";
 
+    // B) HTML interno con BOTTONI = <a> veri
     card.innerHTML = `
       <div class="card-header">
         <span class="badge ${t.status}">${statusLabel}</span>
@@ -72,8 +72,19 @@ function renderTournaments(tournaments) {
         <a href="tournament.html?id=${t.tournament_id}" class="btn secondary">Dettagli</a>
         <a href="standings.html?id=${t.tournament_id}" class="btn secondary">Classifica</a>
       </div>
-
     `;
+
+    // C) click sulla CARD → vai al torneo
+    card.addEventListener("click", () => {
+      window.location.href = `tournament.html?id=${t.tournament_id}`;
+    });
+
+    // D) click sui bottoni → NON attiva il click della card
+    card.querySelectorAll("a, .btn").forEach(el => {
+      el.addEventListener("click", e => {
+        e.stopPropagation();
+      });
+    });
 
     container.appendChild(card);
   });
