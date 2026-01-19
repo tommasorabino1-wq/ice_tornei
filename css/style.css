@@ -275,15 +275,7 @@ body {
   outline-offset: 2px;
 }
 
-.tournament-card * {
-  pointer-events: none;
-}
 
-
-
-.tournament-card .btn {
-  pointer-events: auto;
-}
 
 
 

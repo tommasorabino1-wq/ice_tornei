@@ -33,9 +33,9 @@ function renderTournaments(tournaments) {
   container.innerHTML = "";
 
   tournaments.forEach(t => {
-    const card = document.createElement("a");
+    const card = document.createElement("div");
     card.className = "tournament-card";
-    card.href = `tournament.html?id=${t.tournament_id}`;
+
 
     // Stato torneo
     let statusLabel = "";
@@ -66,12 +66,13 @@ function renderTournaments(tournaments) {
       <div class="card-actions">
         ${
           iscrizioniAperte
-            ? `<span class="btn primary">Iscriviti</span>`
+            ? `<a href="tournament.html?id=${t.tournament_id}" class="btn primary">Iscriviti</a>`
             : `<span class="btn primary disabled">Iscriviti</span>`
         }
-        <span class="btn secondary">Dettagli</span>
-        <span class="btn secondary">Classifica</span>
+        <a href="tournament.html?id=${t.tournament_id}" class="btn secondary">Dettagli</a>
+        <a href="standings.html?id=${t.tournament_id}" class="btn secondary">Classifica</a>
       </div>
+
     `;
 
     container.appendChild(card);
