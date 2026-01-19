@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>ICE | Regolamento Tornei</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="main-header">
+    <div class="main-header-container">
+
+      <div class="brand">
+        <a href="index.html">
+          <img src="assets/logo.png" alt="ICE logo">
+        </a>
+      </div>
+
+      <div class="search-box">
+        <input type="text" placeholder="Cerca tornei, città, squadre">
+      </div>
+
+      <div class="header-actions">
+        <span>🏆</span>
+        <span>📊</span>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="main-nav">
+    <div class="main-nav-container">
+      <a href="index.html">Tornei</a>
+      <a href="standings.html">Classifica</a>
+      <a href="tournament.html" class="active">Regolamento</a>
+    </div>
+  </nav>
+
+  <!-- CONTENUTO -->
+  <main class="container">
+
+    <!-- =========================
+         REGOLAMENTO GENERALE
+         (visibile se NON c'è id)
+    ========================== -->
+    <section id="generic-regulation-section">
+
+      <div class="tournament-layout">
+
+        <!-- COLONNA SINISTRA -->
+        <div class="tournament-info">
+          <h3 class="generic-title">🏆 Regolamento Generale Tornei ICE</h3>
+
+          <ul class="generic-regulation-list">
+            <li>📄 Certificato medico sportivo obbligatorio</li>
+            <li>📅 Prenotazione dei campi a carico dell’organizzazione</li>
+            <li>⏰ È richiesto il rispetto degli orari di gioco</li>
+            <li>⚠️ Ritardi superiori a 10 minuti possono comportare la sconfitta</li>
+            <li>🔁 L’organizzazione può modificare il calendario per necessità</li>
+          </ul>
+        </div>
+
+        <!-- COLONNA DESTRA -->
+        <div class="tournament-action">
+          <p class="select-helper">
+            Seleziona un torneo per visualizzare il regolamento completo
+          </p>
+
+          <select id="tournament-select"></select>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =========================
+         TORNEO SPECIFICO
+         (visibile se c'è id)
+    ========================== -->
+    <section id="tournament-specific-section">
+
+      <!-- HEADER TORNEO -->
+      <section class="tournament-header">
+        <div class="tournament-title-row">
+          <h1 id="tournament-name"></h1>
+          <span id="tournament-status-badge" class="badge"></span>
+        </div>
+        <p class="tournament-subtitle" id="tournament-subtitle"></p>
+      </section>
+
+      <!-- LAYOUT TORNEO -->
+      <section class="tournament-layout">
+
+        <!-- INFO TORNEO -->
+        <div class="tournament-info">
+          <h3>Informazioni torneo</h3>
+
+          <div class="tournament-meta">
+
+            <div class="meta-item">
+              <span class="meta-icon">🏐</span>
+              <span id="info-sport"></span>
+            </div>
+
+            <div class="meta-item">
+              <span class="meta-icon">📍</span>
+              <span id="info-location"></span>
+            </div>
+
+            <div class="meta-item">
+              <span class="meta-icon">📅</span>
+              <span id="info-date"></span>
+            </div>
+
+            <div class="meta-item">
+              <span class="meta-icon">👥</span>
+              <span id="info-teams"></span> squadre
+            </div>
+
+            <div class="meta-item">
+              <span class="meta-icon">💰</span>
+              €<span id="info-price"></span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ISCRIZIONE -->
+        <div class="tournament-action">
+          <h3>Iscrizione</h3>
+
+          <p id="subscribe-message"></p>
+
+          <form id="registration-form">
+
+            <label>
+              Nome squadra
+              <input type="text" name="team_name" required>
+            </label>
+
+            <label>
+              Giocatore 1
+              <input type="text" name="player_1" required>
+            </label>
+
+            <label>
+              Giocatore 2
+              <input type="text" name="player_2" required>
+            </label>
+
+            <label>
+              Email
+              <input type="email" name="email" required>
+            </label>
+
+            <label>
+              Telefono
+              <input type="tel" name="phone" required>
+            </label>
+
+            <button type="submit" class="btn primary">
+              Invia iscrizione
+            </button>
+
+          </form>
+        </div>
+
+      </section>
+    </section>
+
+  </main>
+
+  <!-- SCRIPT -->
+  <script src="js/data.js"></script>
+  <script src="js/tournament.js"></script>
+
+</body>
+</html>

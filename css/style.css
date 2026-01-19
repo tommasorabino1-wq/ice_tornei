@@ -1,0 +1,531 @@
+/* =========================
+   DESIGN SYSTEM
+========================= */
+:root {
+  --bg-main: #0b0f14;
+  --bg-secondary: #121820;
+  --bg-card: #161d27;
+
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+
+  --accent: #22c55e; /* facile da cambiare */
+  --border: #1f2933;
+
+  --radius: 6px;
+  --shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+
+  --font: 'Inter', sans-serif;
+}
+
+/* RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+}
+
+
+/* =========================
+   MAIN HEADER
+========================= */
+.main-header {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.main-header-container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.brand img {
+  width: 80px;
+}
+
+/* SEARCH */
+.search-box input {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  width: 320px;
+  color: var(--text-main);
+}
+
+.search-box input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ACTIONS */
+.header-actions span {
+  margin-left: 15px;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+/* =========================
+   NAV BAR
+========================= */
+.main-nav {
+  background-color: var(--bg-secondary);
+}
+
+.main-nav-container {
+  max-width: 1200px;
+  margin: auto;
+  display: flex;
+}
+
+.main-nav a {
+  padding: 14px 18px;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  border-bottom: 2px solid transparent;
+}
+
+.main-nav a:hover,
+.main-nav a.active {
+  color: var(--text-main);
+  border-bottom: 2px solid var(--accent);
+}
+
+/* =========================
+   CONTENT
+========================= */
+.container {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.container h2 {
+  margin-bottom: 25px;
+}
+
+/* =========================
+   TORNEI
+========================= */
+.tournament-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.tournament {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.tournament h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.tournament p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.tournament a {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+
+/* =========================
+   FOOTER
+========================= */
+.site-footer {
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  margin-top: 80px;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 40px 20px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.footer-brand img {
+  width: 50px;
+  margin-bottom: 10px;
+}
+
+.footer-brand p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.footer-contacts h4 {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.footer-contacts p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.footer-bottom {
+  border-top: 1px solid var(--border);
+  text-align: center;
+  padding: 12px 20px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+
+.footer-legal h4 {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.footer-legal a {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  margin-bottom: 6px;
+}
+
+.footer-legal a:hover {
+  color: var(--text-main);
+}
+
+
+/* =========================
+   EVENT CARDS
+========================= */
+.tournament-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.badge.open {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.badge.full {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.badge.live {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.tournament-card h3 {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.card-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.card-cta {
+  margin-top: 10px;
+  text-align: center;
+  padding: 10px;
+  border-radius: var(--radius);
+  background-color: var(--accent);
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.card-cta:hover {
+  opacity: 0.9;
+}
+
+
+/* =========================
+   CARD ACTIONS
+========================= */
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* BOTTONI BASE */
+.btn {
+  flex: 1;
+  text-align: center;
+  padding: 9px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* PRIMARIO */
+.btn.primary {
+  background-color: var(--accent);
+  color: #000;
+}
+
+/* SECONDARI */
+.btn.secondary {
+  background-color: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-main);
+}
+
+/* DISABILITATO */
+.btn.disabled {
+  background-color: #374151;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* =========================
+   PAGINA TORNEO
+========================= */
+.tournament-header {
+  margin-bottom: 30px;
+}
+
+.tournament-header h1 {
+  font-size: 26px;
+  margin-bottom: 6px;
+}
+
+.tournament-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.tournament-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+}
+
+/* INFO */
+.tournament-info {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.tournament-info ul {
+  list-style: none;
+  margin-top: 15px;
+}
+
+.tournament-info li {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+/* AZIONE */
+.tournament-action {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.tournament-action p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 15px;
+}
+
+.tournament-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+
+/* =========================
+   FORM ISCRIZIONE
+========================= */
+#registration-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+#registration-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+#registration-form input {
+  margin-top: 4px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+}
+
+#registration-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* =========================
+   TOURNAMENT META (INFO)
+========================= */
+.tournament-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.meta-icon {
+  width: 20px;
+  text-align: center;
+  opacity: 0.85;
+}
+
+
+
+/* =========================
+   REGOLAMENTO GENERALE
+========================= */
+
+/* Sezione regolamento generico */
+#generic-regulation-section {
+  display: none; /* visibile solo se NON c'è torneo */
+}
+
+/* Titolo regolamento */
+.generic-title {
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+
+/* Lista regolamento */
+.generic-regulation-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.generic-regulation-list li {
+  font-size: 14px;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+/* Dropdown selezione torneo */
+#tournament-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#tournament-select option {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+}
+
+/* Testo guida */
+.select-helper {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+
+/* =========================
+   VISIBILITÀ SEZIONI TORNEO
+========================= */
+
+/* Di default mostro SOLO regolamento generale */
+#tournament-specific-section {
+  display: none;
+}
