@@ -260,10 +260,6 @@ body {
     border-color 0.2s ease;
 }
 
-.tournament-card * {
-  pointer-events: none;
-}
-
 
 
 
