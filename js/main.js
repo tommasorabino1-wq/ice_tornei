@@ -32,11 +32,10 @@ function renderTournaments(tournaments) {
   container.innerHTML = "";
 
   tournaments.forEach(t => {
-    // A) la card è un DIV normale
     const card = document.createElement("div");
     card.className = "tournament-card";
+    card.dataset.id = t.tournament_id; // 👈 fondamentale
 
-    // Stato torneo
     let statusLabel = "";
     if (t.status === "open") statusLabel = "ISCRIZIONI APERTE";
     if (t.status === "full") statusLabel = "COMPLETO";
@@ -44,7 +43,6 @@ function renderTournaments(tournaments) {
 
     const iscrizioniAperte = t.status === "open";
 
-    // B) HTML interno con BOTTONI = <a> veri
     card.innerHTML = `
       <div class="card-header">
         <span class="badge ${t.status}">${statusLabel}</span>
@@ -74,18 +72,23 @@ function renderTournaments(tournaments) {
       </div>
     `;
 
-    // C) click sulla CARD → vai al torneo
-    card.addEventListener("click", () => {
-      window.location.href = `tournament.html?id=${t.tournament_id}`;
-    });
-
-    // D) click sui bottoni → NON attiva il click della card
-    card.querySelectorAll("a, .btn").forEach(el => {
-      el.addEventListener("click", e => {
-        e.stopPropagation();
-      });
-    });
-
     container.appendChild(card);
   });
 }
+
+// ===============================
+// CLICK HANDLING (EVENT DELEGATION)
+// ===============================
+container.addEventListener("click", e => {
+  // Se clicco su un bottone o un link → NON apro la card
+  if (e.target.closest("a") || e.target.closest(".btn")) {
+    return;
+  }
+
+  // Se clicco su una card → apro il torneo
+  const card = e.target.closest(".tournament-card");
+  if (!card) return;
+
+  const tournamentId = card.dataset.id;
+  window.location.href = `tournament.html?id=${tournamentId}`;
+});
