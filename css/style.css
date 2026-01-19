@@ -1,6 +1,9 @@
 /* =========================
    DESIGN SYSTEM
 ========================= */
+/* =========================
+   DESIGN SYSTEM
+========================= */
 :root {
   --bg-main: #0b0f14;
   --bg-secondary: #121820;
@@ -9,12 +12,10 @@
   --text-main: #e5e7eb;
   --text-muted: #9ca3af;
 
-  --brand: #22c55e;        /* AZZURRO ICE */
-  --brand-soft: rgba(56, 189, 248, 0.35);
+  --accent: #22c55e; /* ACTION / INTERACTION */
+  --accent-hover: #1fb454;
 
-  --accent: #22c55e;       /* STATO: OPEN */
   --border: #1f2933;
-
   --radius: 6px;
   --shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 
@@ -110,8 +111,9 @@ body {
 .main-nav a:hover,
 .main-nav a.active {
   color: var(--text-main);
-  border-bottom: 2px solid var(--brand);
+  border-bottom: 2px solid var(--accent);
 }
+
 
 
 /* =========================
@@ -253,9 +255,11 @@ body {
 
 .tournament-card:hover {
   transform: translateY(-2px);
-  border-color: var(--brand-soft);
+  border-color: rgba(34, 197, 94, 0.35);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
+
+
 
 
 
@@ -312,16 +316,17 @@ body {
   text-align: center;
   padding: 10px;
   border-radius: var(--radius);
-  background-color: var(--brand);
-  color: #002233;
+  background-color: var(--accent);
+  color: #000;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
 }
 
 .card-cta:hover {
-  opacity: 0.92;
+  background-color: var(--accent-hover);
 }
+
 
 
 
@@ -357,14 +362,15 @@ body {
 
 /* PRIMARIO */
 .btn.primary {
-  background-color: var(--brand);
-  color: #002233;
+  background-color: var(--accent);
+  color: #000;
 }
 
 .btn.primary:hover {
+  background-color: var(--accent-hover);
   transform: translateY(-1px);
-  background-color: #2ea8e6;
 }
+
 
 
 
@@ -376,10 +382,11 @@ body {
 }
 
 .btn.secondary:hover {
-  border-color: var(--brand);
-  color: var(--brand);
+  border-color: var(--accent);
+  color: var(--accent);
   transform: translateY(-1px);
 }
+
 
 
 
