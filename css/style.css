@@ -12,8 +12,12 @@
   --text-main: #e5e7eb;
   --text-muted: #9ca3af;
 
-  --accent: #22c55e; /* ACTION / INTERACTION */
-  --accent-hover: #1fb454;
+  --brand: #38bdf8;          /* ICE brand */
+  --brand-hover: #2ea8e6;
+
+  --state-open: #22c55e;
+  --state-full: #ef4444;
+  --state-live: #f59e0b;
 
   --border: #1f2933;
   --radius: 6px;
@@ -111,7 +115,7 @@ body {
 .main-nav a:hover,
 .main-nav a.active {
   color: var(--text-main);
-  border-bottom: 2px solid var(--accent);
+  border-bottom: 2px solid var(--brand);
 }
 
 
@@ -160,7 +164,7 @@ body {
 .tournament a {
   display: inline-block;
   margin-top: 12px;
-  color: var(--accent);
+  color: var(--brand);
   text-decoration: none;
   font-weight: 600;
   font-size: 13px;
@@ -255,7 +259,7 @@ body {
 
 .tournament-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(34, 197, 94, 0.35);
+  border-color: rgba(56, 189, 248, 0.35);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
@@ -316,7 +320,7 @@ body {
   text-align: center;
   padding: 10px;
   border-radius: var(--radius);
-  background-color: var(--accent);
+  background-color: var(--brand);
   color: #000;
   font-size: 13px;
   font-weight: 700;
@@ -324,7 +328,7 @@ body {
 }
 
 .card-cta:hover {
-  background-color: var(--accent-hover);
+  background-color: var(--brand-hover);
 }
 
 
@@ -362,12 +366,12 @@ body {
 
 /* PRIMARIO */
 .btn.primary {
-  background-color: var(--accent);
+  background-color: var(--brand);
   color: #000;
 }
 
 .btn.primary:hover {
-  background-color: var(--accent-hover);
+  background-color: var(--brand-hover);
   transform: translateY(-1px);
 }
 
@@ -382,8 +386,8 @@ body {
 }
 
 .btn.secondary:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--brand);
+  color: var(--brand);
   transform: translateY(-1px);
 }
 
@@ -496,7 +500,7 @@ body {
 
 #registration-form input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--brand);
 }
 
 /* =========================
