@@ -9,7 +9,7 @@
   --text-main: #e5e7eb;
   --text-muted: #9ca3af;
 
-  --brand: #38bdf8;        /* AZZURRO ICE */
+  --brand: #22c55e;        /* AZZURRO ICE */
   --brand-soft: rgba(56, 189, 248, 0.35);
 
   --accent: #22c55e;       /* STATO: OPEN */
@@ -376,10 +376,11 @@ body {
 }
 
 .btn.secondary:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--brand);
+  color: var(--brand);
   transform: translateY(-1px);
 }
+
 
 
 
