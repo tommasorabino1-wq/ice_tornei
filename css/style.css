@@ -9,7 +9,10 @@
   --text-main: #e5e7eb;
   --text-muted: #9ca3af;
 
-  --accent: #22c55e; /* facile da cambiare */
+  --brand: #38bdf8;        /* AZZURRO ICE */
+  --brand-soft: rgba(56, 189, 248, 0.35);
+
+  --accent: #22c55e;       /* STATO: OPEN */
   --border: #1f2933;
 
   --radius: 6px;
@@ -17,6 +20,7 @@
 
   --font: 'Inter', sans-serif;
 }
+
 
 /* RESET */
 * {
@@ -106,8 +110,9 @@ body {
 .main-nav a:hover,
 .main-nav a.active {
   color: var(--text-main);
-  border-bottom: 2px solid var(--accent);
+  border-bottom: 2px solid var(--brand);
 }
+
 
 /* =========================
    CONTENT
@@ -248,7 +253,7 @@ body {
 
 .tournament-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(34, 197, 94, 0.35);
+  border-color: var(--brand-soft);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
@@ -307,16 +312,19 @@ body {
   text-align: center;
   padding: 10px;
   border-radius: var(--radius);
-  background-color: var(--accent);
-  color: #000;
+  background-color: var(--brand);
+  color: #002233;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
 }
 
 .card-cta:hover {
-  opacity: 0.9;
+  opacity: 0.92;
 }
+
+
+
 
 
 /* =========================
@@ -349,14 +357,15 @@ body {
 
 /* PRIMARIO */
 .btn.primary {
-  background-color: var(--accent);
-  color: #000;
+  background-color: var(--brand);
+  color: #002233;
 }
 
 .btn.primary:hover {
   transform: translateY(-1px);
-  background-color: #1fb454; /* accent leggermente più scuro */
+  background-color: #2ea8e6;
 }
+
 
 
 /* SECONDARI */
