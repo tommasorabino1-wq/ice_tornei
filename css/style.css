@@ -276,6 +276,10 @@ body {
 }
 
 
+.tournament-card .btn {
+  pointer-events: auto;
+}
+
 
 
 
