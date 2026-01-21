@@ -160,7 +160,6 @@ function handleFormSubmit(tournament) {
 
     const formData = new FormData(form);
     formData.append("tournament_id", tournament.tournament_id);
-    formData.append("tournament_name", tournament.name);
 
     fetch(API_URL, {
       method: "POST",
@@ -168,38 +167,28 @@ function handleFormSubmit(tournament) {
     })
       .then(res => res.text())
       .then(response => {
-        if (response === "DUPLICATE") {
-          alert("Email già iscritta a questo torneo.");
+        if (response === "TOURNAMENT_NOT_FOUND") {
+          alert("Torneo non valido.");
           return;
         }
 
-        if (response === "FULL") {
-          tournament.status = "full";
-          applyTournamentState(tournament);
-          alert("Il torneo è ora completo.");
+        if (response === "INVALID_DATA") {
+          alert("Dati mancanti o non validi.");
           return;
         }
 
         if (response === "OK") {
           alert("Iscrizione completata!");
 
-          tournament.teams_current += 1;
-          teamsInfo.textContent =
-            `${tournament.teams_current} / ${tournament.teams_max}`;
-
-          if (tournament.teams_current >= tournament.teams_max) {
-            tournament.status = "full";
-            applyTournamentState(tournament);
-          }
-
-          form.reset();
+          // teams_current è formula → ricarichiamo la pagina
+          window.location.reload();
           return;
         }
 
         alert("Risposta inattesa dal server.");
       })
       .catch(() => {
-        alert("Errore durante l'invio.");
+        alert("Errore durante l'invio dell'iscrizione.");
       });
   });
 }
