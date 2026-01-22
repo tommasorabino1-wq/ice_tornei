@@ -3,7 +3,7 @@
 // ===============================
 
 // ⚠️ INSERISCI QUI L’URL DELLA TUA WEB APP
-const API_URL = "https://script.google.com/macros/s/AKfycbwxBN1bnb7VY01hIn4dHGHKDIWutiCmhW02rfvAKVnCmMMn6VrunaQYg0zpqvKbUrbl/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbx2Gc2SAxiaGGTUvHuaiIDfllBSeA8TsXLfUAiCBcPDqfPD_9GH2u9Kj2nysMFAVZwC/exec";
 
 document.addEventListener("DOMContentLoaded", () => {
   const tournamentId = getTournamentIdFromUrl();
@@ -233,7 +233,13 @@ function submitResult(card, matchId, tournamentId) {
     .then(res => res.text())
     .then(response => {
       if (response === "RESULT_SAVED") {
-        card.remove();
+        card.classList.add("played");
+
+        const btn = card.querySelector(".submit-result");
+        btn.classList.remove("primary");
+        btn.classList.add("secondary");
+        btn.textContent = "Modifica risultato";
+
         showToast("Risultato salvato ✔️");
       } else {
         alert("Errore: " + response);
