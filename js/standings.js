@@ -26,8 +26,9 @@ document.addEventListener("DOMContentLoaded", () => {
 // ===============================
 function getTournamentIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  return params.get("tournament_id");
+  return params.get("tournament_id") || params.get("id");
 }
+
 
 // ===============================
 // LOAD MATCHES
