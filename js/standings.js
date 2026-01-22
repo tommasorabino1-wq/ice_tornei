@@ -118,17 +118,38 @@ function renderMatches(matches, tournamentId) {
     roundsMap[match.round_id].push(match);
   });
 
+  const roundEntries = Object.entries(roundsMap);
+
   // 2️⃣ Render per round
-  Object.entries(roundsMap).forEach(([roundId, roundMatches]) => {
+  roundEntries.forEach(([roundId, roundMatches], index) => {
     const roundGroup = document.createElement("div");
     roundGroup.className = "round-group";
+
+    // 👉 Tutti chiusi tranne il primo
+    if (index !== 0) {
+      roundGroup.classList.add("collapsed");
+    }
 
     const roundTitle = document.createElement("div");
     roundTitle.className = "round-title";
     roundTitle.textContent = roundId;
 
+    // 3️⃣ Click su tutta la header (accordion)
+    roundTitle.addEventListener("click", () => {
+      const allRounds = container.querySelectorAll(".round-group");
+
+      allRounds.forEach(group => {
+        if (group !== roundGroup) {
+          group.classList.add("collapsed");
+        }
+      });
+
+      roundGroup.classList.toggle("collapsed");
+    });
+
     roundGroup.appendChild(roundTitle);
 
+    // 4️⃣ Match del round
     roundMatches.forEach(match => {
       const card = document.createElement("div");
       card.className = "match-card";
@@ -162,6 +183,7 @@ function renderMatches(matches, tournamentId) {
     container.appendChild(roundGroup);
   });
 }
+
 
 
 

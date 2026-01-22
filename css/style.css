@@ -862,3 +862,78 @@ body {
   border-left: 3px solid var(--brand);
 }
 
+
+
+
+/* =========================
+   COLLAPSABLE ROUNDS
+========================= */
+
+/* Titolo cliccabile */
+.round-title {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 10px 12px;
+  margin-bottom: 14px;
+
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius);
+
+  user-select: none;
+}
+
+
+.round-title::after {
+  content: "▾";
+  font-size: 14px;
+  opacity: 0.8;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+/* Chiusi: freccia laterale + più visibile */
+.round-group.collapsed .round-title::after {
+  transform: rotate(-90deg);
+  opacity: 1;
+}
+
+
+
+/* Stato chiuso → freccia ruotata */
+.round-group.collapsed .round-title::after {
+  transform: rotate(-90deg);
+}
+
+/* Contenuto del round (match) */
+.round-group > .match-card {
+  transition:
+    opacity 0.2s ease,
+    max-height 0.25s ease,
+    margin 0.25s ease;
+}
+
+/* Stato chiuso → match nascosti */
+.round-group.collapsed > .match-card {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* Stato chiuso: header più evidente */
+.round-group.collapsed .round-title {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+}
+
+/* Hover per suggerire interazione */
+.round-title:hover {
+  background-color: rgba(56, 189, 248, 0.12);
+}
+
+
+
