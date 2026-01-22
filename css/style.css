@@ -611,67 +611,84 @@ body {
 
 
 
+
+
+
 /* =========================
-   STANDINGS PAGE
+   STANDINGS PAGE (REFINED)
 ========================= */
 
 .standings-layout {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 30px;
-  margin-top: 30px;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 26px;
+  margin-top: 26px;
 }
 
 
+/* BOX SINISTRO */
 .standings-results-box {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 16px; /* ↓ più compatto */
   box-shadow: var(--shadow);
 }
 
 .standings-results-box h3 {
-  font-size: 16px;
-  margin-bottom: 15px;
+  font-size: 15px;
+  margin-bottom: 12px;
 }
 
 
+/* SCROLL MATCH */
 .matches-scroll {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  max-height: 420px;
+  gap: 18px;              /* ↑ più spazio tra le partite */
+  max-height: 380px;      /* ↓ box un po’ più compatto */
   overflow-y: auto;
-  padding-right: 6px;
+  padding-right: 8px;
 }
 
+/* Scrollbar più visibile */
 .matches-scroll::-webkit-scrollbar {
-  width: 6px;
+  width: 7px;
 }
 
-.matches-scroll::-webkit-scrollbar-thumb {
-  background-color: var(--border);
+.matches-scroll::-webkit-scrollbar-track {
+  background-color: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
 }
 
+.matches-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.35); /* ↑ più chiara */
+  border-radius: 4px;
+}
 
+.matches-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+
+/* CARD MATCH */
 .match-card {
   background-color: var(--bg-main);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 14px;
+  padding: 12px;          /* ↓ card più piccola */
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .match-header {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
 
+/* TEAMS + SCORE */
 .match-teams {
   display: flex;
   align-items: center;
@@ -680,25 +697,26 @@ body {
 }
 
 .match-teams .team {
-  font-size: 13px;
+  font-size: 12px;        /* ↓ testo leggermente più piccolo */
   flex: 1;
   text-align: center;
 }
 
 .dash {
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 
+/* INPUT SCORE */
 .score-input {
-  width: 46px;
-  padding: 6px;
+  width: 40px;            /* ↓ più compatto */
+  padding: 5px;
   text-align: center;
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background-color: var(--bg-card);
   color: var(--text-main);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .score-input:focus {
@@ -707,50 +725,52 @@ body {
 }
 
 
-
+/* BUTTON */
 .match-card .btn {
-  margin-top: 6px;
-  font-size: 13px;
+  margin-top: 4px;
+  font-size: 12px;
+  padding: 7px;
 }
 
 
+/* BOX CLASSIFICA (DX) */
 .standings-table-box {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 16px;          /* ↓ */
   box-shadow: var(--shadow);
 }
 
 .standings-table-box h3 {
-  font-size: 16px;
-  margin-bottom: 10px;
+  font-size: 15px;
+  margin-bottom: 8px;
 }
 
 
+/* PLACEHOLDER / ERROR */
 .placeholder {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
 .error {
   color: #ef4444;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 
+/* TOAST */
 .toast {
   position: fixed;
   bottom: 20px;
   right: 20px;
   background-color: var(--brand);
   color: #000;
-  padding: 12px 16px;
+  padding: 10px 14px;     /* ↓ più compatto */
   border-radius: var(--radius);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   box-shadow: var(--shadow);
   z-index: 999;
 }
-
-
