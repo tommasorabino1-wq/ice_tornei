@@ -2,8 +2,8 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>ICE | Tournament Platform</title>
-  <meta name="description" content="ICE Tournament - La tua piattaforma per tornei di padel e calcio a Torino. Clicca, iscriviti e gioca facilmente.">
+  <title>ICE | Standings</title>
+  <meta name="description" content="ICE Tournament - Classifiche ufficiali dei tornei ICE. Consulta gironi, punti e risultati aggiornati.">
   <link rel="icon" href="assets/logo.png">
   <link rel="apple-touch-icon" href="assets/logo.png">
 
@@ -19,17 +19,16 @@
   <header class="main-header">
     <div class="main-header-container">
 
-      <!-- BRAND (SOLO LOGO) -->
+      <!-- BRAND -->
       <div class="brand">
         <a href="index.html">
-            <img src="assets/logo.png" alt="ICE logo">
+          <img src="assets/logo.png" alt="ICE logo">
         </a>
-        </div>
-
+      </div>
 
       <!-- SEARCH -->
       <div class="search-box">
-        <input type="text" placeholder="Cerca tornei, città, squadre">
+        <input type="text" placeholder="Cerca tornei, squadre">
       </div>
 
       <!-- UTILITY -->
@@ -42,14 +41,23 @@
   </header>
 
   <!-- NAVIGATION -->
-    <nav class="main-nav">
+  <nav class="main-nav">
     <div class="main-nav-container">
-        <a href="index.html" class="active">Tornei</a>
-        <a href="standings.html">Classifica</a>
-        <a href="tournament.html">Regolamento</a>
+      <a href="index.html">Tornei</a>
+      <a href="standings.html" class="active">Classifica</a>
+      <a href="tournament.html">Regolamento</a>
     </div>
-    </nav>
+  </nav>
 
+  <!-- CONTENT -->
+  <main class="container">
+    <h2>Classifiche tornei</h2>
+
+    <!-- Placeholder -->
+    <div id="standings">
+      <p>Seleziona un torneo per visualizzare la classifica.</p>
+    </div>
+  </main>
 
   <!-- FOOTER -->
   <footer class="site-footer">
@@ -71,7 +79,7 @@
         <a href="#">Privacy Policy</a>
         <a href="#">Cookie Policy</a>
         <a href="#">Termini e condizioni</a>
-        </div>
+      </div>
 
     </div>
 
@@ -80,7 +88,9 @@
     </div>
   </footer>
 
+  <!-- JS (verrà esteso dopo) -->
   <script src="js/data.js"></script>
-  <script src="js/main.js"></script>
+  <script src="js/standings.js"></script>
+
 </body>
 </html>
