@@ -155,10 +155,10 @@ function renderMatches(matches, tournamentId) {
 
     roundMatches.forEach(match => {
       const isPlayed =
-        match.score_a !== null &&
-        match.score_b !== null &&
-        match.score_a !== "" &&
-        match.score_b !== "";
+        match.played === true ||
+        match.played === "TRUE" ||
+        match.played === "true" ||
+        match.played === 1;
 
       if (isPlayed) {
         played.push(match);
@@ -170,10 +170,11 @@ function renderMatches(matches, tournamentId) {
     // 4️⃣ Render: prima da giocare, poi già giocati
     [...toPlay, ...played].forEach(match => {
       const isPlayed =
-        match.score_a !== null &&
-        match.score_b !== null &&
-        match.score_a !== "" &&
-        match.score_b !== "";
+        match.played === true ||
+        match.played === "TRUE" ||
+        match.played === "true" ||
+        match.played === 1;
+
 
       const card = document.createElement("div");
       card.className = "match-card";
