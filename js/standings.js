@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const tournamentId = getTournamentIdFromUrl();
 
   if (tournamentId) {
+    hideTournamentFilter();   // ⬅️ AGGIUNTO
     loadMatches(tournamentId);
     loadStandings(tournamentId);
   } else {
@@ -56,8 +57,16 @@ function showTournamentFilter() {
 
     loadMatches(tournamentId);
     loadStandings(tournamentId);
+    hideTournamentFilter();
   });
 }
+
+
+function hideTournamentFilter() {
+  const filterBox = document.getElementById("tournament-filter");
+  filterBox.classList.add("hidden");
+}
+
 
 
 
