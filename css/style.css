@@ -737,14 +737,31 @@ body {
 
 /* CARD MATCH */
 .match-card {
+  position: relative; /* ⬅️ necessario per il badge */
   background-color: var(--bg-main);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 14px 14px 16px;   /* ↑ più aria sotto */
+  padding: 14px 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;               /* ↑ separazione interna */
+  gap: 12px;
 }
+
+/* Card partita già giocata */
+.match-card.played {
+  background-color: rgba(56, 189, 248, 0.04); /* brand molto soft */
+  border-color: rgba(56, 189, 248, 0.25);
+  opacity: 0.78;
+}
+
+
+.match-card.played .score-input {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+
+
 
 
 .match-header {
@@ -937,3 +954,36 @@ body {
 
 
 
+/* =========================
+   MATCH GIOCATO
+========================= */
+
+/* Badge "Giocata" */
+.match-card.played::before {
+  content: "Giocata";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+
+  padding: 3px 6px;
+  border-radius: 4px;
+
+  background-color: rgba(34, 197, 94, 0.15); /* verde soft */
+  color: #22c55e;
+}
+
+
+/* Bottone modifica risultato */
+.match-card.played .btn.secondary {
+  border-color: rgba(56, 189, 248, 0.4);
+  color: var(--brand);
+}
+
+.match-card.played .btn.secondary:hover {
+  background-color: rgba(56, 189, 248, 0.12);
+  color: var(--brand-hover);
+}

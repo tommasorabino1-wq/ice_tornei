@@ -125,7 +125,7 @@ function renderMatches(matches, tournamentId) {
     const roundGroup = document.createElement("div");
     roundGroup.className = "round-group";
 
-    // 👉 Tutti chiusi tranne il primo
+    // Solo il primo aperto
     if (index !== 0) {
       roundGroup.classList.add("collapsed");
     }
@@ -134,7 +134,7 @@ function renderMatches(matches, tournamentId) {
     roundTitle.className = "round-title";
     roundTitle.textContent = roundId;
 
-    // 3️⃣ Click su tutta la header (accordion)
+    // Accordion
     roundTitle.addEventListener("click", () => {
       const allRounds = container.querySelectorAll(".round-group");
 
@@ -149,26 +149,56 @@ function renderMatches(matches, tournamentId) {
 
     roundGroup.appendChild(roundTitle);
 
-    // 4️⃣ Match del round
+    // 3️⃣ Separa match da giocare vs già giocati
+    const toPlay = [];
+    const played = [];
+
     roundMatches.forEach(match => {
+      const isPlayed =
+        match.score_a !== null &&
+        match.score_b !== null &&
+        match.score_a !== "" &&
+        match.score_b !== "";
+
+      if (isPlayed) {
+        played.push(match);
+      } else {
+        toPlay.push(match);
+      }
+    });
+
+    // 4️⃣ Render: prima da giocare, poi già giocati
+    [...toPlay, ...played].forEach(match => {
+      const isPlayed =
+        match.score_a !== null &&
+        match.score_b !== null &&
+        match.score_a !== "" &&
+        match.score_b !== "";
+
       const card = document.createElement("div");
       card.className = "match-card";
+
+      if (isPlayed) {
+        card.classList.add("played");
+      }
 
       card.innerHTML = `
         <div class="match-teams">
           <span class="team">${formatTeam(match.team_a)}</span>
 
-          <input type="number" min="0" class="score-input" placeholder="0">
+          <input type="number" min="0" class="score-input" placeholder="0"
+            value="${isPlayed ? match.score_a : ""}">
 
           <span class="dash">-</span>
 
-          <input type="number" min="0" class="score-input" placeholder="0">
+          <input type="number" min="0" class="score-input" placeholder="0"
+            value="${isPlayed ? match.score_b : ""}">
 
           <span class="team">${formatTeam(match.team_b)}</span>
         </div>
 
-        <button class="btn primary submit-result">
-          Invia risultato
+        <button class="btn ${isPlayed ? "secondary" : "primary"} submit-result">
+          ${isPlayed ? "Modifica risultato" : "Invia risultato"}
         </button>
       `;
 
