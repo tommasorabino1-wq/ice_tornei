@@ -108,40 +108,64 @@ function renderMatches(matches, tournamentId) {
 
   container.innerHTML = "";
 
+  // 1️⃣ Raggruppa per round
+  const roundsMap = {};
+
   matches.forEach(match => {
-    const card = document.createElement("div");
-    card.className = "match-card";
+    if (!roundsMap[match.round_id]) {
+      roundsMap[match.round_id] = [];
+    }
+    roundsMap[match.round_id].push(match);
+  });
 
-    card.innerHTML = `
-      <div class="match-header">
-        <strong>${match.round_id}</strong>
-      </div>
+  // 2️⃣ Render per round
+  Object.entries(roundsMap).forEach(([roundId, roundMatches]) => {
+    const roundGroup = document.createElement("div");
+    roundGroup.className = "round-group";
 
-      <div class="match-teams">
-        <span class="team">${formatTeam(match.team_a)}</span>
+    const roundTitle = document.createElement("div");
+    roundTitle.className = "round-title";
+    roundTitle.textContent = roundId;
 
-        <input type="number" min="0" class="score-input" placeholder="0" data-side="a">
+    roundGroup.appendChild(roundTitle);
 
-        <span class="dash">-</span>
+    roundMatches.forEach(match => {
+      const card = document.createElement("div");
+      card.className = "match-card";
 
-        <input type="number" min="0" class="score-input" placeholder="0" data-side="b">
+      card.innerHTML = `
+        <div class="match-teams">
+          <span class="team">${formatTeam(match.team_a)}</span>
 
-        <span class="team">${formatTeam(match.team_b)}</span>
-      </div>
+          <input type="number" min="0" class="score-input" placeholder="0">
 
-      <button class="btn primary submit-result">
-        Invia risultato
-      </button>
-    `;
+          <span class="dash">-</span>
 
-    const button = card.querySelector(".submit-result");
-    button.addEventListener("click", () => {
-      submitResult(card, match.match_id, tournamentId);
+          <input type="number" min="0" class="score-input" placeholder="0">
+
+          <span class="team">${formatTeam(match.team_b)}</span>
+        </div>
+
+        <button class="btn primary submit-result">
+          Invia risultato
+        </button>
+      `;
+
+      const button = card.querySelector(".submit-result");
+      button.addEventListener("click", () => {
+        submitResult(card, match.match_id, tournamentId);
+      });
+
+      roundGroup.appendChild(card);
     });
 
-    container.appendChild(card);
+    container.appendChild(roundGroup);
   });
 }
+
+
+
+
 
 // ===============================
 // SUBMIT RESULT

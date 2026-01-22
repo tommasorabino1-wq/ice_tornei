@@ -740,11 +740,12 @@ body {
   background-color: var(--bg-main);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 12px;          /* ↓ card più piccola */
+  padding: 14px 14px 16px;   /* ↑ più aria sotto */
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;               /* ↑ separazione interna */
 }
+
 
 .match-header {
   font-size: 11px;
@@ -761,10 +762,13 @@ body {
 }
 
 .match-teams .team {
-  font-size: 12px;        /* ↓ testo leggermente più piccolo */
+  font-size: 13px;        /* ↑ leggibilità */
+  font-weight: 500;       /* ↑ contrasto visivo */
   flex: 1;
   text-align: center;
+  line-height: 1.3;
 }
+
 
 .dash {
   opacity: 0.6;
@@ -838,3 +842,23 @@ body {
   box-shadow: var(--shadow);
   z-index: 999;
 }
+
+
+.round-group {
+  margin-bottom: 28px;          /* ↑ spazio netto tra gironi */
+  padding-bottom: 22px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+
+.round-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  padding-left: 6px;
+  border-left: 3px solid var(--brand);
+}
+
