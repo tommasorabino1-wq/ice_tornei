@@ -993,3 +993,7 @@ body {
   background-color: rgba(56, 189, 248, 0.12);
   color: var(--brand-hover);
 }
+
+.hidden {
+  display: none !important;
+}
