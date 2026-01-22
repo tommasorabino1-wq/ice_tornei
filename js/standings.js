@@ -7,19 +7,17 @@ const API_URL = "https://script.google.com/macros/s/AKfycbw-bCgW0WfRSIaoDkr3niIv
 
 document.addEventListener("DOMContentLoaded", () => {
   const tournamentId = getTournamentIdFromUrl();
-  const matchesListEl = document.getElementById("matches-list");
 
-  if (!tournamentId) {
-    matchesListEl.innerHTML = `
-        <p class="placeholder">
-            Seleziona un torneo per inserire i risultati.
-        </p>
-    `;
-    return;
+  if (tournamentId) {
+    loadMatches(tournamentId);
+    loadStandings(tournamentId);
+  } else {
+    showTournamentFilter();
   }
-
-  loadMatches(tournamentId);
 });
+
+
+
 
 // ===============================
 // GET TOURNAMENT ID
@@ -28,6 +26,39 @@ function getTournamentIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
   return params.get("tournament_id") || params.get("id");
 }
+
+// ===============================
+// SHOW TOURNAMENT FILTER
+// ===============================
+function showTournamentFilter() {
+  const filterBox = document.getElementById("tournament-filter");
+  const select = document.getElementById("tournament-select");
+
+  filterBox.classList.remove("hidden");
+
+  fetch(`${API_URL}?action=get_tournaments`)
+    .then(res => res.json())
+    .then(tournaments => {
+      tournaments.forEach(t => {
+        const option = document.createElement("option");
+        option.value = t.tournament_id;
+        option.textContent = t.name;
+        select.appendChild(option);
+      });
+    });
+
+  select.addEventListener("change", () => {
+    if (!select.value) return;
+
+    const tournamentId = select.value;
+
+    history.replaceState(null, "", `?tournament_id=${tournamentId}`);
+
+    loadMatches(tournamentId);
+    loadStandings(tournamentId);
+  });
+}
+
 
 
 // ===============================
@@ -42,6 +73,27 @@ function loadMatches(tournamentId) {
         "<p class='error'>Errore caricamento match</p>";
     });
 }
+
+// ===============================
+// LOAD STANDINGS (STUB)
+// ===============================
+function loadStandings(tournamentId) {
+  const standingsEl = document.getElementById("standings");
+
+  standingsEl.innerHTML = "<p>Caricamento classifica…</p>";
+
+  fetch(`${API_URL}?action=get_standings&tournament_id=${encodeURIComponent(tournamentId)}`)
+    .then(res => res.json())
+    .then(data => {
+      standingsEl.innerHTML = "<p>Classifica caricata (placeholder)</p>";
+      // qui in futuro renderStandingsTable(data)
+    })
+    .catch(() => {
+      standingsEl.innerHTML = "<p class='error'>Errore caricamento classifica</p>";
+    });
+}
+
+
 
 // ===============================
 // RENDER MATCH LIST
