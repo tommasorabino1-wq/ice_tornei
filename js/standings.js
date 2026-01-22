@@ -120,12 +120,12 @@ function renderMatches(matches, tournamentId) {
 
   const roundEntries = Object.entries(roundsMap);
 
+
   // 2️⃣ Render per round
   roundEntries.forEach(([roundId, roundMatches], index) => {
     const roundGroup = document.createElement("div");
     roundGroup.className = "round-group";
 
-    // Solo il primo aperto
     if (index !== 0) {
       roundGroup.classList.add("collapsed");
     }
@@ -134,22 +134,22 @@ function renderMatches(matches, tournamentId) {
     roundTitle.className = "round-title";
     roundTitle.textContent = roundId;
 
-    // Accordion
     roundTitle.addEventListener("click", () => {
       const allRounds = container.querySelectorAll(".round-group");
-
       allRounds.forEach(group => {
-        if (group !== roundGroup) {
-          group.classList.add("collapsed");
-        }
+        if (group !== roundGroup) group.classList.add("collapsed");
       });
-
       roundGroup.classList.toggle("collapsed");
     });
 
     roundGroup.appendChild(roundTitle);
 
-    // 3️⃣ Separa match da giocare vs già giocati
+    // ✅ WRAPPER MATCH
+    const matchesWrapper = document.createElement("div");
+    matchesWrapper.className = "round-matches";
+    roundGroup.appendChild(matchesWrapper);
+
+    // separazione played / toPlay
     const toPlay = [];
     const played = [];
 
@@ -160,14 +160,9 @@ function renderMatches(matches, tournamentId) {
         match.played === "true" ||
         match.played === 1;
 
-      if (isPlayed) {
-        played.push(match);
-      } else {
-        toPlay.push(match);
-      }
+      isPlayed ? played.push(match) : toPlay.push(match);
     });
 
-    // 4️⃣ Render: prima da giocare, poi già giocati
     [...toPlay, ...played].forEach(match => {
       const isPlayed =
         match.played === true ||
@@ -175,44 +170,34 @@ function renderMatches(matches, tournamentId) {
         match.played === "true" ||
         match.played === 1;
 
-
       const card = document.createElement("div");
       card.className = "match-card";
-
-      if (isPlayed) {
-        card.classList.add("played");
-      }
+      if (isPlayed) card.classList.add("played");
 
       card.innerHTML = `
         <div class="match-teams">
           <span class="team">${formatTeam(match.team_a)}</span>
-
-          <input type="number" min="0" class="score-input" placeholder="0"
-            value="${isPlayed ? match.score_a : ""}">
-
+          <input type="number" class="score-input" value="${isPlayed ? match.score_a : ""}">
           <span class="dash">-</span>
-
-          <input type="number" min="0" class="score-input" placeholder="0"
-            value="${isPlayed ? match.score_b : ""}">
-
+          <input type="number" class="score-input" value="${isPlayed ? match.score_b : ""}">
           <span class="team">${formatTeam(match.team_b)}</span>
         </div>
-
         <button class="btn ${isPlayed ? "secondary" : "primary"} submit-result">
           ${isPlayed ? "Modifica risultato" : "Invia risultato"}
         </button>
       `;
 
-      const button = card.querySelector(".submit-result");
-      button.addEventListener("click", () => {
+      card.querySelector(".submit-result").addEventListener("click", () => {
         submitResult(card, match.match_id, tournamentId);
       });
 
-      roundGroup.appendChild(card);
+      // ⬅️ APPEND QUI
+      matchesWrapper.appendChild(card);
     });
 
     container.appendChild(roundGroup);
   });
+
 }
 
 

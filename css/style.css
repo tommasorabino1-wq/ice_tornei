@@ -923,23 +923,29 @@ body {
   transform: rotate(-90deg);
 }
 
-/* Contenuto del round (match) */
-.round-group > .match-card {
-  transition:
-    opacity 0.2s ease,
-    max-height 0.25s ease,
-    margin 0.25s ease;
+
+
+.round-matches {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
 }
 
-/* Stato chiuso → match nascosti */
-.round-group.collapsed > .match-card {
-  opacity: 0;
+/* chiuso */
+.round-group.collapsed .round-matches {
   max-height: 0;
-  overflow: hidden;
-  margin: 0;
-  padding: 0;
-  border: none;
+  opacity: 0;
 }
+
+/* aperto */
+.round-group:not(.collapsed) .round-matches {
+  max-height: 2000px; /* alto a sufficienza */
+  opacity: 1;
+}
+
+
 
 /* Stato chiuso: header più evidente */
 .round-group.collapsed .round-title {
