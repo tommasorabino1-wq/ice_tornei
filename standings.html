@@ -53,18 +53,6 @@
   <main class="container">
     <h2>Classifiche tornei</h2>
 
-    <!-- TOURNAMENT FILTER -->
-    <div id="tournament-filter" class="tournament-filter hidden">
-      <label for="tournament-select">Seleziona torneo</label>
-      <select id="tournament-select">
-        <option value="">-- Seleziona --</option>
-      </select>
-    </div>
-
-
-
-
-
 
 
     <section class="standings-layout">
@@ -72,9 +60,17 @@
       <!-- LEFT: INSERT RESULTS -->
       <div class="standings-results-box">
 
+        <!-- TOURNAMENT FILTER -->
+        <div id="tournament-filter" class="tournament-filter-box standings hidden">
+          <label for="tournament-select">Seleziona torneo</label>
+          <select id="tournament-select">
+            <option value="">-- Seleziona --</option>
+          </select>
+        </div>
+
         <h3>Inserisci risultato</h3>
 
-        <!-- MATCH LIST (JS will populate) -->
+        <!-- MATCH LIST -->
         <div id="matches-list" class="matches-scroll">
           <p class="placeholder">
             Caricamento match disponibili…
@@ -82,6 +78,7 @@
         </div>
 
       </div>
+
 
       <!-- RIGHT: STANDINGS (future) -->
       <div class="standings-table-box">
@@ -91,10 +88,6 @@
 
     </section>
 
-    <!-- Placeholder -->
-    <div id="standings">
-      <p>Seleziona un torneo per visualizzare la classifica.</p>
-    </div>
   </main>
 
   <!-- FOOTER -->
