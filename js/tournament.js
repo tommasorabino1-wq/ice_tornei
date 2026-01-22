@@ -30,7 +30,7 @@ const tournamentSelect = document.getElementById("tournament-select");
 // 3. API URL
 // ===============================
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbwDs3jOMMJRuhBleOoWye5C6-XtOBkt0Vd7coRjhwMsq1dEqWDB2JOt2Gt-LqJaW4Srvw/exec";
+  "https://script.google.com/macros/s/AKfycbzh8nMImQBURsdlgAlkuCStjQNZAN0lIQl-CLb25m9hBrxJerr9LyBHae3Gl95p2LaXFA/exec";
 
 // ===============================
 // 4. FETCH TORNEI
