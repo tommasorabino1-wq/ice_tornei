@@ -10,7 +10,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const matchesListEl = document.getElementById("matches-list");
 
   if (!tournamentId) {
-    matchesListEl.innerHTML = "<p class='error'>Torneo non specificato</p>";
+    matchesListEl.innerHTML = `
+        <p class="placeholder">
+            Seleziona un torneo per inserire i risultati.
+        </p>
+    `;
     return;
   }
 
