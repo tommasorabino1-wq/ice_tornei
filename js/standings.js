@@ -3,7 +3,7 @@
 // ===============================
 
 // ⚠️ INSERISCI QUI L’URL DELLA TUA WEB APP
-const API_URL = "https://script.google.com/macros/s/AKfycbwQB_Mt8dy8wxDOqk2AgddtQu7lbyocznbbG5nMxTU0zhPcA9bs0gMl_t7jbRT7VBZy9Q/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzCpL2sLyUWTFDDirCzj7vjSie4P-qib8z4_7APfyBnEWKfPFsTdodrCksVlL5jYGROqw/exec";
 
 document.addEventListener("DOMContentLoaded", () => {
   const tournamentId = getTournamentIdFromUrl();
