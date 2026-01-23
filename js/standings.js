@@ -320,8 +320,8 @@ function renderStandings(data) {
         <thead>
           <tr>
             <th>Squadra</th>
-            <th>G</th>
             <th>Pt</th>
+            <th>G</th>
             <th>V</th>
             <th>P</th>
             <th>S</th>
@@ -332,8 +332,8 @@ function renderStandings(data) {
           ${teams.map(team => `
             <tr>
               <td>${team.team_name}</td>
-              <td>${team.matches_played ?? 0}</td>
               <td>${team.points}</td>
+              <td>${team.matches_played ?? 0}</td>
               <td>${team.wins}</td>
               <td>${team.draws}</td>
               <td>${team.losses}</td>
