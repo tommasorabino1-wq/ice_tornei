@@ -678,7 +678,10 @@ body {
   grid-template-columns: 1.15fr 1fr;
   gap: 26px;
   margin-top: 26px;
+
+  align-items: stretch; /* 🔥 CHIAVE */
 }
+
 
 
 /* FILTER POSITIONING – STANDINGS */
@@ -692,10 +695,12 @@ body {
 
 /* BOX SINISTRO */
 .standings-results-box {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px; /* ↓ più compatto */
   box-shadow: var(--shadow);
 }
 
@@ -709,11 +714,12 @@ body {
 .matches-scroll {
   display: flex;
   flex-direction: column;
-  gap: 18px;              /* ↑ più spazio tra le partite */
-  max-height: 380px;      /* ↓ box un po’ più compatto */
+  gap: 18px;
+  flex: 1;
   overflow-y: auto;
   padding-right: 8px;
 }
+
 
 /* Scrollbar più visibile */
 .matches-scroll::-webkit-scrollbar {
@@ -820,10 +826,12 @@ body {
 
 /* BOX CLASSIFICA (DX) */
 .standings-table-box {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px;          /* ↓ */
   box-shadow: var(--shadow);
 }
 
@@ -1076,4 +1084,10 @@ body {
 .standings-table td:nth-child(n+3) {
   color: var(--text-muted);
   font-size: 12px;
+}
+
+
+#standings {
+  flex: 1;
+  overflow-y: auto;
 }
