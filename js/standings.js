@@ -5,6 +5,23 @@
 // ⚠️ INSERISCI QUI L’URL DELLA TUA WEB APP
 const API_URL = "https://script.google.com/macros/s/AKfycbzXD6iAY1MCMDAbAGjqABqMwsvYB3vR5EgqlmaFyNEU-1tyUUWqC-W68YM6zmYtIwCJgA/exec";
 
+// ===============================
+// SKELETON HELPERS
+// ===============================
+function fadeOutSkeleton(container) {
+  const skeletons = container.querySelectorAll(".skeleton");
+  skeletons.forEach(el => el.classList.add("fade-out"));
+}
+
+function clearAndRender(container, renderFn) {
+  setTimeout(() => {
+    container.innerHTML = "";
+    renderFn();
+  }, 350); // ⬅️ match CSS transition
+}
+
+
+
 document.addEventListener("DOMContentLoaded", () => {
   const tournamentId = getTournamentIdFromUrl();
 
@@ -74,26 +91,36 @@ function hideTournamentFilter() {
 // LOAD MATCHES
 // ===============================
 function loadMatches(tournamentId) {
+  const container = document.getElementById("matches-list");
+
   fetch(`${API_URL}?action=get_matches&tournament_id=${encodeURIComponent(tournamentId)}`)
     .then(res => res.json())
-    .then(matches => renderMatches(matches, tournamentId))
+    .then(matches => {
+      fadeOutSkeleton(container);
+      clearAndRender(container, () => {
+        renderMatches(matches, tournamentId);
+      });
+    })
     .catch(() => {
-      document.getElementById("matches-list").innerHTML =
+      container.innerHTML =
         "<p class='error'>Errore caricamento match</p>";
     });
 }
 
+
 // ===============================
-// LOAD STANDINGS (STUB)
+// LOAD STANDINGS
 // ===============================
 function loadStandings(tournamentId) {
   const standingsEl = document.getElementById("standings");
-  standingsEl.innerHTML = "<p>Caricamento classifica…</p>";
 
   fetch(`${API_URL}?action=get_standings&tournament_id=${encodeURIComponent(tournamentId)}`)
     .then(res => res.json())
     .then(data => {
-      renderStandings(data);
+      fadeOutSkeleton(standingsEl);
+      clearAndRender(standingsEl, () => {
+        renderStandings(data);
+      });
     })
     .catch(() => {
       standingsEl.innerHTML =
@@ -104,22 +131,21 @@ function loadStandings(tournamentId) {
 
 
 
+
 // ===============================
 // RENDER MATCH LIST
 // ===============================
 function renderMatches(matches, tournamentId) {
   const container = document.getElementById("matches-list");
 
-  if (!matches.length) {
-    container.innerHTML = "<p class='placeholder'>Nessun match disponibile</p>";
+  if (!Array.isArray(matches) || matches.length === 0) {
+    container.innerHTML =
+      "<p class='placeholder'>Nessun match disponibile</p>";
     return;
   }
 
-  container.innerHTML = "";
-
   // 1️⃣ Raggruppa per round
   const roundsMap = {};
-
   matches.forEach(match => {
     if (!roundsMap[match.round_id]) {
       roundsMap[match.round_id] = [];
@@ -127,38 +153,27 @@ function renderMatches(matches, tournamentId) {
     roundsMap[match.round_id].push(match);
   });
 
-  const roundEntries = Object.entries(roundsMap);
-
-
-  // 2️⃣ Render per round
-  roundEntries.forEach(([roundId, roundMatches], index) => {
+  Object.entries(roundsMap).forEach(([roundId, roundMatches], index) => {
     const roundGroup = document.createElement("div");
     roundGroup.className = "round-group";
-
-    if (index !== 0) {
-      roundGroup.classList.add("collapsed");
-    }
+    if (index !== 0) roundGroup.classList.add("collapsed");
 
     const roundTitle = document.createElement("div");
     roundTitle.className = "round-title";
     roundTitle.textContent = roundId;
 
     roundTitle.addEventListener("click", () => {
-      const allRounds = container.querySelectorAll(".round-group");
-      allRounds.forEach(group => {
-        if (group !== roundGroup) group.classList.add("collapsed");
-      });
+      container.querySelectorAll(".round-group")
+        .forEach(g => g !== roundGroup && g.classList.add("collapsed"));
       roundGroup.classList.toggle("collapsed");
     });
 
     roundGroup.appendChild(roundTitle);
 
-    // ✅ WRAPPER MATCH
     const matchesWrapper = document.createElement("div");
     matchesWrapper.className = "round-matches";
     roundGroup.appendChild(matchesWrapper);
 
-    // separazione played / toPlay
     const toPlay = [];
     const played = [];
 
@@ -196,17 +211,16 @@ function renderMatches(matches, tournamentId) {
         </button>
       `;
 
-      card.querySelector(".submit-result").addEventListener("click", () => {
-        submitResult(card, match.match_id, tournamentId);
-      });
+      card.querySelector(".submit-result")
+        .addEventListener("click", () =>
+          submitResult(card, match.match_id, tournamentId)
+        );
 
-      // ⬅️ APPEND QUI
       matchesWrapper.appendChild(card);
     });
 
     container.appendChild(roundGroup);
   });
-
 }
 
 
@@ -280,6 +294,10 @@ function showToast(message) {
 }
 
 
+
+// ===============================
+// RENDER STANDINGS
+// ===============================
 function renderStandings(data) {
   const standingsEl = document.getElementById("standings");
 
@@ -289,11 +307,7 @@ function renderStandings(data) {
     return;
   }
 
-  standingsEl.innerHTML = "";
-
-  // 1️⃣ Raggruppa per girone
   const roundsMap = {};
-
   data.forEach(row => {
     if (!roundsMap[row.round_id]) {
       roundsMap[row.round_id] = [];
@@ -301,10 +315,7 @@ function renderStandings(data) {
     roundsMap[row.round_id].push(row);
   });
 
-  // 2️⃣ Per ogni girone → tabella
   Object.entries(roundsMap).forEach(([roundId, teams]) => {
-
-    // 🔢 Ordina per punti (desc)
     teams.sort((a, b) =>
       b.points - a.points ||
       b.goal_diff - a.goal_diff ||
