@@ -19,9 +19,18 @@ fetch(API_URL)
     }
 
     // ✅ ora è sicuro rimuovere la skeleton
-    container.innerHTML = "";
+    // 1️⃣ seleziono tutte le skeleton card
+    const skeletons = container.querySelectorAll(".tournament-card.skeleton");
 
-    renderTournaments(tournaments);
+    // 2️⃣ attivo fade-out
+    skeletons.forEach(card => card.classList.add("fade-out"));
+
+    // 3️⃣ aspetto la fine dell’animazione
+    setTimeout(() => {
+      container.innerHTML = "";
+      renderTournaments(tournaments);
+    }, 350);
+
   })
 
   .catch(err => {

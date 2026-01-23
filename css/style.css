@@ -1101,7 +1101,24 @@ body {
 .tournament-card.skeleton {
   pointer-events: none;
   cursor: default;
+
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+
+  transition:
+    opacity 0.35s ease,
+    filter 0.35s ease,
+    transform 0.35s ease;
 }
+
+/* stato di uscita skeleton (fade-out soft) */
+.tournament-card.skeleton.fade-out {
+  opacity: 0;
+  filter: blur(4px);
+  transform: scale(0.98);
+}
+
 
 /* disabilita hover effetti */
 .tournament-card.skeleton:hover {
