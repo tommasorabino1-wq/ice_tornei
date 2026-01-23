@@ -1168,3 +1168,31 @@ body {
     background-position: -100% 0;
   }
 }
+
+
+/* =========================
+   SKELETON UI – GENERIC (TOURNAMENT PAGE)
+========================= */
+
+/* stato base skeleton generica */
+.skeleton,
+.skeleton-line,
+.skeleton-title {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+
+  transition:
+    opacity 0.35s ease,
+    filter 0.35s ease,
+    transform 0.35s ease;
+}
+
+/* stato di uscita (fade-out luxury) */
+.skeleton.fade-out,
+.skeleton-line.fade-out,
+.skeleton-title.fade-out {
+  opacity: 0;
+  filter: blur(4px);
+  transform: scale(0.98);
+}

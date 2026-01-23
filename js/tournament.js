@@ -33,7 +33,7 @@ const API_URL =
   "https://script.google.com/macros/s/AKfycbzXD6iAY1MCMDAbAGjqABqMwsvYB3vR5EgqlmaFyNEU-1tyUUWqC-W68YM6zmYtIwCJgA/exec";
 
 // ===============================
-// 4. FETCH TORNEI
+// 4. FETCH TORNEI (WITH SKELETON FADE)
 // ===============================
 fetch(API_URL)
   .then(res => res.json())
@@ -42,28 +42,37 @@ fetch(API_URL)
       throw new Error("Formato dati non valido");
     }
 
-    // CASO 1: ID PRESENTE
-    if (tournamentId) {
-      const tournament = tournaments.find(
-        t => t.tournament_id === tournamentId
-      );
+    // 🔥 fade-out skeleton
+    const skeletons = document.querySelectorAll(".skeleton, .skeleton-line, .skeleton-title");
+    skeletons.forEach(el => el.classList.add("fade-out"));
 
-      if (!tournament) {
-        renderGenericRegulation(tournaments);
+    setTimeout(() => {
+
+      // CASO 1: ID PRESENTE
+      if (tournamentId) {
+        const tournament = tournaments.find(
+          t => t.tournament_id === tournamentId
+        );
+
+        if (!tournament) {
+          renderGenericRegulation(tournaments);
+          return;
+        }
+
+        renderTournament(tournament);
         return;
       }
 
-      renderTournament(tournament);
-      return;
-    }
+      // CASO 2: NESSUN ID
+      renderGenericRegulation(tournaments);
 
-    // CASO 2: NESSUN ID
-    renderGenericRegulation(tournaments);
+    }, 350); // allineato al CSS
   })
   .catch(err => {
     console.error(err);
     container.innerHTML = "<p>Errore nel caricamento dei dati.</p>";
   });
+
 
 // ===============================
 // 5. REGOLAMENTO GENERALE + SELECT
@@ -99,6 +108,12 @@ function renderTournament(tournament) {
   genericSection.style.display = "none";
   tournamentSection.style.display = "block";
 
+  // 🔥 rimuovo classi skeleton residue
+  const skeletonElements = tournamentSection.querySelectorAll(".skeleton, .skeleton-line, .skeleton-title");
+  skeletonElements.forEach(el => {
+    el.classList.remove("skeleton", "skeleton-line", "skeleton-title", "fade-out");
+  });
+
   // Header
   document.getElementById("tournament-name").textContent = tournament.name;
   document.getElementById("tournament-subtitle").textContent =
@@ -120,11 +135,14 @@ function renderTournament(tournament) {
   }
 }
 
+
 // ===============================
 // 7. STATO TORNEO (UI)
 // ===============================
 function applyTournamentState(tournament) {
   form.style.display = "none";
+  form.classList.remove("skeleton");
+
   badge.className = "badge";
 
   if (tournament.status === "open") {
@@ -150,6 +168,7 @@ function applyTournamentState(tournament) {
       "Il torneo è in corso. Le iscrizioni sono chiuse.";
   }
 }
+
 
 // ===============================
 // 8. SUBMIT ISCRIZIONE

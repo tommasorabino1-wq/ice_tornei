@@ -98,10 +98,10 @@
       <!-- HEADER TORNEO -->
       <section class="tournament-header">
         <div class="tournament-title-row">
-          <h1 id="tournament-name"></h1>
-          <span id="tournament-status-badge" class="badge"></span>
+          <h1 id="tournament-name" class="skeleton-title"></h1>
+          <span id="tournament-status-badge" class="badge skeleton-line short"></span>
         </div>
-        <p class="tournament-subtitle" id="tournament-subtitle"></p>
+        <p class="tournament-subtitle skeleton-line"></p>
       </section>
 
       <!-- LAYOUT TORNEO -->
@@ -115,27 +115,27 @@
 
             <div class="meta-item">
               <span class="meta-icon">🏐</span>
-              <span id="info-sport"></span>
+              <span id="info-sport" class="skeleton-line short"></span>
             </div>
 
             <div class="meta-item">
               <span class="meta-icon">📍</span>
-              <span id="info-location"></span>
+              <span id="info-location" class="skeleton-line short"></span>
             </div>
 
             <div class="meta-item">
               <span class="meta-icon">📅</span>
-              <span id="info-date"></span>
+              <span id="info-date" class="skeleton-line short"></span>
             </div>
 
             <div class="meta-item">
               <span class="meta-icon">👥</span>
-              <span id="info-teams"></span> squadre
+              <span id="info-teams" class="skeleton-line short"></span> squadre
             </div>
 
             <div class="meta-item">
               <span class="meta-icon">💰</span>
-              €<span id="info-price"></span>
+              €<span id="info-price" class="skeleton-line short"></span>
             </div>
 
           </div>
@@ -145,9 +145,13 @@
         <div class="tournament-action">
           <h3>Iscrizione</h3>
 
-          <p id="subscribe-message"></p>
+          <p id="subscribe-message" class="skeleton-line"></p>
 
-          <form id="registration-form">
+          <form id="registration-form" class="skeleton">
+
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
 
             <label>
               Nome squadra
@@ -169,6 +173,7 @@
             </button>
 
           </form>
+
         </div>
 
       </section>
