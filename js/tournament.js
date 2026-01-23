@@ -30,7 +30,7 @@ const tournamentSelect = document.getElementById("tournament-select");
 // 3. API URL
 // ===============================
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbzCpL2sLyUWTFDDirCzj7vjSie4P-qib8z4_7APfyBnEWKfPFsTdodrCksVlL5jYGROqw/exec";
+  "https://script.google.com/macros/s/AKfycbwBOzpbyZX4oFnoYo9BoXLMwXPUD2t_wLRn-0Nxiz8-AoIneEZJYJNCl9eaUCvf625t8w/exec";
 
 // ===============================
 // 4. FETCH TORNEI
@@ -167,28 +167,51 @@ function handleFormSubmit(tournament) {
     })
       .then(res => res.text())
       .then(response => {
-        if (response === "TOURNAMENT_NOT_FOUND") {
-          alert("Torneo non valido.");
+          if (response === "TOURNAMENT_NOT_FOUND") {
+            showToast("Torneo non valido ❌");
+            return;
+          }
+
+          if (response === "INVALID_DATA") {
+            showToast("Dati mancanti o non validi ⚠️");
+            return;
+          }
+
+          if (response === "DUPLICATE") {
+            showToast("Questa email è già iscritta ⚠️");
+            return;
+          }
+
+        if (response === "SUBSCRIPTION_SAVED") {
+          showToast("Iscrizione completata 🎉");
+
+          // ricarico per aggiornare teams_current / stato torneo
+          setTimeout(() => {
+            window.location.reload();
+          }, 1200);
+
           return;
         }
 
-        if (response === "INVALID_DATA") {
-          alert("Dati mancanti o non validi.");
-          return;
-        }
 
-        if (response === "OK") {
-          alert("Iscrizione completata!");
-
-          // teams_current è formula → ricarichiamo la pagina
-          window.location.reload();
-          return;
-        }
-
-        alert("Risposta inattesa dal server.");
+        showToast("Errore inatteso ❌");
       })
       .catch(() => {
-        alert("Errore durante l'invio dell'iscrizione.");
+        showToast("Errore inatteso ❌");
       });
   });
+}
+
+
+
+function showToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 2500);
 }
