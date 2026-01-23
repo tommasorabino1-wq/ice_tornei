@@ -305,7 +305,11 @@ function renderStandings(data) {
   Object.entries(roundsMap).forEach(([roundId, teams]) => {
 
     // 🔢 Ordina per punti (desc)
-    teams.sort((a, b) => b.points - a.points);
+    teams.sort((a, b) =>
+      b.points - a.points ||
+      b.goal_diff - a.goal_diff ||
+      b.matches_played - a.matches_played
+    );
 
     const group = document.createElement("div");
     group.className = "standings-group";
@@ -316,6 +320,7 @@ function renderStandings(data) {
         <thead>
           <tr>
             <th>Squadra</th>
+            <th>G</th>
             <th>Pt</th>
             <th>V</th>
             <th>P</th>
@@ -327,6 +332,7 @@ function renderStandings(data) {
           ${teams.map(team => `
             <tr>
               <td>${team.team_name}</td>
+              <td>${team.matches_played ?? 0}</td>
               <td>${team.points}</td>
               <td>${team.wins}</td>
               <td>${team.draws}</td>
