@@ -88,19 +88,19 @@ function loadMatches(tournamentId) {
 // ===============================
 function loadStandings(tournamentId) {
   const standingsEl = document.getElementById("standings");
-
   standingsEl.innerHTML = "<p>Caricamento classifica…</p>";
 
   fetch(`${API_URL}?action=get_standings&tournament_id=${encodeURIComponent(tournamentId)}`)
     .then(res => res.json())
     .then(data => {
-      standingsEl.innerHTML = "<p>Classifica caricata (placeholder)</p>";
-      // qui in futuro renderStandingsTable(data)
+      renderStandings(data);
     })
     .catch(() => {
-      standingsEl.innerHTML = "<p class='error'>Errore caricamento classifica</p>";
+      standingsEl.innerHTML =
+        "<p class='error'>Errore caricamento classifica</p>";
     });
 }
+
 
 
 
@@ -277,4 +277,67 @@ function showToast(message) {
   setTimeout(() => {
     toast.remove();
   }, 2500);
+}
+
+
+function renderStandings(data) {
+  const standingsEl = document.getElementById("standings");
+
+  if (!Array.isArray(data) || data.length === 0) {
+    standingsEl.innerHTML =
+      "<p class='placeholder'>Nessuna classifica disponibile</p>";
+    return;
+  }
+
+  standingsEl.innerHTML = "";
+
+  // 1️⃣ Raggruppa per girone
+  const roundsMap = {};
+
+  data.forEach(row => {
+    if (!roundsMap[row.round_id]) {
+      roundsMap[row.round_id] = [];
+    }
+    roundsMap[row.round_id].push(row);
+  });
+
+  // 2️⃣ Per ogni girone → tabella
+  Object.entries(roundsMap).forEach(([roundId, teams]) => {
+
+    // 🔢 Ordina per punti (desc)
+    teams.sort((a, b) => b.points - a.points);
+
+    const group = document.createElement("div");
+    group.className = "standings-group";
+
+    group.innerHTML = `
+      <h3 class="standings-title">${roundId}</h3>
+      <table class="standings-table">
+        <thead>
+          <tr>
+            <th>Squadra</th>
+            <th>Pt</th>
+            <th>V</th>
+            <th>P</th>
+            <th>S</th>
+            <th>Diff</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${teams.map(team => `
+            <tr>
+              <td>${team.team_name}</td>
+              <td>${team.points}</td>
+              <td>${team.wins}</td>
+              <td>${team.draws}</td>
+              <td>${team.losses}</td>
+              <td>${team.goal_diff}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+
+    standingsEl.appendChild(group);
+  });
 }

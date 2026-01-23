@@ -997,3 +997,83 @@ body {
 .hidden {
   display: none !important;
 }
+
+/* =========================
+   STANDINGS – CLASSIFICA
+========================= */
+
+.standings-group {
+  background-color: var(--bg-main);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 14px 16px;
+  margin-bottom: 18px;
+}
+
+
+.standings-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+
+  margin-bottom: 10px;
+  padding-left: 8px;
+  border-left: 3px solid var(--brand);
+}
+
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+
+.standings-table thead th {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.standings-table thead th:first-child {
+  text-align: left;
+}
+
+
+.standings-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.standings-table tbody tr:hover {
+  background-color: rgba(56, 189, 248, 0.06);
+}
+
+
+.standings-table td {
+  padding: 8px 4px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.standings-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+}
+
+
+.standings-table td:nth-child(2) {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--brand);
+}
+
+
+.standings-table td:nth-child(n+3) {
+  color: var(--text-muted);
+  font-size: 12px;
+}
