@@ -18,8 +18,12 @@ fetch(API_URL)
       throw new Error("Formato dati non valido");
     }
 
+    // ✅ ora è sicuro rimuovere la skeleton
+    container.innerHTML = "";
+
     renderTournaments(tournaments);
   })
+
   .catch(err => {
     console.error(err);
     container.innerHTML = "<p>Errore nel caricamento dei tornei.</p>";
@@ -29,7 +33,6 @@ fetch(API_URL)
 // RENDER CARD TORNEI
 // ===============================
 function renderTournaments(tournaments) {
-  container.innerHTML = "";
 
   tournaments.forEach(t => {
     const card = document.createElement("div");
