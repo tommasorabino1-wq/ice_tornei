@@ -32,6 +32,14 @@ const tournamentSelect = document.getElementById("tournament-select");
 const API_URL =
   "https://script.google.com/macros/s/AKfycbzXD6iAY1MCMDAbAGjqABqMwsvYB3vR5EgqlmaFyNEU-1tyUUWqC-W68YM6zmYtIwCJgA/exec";
 
+
+if (tournamentId) {
+  genericSection.style.display = "none";
+  tournamentSection.style.display = "block";
+}
+
+
+
 // ===============================
 // 4. FETCH TORNEI (WITH SKELETON FADE)
 // ===============================
