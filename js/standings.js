@@ -320,8 +320,8 @@ function renderStandings(data) {
         <thead>
           <tr>
             <th>Squadra</th>
-            <th>Pt</th>
-            <th>G</th>
+            <th>Pts</th>
+            <th>PG</th>
             <th>V</th>
             <th>P</th>
             <th>S</th>
