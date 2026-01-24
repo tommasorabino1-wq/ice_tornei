@@ -57,49 +57,62 @@
 
     <section class="standings-layout">
 
-      <!-- LEFT: INSERT RESULTS -->
+      <!-- =====================
+          LEFT COLUMN
+      ====================== -->
       <div class="standings-results-box">
 
-        <!-- TOURNAMENT FILTER -->
-        <div id="tournament-filter" class="tournament-filter-box standings hidden">
+        <!-- FILTER (REAL UI) -->
+        <div
+          id="tournament-filter"
+          class="tournament-filter-box standings hidden">
           <label for="tournament-select">Seleziona torneo</label>
           <select id="tournament-select">
             <option value="">-- Seleziona --</option>
           </select>
         </div>
 
-        <!-- TITOLO (SKELETON) -->
-        <h3 class="skeleton skeleton-title"></h3>
+        <!-- ===== SKELETON LEFT ===== -->
+        <div class="standings-skeleton">
 
-        <!-- MATCH LIST -->
-        <div id="matches-list" class="matches-scroll">
+          <h3 class="skeleton skeleton-title"></h3>
 
-          <!-- SKELETON MATCH -->
-          <div class="match-card skeleton">
-            <div class="skeleton-line short"></div>
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line short"></div>
-          </div>
+          <div class="matches-scroll">
 
-          <div class="match-card skeleton">
-            <div class="skeleton-line short"></div>
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line short"></div>
+            <div class="skeleton-match">
+              <div class="skeleton-line short"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+
+            <div class="skeleton-match">
+              <div class="skeleton-line short"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+
           </div>
 
         </div>
+
+
+        <!-- ===== REAL CONTENT LEFT ===== -->
+        <h3 id="matches-title"></h3>
+        <div id="matches-list" class="matches-scroll"></div>
+
+
       </div>
 
-      <!-- RIGHT: STANDINGS -->
+      <!-- =====================
+          RIGHT COLUMN
+      ====================== -->
       <div class="standings-table-box">
 
-        <!-- TITOLO (SKELETON) -->
-        <h3 class="skeleton skeleton-title"></h3>
+        <!-- ===== SKELETON RIGHT ===== -->
+        <div class="standings-skeleton">
 
-        <!-- CONTENITORE CLASSIFICA -->
-        <div id="standings">
+          <h3 class="skeleton skeleton-title"></h3>
 
-          <!-- SKELETON CLASSIFICA -->
           <div class="standings-group skeleton">
             <div class="skeleton-line"></div>
             <div class="skeleton-line"></div>
@@ -108,9 +121,14 @@
           </div>
 
         </div>
+
+        <!-- ===== REAL CONTENT RIGHT ===== -->
+        <div id="standings" class="hidden"></div>
+
       </div>
 
     </section>
+
 
 
   </main>

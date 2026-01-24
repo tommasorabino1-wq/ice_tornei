@@ -1196,3 +1196,71 @@ body {
   filter: blur(4px);
   transform: scale(0.98);
 }
+
+
+
+/* =========================
+   SKELETON UI – STANDINGS
+========================= */
+
+.standings-skeleton {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+
+  transition:
+    opacity 0.35s ease,
+    filter 0.35s ease,
+    transform 0.35s ease;
+}
+
+/* fade-out pilotato dal JS */
+.standings-skeleton.fade-out {
+  opacity: 0;
+  filter: blur(4px);
+  transform: scale(0.98);
+}
+
+
+
+
+/* skeleton match card */
+.standings-skeleton .skeleton-match {
+  height: 54px;
+  border-radius: var(--radius);
+  background: linear-gradient(
+    90deg,
+    #1f2933 25%,
+    #2a3441 37%,
+    #1f2933 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+
+
+/* skeleton row classifica */
+.standings-skeleton .skeleton-row {
+  height: 14px;
+  width: 100%;
+  border-radius: 4px;
+
+  background: linear-gradient(
+    90deg,
+    #1f2933 25%,
+    #2a3441 37%,
+    #1f2933 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+.standings-skeleton .skeleton-row.short {
+  width: 60%;
+}

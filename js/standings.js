@@ -8,17 +8,19 @@ const API_URL = "https://script.google.com/macros/s/AKfycbzXD6iAY1MCMDAbAGjqABqM
 // ===============================
 // SKELETON HELPERS
 // ===============================
-function fadeOutSkeleton(container) {
-  const skeletons = container.querySelectorAll(".skeleton");
-  skeletons.forEach(el => el.classList.add("fade-out"));
+function fadeOutSkeleton(wrapper) {
+  wrapper.classList.add("fade-out");
+
+  setTimeout(() => {
+    wrapper.classList.add("hidden");
+  }, 350);
 }
 
-function clearAndRender(container, renderFn) {
-  setTimeout(() => {
-    container.innerHTML = "";
-    renderFn();
-  }, 350); // ⬅️ match CSS transition
+function loadStandingsPage(tournamentId) {
+  loadMatches(tournamentId);
+  loadStandings(tournamentId);
 }
+
 
 
 
@@ -26,13 +28,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const tournamentId = getTournamentIdFromUrl();
 
   if (tournamentId) {
-    hideTournamentFilter();   // ⬅️ AGGIUNTO
-    loadMatches(tournamentId);
-    loadStandings(tournamentId);
+    hideTournamentFilter();
+    loadStandingsPage(tournamentId);
   } else {
     showTournamentFilter();
   }
 });
+
 
 
 
@@ -69,13 +71,20 @@ function showTournamentFilter() {
     if (!select.value) return;
 
     const tournamentId = select.value;
-
     history.replaceState(null, "", `?tournament_id=${tournamentId}`);
 
-    loadMatches(tournamentId);
-    loadStandings(tournamentId);
+    
+    document
+      .querySelectorAll(".standings-results-box, .standings-table-box")
+      .forEach(box => {
+        box.classList.remove("hidden", "fade-out");
+      });
+
+
+    loadStandingsPage(tournamentId);
     hideTournamentFilter();
   });
+
 }
 
 
@@ -91,42 +100,49 @@ function hideTournamentFilter() {
 // LOAD MATCHES
 // ===============================
 function loadMatches(tournamentId) {
-  const container = document.getElementById("matches-list");
+  const box = document.querySelector(".standings-results-box");
+  const list = document.getElementById("matches-list");
+
+  // RESET contenuto precedente
+  list.innerHTML = "";
 
   fetch(`${API_URL}?action=get_matches&tournament_id=${encodeURIComponent(tournamentId)}`)
     .then(res => res.json())
     .then(matches => {
-      fadeOutSkeleton(container);
-      clearAndRender(container, () => {
-        renderMatches(matches, tournamentId);
-      });
+      fadeOutSkeleton(box);
+      renderMatches(matches, tournamentId);
     })
     .catch(() => {
-      container.innerHTML =
-        "<p class='error'>Errore caricamento match</p>";
+      list.innerHTML = "<p class='error'>Errore caricamento match</p>";
     });
 }
+
+
 
 
 // ===============================
 // LOAD STANDINGS
 // ===============================
 function loadStandings(tournamentId) {
+  const box = document.querySelector(".standings-table-box");
   const standingsEl = document.getElementById("standings");
+
+  // RESET classifica precedente
+  standingsEl.innerHTML = "";
 
   fetch(`${API_URL}?action=get_standings&tournament_id=${encodeURIComponent(tournamentId)}`)
     .then(res => res.json())
     .then(data => {
-      fadeOutSkeleton(standingsEl);
-      clearAndRender(standingsEl, () => {
-        renderStandings(data);
-      });
+      fadeOutSkeleton(box);
+      renderStandings(data);
     })
     .catch(() => {
       standingsEl.innerHTML =
         "<p class='error'>Errore caricamento classifica</p>";
     });
 }
+
+
 
 
 
