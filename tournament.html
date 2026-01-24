@@ -86,22 +86,61 @@
           </div>
 
         </div>
+      </div>
+    </section>
+
+
+    <!-- =========================
+        TORNEO SPECIFICO – SKELETON
+    ========================== -->
+    <section id="tournament-specific-skeleton" class="tournament-skeleton skeleton hidden">
+
+      <!-- HEADER SKELETON -->
+      <section class="tournament-header">
+        <div class="tournament-title-row">
+          <div class="skeleton-title" style="width: 260px;"></div>
+          <div class="skeleton-line short"></div>
+        </div>
+        <div class="skeleton-line" style="width: 420px;"></div>
+      </section>
+
+      <!-- LAYOUT -->
+      <section class="tournament-layout">
+
+        <!-- INFO -->
+        <div class="tournament-info">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line short"></div>
+        </div>
+
+        <!-- AZIONE -->
+        <div class="tournament-action">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line short"></div>
+        </div>
+
+      </section>
 
     </section>
 
+
+
     <!-- =========================
-         TORNEO SPECIFICO
-         (visibile se c'è id)
+        TORNEO SPECIFICO – CONTENUTO
     ========================== -->
-    <section id="tournament-specific-section">
+    <section id="tournament-specific-section" class="hidden">
 
       <!-- HEADER TORNEO -->
       <section class="tournament-header">
         <div class="tournament-title-row">
-          <h1 id="tournament-name" class="skeleton-title"></h1>
-          <span id="tournament-status-badge" class="badge skeleton-line short"></span>
+          <h1 id="tournament-name"></h1>
+          <span id="tournament-status-badge" class="badge"></span>
         </div>
-        <p class="tournament-subtitle skeleton-line"></p>
+        <p id="tournament-subtitle" class="tournament-subtitle"></p>
       </section>
 
       <!-- LAYOUT TORNEO -->
@@ -112,52 +151,25 @@
           <h3>Informazioni torneo</h3>
 
           <div class="tournament-meta">
-
-            <div class="meta-item">
-              <span class="meta-icon">🏐</span>
-              <span id="info-sport" class="skeleton-line short"></span>
-            </div>
-
-            <div class="meta-item">
-              <span class="meta-icon">📍</span>
-              <span id="info-location" class="skeleton-line short"></span>
-            </div>
-
-            <div class="meta-item">
-              <span class="meta-icon">📅</span>
-              <span id="info-date" class="skeleton-line short"></span>
-            </div>
-
-            <div class="meta-item">
-              <span class="meta-icon">👥</span>
-              <span id="info-teams" class="skeleton-line short"></span> squadre
-            </div>
-
-            <div class="meta-item">
-              <span class="meta-icon">💰</span>
-              €<span id="info-price" class="skeleton-line short"></span>
-            </div>
-
+            <div class="meta-item"><span class="meta-icon">🏐</span><span id="info-sport"></span></div>
+            <div class="meta-item"><span class="meta-icon">📍</span><span id="info-location"></span></div>
+            <div class="meta-item"><span class="meta-icon">📅</span><span id="info-date"></span></div>
+            <div class="meta-item"><span class="meta-icon">👥</span><span id="info-teams"></span> squadre</div>
+            <div class="meta-item"><span class="meta-icon">💰</span>€<span id="info-price"></span></div>
           </div>
         </div>
 
         <!-- ISCRIZIONE -->
         <div class="tournament-action">
           <h3>Iscrizione</h3>
+          <p id="subscribe-message"></p>
 
-          <p id="subscribe-message" class="skeleton-line"></p>
-
-          <form id="registration-form" class="skeleton">
-
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line short"></div>
-
+          <form id="registration-form">
             <label>
               Nome squadra
               <input type="text" name="team_name" required>
             </label>
-            
+
             <label>
               Email
               <input type="email" name="email" required>
@@ -171,13 +183,13 @@
             <button type="submit" class="btn primary">
               Invia iscrizione
             </button>
-
           </form>
-
         </div>
 
       </section>
+
     </section>
+
 
   </main>
 

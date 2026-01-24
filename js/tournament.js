@@ -11,11 +11,12 @@ const tournamentId = params.get("id");
 // ===============================
 // 2. ELEMENTI DOM
 // ===============================
-const container = document.querySelector(".container");
 
 // Sezioni principali
 const genericSection = document.getElementById("generic-regulation-section");
 const tournamentSection = document.getElementById("tournament-specific-section");
+const tournamentSkeleton = document.querySelector(".tournament-skeleton");
+
 
 // Torneo UI
 const badge = document.getElementById("tournament-status-badge");
@@ -34,9 +35,15 @@ const API_URL =
 
 
 if (tournamentId) {
-  genericSection.style.display = "none";
-  tournamentSection.style.display = "block";
+  genericSection.classList.add("hidden");
+  tournamentSkeleton.classList.remove("hidden");
+  tournamentSection.classList.add("hidden");
+} else {
+  genericSection.classList.remove("hidden");
+  tournamentSkeleton.classList.add("hidden");
+  tournamentSection.classList.add("hidden");
 }
+
 
 
 
@@ -51,34 +58,41 @@ fetch(API_URL)
     }
 
     // 🔥 fade-out skeleton
-    const skeletons = document.querySelectorAll(".skeleton, .skeleton-line, .skeleton-title");
-    skeletons.forEach(el => el.classList.add("fade-out"));
+    if (tournamentId) {
+      tournamentSkeleton.classList.add("fade-out");
+    }
 
     setTimeout(() => {
 
-      // CASO 1: ID PRESENTE
       if (tournamentId) {
         const tournament = tournaments.find(
           t => t.tournament_id === tournamentId
         );
 
         if (!tournament) {
+          tournamentSkeleton.classList.add("hidden");
           renderGenericRegulation(tournaments);
           return;
         }
 
+        tournamentSkeleton.classList.add("hidden");
+        tournamentSection.classList.remove("hidden");
         renderTournament(tournament);
         return;
       }
 
-      // CASO 2: NESSUN ID
       renderGenericRegulation(tournaments);
 
-    }, 350); // allineato al CSS
+    }, 350);
+
   })
   .catch(err => {
     console.error(err);
-    container.innerHTML = "<p>Errore nel caricamento dei dati.</p>";
+    genericSection.classList.remove("hidden");
+    tournamentSkeleton.classList.add("hidden");
+    tournamentSection.classList.add("hidden");
+    showToast("Errore nel caricamento dei dati ❌");
+
   });
 
 
@@ -86,9 +100,10 @@ fetch(API_URL)
 // 5. REGOLAMENTO GENERALE + SELECT
 // ===============================
 function renderGenericRegulation(tournaments) {
-  // VISIBILITÀ
-  genericSection.style.display = "block";
-  tournamentSection.style.display = "none";
+  genericSection.classList.remove("hidden");
+  tournamentSection.classList.add("hidden");
+  tournamentSkeleton.classList.add("hidden");
+
 
   // Reset select
   tournamentSelect.innerHTML =
@@ -112,15 +127,9 @@ function renderGenericRegulation(tournaments) {
 // 6. RENDER TORNEO SPECIFICO
 // ===============================
 function renderTournament(tournament) {
-  // VISIBILITÀ
-  genericSection.style.display = "none";
-  tournamentSection.style.display = "block";
+  genericSection.classList.add("hidden");
+  tournamentSection.classList.remove("hidden");
 
-  // 🔥 rimuovo classi skeleton residue
-  const skeletonElements = tournamentSection.querySelectorAll(".skeleton, .skeleton-line, .skeleton-title");
-  skeletonElements.forEach(el => {
-    el.classList.remove("skeleton", "skeleton-line", "skeleton-title", "fade-out");
-  });
 
   // Header
   document.getElementById("tournament-name").textContent = tournament.name;

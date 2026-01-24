@@ -547,10 +547,7 @@ body {
    REGOLAMENTO GENERALE
 ========================= */
 
-/* Sezione regolamento generico */
-#generic-regulation-section {
-  display: none; /* visibile solo se NON c'è torneo */
-}
+
 
 /* Titolo regolamento */
 .generic-title {
@@ -601,10 +598,15 @@ body {
    VISIBILITÀ SEZIONI TORNEO
 ========================= */
 
-/* Di default mostro SOLO regolamento generale */
-#tournament-specific-section {
-  display: none;
+/* =========================
+   VISIBILITÀ BASE SEZIONI
+========================= */
+#generic-regulation-section,
+#tournament-specific-section,
+.tournament-skeleton {
+  display: block;
 }
+
 
 
 
@@ -1171,13 +1173,13 @@ body {
 
 
 /* =========================
-   SKELETON UI – GENERIC (TOURNAMENT PAGE)
+   SKELETON UI – TOURNAMENT PAGE
 ========================= */
 
-/* stato base skeleton generica */
-.skeleton,
-.skeleton-line,
-.skeleton-title {
+.tournament-skeleton {
+  pointer-events: none;
+  cursor: default;
+
   opacity: 1;
   filter: blur(0);
   transform: scale(1);
@@ -1188,10 +1190,8 @@ body {
     transform 0.35s ease;
 }
 
-/* stato di uscita (fade-out luxury) */
-.skeleton.fade-out,
-.skeleton-line.fade-out,
-.skeleton-title.fade-out {
+/* fade-out skeleton torneo */
+.tournament-skeleton.fade-out {
   opacity: 0;
   filter: blur(4px);
   transform: scale(0.98);
