@@ -342,7 +342,14 @@ function renderStandings(data) {
     roundsMap[row.round_id].push(row);
   });
 
-  Object.entries(roundsMap).forEach(([roundId, teams]) => {
+  Object.entries(roundsMap)
+    .sort(([a], [b]) => {
+      const na = Number(a.replace("G", ""));
+      const nb = Number(b.replace("G", ""));
+      return na - nb;
+    })
+    .forEach(([roundId, teams]) => {
+
     teams.sort((a, b) =>
       b.points - a.points ||
       b.goal_diff - a.goal_diff ||
