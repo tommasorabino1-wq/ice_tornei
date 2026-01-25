@@ -21,6 +21,13 @@ function loadStandingsPage(tournamentId) {
   loadStandings(tournamentId);
 }
 
+function hideSkeletons() {
+  document
+    .querySelectorAll(".standings-skeleton")
+    .forEach(s => s.classList.add("hidden"));
+}
+
+
 
 
 
@@ -31,9 +38,11 @@ document.addEventListener("DOMContentLoaded", () => {
     hideTournamentFilter();
     loadStandingsPage(tournamentId);
   } else {
+    hideSkeletons();      // 👈 AGGIUNGI QUESTO
     showTournamentFilter();
   }
 });
+
 
 
 
