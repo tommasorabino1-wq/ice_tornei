@@ -100,16 +100,17 @@ function hideTournamentFilter() {
 // LOAD MATCHES
 // ===============================
 function loadMatches(tournamentId) {
-  const box = document.querySelector(".standings-results-box");
+  const skeleton = document.querySelector(
+    ".standings-results-box .standings-skeleton"
+  );
   const list = document.getElementById("matches-list");
 
-  // RESET contenuto precedente
   list.innerHTML = "";
 
   fetch(`${API_URL}?action=get_matches&tournament_id=${encodeURIComponent(tournamentId)}`)
     .then(res => res.json())
     .then(matches => {
-      fadeOutSkeleton(box);
+      fadeOutSkeleton(skeleton);
       renderMatches(matches, tournamentId);
     })
     .catch(() => {
@@ -124,16 +125,18 @@ function loadMatches(tournamentId) {
 // LOAD STANDINGS
 // ===============================
 function loadStandings(tournamentId) {
-  const box = document.querySelector(".standings-table-box");
+  const skeleton = document.querySelector(
+    ".standings-table-box .standings-skeleton"
+  );
   const standingsEl = document.getElementById("standings");
 
-  // RESET classifica precedente
   standingsEl.innerHTML = "";
+  standingsEl.classList.remove("hidden"); // ⚠️ fondamentale
 
   fetch(`${API_URL}?action=get_standings&tournament_id=${encodeURIComponent(tournamentId)}`)
     .then(res => res.json())
     .then(data => {
-      fadeOutSkeleton(box);
+      fadeOutSkeleton(skeleton);
       renderStandings(data);
     })
     .catch(() => {
@@ -141,7 +144,6 @@ function loadStandings(tournamentId) {
         "<p class='error'>Errore caricamento classifica</p>";
     });
 }
-
 
 
 
