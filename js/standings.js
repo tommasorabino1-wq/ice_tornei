@@ -180,7 +180,14 @@ function renderMatches(matches, tournamentId) {
     roundsMap[match.round_id].push(match);
   });
 
-  Object.entries(roundsMap).forEach(([roundId, roundMatches], index) => {
+  Object.entries(roundsMap)
+    .sort(([a], [b]) => {
+      const na = Number(a.replace("G", ""));
+      const nb = Number(b.replace("G", ""));
+      return na - nb;
+    })
+    .forEach(([roundId, roundMatches], index) => {
+
     const roundGroup = document.createElement("div");
     roundGroup.className = "round-group";
     if (index !== 0) roundGroup.classList.add("collapsed");
