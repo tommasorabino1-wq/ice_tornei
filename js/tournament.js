@@ -31,7 +31,7 @@ const tournamentSelect = document.getElementById("tournament-select");
 // 3. API URL
 // ===============================
 const API_URL =
-  "https://script.google.com/macros/s/AKfycby0aDpLdA1jRvRupgvs7EK9CgvBiE3jlEEFyuL6im-XzR_FpE-F1Joc8JFAxKESZK0Rag/exec";
+  "https://script.google.com/macros/s/AKfycbzUOSXfSTZ23_GrAiBIiSDeC6NWD2Gjuxc83BZEZ2sMd3nIrbaqdcon2yd7SRqbKHay6Q/exec";
 
 
 if (tournamentId) {
@@ -178,12 +178,23 @@ function applyTournamentState(tournament) {
     return;
   }
 
+  if (tournament.status === "final_phase") {
+  badge.textContent = "FASE FINALE";
+  badge.classList.add("final_phase");
+  subscribeMessage.textContent =
+    "Il torneo è entrato nella fase finale. Le iscrizioni sono chiuse.";
+  return;
+}
+
+
   if (tournament.status === "live") {
     badge.textContent = "IN CORSO";
     badge.classList.add("live");
     subscribeMessage.textContent =
       "Il torneo è in corso. Le iscrizioni sono chiuse.";
   }
+
+
 }
 
 

@@ -3,7 +3,7 @@
 // ===============================
 
 // ⚠️ INSERISCI QUI L’URL DELLA TUA WEB APP
-const API_URL = "https://script.google.com/macros/s/AKfycby0aDpLdA1jRvRupgvs7EK9CgvBiE3jlEEFyuL6im-XzR_FpE-F1Joc8JFAxKESZK0Rag/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzUOSXfSTZ23_GrAiBIiSDeC6NWD2Gjuxc83BZEZ2sMd3nIrbaqdcon2yd7SRqbKHay6Q/exec";
 
 // ===============================
 // SKELETON HELPERS
