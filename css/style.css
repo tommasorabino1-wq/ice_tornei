@@ -1300,3 +1300,26 @@ body {
   border-color: rgba(0, 0, 0, 0.2);
   border-top-color: rgba(0, 0, 0, 0.6);
 }
+
+
+/* =========================
+   MATCH BUTTON – LOADING VARIANTS
+========================= */
+
+/* Spinner su bottone SECONDARY (modifica risultato) */
+.match-card .btn.secondary .spinner {
+  border-color: rgba(229, 231, 235, 0.35);   /* text-main soft */
+  border-top-color: var(--text-main);
+}
+
+/* Spinner su bottone PRIMARY (invio risultato) */
+.match-card .btn.primary .spinner {
+  border-color: rgba(0, 0, 0, 0.25);
+  border-top-color: #000;
+}
+
+/* Stato disabled nei match (più neutro) */
+.match-card .btn.disabled {
+  background-color: rgba(55, 65, 81, 0.6);
+  border-color: rgba(55, 65, 81, 0.6);
+}

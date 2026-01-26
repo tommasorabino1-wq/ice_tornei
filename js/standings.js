@@ -265,17 +265,22 @@ function renderMatches(matches, tournamentId) {
 // ===============================
 // SUBMIT RESULT
 // ===============================
+// ===============================
+// SUBMIT RESULT (WITH LOADING STATE)
+// ===============================
 function submitResult(card, matchId, tournamentId) {
   const inputs = card.querySelectorAll(".score-input");
+  const btn = card.querySelector(".submit-result");
 
   const scoreA = inputs[0].value;
   const scoreB = inputs[1].value;
 
   if (scoreA === "" || scoreB === "") {
-    alert("Inserisci entrambi i punteggi");
+    showToast("Inserisci entrambi i punteggi ⚠️");
     return;
   }
 
+  // ✅ CREA PRIMA I DATI
   const formData = new URLSearchParams();
   formData.append("action", "submit_result");
   formData.append("tournament_id", tournamentId);
@@ -283,29 +288,61 @@ function submitResult(card, matchId, tournamentId) {
   formData.append("score_a", scoreA);
   formData.append("score_b", scoreB);
 
+  // --- STATO LOADING ---
+  btn.innerHTML = `
+    <span class="spinner"></span>
+    Salvataggio...
+  `;
+  btn.classList.add("disabled");
+  btn.disabled = true;
+
+  inputs.forEach(input => input.disabled = true);
+
   fetch(API_URL, {
     method: "POST",
     body: formData
   })
     .then(res => res.text())
     .then(response => {
+
       if (response === "RESULT_SAVED") {
         card.classList.add("played");
 
-        const btn = card.querySelector(".submit-result");
         btn.classList.remove("primary");
         btn.classList.add("secondary");
         btn.textContent = "Modifica risultato";
 
         showToast("Risultato salvato ✔️");
-      } else {
-        alert("Errore: " + response);
+
+        // 🔁 riabilita input per eventuale modifica futura
+        inputs.forEach(input => input.disabled = false);
+        btn.disabled = false;
+        btn.classList.remove("disabled");
+
+        return;
       }
+
+      showToast("Errore nel salvataggio ❌");
+      restoreUI();
     })
     .catch(() => {
-      alert("Errore di rete");
+      showToast("Errore di rete ❌");
+      restoreUI();
     });
+
+  // --- RIPRISTINO UI ---
+  function restoreUI() {
+    btn.textContent = card.classList.contains("played")
+      ? "Modifica risultato"
+      : "Invia risultato";
+
+    btn.disabled = false;
+    btn.classList.remove("disabled");
+
+    inputs.forEach(input => input.disabled = false);
+  }
 }
+
 
 // ===============================
 // HELPERS
