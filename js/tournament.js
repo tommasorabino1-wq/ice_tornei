@@ -259,7 +259,8 @@ function handleFormSubmit(tournament) {
       submitBtn.disabled = false;
       inputs.forEach(input => input.disabled = false);
     }
-  });
+
+  }, { once: true }); // 🔥 QUESTA È LA CHIAVE
 }
 
 
