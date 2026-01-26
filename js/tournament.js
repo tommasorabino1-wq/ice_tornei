@@ -190,9 +190,25 @@ function applyTournamentState(tournament) {
 // ===============================
 // 8. SUBMIT ISCRIZIONE
 // ===============================
+// ===============================
+// 8. SUBMIT ISCRIZIONE (WITH LOADING STATE)
+// ===============================
 function handleFormSubmit(tournament) {
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const inputs = form.querySelectorAll("input");
+
+    // --- STATO LOADING ---
+    submitBtn.innerHTML = `
+      <span class="spinner"></span>
+      Iscrizione in corso...
+    `;
+    submitBtn.classList.add("disabled");
+    submitBtn.disabled = true;
+
+    inputs.forEach(input => input.disabled = true);
 
     const formData = new FormData(form);
     formData.append("tournament_id", tournament.tournament_id);
@@ -203,25 +219,28 @@ function handleFormSubmit(tournament) {
     })
       .then(res => res.text())
       .then(response => {
-          if (response === "TOURNAMENT_NOT_FOUND") {
-            showToast("Torneo non valido ❌");
-            return;
-          }
 
-          if (response === "INVALID_DATA") {
-            showToast("Dati mancanti o non validi ⚠️");
-            return;
-          }
+        if (response === "TOURNAMENT_NOT_FOUND") {
+          showToast("Torneo non valido ❌");
+          restoreForm();
+          return;
+        }
 
-          if (response === "DUPLICATE") {
-            showToast("Questa email è già iscritta ⚠️");
-            return;
-          }
+        if (response === "INVALID_DATA") {
+          showToast("Dati mancanti o non validi ⚠️");
+          restoreForm();
+          return;
+        }
+
+        if (response === "DUPLICATE") {
+          showToast("Questa email è già iscritta ⚠️");
+          restoreForm();
+          return;
+        }
 
         if (response === "SUBSCRIPTION_SAVED") {
           showToast("Iscrizione completata 🎉");
 
-          // ricarico per aggiornare teams_current / stato torneo
           setTimeout(() => {
             window.location.reload();
           }, 1200);
@@ -229,14 +248,24 @@ function handleFormSubmit(tournament) {
           return;
         }
 
-
         showToast("Errore inatteso ❌");
+        restoreForm();
       })
       .catch(() => {
         showToast("Errore inatteso ❌");
+        restoreForm();
       });
+
+    function restoreForm() {
+      submitBtn.innerHTML = "Invia iscrizione";
+      submitBtn.classList.remove("disabled");
+      submitBtn.disabled = false;
+
+      inputs.forEach(input => input.disabled = false);
+    }
   });
 }
+
 
 
 
