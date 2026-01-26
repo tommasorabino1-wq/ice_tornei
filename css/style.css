@@ -1331,23 +1331,3 @@ body {
   color: var(--state-final);
 }
 
-
-.standings-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-
-  margin-bottom: 16px;
-  padding: 10px 12px;
-
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-
-.legend-key {
-  font-weight: 700;
-  color: var(--text-main);
-}
-

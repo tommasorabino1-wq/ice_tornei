@@ -147,10 +147,6 @@ function loadStandings(tournamentId) {
     .then(data => {
       fadeOutSkeleton(skeleton);
       renderStandings(data);
-
-      // ✅ mostra legenda quando la classifica è pronta
-      const legend = document.getElementById("standings-legend");
-      if (legend) legend.classList.remove("hidden");
     })
     .catch(() => {
       standingsEl.innerHTML =
