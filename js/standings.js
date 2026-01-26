@@ -3,7 +3,7 @@
 // ===============================
 
 // ⚠️ INSERISCI QUI L’URL DELLA TUA WEB APP
-const API_URL = "https://script.google.com/macros/s/AKfycbweb9AwMQNiwbtqUroSy4Yb3_mFNXHzKX2kItIGctvTRXBkw2Uyr4E9AKocHV5HoQw5Bg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbx8d0aoJ0vLknpqHXFZO-fx2fg4eDqrUYq4SuMI-ViFJ1BdjwZKSeUgvUm-tL9ti55r-Q/exec";
 
 // ===============================
 // SKELETON HELPERS
@@ -394,12 +394,6 @@ function renderStandings(data) {
       return na - nb;
     })
     .forEach(([roundId, teams]) => {
-
-    teams.sort((a, b) =>
-      b.points - a.points ||
-      b.goal_diff - a.goal_diff ||
-      b.goals_for - a.goals_for
-    );
 
 
     const group = document.createElement("div");
