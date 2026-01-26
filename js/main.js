@@ -41,12 +41,28 @@ fetch(API_URL)
 // ===============================
 // RENDER CARD TORNEI
 // ===============================
+// ===============================
+// RENDER CARD TORNEI (ORDERED)
+// ===============================
 function renderTournaments(tournaments) {
 
+  // 1️⃣ priorità stati
+  const statusPriority = {
+    open: 1,
+    live: 2,
+    full: 3
+  };
+
+  // 2️⃣ ordina tornei
+  tournaments.sort((a, b) => {
+    return statusPriority[a.status] - statusPriority[b.status];
+  });
+
+  // 3️⃣ render normale
   tournaments.forEach(t => {
     const card = document.createElement("div");
     card.className = "tournament-card";
-    card.dataset.id = t.tournament_id; // 👈 fondamentale
+    card.dataset.id = t.tournament_id;
 
     let statusLabel = "";
     if (t.status === "open") statusLabel = "ISCRIZIONI APERTE";
@@ -87,6 +103,7 @@ function renderTournaments(tournaments) {
     container.appendChild(card);
   });
 }
+
 
 // ===============================
 // CLICK HANDLING (EVENT DELEGATION)
