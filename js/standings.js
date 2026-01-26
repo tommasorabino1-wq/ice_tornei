@@ -3,7 +3,7 @@
 // ===============================
 
 // ⚠️ INSERISCI QUI L’URL DELLA TUA WEB APP
-const API_URL = "https://script.google.com/macros/s/AKfycbzUOSXfSTZ23_GrAiBIiSDeC6NWD2Gjuxc83BZEZ2sMd3nIrbaqdcon2yd7SRqbKHay6Q/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbweb9AwMQNiwbtqUroSy4Yb3_mFNXHzKX2kItIGctvTRXBkw2Uyr4E9AKocHV5HoQw5Bg/exec";
 
 // ===============================
 // SKELETON HELPERS
@@ -140,19 +140,24 @@ function loadStandings(tournamentId) {
   const standingsEl = document.getElementById("standings");
 
   standingsEl.innerHTML = "";
-  standingsEl.classList.remove("hidden"); // ⚠️ fondamentale
+  standingsEl.classList.remove("hidden");
 
   fetch(`${API_URL}?action=get_standings&tournament_id=${encodeURIComponent(tournamentId)}`)
     .then(res => res.json())
     .then(data => {
       fadeOutSkeleton(skeleton);
       renderStandings(data);
+
+      // ✅ mostra legenda quando la classifica è pronta
+      const legend = document.getElementById("standings-legend");
+      if (legend) legend.classList.remove("hidden");
     })
     .catch(() => {
       standingsEl.innerHTML =
         "<p class='error'>Errore caricamento classifica</p>";
     });
 }
+
 
 
 
@@ -397,8 +402,9 @@ function renderStandings(data) {
     teams.sort((a, b) =>
       b.points - a.points ||
       b.goal_diff - a.goal_diff ||
-      b.matches_played - a.matches_played
+      b.goals_for - a.goals_for
     );
+
 
     const group = document.createElement("div");
     group.className = "standings-group";
@@ -412,8 +418,10 @@ function renderStandings(data) {
             <th>Pts</th>
             <th>PG</th>
             <th>V</th>
+            <th>N</th>
             <th>P</th>
-            <th>S</th>
+            <th>GF</th>
+            <th>GS</th>
             <th>Diff</th>
           </tr>
         </thead>
@@ -426,12 +434,15 @@ function renderStandings(data) {
               <td>${team.wins}</td>
               <td>${team.draws}</td>
               <td>${team.losses}</td>
+              <td>${team.goals_for ?? 0}</td>
+              <td>${team.goals_against ?? 0}</td>
               <td>${team.goal_diff}</td>
             </tr>
           `).join("")}
         </tbody>
       </table>
     `;
+
 
     standingsEl.appendChild(group);
   });

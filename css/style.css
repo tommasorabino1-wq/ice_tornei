@@ -18,6 +18,7 @@
   --state-open: #22c55e;
   --state-full: #ef4444;
   --state-live: #f59e0b;
+  --state-final: #8b5cf6;
 
   --border: #1f2933;
   --radius: 6px;
@@ -1326,5 +1327,27 @@ body {
 
 
 .badge.final_phase {
-  background: #f59e0b; /* esempio */
+  background-color: rgba(139, 92, 246, 0.15);
+  color: var(--state-final);
 }
+
+
+.standings-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+
+  margin-bottom: 16px;
+  padding: 10px 12px;
+
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+
+.legend-key {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
