@@ -200,6 +200,10 @@ function handleFormSubmit(tournament) {
     const submitBtn = form.querySelector('button[type="submit"]');
     const inputs = form.querySelectorAll("input");
 
+    // ✅ CREA PRIMA I DATI
+    const formData = new FormData(form);
+    formData.append("tournament_id", tournament.tournament_id);
+
     // --- STATO LOADING ---
     submitBtn.innerHTML = `
       <span class="spinner"></span>
@@ -209,9 +213,6 @@ function handleFormSubmit(tournament) {
     submitBtn.disabled = true;
 
     inputs.forEach(input => input.disabled = true);
-
-    const formData = new FormData(form);
-    formData.append("tournament_id", tournament.tournament_id);
 
     fetch(API_URL, {
       method: "POST",
@@ -240,11 +241,7 @@ function handleFormSubmit(tournament) {
 
         if (response === "SUBSCRIPTION_SAVED") {
           showToast("Iscrizione completata 🎉");
-
-          setTimeout(() => {
-            window.location.reload();
-          }, 1200);
-
+          setTimeout(() => window.location.reload(), 1200);
           return;
         }
 
@@ -260,7 +257,6 @@ function handleFormSubmit(tournament) {
       submitBtn.innerHTML = "Invia iscrizione";
       submitBtn.classList.remove("disabled");
       submitBtn.disabled = false;
-
       inputs.forEach(input => input.disabled = false);
     }
   });
