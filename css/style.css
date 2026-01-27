@@ -1331,3 +1331,8 @@ body {
   color: var(--state-final);
 }
 
+
+.badge.needs_attention {
+  background: #4f44ef;
+  color: white;
+}

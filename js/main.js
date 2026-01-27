@@ -48,11 +48,13 @@ function renderTournaments(tournaments) {
 
   // 1️⃣ priorità stati
   const statusPriority = {
+    needs_attention: 0,
     open: 1,
     live: 2,
     final_phase: 3,
     full: 4
   };
+
 
   // 2️⃣ ordina tornei
   tournaments.sort((a, b) => {
@@ -71,6 +73,8 @@ function renderTournaments(tournaments) {
     if (t.status === "live") statusLabel = "IN CORSO";
     if (t.status === "final_phase") statusLabel = "FASE FINALE";
     if (t.status === "full") statusLabel = "COMPLETO";
+    if (t.status === "needs_attention") statusLabel = "DECIDING FINALS";
+
 
 
     const iscrizioniAperte = t.status === "open";
