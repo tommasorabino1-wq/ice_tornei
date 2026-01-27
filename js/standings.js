@@ -3,7 +3,10 @@
 // ===============================
 
 // ⚠️ INSERISCI QUI L’URL DELLA TUA WEB APP
-const API_URL = "https://script.google.com/macros/s/AKfycbw7WrPE27sRQHMS21noBm5jFEM1xeIcGtx_dXw1fzxrZSbApbLhfJ_FfFVCE8vRnqvuBw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwEVqnrrJSDdjE7R1QTcXz9e-ukCQawGeGdPce6h1mesYfn9uwkHOX02Qwe-3XgTcVP4g/exec";
+
+let TOURNAMENT_STATUS = null;
+
 
 // ===============================
 // SKELETON HELPERS
@@ -17,9 +20,17 @@ function fadeOutSkeleton(wrapper) {
 }
 
 function loadStandingsPage(tournamentId) {
-  loadMatches(tournamentId);
-  loadStandings(tournamentId);
+  fetch(API_URL)
+    .then(res => res.json())
+    .then(tournaments => {
+      const t = tournaments.find(t => t.tournament_id === tournamentId);
+      TOURNAMENT_STATUS = t?.status || null;
+
+      loadMatches(tournamentId);
+      loadStandings(tournamentId);
+    });
 }
+
 
 function hideSkeletons() {
   document
@@ -65,7 +76,7 @@ function showTournamentFilter() {
 
   filterBox.classList.remove("hidden");
 
-  fetch(`${API_URL}?action=get_tournaments`)
+  fetch(API_URL)
     .then(res => res.json())
     .then(tournaments => {
       tournaments.forEach(t => {
@@ -229,6 +240,8 @@ function renderMatches(matches, tournamentId) {
         match.played === "true" ||
         match.played === 1;
 
+      const locked = TOURNAMENT_STATUS === "final_phase";
+
       const card = document.createElement("div");
       card.className = "match-card";
       if (isPlayed) card.classList.add("played");
@@ -236,20 +249,43 @@ function renderMatches(matches, tournamentId) {
       card.innerHTML = `
         <div class="match-teams">
           <span class="team">${formatTeam(match.team_a)}</span>
-          <input type="number" class="score-input" value="${isPlayed ? match.score_a : ""}">
+
+          <input type="number"
+            class="score-input"
+            ${locked ? "disabled" : ""}
+            value="${isPlayed ? match.score_a : ""}">
+
           <span class="dash">-</span>
-          <input type="number" class="score-input" value="${isPlayed ? match.score_b : ""}">
+
+          <input type="number"
+            class="score-input"
+            ${locked ? "disabled" : ""}
+            value="${isPlayed ? match.score_b : ""}">
+
           <span class="team">${formatTeam(match.team_b)}</span>
         </div>
-        <button class="btn ${isPlayed ? "secondary" : "primary"} submit-result">
-          ${isPlayed ? "Modifica risultato" : "Invia risultato"}
+
+        <button
+          class="btn secondary submit-result"
+          ${locked ? "disabled" : ""}>
+          ${
+            locked
+              ? "Fase finale"
+              : isPlayed
+                ? "Modifica risultato"
+                : "Invia risultato"
+          }
         </button>
       `;
 
-      card.querySelector(".submit-result")
-        .addEventListener("click", () =>
-          submitResult(card, match.match_id, tournamentId)
-        );
+      // 🔐 evento SOLO se non bloccato
+      if (!locked) {
+        card.querySelector(".submit-result")
+          .addEventListener("click", () =>
+            submitResult(card, match.match_id, tournamentId)
+          );
+      }
+
 
       matchesWrapper.appendChild(card);
     });
@@ -395,45 +431,57 @@ function renderStandings(data) {
     })
     .forEach(([roundId, teams]) => {
 
+      // 🔹 calcolo pari merito
+      const rankGroupsCount = {};
+      teams.forEach(t => {
+        rankGroupsCount[t.rank_group] =
+          (rankGroupsCount[t.rank_group] || 0) + 1;
+      });
 
-    const group = document.createElement("div");
-    group.className = "standings-group";
+      const group = document.createElement("div");
+      group.className = "standings-group";
 
-    group.innerHTML = `
-      <h3 class="standings-title">${roundId}</h3>
-      <table class="standings-table">
-        <thead>
-          <tr>
-            <th>Squadra</th>
-            <th>Pts</th>
-            <th>PG</th>
-            <th>V</th>
-            <th>N</th>
-            <th>P</th>
-            <th>GF</th>
-            <th>GS</th>
-            <th>Diff</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${teams.map(team => `
+      group.innerHTML = `
+        <h3 class="standings-title">${roundId}</h3>
+        <table class="standings-table">
+          <thead>
             <tr>
-              <td>${team.team_name}</td>
-              <td>${team.points}</td>
-              <td>${team.matches_played ?? 0}</td>
-              <td>${team.wins}</td>
-              <td>${team.draws}</td>
-              <td>${team.losses}</td>
-              <td>${team.goals_for ?? 0}</td>
-              <td>${team.goals_against ?? 0}</td>
-              <td>${team.goal_diff}</td>
+              <th>Squadra</th>
+              <th>Pts</th>
+              <th>PG</th>
+              <th>V</th>
+              <th>N</th>
+              <th>P</th>
+              <th>GF</th>
+              <th>GS</th>
+              <th>Diff</th>
             </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    `;
+          </thead>
+          <tbody>
+            ${teams.map(team => {
+              const isTie = rankGroupsCount[team.rank_group] > 1;
+              return `
+                <tr>
+                  <td>
+                    ${team.team_name}
+                    ${isTie ? `<span class="tie-badge">pari merito</span>` : ""}
+                  </td>
+                  <td>${team.points}</td>
+                  <td>${team.matches_played ?? 0}</td>
+                  <td>${team.wins}</td>
+                  <td>${team.draws}</td>
+                  <td>${team.losses}</td>
+                  <td>${team.goals_for ?? 0}</td>
+                  <td>${team.goals_against ?? 0}</td>
+                  <td>${team.goal_diff}</td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      `;
 
-
-    standingsEl.appendChild(group);
-  });
+      standingsEl.appendChild(group);
+    });
 }
+
