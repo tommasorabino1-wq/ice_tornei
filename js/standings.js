@@ -48,11 +48,13 @@ document.addEventListener("DOMContentLoaded", () => {
   if (tournamentId) {
     hideTournamentFilter();
     loadStandingsPage(tournamentId);
-  } else {
-    hideSkeletons();      // 👈 AGGIUNGI QUESTO
-    showTournamentFilter();
+    return; // ⬅️ FONDAMENTALE
   }
+
+  hideSkeletons();
+  showTournamentFilter();
 });
+
 
 
 
@@ -64,8 +66,9 @@ document.addEventListener("DOMContentLoaded", () => {
 // ===============================
 function getTournamentIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  return params.get("tournament_id") || params.get("id");
+  return params.get("tournament_id");
 }
+
 
 // ===============================
 // SHOW TOURNAMENT FILTER
@@ -74,11 +77,17 @@ function showTournamentFilter() {
   const filterBox = document.getElementById("tournament-filter");
   const select = document.getElementById("tournament-select");
 
+  // 🔒 protezione: inizializza UNA SOLA VOLTA
+  if (select.dataset.initialized === "true") return;
+  select.dataset.initialized = "true";
+
   filterBox.classList.remove("hidden");
 
   fetch(API_URL)
     .then(res => res.json())
     .then(tournaments => {
+      select.innerHTML = `<option value="">Seleziona torneo</option>`;
+
       tournaments.forEach(t => {
         const option = document.createElement("option");
         option.value = t.tournament_id;
@@ -91,21 +100,23 @@ function showTournamentFilter() {
     if (!select.value) return;
 
     const tournamentId = select.value;
-    history.replaceState(null, "", `?tournament_id=${tournamentId}`);
 
-    
+    // ✅ URL coerente
+    history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}?tournament_id=${tournamentId}`
+    );
+
     document
       .querySelectorAll(".standings-results-box, .standings-table-box")
-      .forEach(box => {
-        box.classList.remove("hidden", "fade-out");
-      });
+      .forEach(box => box.classList.remove("hidden"));
 
-
-    loadStandingsPage(tournamentId);
     hideTournamentFilter();
+    loadStandingsPage(tournamentId);
   });
-
 }
+
 
 
 function hideTournamentFilter() {
