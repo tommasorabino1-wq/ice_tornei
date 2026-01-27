@@ -3,7 +3,7 @@
 // ===============================
 
 // ⚠️ INSERISCI QUI L’URL DELLA TUA WEB APP
-const API_URL = "https://script.google.com/macros/s/AKfycbxHBdnyVB_JFSdtfoLM5YYe8lb1JTchBZYYTVi4Ag5gxle_ksVKfTTKW1f-ql_VUrE9MA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxm-mF87m5wmZT2oWLWZ5al_UwxnhN53WbSW-0ln4iUwC98HmS4ush3sR78Kf4QIGI67w/exec";
 
 let TOURNAMENT_STATUS = null;
 
@@ -406,6 +406,9 @@ function showToast(message) {
 // ===============================
 // RENDER STANDINGS
 // ===============================
+// ===============================
+// RENDER STANDINGS (NEW)
+// ===============================
 function renderStandings(data) {
   const standingsEl = document.getElementById("standings");
 
@@ -415,6 +418,7 @@ function renderStandings(data) {
     return;
   }
 
+  // raggruppa per girone
   const roundsMap = {};
   data.forEach(row => {
     if (!roundsMap[row.round_id]) {
@@ -430,13 +434,6 @@ function renderStandings(data) {
       return na - nb;
     })
     .forEach(([roundId, teams]) => {
-
-      // 🔹 calcolo pari merito
-      const rankGroupsCount = {};
-      teams.forEach(t => {
-        rankGroupsCount[t.rank_group] =
-          (rankGroupsCount[t.rank_group] || 0) + 1;
-      });
 
       const group = document.createElement("div");
       group.className = "standings-group";
@@ -458,25 +455,22 @@ function renderStandings(data) {
             </tr>
           </thead>
           <tbody>
-            ${teams.map(team => {
-              const isTie = rankGroupsCount[team.rank_group] > 1;
-              return `
-                <tr>
-                  <td>
-                    ${team.team_name}
-                    ${isTie ? `<span class="tie-badge">pari merito</span>` : ""}
-                  </td>
-                  <td>${team.points}</td>
-                  <td>${team.matches_played ?? 0}</td>
-                  <td>${team.wins}</td>
-                  <td>${team.draws}</td>
-                  <td>${team.losses}</td>
-                  <td>${team.goals_for ?? 0}</td>
-                  <td>${team.goals_against ?? 0}</td>
-                  <td>${team.goal_diff}</td>
-                </tr>
-              `;
-            }).join("")}
+            ${teams.map(team => `
+              <tr>
+                <td class="team-cell">
+                  <span class="rank-badge">${team.rank_level}</span>
+                  <span class="team-name">${team.team_name}</span>
+                </td>
+                <td>${team.points}</td>
+                <td>${team.matches_played ?? 0}</td>
+                <td>${team.wins}</td>
+                <td>${team.draws}</td>
+                <td>${team.losses}</td>
+                <td>${team.goals_for ?? 0}</td>
+                <td>${team.goals_against ?? 0}</td>
+                <td>${team.goal_diff}</td>
+              </tr>
+            `).join("")}
           </tbody>
         </table>
       `;
@@ -484,4 +478,5 @@ function renderStandings(data) {
       standingsEl.appendChild(group);
     });
 }
+
 
