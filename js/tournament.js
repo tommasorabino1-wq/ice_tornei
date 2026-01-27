@@ -6,7 +6,8 @@
 // 1. PARAMETRI URL
 // ===============================
 const params = new URLSearchParams(window.location.search);
-const tournamentId = params.get("id");
+const tournamentId = params.get("tournament_id");
+
 
 // ===============================
 // 2. ELEMENTI DOM
@@ -119,7 +120,7 @@ function renderGenericRegulation(tournaments) {
   // Redirect su torneo
   tournamentSelect.onchange = function () {
     if (!this.value) return;
-    window.location.href = `tournament.html?id=${this.value}`;
+    window.location.href = `tournament.html?tournament_id=${this.value}`;
   };
 }
 
