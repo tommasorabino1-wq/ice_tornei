@@ -1536,3 +1536,55 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =========================
+   REGOLAMENTO – MODERN UI
+========================= */
+
+.generic-regulation-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.regulation-card {
+  display: flex;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+}
+
+.regulation-icon {
+  font-size: 22px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.regulation-content {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.regulation-content p {
+  margin: 0 0 8px;
+}
+
+.regulation-content p:last-child {
+  margin-bottom: 0;
+}
+
+.regulation-sublist {
+  margin: 8px 0 12px 18px;
+  padding: 0;
+}
+
+.regulation-sublist li {
+  margin-bottom: 6px;
+  list-style: disc;
+}
