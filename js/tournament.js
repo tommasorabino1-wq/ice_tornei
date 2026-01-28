@@ -25,6 +25,12 @@ const subscribeMessage = document.getElementById("subscribe-message");
 const form = document.getElementById("registration-form");
 const teamsInfo = document.getElementById("info-teams");
 
+// Teams list UI
+const teamsListSection = document.getElementById("tournament-teams-section");
+const teamsListCount = document.getElementById("teams-list-count");
+const teamsListContainer = document.getElementById("teams-list-container");
+
+
 // Select tornei
 const tournamentSelect = document.getElementById("tournament-select");
 
@@ -32,7 +38,7 @@ const tournamentSelect = document.getElementById("tournament-select");
 // 3. API URL
 // ===============================
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbylVq4oKwvNdC99RC9obN1G2B68znXqmOi5q32LAlsqMyeFGFsWpGvQnWFk-N_XXcA-nw/exec";
+  "https://script.google.com/macros/s/AKfycbyAN5-AA1zelbSpbBHE8EV2Cq7RktrHwxZI0v4qnVVx1zHG-9zvovg7ek74DuKzRN5WIQ/exec";
 
 
 if (tournamentId) {
@@ -124,13 +130,13 @@ function renderGenericRegulation(tournaments) {
   };
 }
 
+
 // ===============================
 // 6. RENDER TORNEO SPECIFICO
 // ===============================
 function renderTournament(tournament) {
   genericSection.classList.add("hidden");
   tournamentSection.classList.remove("hidden");
-
 
   // Header
   document.getElementById("tournament-name").textContent = tournament.name;
@@ -143,15 +149,20 @@ function renderTournament(tournament) {
   document.getElementById("info-date").textContent = tournament.date;
   document.getElementById("info-price").textContent = tournament.price;
 
-  teamsInfo.textContent =
-    `${tournament.teams_current} / ${tournament.teams_max}`;
+  // Existing counter (already in your UI)
+  teamsInfo.textContent = `${tournament.teams_current} / ${tournament.teams_max}`;
 
+  // Apply state & form behavior
   applyTournamentState(tournament);
 
   if (tournament.status === "open") {
     handleFormSubmit(tournament);
   }
+
+  // ✅ NEW: Load + render teams list block under the two columns
+  loadAndRenderTeamsList(tournament);
 }
+
 
 
 // ===============================
@@ -278,6 +289,115 @@ function handleFormSubmit(tournament) {
 
 
 
+
+// ===============================
+// 9. LOAD + RENDER TEAMS LIST (NEW)
+// ===============================
+function loadAndRenderTeamsList(tournament) {
+  // If HTML block not present, avoid breaking the page
+  if (!teamsListSection || !teamsListContainer || !teamsListCount) return;
+
+  // Show block + reset UI
+  teamsListSection.classList.remove("hidden");
+  teamsListContainer.innerHTML = "";
+  teamsListCount.textContent = `${tournament.teams_current} / ${tournament.teams_max}`;
+
+  // Skeleton placeholders (simple, CSS later)
+  renderTeamsSkeleton(8);
+
+  const url = `${API_URL}?action=get_teams&tournament_id=${encodeURIComponent(
+    tournament.tournament_id
+  )}`;
+
+  fetch(url)
+    .then(res => res.json())
+    .then(teams => {
+      if (!Array.isArray(teams)) throw new Error("Formato teams non valido");
+
+      // Clear skeleton
+      teamsListContainer.innerHTML = "";
+
+      if (teams.length === 0) {
+        renderTeamsEmptyState();
+        return;
+      }
+
+      renderTeamsChips(teams);
+    })
+    .catch(err => {
+      console.error(err);
+      teamsListContainer.innerHTML = "";
+      renderTeamsErrorState();
+    });
+}
+
+function renderTeamsChips(teams) {
+  // teams: [{team_id, team_name}]
+  const frag = document.createDocumentFragment();
+
+  teams.forEach((t, idx) => {
+    const chip = document.createElement("div");
+    chip.className = "team-chip"; // CSS later
+
+    chip.innerHTML = `
+      <span class="team-chip-index">${idx + 1}</span>
+      <span class="team-chip-name">${escapeHTML(t.team_name || "")}</span>
+    `;
+
+    frag.appendChild(chip);
+  });
+
+  teamsListContainer.appendChild(frag);
+}
+
+// ===============================
+// TEAMS LIST STATES (NEW)
+// ===============================
+function renderTeamsSkeleton(count) {
+  const frag = document.createDocumentFragment();
+
+  for (let i = 0; i < count; i++) {
+    const sk = document.createElement("div");
+    sk.className = "team-chip team-chip--skeleton";
+    sk.innerHTML = `
+      <span class="team-chip-index">&nbsp;</span>
+      <span class="team-chip-name">&nbsp;</span>
+    `;
+    frag.appendChild(sk);
+  }
+
+  teamsListContainer.appendChild(frag);
+}
+
+function renderTeamsEmptyState() {
+  const el = document.createElement("div");
+  el.className = "teams-empty"; // CSS later
+  el.textContent = "Nessuna squadra iscritta al momento.";
+  teamsListContainer.appendChild(el);
+}
+
+function renderTeamsErrorState() {
+  const el = document.createElement("div");
+  el.className = "teams-error"; // CSS later
+  el.textContent = "Errore nel caricamento delle squadre ❌";
+  teamsListContainer.appendChild(el);
+}
+
+// Minimal escaping to avoid HTML injection via team_name
+function escapeHTML(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+
+
+
+
 function showToast(message) {
   const toast = document.createElement("div");
   toast.className = "toast";
@@ -289,3 +409,7 @@ function showToast(message) {
     toast.remove();
   }, 2500);
 }
+
+
+
+

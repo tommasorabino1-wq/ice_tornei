@@ -104,7 +104,7 @@
         <div class="skeleton-line" style="width: 420px;"></div>
       </section>
 
-      <!-- LAYOUT -->
+      <!-- LAYOUT (2 COLONNE) -->
       <section class="tournament-layout">
 
         <!-- INFO -->
@@ -123,6 +123,25 @@
           <div class="skeleton-line short"></div>
         </div>
 
+      </section>
+
+      <!-- TEAMS LIST SKELETON (NEW) -->
+      <section class="tournament-teams-block">
+        <div class="teams-block-header">
+          <div class="skeleton-line" style="width: 220px;"></div>
+          <div class="skeleton-line short" style="width: 120px;"></div>
+        </div>
+
+        <div class="teams-chips-grid">
+          <div class="team-chip team-chip--skeleton"><span class="team-chip-index">&nbsp;</span><span class="team-chip-name">&nbsp;</span></div>
+          <div class="team-chip team-chip--skeleton"><span class="team-chip-index">&nbsp;</span><span class="team-chip-name">&nbsp;</span></div>
+          <div class="team-chip team-chip--skeleton"><span class="team-chip-index">&nbsp;</span><span class="team-chip-name">&nbsp;</span></div>
+          <div class="team-chip team-chip--skeleton"><span class="team-chip-index">&nbsp;</span><span class="team-chip-name">&nbsp;</span></div>
+          <div class="team-chip team-chip--skeleton"><span class="team-chip-index">&nbsp;</span><span class="team-chip-name">&nbsp;</span></div>
+          <div class="team-chip team-chip--skeleton"><span class="team-chip-index">&nbsp;</span><span class="team-chip-name">&nbsp;</span></div>
+          <div class="team-chip team-chip--skeleton"><span class="team-chip-index">&nbsp;</span><span class="team-chip-name">&nbsp;</span></div>
+          <div class="team-chip team-chip--skeleton"><span class="team-chip-index">&nbsp;</span><span class="team-chip-name">&nbsp;</span></div>
+        </div>
       </section>
 
     </section>
@@ -188,15 +207,29 @@
 
       </section>
 
-    </section>
+      <!-- =========================
+          TEAMS LIST – BLOCCO FULL WIDTH (NEW)
+      ========================== -->
+      <section id="tournament-teams-section" class="tournament-teams-block hidden">
+        <div class="teams-block-header">
+          <h3 class="teams-block-title">Squadre iscritte</h3>
+          <div class="teams-block-count">
+            <span class="meta-icon">👥</span>
+            <span id="teams-list-count">0 / 0</span>
+          </div>
+        </div>
 
+        <!-- JS riempie qui: skeleton → chips → empty/error -->
+        <div id="teams-list-container" class="teams-chips-grid"></div>
+      </section>
+
+    </section>
 
   </main>
 
   <!-- SCRIPT -->
   <script src="js/data.js"></script>
   <script src="js/tournament.js"></script>
-
 
   <!-- FOOTER -->
   <footer class="site-footer">
@@ -218,7 +251,7 @@
         <a href="#">Privacy Policy</a>
         <a href="#">Cookie Policy</a>
         <a href="#">Termini e condizioni</a>
-        </div>
+      </div>
 
     </div>
 

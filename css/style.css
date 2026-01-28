@@ -1,9 +1,6 @@
 /* =========================
    DESIGN SYSTEM
 ========================= */
-/* =========================
-   DESIGN SYSTEM
-========================= */
 :root {
   --bg-main: #0b0f14;
   --bg-secondary: #121820;
@@ -14,7 +11,6 @@
 
   --brand: #38bdf8;          /* ICE brand */
   --brand-hover: #2ea8e6;
-
   --state-open: #22c55e;
   --state-full: #ef4444;
   --state-live: #f59e0b;
@@ -1360,4 +1356,183 @@ body {
 
 .team-name {
   white-space: nowrap;
+}
+
+
+/* =========================
+   TOURNAMENT TEAMS LIST (NEW)
+========================= */
+
+/* blocco full width sotto le 2 colonne */
+.tournament-teams-block {
+  margin-top: 26px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+/* header blocco: titolo + contatore */
+.teams-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.teams-block-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+/* contatore "X / Y" */
+.teams-block-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* grid chips */
+.teams-chips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+/* chip team */
+.team-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 12px;
+  border-radius: 999px;
+
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.team-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(56, 189, 248, 0.35);
+  background-color: rgba(56, 189, 248, 0.06);
+}
+
+/* numerino a sinistra (pill piccola) */
+.team-chip-index {
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  background-color: rgba(56, 189, 248, 0.18);
+  color: var(--brand);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+/* nome team */
+.team-chip-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* stati empty/error */
+.teams-empty,
+.teams-error {
+  padding: 12px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text-muted);
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.teams-error {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.35);
+  background-color: rgba(239, 68, 68, 0.06);
+}
+
+/* =========================
+   TEAMS LIST SKELETON (NEW)
+========================= */
+.team-chip--skeleton {
+  pointer-events: none;
+  border-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.team-chip--skeleton .team-chip-index,
+.team-chip--skeleton .team-chip-name {
+  color: transparent;
+  border: none;
+  background: linear-gradient(
+    90deg,
+    #1f2933 25%,
+    #2a3441 37%,
+    #1f2933 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+/* widths più realistici nello skeleton */
+.team-chip--skeleton .team-chip-index {
+  width: 22px;
+}
+
+.team-chip--skeleton .team-chip-name {
+  height: 12px;
+  width: 120px;
+  border-radius: 6px;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 860px) {
+  .tournament-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .teams-chips-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .teams-block-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .teams-chips-grid {
+    grid-template-columns: 1fr;
+  }
 }
