@@ -38,7 +38,7 @@ const tournamentSelect = document.getElementById("tournament-select");
 // 3. API URL
 // ===============================
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbyfriKOmnEsz9WztDM0dpQ_UQiblFTUNrKDwTp7CkDmfzC0GXtARdM4WPpG2mhA2tLqvw/exec";
+  "https://script.google.com/macros/s/AKfycbwdnHY6tmQpXHoDP5mXVJ5mbjEym_jndYLlFKGoI3Kx2pF06IfKXQUNPCi5eoj7D3VD1A/exec";
 
 
 if (tournamentId) {
