@@ -47,6 +47,10 @@ function hideSkeletons() {
 
 
 document.addEventListener("DOMContentLoaded", () => {
+  document
+    .querySelector(".standings-results-box")
+    ?.classList.add("loading");
+
   const tournamentId = getTournamentIdFromUrl();
 
   if (tournamentId) {
@@ -157,10 +161,16 @@ function loadMatches(tournamentId) {
 
       renderRoundFilter(AVAILABLE_ROUNDS);
       renderMatchesByRound(AVAILABLE_ROUNDS[0]); // default: prima giornata
+
+      // ✅ QUI è il punto GIUSTO
+      document
+        .querySelector(".standings-results-box")
+        ?.classList.remove("loading");
     })
     .catch(() => {
       list.innerHTML = "<p class='error'>Errore caricamento match</p>";
     });
+
 }
 
 

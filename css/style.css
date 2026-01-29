@@ -1704,3 +1704,10 @@ body {
   color: var(--brand);
   border-color: rgba(56, 189, 248, 0.35);
 }
+
+
+/* Nasconde il filtro finché la pagina è in loading */
+.standings-results-box.loading #tournament-filter,
+.standings-results-box.loading .round-filter-box {
+  display: none;
+}
