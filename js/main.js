@@ -6,7 +6,7 @@ const container = document.getElementById("tournaments");
 
 // URL della Web App (doGet)
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbz6306vHXhW7INLb4hpB7iDeGVRX4Ko1jUO9PPLqM1tqlu2qUR8qvVQQj23i1oH2qHVzQ/exec";
+  "https://script.google.com/macros/s/AKfycbxfpbny6yzOBXP44OQtfUqrmx5TjxCodgiV0Tue3SHIbogFjO0zVBUrtLyBYBt9dBMV/exec";
 
 // ===============================
 // FETCH TORNEI DAL BACKEND
