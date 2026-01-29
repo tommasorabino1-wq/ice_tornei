@@ -1621,3 +1621,86 @@ body {
   margin-bottom: 4px;
   list-style: disc;
 }
+
+
+
+/* =========================
+   ROUND FILTER (STANDINGS)
+========================= */
+
+.round-filter-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-bottom: 18px;
+  padding: 12px 14px;
+
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.round-filter-box label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.round-filter-box select {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 13px;
+
+  background-color: var(--bg-main);
+  color: var(--text-main);
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.round-filter-box select:hover,
+.round-filter-box select:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35);
+}
+
+
+/* =========================
+   MATCH META (ROUND + GROUP)
+========================= */
+
+.match-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.match-round,
+.match-group {
+  padding: 4px 8px;
+  border-radius: 999px;
+
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* evidenzia la giornata */
+.match-round {
+  background-color: rgba(56, 189, 248, 0.15);
+  color: var(--brand);
+  border-color: rgba(56, 189, 248, 0.35);
+}

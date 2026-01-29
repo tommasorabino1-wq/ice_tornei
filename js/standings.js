@@ -7,6 +7,10 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwdnHY6tmQpXHoDP5mXVJ5m
 
 let TOURNAMENT_STATUS = null;
 
+let ALL_MATCHES = [];
+let AVAILABLE_ROUNDS = [];
+
+
 
 // ===============================
 // SKELETON HELPERS
@@ -142,12 +146,104 @@ function loadMatches(tournamentId) {
     .then(res => res.json())
     .then(matches => {
       fadeOutSkeleton(skeleton);
-      renderMatches(matches, tournamentId);
+
+      ALL_MATCHES = Array.isArray(matches) ? matches : [];
+
+      AVAILABLE_ROUNDS = [
+        ...new Set(
+          ALL_MATCHES.map(m => Number(m.round_id)).filter(Boolean)
+        )
+      ].sort((a, b) => a - b);
+
+      renderRoundFilter(AVAILABLE_ROUNDS);
+      renderMatchesByRound(AVAILABLE_ROUNDS[0]); // default: prima giornata
     })
     .catch(() => {
       list.innerHTML = "<p class='error'>Errore caricamento match</p>";
     });
 }
+
+
+function renderMatchesByRound(roundId) {
+  const container = document.getElementById("matches-list");
+  container.innerHTML = "";
+
+  const matches = ALL_MATCHES.filter(
+    m => Number(m.round_id) === Number(roundId)
+  );
+
+  if (matches.length === 0) {
+    container.innerHTML =
+      "<p class='placeholder'>Nessun match per questa giornata</p>";
+    return;
+  }
+
+  const locked = TOURNAMENT_STATUS === "final_phase";
+
+  matches.forEach(match => {
+    const isPlayed =
+      match.played === true ||
+      match.played === "TRUE" ||
+      match.played === "true" ||
+      match.played === 1;
+
+    const card = document.createElement("div");
+    card.className = "match-card";
+    if (isPlayed) card.classList.add("played");
+
+    card.innerHTML = `
+      <div class="match-meta">
+        <span class="match-round">Giornata ${roundId}</span>
+        <span class="match-group">Girone ${escapeHTML(match.group_id || "?")}</span>
+      </div>
+
+      <div class="match-teams">
+        <span class="team">${escapeHTML(formatTeam(match.team_a))}</span>
+
+        <input type="number"
+          class="score-input"
+          ${locked ? "disabled" : ""}
+          value="${isPlayed ? (match.score_a ?? "") : ""}">
+
+        <span class="dash">-</span>
+
+        <input type="number"
+          class="score-input"
+          ${locked ? "disabled" : ""}
+          value="${isPlayed ? (match.score_b ?? "") : ""}">
+
+        <span class="team">${escapeHTML(formatTeam(match.team_b))}</span>
+      </div>
+
+      <button class="btn secondary submit-result" ${locked ? "disabled" : ""}>
+        ${
+          locked
+            ? "Fase finale"
+            : isPlayed
+              ? "Modifica risultato"
+              : "Invia risultato"
+        }
+      </button>
+    `;
+
+    if (!locked) {
+      card.querySelector(".submit-result")
+        .addEventListener("click", () =>
+          submitResult(card, match.match_id, getTournamentIdFromUrl())
+        );
+    }
+
+    container.appendChild(card);
+  });
+}
+
+
+function onRoundChange(value) {
+  if (!value) return;
+  renderMatchesByRound(Number(value));
+}
+
+
 
 
 
@@ -185,145 +281,7 @@ function loadStandings(tournamentId) {
 // ===============================
 // RENDER MATCH LIST
 // ===============================
-function renderMatches(matches, tournamentId) {
-  const container = document.getElementById("matches-list");
 
-  if (!Array.isArray(matches) || matches.length === 0) {
-    container.innerHTML = "<p class='placeholder'>Nessun match disponibile</p>";
-    return;
-  }
-
-  // ✅ 1) raggruppa per GIORNATA (round_id)
-  // daysMap[round_id][group_id] = [matches]
-  const daysMap = {};
-  matches.forEach(m => {
-    const day = Number(m.round_id) || 0;       // giornata
-    const gid = m.group_id || "G?";            // girone
-
-    if (!daysMap[day]) daysMap[day] = {};
-    if (!daysMap[day][gid]) daysMap[day][gid] = [];
-    daysMap[day][gid].push(m);
-  });
-
-  container.innerHTML = "";
-
-  const dayIds = Object.keys(daysMap)
-    .map(Number)
-    .sort((a, b) => a - b);
-
-  dayIds.forEach((day, dayIndex) => {
-    const dayGroup = document.createElement("div");
-    dayGroup.className = "round-group";
-    if (dayIndex !== 0) dayGroup.classList.add("collapsed");
-
-    const dayTitle = document.createElement("div");
-    dayTitle.className = "round-title";
-    dayTitle.textContent = `Giornata ${day}`;
-    dayTitle.addEventListener("click", () => {
-      container.querySelectorAll(".round-group")
-        .forEach(g => g !== dayGroup && g.classList.add("collapsed"));
-      dayGroup.classList.toggle("collapsed");
-    });
-
-    dayGroup.appendChild(dayTitle);
-
-    const dayWrapper = document.createElement("div");
-    dayWrapper.className = "round-matches";
-    dayGroup.appendChild(dayWrapper);
-
-    // ✅ 2) dentro la giornata, separa per girone
-    const groupIds = Object.keys(daysMap[day]).sort((a, b) => {
-      const na = parseInt(String(a).replace(/[^\d]/g, ""), 10) || 0;
-      const nb = parseInt(String(b).replace(/[^\d]/g, ""), 10) || 0;
-      return na - nb;
-    });
-
-    groupIds.forEach(groupId => {
-      const groupBlock = document.createElement("div");
-      groupBlock.className = "matches-subgroup";
-
-      groupBlock.innerHTML = `
-        <div class="matches-subgroup-title">Girone ${escapeHTML(groupId)}</div>
-      `;
-
-      const list = document.createElement("div");
-      list.className = "matches-subgroup-list";
-      groupBlock.appendChild(list);
-
-      const roundMatches = daysMap[day][groupId];
-
-      const toPlay = [];
-      const played = [];
-
-      roundMatches.forEach(match => {
-        const isPlayed =
-          match.played === true ||
-          match.played === "TRUE" ||
-          match.played === "true" ||
-          match.played === 1;
-
-        isPlayed ? played.push(match) : toPlay.push(match);
-      });
-
-      const locked = TOURNAMENT_STATUS === "final_phase";
-
-      [...toPlay, ...played].forEach(match => {
-        const isPlayed =
-          match.played === true ||
-          match.played === "TRUE" ||
-          match.played === "true" ||
-          match.played === 1;
-
-        const card = document.createElement("div");
-        card.className = "match-card";
-        if (isPlayed) card.classList.add("played");
-
-        card.innerHTML = `
-          <div class="match-teams">
-            <span class="team">${escapeHTML(formatTeam(match.team_a))}</span>
-
-            <input type="number"
-              class="score-input"
-              ${locked ? "disabled" : ""}
-              value="${isPlayed ? (match.score_a ?? "") : ""}">
-
-            <span class="dash">-</span>
-
-            <input type="number"
-              class="score-input"
-              ${locked ? "disabled" : ""}
-              value="${isPlayed ? (match.score_b ?? "") : ""}">
-
-            <span class="team">${escapeHTML(formatTeam(match.team_b))}</span>
-          </div>
-
-          <button class="btn secondary submit-result" ${locked ? "disabled" : ""}>
-            ${
-              locked
-                ? "Fase finale"
-                : isPlayed
-                  ? "Modifica risultato"
-                  : "Invia risultato"
-            }
-          </button>
-        `;
-
-        if (!locked) {
-          card.querySelector(".submit-result")
-            .addEventListener("click", () =>
-              submitResult(card, match.match_id, tournamentId)
-            );
-        }
-
-        list.appendChild(card);
-      });
-
-      dayWrapper.appendChild(groupBlock);
-    });
-
-    container.appendChild(dayGroup);
-  });
-}
 
 
 
@@ -543,5 +501,34 @@ function escapeHTML(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+
+function renderRoundFilter(rounds) {
+  const select = document.getElementById("round-filter");
+
+  if (!select || !Array.isArray(rounds)) return;
+
+  // reset
+  select.innerHTML = "";
+
+  rounds.forEach((round, index) => {
+    const option = document.createElement("option");
+    option.value = round;
+    option.textContent = `Giornata ${round}`;
+
+    // default selezionata = prima giornata
+    if (index === 0) option.selected = true;
+
+    select.appendChild(option);
+  });
+
+  // evita doppio binding
+  if (select.dataset.initialized === "true") return;
+  select.dataset.initialized = "true";
+
+  select.addEventListener("change", e => {
+    onRoundChange(e.target.value);
+  });
 }
 
