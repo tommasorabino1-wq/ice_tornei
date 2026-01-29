@@ -189,119 +189,139 @@ function renderMatches(matches, tournamentId) {
   const container = document.getElementById("matches-list");
 
   if (!Array.isArray(matches) || matches.length === 0) {
-    container.innerHTML =
-      "<p class='placeholder'>Nessun match disponibile</p>";
+    container.innerHTML = "<p class='placeholder'>Nessun match disponibile</p>";
     return;
   }
 
-  // 1️⃣ Raggruppa per round
-  const roundsMap = {};
-  matches.forEach(match => {
-    if (!roundsMap[match.round_id]) {
-      roundsMap[match.round_id] = [];
-    }
-    roundsMap[match.round_id].push(match);
+  // ✅ 1) raggruppa per GIORNATA (round_id)
+  // daysMap[round_id][group_id] = [matches]
+  const daysMap = {};
+  matches.forEach(m => {
+    const day = Number(m.round_id) || 0;       // giornata
+    const gid = m.group_id || "G?";            // girone
+
+    if (!daysMap[day]) daysMap[day] = {};
+    if (!daysMap[day][gid]) daysMap[day][gid] = [];
+    daysMap[day][gid].push(m);
   });
 
-  Object.entries(roundsMap)
-    .sort(([a], [b]) => {
-      const na = Number(a.replace("G", ""));
-      const nb = Number(b.replace("G", ""));
-      return na - nb;
-    })
-    .forEach(([roundId, roundMatches], index) => {
+  container.innerHTML = "";
 
-    const roundGroup = document.createElement("div");
-    roundGroup.className = "round-group";
-    if (index !== 0) roundGroup.classList.add("collapsed");
+  const dayIds = Object.keys(daysMap)
+    .map(Number)
+    .sort((a, b) => a - b);
 
-    const roundTitle = document.createElement("div");
-    roundTitle.className = "round-title";
-    roundTitle.textContent = roundId;
+  dayIds.forEach((day, dayIndex) => {
+    const dayGroup = document.createElement("div");
+    dayGroup.className = "round-group";
+    if (dayIndex !== 0) dayGroup.classList.add("collapsed");
 
-    roundTitle.addEventListener("click", () => {
+    const dayTitle = document.createElement("div");
+    dayTitle.className = "round-title";
+    dayTitle.textContent = `Giornata ${day}`;
+    dayTitle.addEventListener("click", () => {
       container.querySelectorAll(".round-group")
-        .forEach(g => g !== roundGroup && g.classList.add("collapsed"));
-      roundGroup.classList.toggle("collapsed");
+        .forEach(g => g !== dayGroup && g.classList.add("collapsed"));
+      dayGroup.classList.toggle("collapsed");
     });
 
-    roundGroup.appendChild(roundTitle);
+    dayGroup.appendChild(dayTitle);
 
-    const matchesWrapper = document.createElement("div");
-    matchesWrapper.className = "round-matches";
-    roundGroup.appendChild(matchesWrapper);
+    const dayWrapper = document.createElement("div");
+    dayWrapper.className = "round-matches";
+    dayGroup.appendChild(dayWrapper);
 
-    const toPlay = [];
-    const played = [];
-
-    roundMatches.forEach(match => {
-      const isPlayed =
-        match.played === true ||
-        match.played === "TRUE" ||
-        match.played === "true" ||
-        match.played === 1;
-
-      isPlayed ? played.push(match) : toPlay.push(match);
+    // ✅ 2) dentro la giornata, separa per girone
+    const groupIds = Object.keys(daysMap[day]).sort((a, b) => {
+      const na = parseInt(String(a).replace(/[^\d]/g, ""), 10) || 0;
+      const nb = parseInt(String(b).replace(/[^\d]/g, ""), 10) || 0;
+      return na - nb;
     });
 
-    [...toPlay, ...played].forEach(match => {
-      const isPlayed =
-        match.played === true ||
-        match.played === "TRUE" ||
-        match.played === "true" ||
-        match.played === 1;
+    groupIds.forEach(groupId => {
+      const groupBlock = document.createElement("div");
+      groupBlock.className = "matches-subgroup";
+
+      groupBlock.innerHTML = `
+        <div class="matches-subgroup-title">Girone ${escapeHTML(groupId)}</div>
+      `;
+
+      const list = document.createElement("div");
+      list.className = "matches-subgroup-list";
+      groupBlock.appendChild(list);
+
+      const roundMatches = daysMap[day][groupId];
+
+      const toPlay = [];
+      const played = [];
+
+      roundMatches.forEach(match => {
+        const isPlayed =
+          match.played === true ||
+          match.played === "TRUE" ||
+          match.played === "true" ||
+          match.played === 1;
+
+        isPlayed ? played.push(match) : toPlay.push(match);
+      });
 
       const locked = TOURNAMENT_STATUS === "final_phase";
 
-      const card = document.createElement("div");
-      card.className = "match-card";
-      if (isPlayed) card.classList.add("played");
+      [...toPlay, ...played].forEach(match => {
+        const isPlayed =
+          match.played === true ||
+          match.played === "TRUE" ||
+          match.played === "true" ||
+          match.played === 1;
 
-      card.innerHTML = `
-        <div class="match-teams">
-          <span class="team">${formatTeam(match.team_a)}</span>
+        const card = document.createElement("div");
+        card.className = "match-card";
+        if (isPlayed) card.classList.add("played");
 
-          <input type="number"
-            class="score-input"
-            ${locked ? "disabled" : ""}
-            value="${isPlayed ? match.score_a : ""}">
+        card.innerHTML = `
+          <div class="match-teams">
+            <span class="team">${escapeHTML(formatTeam(match.team_a))}</span>
 
-          <span class="dash">-</span>
+            <input type="number"
+              class="score-input"
+              ${locked ? "disabled" : ""}
+              value="${isPlayed ? (match.score_a ?? "") : ""}">
 
-          <input type="number"
-            class="score-input"
-            ${locked ? "disabled" : ""}
-            value="${isPlayed ? match.score_b : ""}">
+            <span class="dash">-</span>
 
-          <span class="team">${formatTeam(match.team_b)}</span>
-        </div>
+            <input type="number"
+              class="score-input"
+              ${locked ? "disabled" : ""}
+              value="${isPlayed ? (match.score_b ?? "") : ""}">
 
-        <button
-          class="btn secondary submit-result"
-          ${locked ? "disabled" : ""}>
-          ${
-            locked
-              ? "Fase finale"
-              : isPlayed
-                ? "Modifica risultato"
-                : "Invia risultato"
-          }
-        </button>
-      `;
+            <span class="team">${escapeHTML(formatTeam(match.team_b))}</span>
+          </div>
 
-      // 🔐 evento SOLO se non bloccato
-      if (!locked) {
-        card.querySelector(".submit-result")
-          .addEventListener("click", () =>
-            submitResult(card, match.match_id, tournamentId)
-          );
-      }
+          <button class="btn secondary submit-result" ${locked ? "disabled" : ""}>
+            ${
+              locked
+                ? "Fase finale"
+                : isPlayed
+                  ? "Modifica risultato"
+                  : "Invia risultato"
+            }
+          </button>
+        `;
 
+        if (!locked) {
+          card.querySelector(".submit-result")
+            .addEventListener("click", () =>
+              submitResult(card, match.match_id, tournamentId)
+            );
+        }
 
-      matchesWrapper.appendChild(card);
+        list.appendChild(card);
+      });
+
+      dayWrapper.appendChild(groupBlock);
     });
 
-    container.appendChild(roundGroup);
+    container.appendChild(dayGroup);
   });
 }
 
@@ -367,8 +387,26 @@ function submitResult(card, matchId, tournamentId) {
         btn.disabled = false;
         btn.classList.remove("disabled");
 
+        // ✅ aggiorna classifica subito
+        loadStandings(tournamentId);
+
+        // ✅ aggiorna status torneo (potrebbe diventare final_phase)
+        fetch(API_URL)
+          .then(r => r.json())
+          .then(tournaments => {
+            const t = tournaments.find(x => x.tournament_id === tournamentId);
+            TOURNAMENT_STATUS = t?.status || TOURNAMENT_STATUS;
+
+            // se è entrato in final_phase, ricarico i match per bloccare gli input
+            if (TOURNAMENT_STATUS === "final_phase") {
+              loadMatches(tournamentId);
+            }
+          })
+          .catch(() => {});
+
         return;
       }
+
 
       showToast("Errore nel salvataggio ❌");
       restoreUI();
@@ -429,28 +467,34 @@ function renderStandings(data) {
     return;
   }
 
-  // raggruppa per girone
-  const roundsMap = {};
+  // ✅ raggruppa per GIRONE (group_id)
+  const groupsMap = {};
   data.forEach(row => {
-    if (!roundsMap[row.round_id]) {
-      roundsMap[row.round_id] = [];
-    }
-    roundsMap[row.round_id].push(row);
+    const gid = row.group_id || "G?";
+    if (!groupsMap[gid]) groupsMap[gid] = [];
+    groupsMap[gid].push(row);
   });
 
-  Object.entries(roundsMap)
-    .sort(([a], [b]) => {
-      const na = Number(a.replace("G", ""));
-      const nb = Number(b.replace("G", ""));
-      return na - nb;
-    })
-    .forEach(([roundId, teams]) => {
+  // helper sort: "G1","G2"...
+  const groupSort = (a, b) => {
+    const na = parseInt(String(a).replace(/[^\d]/g, ""), 10) || 0;
+    const nb = parseInt(String(b).replace(/[^\d]/g, ""), 10) || 0;
+    return na - nb;
+  };
+
+  // pulisci e renderizza per girone
+  standingsEl.innerHTML = "";
+
+  Object.keys(groupsMap)
+    .sort(groupSort)
+    .forEach(groupId => {
+      const teams = groupsMap[groupId];
 
       const group = document.createElement("div");
       group.className = "standings-group";
 
       group.innerHTML = `
-        <h3 class="standings-title">${roundId}</h3>
+        <h3 class="standings-title">Girone ${escapeHTML(groupId)}</h3>
         <table class="standings-table">
           <thead>
             <tr>
@@ -470,16 +514,16 @@ function renderStandings(data) {
               <tr>
                 <td class="team-cell">
                   <span class="rank-badge">${team.rank_level}</span>
-                  <span class="team-name">${team.team_name}</span>
+                  <span class="team-name">${escapeHTML(team.team_name || "")}</span>
                 </td>
-                <td>${team.points}</td>
-                <td>${team.matches_played ?? 0}</td>
-                <td>${team.wins}</td>
-                <td>${team.draws}</td>
-                <td>${team.losses}</td>
-                <td>${team.goals_for ?? 0}</td>
-                <td>${team.goals_against ?? 0}</td>
-                <td>${team.goal_diff}</td>
+                <td>${Number(team.points) || 0}</td>
+                <td>${Number(team.matches_played) || 0}</td>
+                <td>${Number(team.wins) || 0}</td>
+                <td>${Number(team.draws) || 0}</td>
+                <td>${Number(team.losses) || 0}</td>
+                <td>${Number(team.goals_for) || 0}</td>
+                <td>${Number(team.goals_against) || 0}</td>
+                <td>${Number(team.goal_diff) || 0}</td>
               </tr>
             `).join("")}
           </tbody>
