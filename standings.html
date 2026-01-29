@@ -58,77 +58,93 @@
     <section class="standings-layout">
 
       <!-- =====================
-          LEFT COLUMN
+          FINALS (TOP – FULL WIDTH)
       ====================== -->
-      <div class="standings-results-box loading">
+      <div id="finals-container" class="finals-box hidden">
 
-        <!-- FILTER (REAL UI) -->
-        <div
-          id="tournament-filter"
-          class="tournament-filter-box standings hidden">
-          <label for="tournament-select">Seleziona torneo</label>
-          <select id="tournament-select">
-            <option value="">-- Seleziona --</option>
-          </select>
-        </div>
-
-        <!-- ===== SKELETON LEFT ===== -->
-        <div class="standings-skeleton" id="matches-skeleton">
+        <!-- ===== SKELETON FINALS ===== -->
+        <div class="standings-skeleton finals-skeleton">
           <h3 class="skeleton skeleton-title"></h3>
 
           <div class="matches-scroll">
-            <div class="skeleton-match">
-              <div class="skeleton-line short"></div>
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line short"></div>
-            </div>
-            <div class="skeleton-match">
-              <div class="skeleton-line short"></div>
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line short"></div>
-            </div>
+            <div class="skeleton-match"></div>
+            <div class="skeleton-match"></div>
           </div>
         </div>
 
-        <!-- ===== REAL CONTENT LEFT ===== -->
-        <div class="standings-content">
-
-          <!-- ROUND FILTER -->
-          <div class="round-filter-box">
-            <label for="round-filter">Giornata</label>
-            <select id="round-filter">
-              <!-- popolato da JS -->
-            </select>
-          </div>
-
-          <!-- MATCHES -->
-          <div id="matches-list" class="matches-scroll"></div>
-
+        <!-- ===== REAL FINALS CONTENT ===== -->
+        <div class="finals-content">
+          <!-- popolato da standings.js -->
         </div>
 
       </div>
 
       <!-- =====================
-          RIGHT COLUMN
+          MAIN ROW (GIRONI)
       ====================== -->
-      <div class="standings-table-box">
+      <div class="main-standings-row">
 
-        <!-- ===== SKELETON RIGHT ===== -->
-        <div class="standings-skeleton" id="standings-skeleton">
-          <h3 class="skeleton skeleton-title"></h3>
-          <div class="standings-group skeleton">
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line short"></div>
+        <!-- =====================
+            MATCHES (LEFT)
+        ====================== -->
+        <div id="matches-container" class="standings-results-box loading">
+
+          <!-- FILTER -->
+          <div
+            id="tournament-filter"
+            class="tournament-filter-box standings hidden">
+            <label for="tournament-select">Seleziona torneo</label>
+            <select id="tournament-select"></select>
           </div>
+
+          <!-- ===== SKELETON MATCHES ===== -->
+          <div class="standings-skeleton" id="matches-skeleton">
+            <h3 class="skeleton skeleton-title"></h3>
+
+            <div class="matches-scroll">
+              <div class="skeleton-match"></div>
+              <div class="skeleton-match"></div>
+            </div>
+          </div>
+
+          <!-- ===== REAL MATCHES ===== -->
+          <div class="standings-content">
+
+            <div class="round-filter-box">
+              <label for="round-filter">Giornata</label>
+              <select id="round-filter"></select>
+            </div>
+
+            <div id="matches-list" class="matches-scroll"></div>
+
+          </div>
+
         </div>
 
-        <div id="standings" class="standings-content hidden"></div>
-        
+        <!-- =====================
+            STANDINGS (RIGHT)
+        ====================== -->
+        <div id="standings-container" class="standings-table-box">
+
+          <!-- ===== SKELETON STANDINGS ===== -->
+          <div class="standings-skeleton" id="standings-skeleton">
+            <h3 class="skeleton skeleton-title"></h3>
+            <div class="standings-group skeleton">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+          </div>
+
+          <!-- ===== REAL STANDINGS ===== -->
+          <div id="standings" class="standings-content hidden"></div>
+
+        </div>
+
       </div>
 
     </section>
+
 
 
 

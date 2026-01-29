@@ -3,12 +3,14 @@
 // ===============================
 
 // ⚠️ INSERISCI QUI L’URL DELLA TUA WEB APP
-const API_URL = "https://script.google.com/macros/s/AKfycby7O588n5l5dDZLhjkOFy0YfPV3NItRI7IVeCyD6bS1m4ANQZQIcwZc3mKamvEKtx9VBw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbz6306vHXhW7INLb4hpB7iDeGVRX4Ko1jUO9PPLqM1tqlu2qUR8qvVQQj23i1oH2qHVzQ/exec";
 
 let TOURNAMENT_STATUS = null;
 
 let ALL_MATCHES = [];
 let AVAILABLE_ROUNDS = [];
+let FINALS_MATCHES = [];
+
 
 
 
@@ -32,8 +34,20 @@ function loadStandingsPage(tournamentId) {
 
       loadMatches(tournamentId);
       loadStandings(tournamentId);
+
+      if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "completed") {
+        loadFinals(tournamentId).then(() => {
+          renderFinalsSection(tournamentId);
+          applyLayoutByStatus();
+        });
+      } else {
+        FINALS_MATCHES = [];
+        applyLayoutByStatus();
+      }
     });
 }
+
+
 
 
 function hideSkeletons() {
@@ -188,7 +202,7 @@ function renderMatchesByRound(roundId) {
     return;
   }
 
-  const locked = TOURNAMENT_STATUS === "final_phase";
+  const locked = FINALS_MATCHES.length > 0;
 
   matches.forEach(match => {
     const isPlayed =
@@ -304,7 +318,7 @@ function loadStandings(tournamentId) {
 // ===============================
 // SUBMIT RESULT (WITH LOADING STATE)
 // ===============================
-function submitResult(card, matchId, tournamentId) {
+function submitResult(card, matchId, tournamentId, phase = "group") {
   const inputs = card.querySelectorAll(".score-input");
   const btn = card.querySelector(".submit-result");
 
@@ -333,6 +347,8 @@ function submitResult(card, matchId, tournamentId) {
   btn.disabled = true;
 
   inputs.forEach(input => input.disabled = true);
+
+  formData.append("phase", phase);
 
   fetch(API_URL, {
     method: "POST",
@@ -541,4 +557,90 @@ function renderRoundFilter(rounds) {
     onRoundChange(e.target.value);
   });
 }
+
+
+
+function loadFinals(tournamentId) {
+  return fetch(`${API_URL}?action=get_finals&tournament_id=${encodeURIComponent(tournamentId)}`)
+    .then(res => res.json())
+    .then(data => {
+      FINALS_MATCHES = Array.isArray(data) ? data : [];
+      return FINALS_MATCHES;
+    })
+    .catch(() => {
+      FINALS_MATCHES = [];
+      return [];
+    });
+}
+
+
+function applyLayoutByStatus() {
+  const finals = document.getElementById("finals-container");
+  const matches = document.getElementById("matches-container");
+  const standings = document.getElementById("standings-container");
+
+  finals.classList.add("hidden");
+
+  if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "completed") {
+    if (FINALS_MATCHES.length > 0) {
+      finals.classList.remove("hidden");
+    }
+  }
+}
+
+
+function renderFinalsSection(tournamentId) {
+  const container = document.getElementById("finals-container");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (!FINALS_MATCHES.length) {
+    container.innerHTML =
+      "<p class='placeholder'>Finals non ancora disponibili</p>";
+    return;
+  }
+
+  FINALS_MATCHES.forEach(match => {
+    const isPlayed =
+      match.played === true ||
+      String(match.played).toUpperCase() === "TRUE";
+
+    const card = document.createElement("div");
+    card.className = "match-card finals";
+    if (isPlayed) card.classList.add("played");
+
+    card.innerHTML = `
+      <div class="match-meta">
+        <span class="match-round">Finals</span>
+      </div>
+
+      <div class="match-teams">
+        <span class="team">${escapeHTML(formatTeam(match.team_a))}</span>
+
+        <input type="number" class="score-input"
+          value="${isPlayed ? match.score_a ?? "" : ""}">
+
+        <span class="dash">-</span>
+
+        <input type="number" class="score-input"
+          value="${isPlayed ? match.score_b ?? "" : ""}">
+
+        <span class="team">${escapeHTML(formatTeam(match.team_b))}</span>
+      </div>
+
+      <button class="btn secondary submit-result">
+        ${isPlayed ? "Modifica risultato" : "Invia risultato"}
+      </button>
+    `;
+
+    card.querySelector(".submit-result")
+      .addEventListener("click", () =>
+        submitResult(card, match.match_id, tournamentId, "final")
+      );
+
+    container.appendChild(card);
+  });
+}
+
 
