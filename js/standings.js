@@ -3,7 +3,7 @@
 // ===============================
 
 // ⚠️ INSERISCI QUI L’URL DELLA TUA WEB APP
-const API_URL = "https://script.google.com/macros/s/AKfycbxfpbny6yzOBXP44OQtfUqrmx5TjxCodgiV0Tue3SHIbogFjO0zVBUrtLyBYBt9dBMV/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzxur76IjDP0AyMRUzKefmRJUFH-arRQX2-Z7HxEEaK5QNTxq-k76ZT5jm5V1VB5vbl6Q/exec";
 
 let TOURNAMENT_STATUS = null;
 
@@ -32,12 +32,18 @@ function loadStandingsPage(tournamentId) {
       const t = tournaments.find(t => t.tournament_id === tournamentId);
       TOURNAMENT_STATUS = t?.status || null;
 
+      const layout = document.querySelector(".standings-layout");
+      if (layout) {
+        layout.classList.toggle("finished", TOURNAMENT_STATUS === "finished");
+      }
+
+
       loadMatches(tournamentId);
       loadStandings(tournamentId);
 
-      if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "completed") {
-        loadFinals(tournamentId).then(() => {
-          renderFinalsSection(tournamentId);
+      if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished") {
+        loadFinalsBracket(tournamentId).then(bracket => {
+          if (bracket) renderFinalsBracket(bracket, tournamentId);
           applyLayoutByStatus();
         });
       } else {
@@ -202,18 +208,21 @@ function renderMatchesByRound(roundId) {
     return;
   }
 
-  const locked = FINALS_MATCHES.length > 0;
+  // 🔒 BLOCCO LOGICO
+  const tournamentLocked = TOURNAMENT_STATUS === "finished";
+  const finalsStarted = TOURNAMENT_STATUS === "final_phase";
 
   matches.forEach(match => {
     const isPlayed =
       match.played === true ||
-      match.played === "TRUE" ||
-      match.played === "true" ||
-      match.played === 1;
+      String(match.played).toUpperCase() === "TRUE";
+
+    const locked = tournamentLocked || finalsStarted;
 
     const card = document.createElement("div");
     card.className = "match-card";
     if (isPlayed) card.classList.add("played");
+    if (locked) card.classList.add("locked");
 
     card.innerHTML = `
       <div class="match-meta">
@@ -227,25 +236,27 @@ function renderMatchesByRound(roundId) {
         <input type="number"
           class="score-input"
           ${locked ? "disabled" : ""}
-          value="${isPlayed ? (match.score_a ?? "") : ""}">
+          value="${isPlayed ? match.score_a ?? "" : ""}">
 
         <span class="dash">-</span>
 
         <input type="number"
           class="score-input"
           ${locked ? "disabled" : ""}
-          value="${isPlayed ? (match.score_b ?? "") : ""}">
+          value="${isPlayed ? match.score_b ?? "" : ""}">
 
         <span class="team">${escapeHTML(formatTeam(match.team_b))}</span>
       </div>
 
       <button class="btn secondary submit-result" ${locked ? "disabled" : ""}>
         ${
-          locked
-            ? "Fase finale"
-            : isPlayed
-              ? "Modifica risultato"
-              : "Invia risultato"
+          tournamentLocked
+            ? "Torneo concluso"
+            : finalsStarted
+              ? "Fase finale avviata"
+              : isPlayed
+                ? "Modifica risultato"
+                : "Invia risultato"
         }
       </button>
     `;
@@ -260,6 +271,7 @@ function renderMatchesByRound(roundId) {
     container.appendChild(card);
   });
 }
+
 
 
 function onRoundChange(value) {
@@ -319,6 +331,12 @@ function loadStandings(tournamentId) {
 // SUBMIT RESULT (WITH LOADING STATE)
 // ===============================
 function submitResult(card, matchId, tournamentId, phase = "group") {
+
+  if (TOURNAMENT_STATUS === "finished") {
+    showToast("Torneo concluso 🔒");
+    return;
+  }
+
   const inputs = card.querySelectorAll(".score-input");
   const btn = card.querySelector(".submit-result");
 
@@ -412,6 +430,10 @@ function submitResult(card, matchId, tournamentId, phase = "group") {
     inputs.forEach(input => input.disabled = false);
   }
 }
+
+
+
+
 
 
 // ===============================
@@ -560,87 +582,168 @@ function renderRoundFilter(rounds) {
 
 
 
-function loadFinals(tournamentId) {
-  return fetch(`${API_URL}?action=get_finals&tournament_id=${encodeURIComponent(tournamentId)}`)
+function loadFinalsBracket(tournamentId) {
+  return fetch(`${API_URL}?action=get_bracket&tournament_id=${encodeURIComponent(tournamentId)}`)
     .then(res => res.json())
     .then(data => {
-      FINALS_MATCHES = Array.isArray(data) ? data : [];
-      return FINALS_MATCHES;
+      return data && data.rounds ? data : null;
     })
-    .catch(() => {
-      FINALS_MATCHES = [];
-      return [];
-    });
+    .catch(() => null);
 }
+
 
 
 function applyLayoutByStatus() {
   const finals = document.getElementById("finals-container");
-  const matches = document.getElementById("matches-container");
-  const standings = document.getElementById("standings-container");
 
   finals.classList.add("hidden");
 
-  if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "completed") {
-    if (FINALS_MATCHES.length > 0) {
-      finals.classList.remove("hidden");
-    }
+  if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished") {
+    finals.classList.remove("hidden");
   }
 }
 
 
-function renderFinalsSection(tournamentId) {
+
+function renderFinalsBracket(bracket, tournamentId) {
   const container = document.getElementById("finals-container");
   if (!container) return;
 
   container.innerHTML = "";
 
-  if (!FINALS_MATCHES.length) {
-    container.innerHTML =
-      "<p class='placeholder'>Finals non ancora disponibili</p>";
+  const rounds = Object.keys(bracket.rounds)
+    .map(Number)
+    .sort((a, b) => a - b);
+
+  rounds.forEach(roundId => {
+    const roundBox = document.createElement("div");
+    roundBox.className = "finals-round";
+
+    roundBox.innerHTML = `<h3>Round ${roundId}</h3>`;
+
+    bracket.rounds[roundId].forEach(match => {
+      const card = renderFinalsMatchCard(match, tournamentId);
+      roundBox.appendChild(card);
+    });
+
+    container.appendChild(roundBox);
+  });
+}
+
+
+function renderFinalsMatchCard(match, tournamentId) {
+  const card = document.createElement("div");
+  card.className = "match-card finals";
+
+  const isPlayed =
+    match.played === true ||
+    String(match.played).toUpperCase() === "TRUE";
+
+  const tournamentLocked = TOURNAMENT_STATUS === "finished";
+
+  if (isPlayed) card.classList.add("played");
+  if (tournamentLocked) card.classList.add("locked");
+
+  card.innerHTML = `
+    <div class="match-teams">
+      <span class="team">${escapeHTML(formatTeam(match.team_a))}</span>
+
+      <input type="number"
+        class="score-input"
+        ${tournamentLocked ? "disabled" : ""}
+        value="${match.score_a ?? ""}">
+
+      <span class="dash">-</span>
+
+      <input type="number"
+        class="score-input"
+        ${tournamentLocked ? "disabled" : ""}
+        value="${match.score_b ?? ""}">
+
+      <span class="team">${escapeHTML(formatTeam(match.team_b))}</span>
+    </div>
+
+    <div class="winner-select hidden">
+      <label>Winner</label>
+      <select ${tournamentLocked ? "disabled" : ""}>
+        <option value="">Seleziona</option>
+        <option value="${match.team_a}">${formatTeam(match.team_a)}</option>
+        <option value="${match.team_b}">${formatTeam(match.team_b)}</option>
+      </select>
+    </div>
+
+    <button class="btn secondary submit-result" ${tournamentLocked ? "disabled" : ""}>
+      ${tournamentLocked ? "Torneo concluso" : isPlayed ? "Modifica risultato" : "Invia risultato"}
+    </button>
+  `;
+
+  if (tournamentLocked) return card;
+
+  const inputs = card.querySelectorAll(".score-input");
+  const selectBox = card.querySelector(".winner-select");
+  const select = selectBox.querySelector("select");
+
+  inputs.forEach(i =>
+    i.addEventListener("input", () => {
+      if (inputs[0].value !== "" && inputs[0].value === inputs[1].value) {
+        selectBox.classList.remove("hidden");
+      } else {
+        selectBox.classList.add("hidden");
+        select.value = "";
+      }
+    })
+  );
+
+  card.querySelector(".submit-result")
+    .addEventListener("click", () =>
+      submitFinalResult(card, match, tournamentId, select.value)
+    );
+
+  return card;
+}
+
+
+
+function submitFinalResult(card, match, tournamentId, winnerTeamId) {
+  const inputs = card.querySelectorAll(".score-input");
+  const scoreA = inputs[0].value;
+  const scoreB = inputs[1].value;
+
+  if (scoreA === "" || scoreB === "") {
+    showToast("Inserisci entrambi i punteggi ⚠️");
     return;
   }
 
-  FINALS_MATCHES.forEach(match => {
-    const isPlayed =
-      match.played === true ||
-      String(match.played).toUpperCase() === "TRUE";
+  if (scoreA === scoreB && !winnerTeamId) {
+    showToast("Seleziona il vincitore dello spareggio ⚠️");
+    return;
+  }
 
-    const card = document.createElement("div");
-    card.className = "match-card finals";
-    if (isPlayed) card.classList.add("played");
+  const formData = new URLSearchParams();
+  formData.append("action", "submit_result");
+  formData.append("phase", "final");
+  formData.append("tournament_id", tournamentId);
+  formData.append("match_id", match.match_id);
+  formData.append("score_a", scoreA);
+  formData.append("score_b", scoreB);
 
-    card.innerHTML = `
-      <div class="match-meta">
-        <span class="match-round">Finals</span>
-      </div>
+  if (winnerTeamId) {
+    formData.append("winner_team_id", winnerTeamId);
+  }
 
-      <div class="match-teams">
-        <span class="team">${escapeHTML(formatTeam(match.team_a))}</span>
-
-        <input type="number" class="score-input"
-          value="${isPlayed ? match.score_a ?? "" : ""}">
-
-        <span class="dash">-</span>
-
-        <input type="number" class="score-input"
-          value="${isPlayed ? match.score_b ?? "" : ""}">
-
-        <span class="team">${escapeHTML(formatTeam(match.team_b))}</span>
-      </div>
-
-      <button class="btn secondary submit-result">
-        ${isPlayed ? "Modifica risultato" : "Invia risultato"}
-      </button>
-    `;
-
-    card.querySelector(".submit-result")
-      .addEventListener("click", () =>
-        submitResult(card, match.match_id, tournamentId, "final")
-      );
-
-    container.appendChild(card);
-  });
+  fetch(API_URL, { method: "POST", body: formData })
+    .then(res => res.text())
+    .then(resp => {
+      if (resp === "RESULT_SAVED") {
+        showToast("Risultato finale salvato ✔️");
+        loadFinalsBracket(tournamentId)
+          .then(bracket => renderFinalsBracket(bracket, tournamentId));
+      } else {
+        showToast("Errore nel salvataggio ❌");
+      }
+    });
 }
+
+
 
 

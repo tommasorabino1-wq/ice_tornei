@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>ICE | Standings</title>
   <meta name="description" content="ICE Tournament - Classifiche ufficiali dei tornei ICE. Consulta gironi, punti e risultati aggiornati.">
+
   <link rel="icon" href="assets/logo.png">
   <link rel="apple-touch-icon" href="assets/logo.png">
 
@@ -15,173 +16,188 @@
 
 <body>
 
-  <!-- MAIN HEADER -->
-  <header class="main-header">
-    <div class="main-header-container">
+<!-- =====================
+     HEADER
+===================== -->
+<header class="main-header">
+  <div class="main-header-container">
 
-      <!-- BRAND -->
-      <div class="brand">
-        <a href="index.html">
-          <img src="assets/logo.png" alt="ICE logo">
-        </a>
-      </div>
-
-      <!-- SEARCH -->
-      <div class="search-box">
-        <input type="text" placeholder="Cerca tornei, squadre">
-      </div>
-
-      <!-- UTILITY -->
-      <div class="header-actions">
-        <span>🏆</span>
-        <span>📊</span>
-      </div>
-
+    <div class="brand">
+      <a href="index.html">
+        <img src="assets/logo.png" alt="ICE logo">
+      </a>
     </div>
-  </header>
 
-  <!-- NAVIGATION -->
-  <nav class="main-nav">
-    <div class="main-nav-container">
-      <a href="index.html">Tornei</a>
-      <a href="standings.html" class="active">Classifica</a>
-      <a href="tournament.html">Regolamento</a>
+    <div class="search-box">
+      <input type="text" placeholder="Cerca tornei, squadre">
     </div>
-  </nav>
 
-  <!-- CONTENT -->
-  <main class="container">
-    <h2>Classifiche tornei</h2>
+    <div class="header-actions">
+      <span>🏆</span>
+      <span>📊</span>
+    </div>
 
+  </div>
+</header>
 
+<!-- =====================
+     NAV
+===================== -->
+<nav class="main-nav">
+  <div class="main-nav-container">
+    <a href="index.html">Tornei</a>
+    <a href="standings.html" class="active">Classifica</a>
+    <a href="tournament.html">Regolamento</a>
+  </div>
+</nav>
 
-    <section class="standings-layout">
+<!-- =====================
+     MAIN
+===================== -->
+<main class="container">
+  <h2>Classifiche torneo</h2>
+
+  <section class="standings-layout">
+
+    <!-- =====================
+         FINALS / BRACKET
+    ====================== -->
+    <section
+      id="finals-container"
+      class="finals-section hidden"
+      aria-label="Fase finale torneo">
+
+      <!-- Skeleton Finals -->
+      <div class="standings-skeleton finals-skeleton">
+        <h3 class="skeleton skeleton-title"></h3>
+        <div class="finals-bracket">
+          <div class="skeleton-match"></div>
+          <div class="skeleton-match"></div>
+        </div>
+      </div>
+
+      <!-- Real Finals Bracket -->
+      <div class="finals-bracket">
+        <!-- popolato da standings.js -->
+      </div>
+
+    </section>
+
+    <!-- =====================
+         MAIN ROW
+    ====================== -->
+    <section class="main-standings-row">
 
       <!-- =====================
-          FINALS (TOP – FULL WIDTH)
+           MATCHES (GIRONI)
       ====================== -->
-      <div id="finals-container" class="finals-box hidden">
+      <section
+        id="matches-container"
+        class="standings-results-box loading"
+        aria-label="Match gironi">
 
-        <!-- ===== SKELETON FINALS ===== -->
-        <div class="standings-skeleton finals-skeleton">
+        <!-- Tournament Filter -->
+        <div
+          id="tournament-filter"
+          class="tournament-filter-box standings hidden">
+          <label for="tournament-select">Seleziona torneo</label>
+          <select id="tournament-select"></select>
+        </div>
+
+        <!-- Skeleton Matches -->
+        <div class="standings-skeleton" id="matches-skeleton">
           <h3 class="skeleton skeleton-title"></h3>
-
           <div class="matches-scroll">
             <div class="skeleton-match"></div>
             <div class="skeleton-match"></div>
           </div>
         </div>
 
-        <!-- ===== REAL FINALS CONTENT ===== -->
-        <div class="finals-content">
-          <!-- popolato da standings.js -->
+        <!-- Real Matches -->
+        <div class="standings-content">
+
+          <div class="round-filter-box">
+            <label for="round-filter">Giornata</label>
+            <select id="round-filter"></select>
+          </div>
+
+          <div
+            id="matches-list"
+            class="matches-scroll"
+            aria-live="polite">
+          </div>
+
         </div>
 
-      </div>
+      </section>
 
       <!-- =====================
-          MAIN ROW (GIRONI)
+           STANDINGS TABLE
       ====================== -->
-      <div class="main-standings-row">
+      <section
+        id="standings-container"
+        class="standings-table-box"
+        aria-label="Classifiche gironi">
 
-        <!-- =====================
-            MATCHES (LEFT)
-        ====================== -->
-        <div id="matches-container" class="standings-results-box loading">
-
-          <!-- FILTER -->
-          <div
-            id="tournament-filter"
-            class="tournament-filter-box standings hidden">
-            <label for="tournament-select">Seleziona torneo</label>
-            <select id="tournament-select"></select>
+        <!-- Skeleton Standings -->
+        <div class="standings-skeleton" id="standings-skeleton">
+          <h3 class="skeleton skeleton-title"></h3>
+          <div class="standings-group skeleton">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
           </div>
-
-          <!-- ===== SKELETON MATCHES ===== -->
-          <div class="standings-skeleton" id="matches-skeleton">
-            <h3 class="skeleton skeleton-title"></h3>
-
-            <div class="matches-scroll">
-              <div class="skeleton-match"></div>
-              <div class="skeleton-match"></div>
-            </div>
-          </div>
-
-          <!-- ===== REAL MATCHES ===== -->
-          <div class="standings-content">
-
-            <div class="round-filter-box">
-              <label for="round-filter">Giornata</label>
-              <select id="round-filter"></select>
-            </div>
-
-            <div id="matches-list" class="matches-scroll"></div>
-
-          </div>
-
         </div>
 
-        <!-- =====================
-            STANDINGS (RIGHT)
-        ====================== -->
-        <div id="standings-container" class="standings-table-box">
-
-          <!-- ===== SKELETON STANDINGS ===== -->
-          <div class="standings-skeleton" id="standings-skeleton">
-            <h3 class="skeleton skeleton-title"></h3>
-            <div class="standings-group skeleton">
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line short"></div>
-            </div>
-          </div>
-
-          <!-- ===== REAL STANDINGS ===== -->
-          <div id="standings" class="standings-content hidden"></div>
-
+        <!-- Real Standings -->
+        <div
+          id="standings"
+          class="standings-content hidden">
         </div>
 
-      </div>
+      </section>
 
     </section>
 
+  </section>
+</main>
 
+<!-- =====================
+     FOOTER
+===================== -->
+<footer class="site-footer">
+  <div class="footer-container">
 
-
-  </main>
-
-  <!-- FOOTER -->
-  <footer class="site-footer">
-    <div class="footer-container">
-
-      <div class="footer-brand">
-        <img src="assets/logo.png" alt="ICE logo">
-        <p>Piattaforma ufficiale tornei ICE</p>
-      </div>
-
-      <div class="footer-contacts">
-        <h4>Contatti</h4>
-        <p>📞 +39 3396160901</p>
-        <p>✉️ tommaso.rabino1@gmail.com</p>
-      </div>
-
-      <div class="footer-legal">
-        <h4>Informazioni legali</h4>
-        <a href="#">Privacy Policy</a>
-        <a href="#">Cookie Policy</a>
-        <a href="#">Termini e condizioni</a>
-      </div>
-
+    <div class="footer-brand">
+      <img src="assets/logo.png" alt="ICE logo">
+      <p>Piattaforma ufficiale tornei ICE</p>
     </div>
 
-    <div class="footer-bottom">
-      © 2026 ICE. Tutti i diritti riservati.
+    <div class="footer-contacts">
+      <h4>Contatti</h4>
+      <p>📞 +39 3396160901</p>
+      <p>✉️ tommaso.rabino1@gmail.com</p>
     </div>
-  </footer>
 
-  <!-- JS (verrà esteso dopo) -->
-  <script src="js/data.js"></script>
-  <script src="js/standings.js"></script>
+    <div class="footer-legal">
+      <h4>Informazioni legali</h4>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Cookie Policy</a>
+      <a href="#">Termini e condizioni</a>
+    </div>
+
+  </div>
+
+  <div class="footer-bottom">
+    © 2026 ICE. Tutti i diritti riservati.
+  </div>
+</footer>
+
+<!-- =====================
+     JS
+===================== -->
+<script src="js/data.js"></script>
+<script src="js/standings.js"></script>
 
 </body>
 </html>

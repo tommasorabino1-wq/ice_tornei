@@ -15,6 +15,7 @@
   --state-full: #ef4444;
   --state-live: #f59e0b;
   --state-final: #8b5cf6;
+  --state-finished: #6b7280; /* slate / neutral */
 
   --border: #1f2933;
   --radius: 6px;
@@ -260,6 +261,20 @@ body {
 
 
 
+.tournament-card.finished {
+  opacity: 0.75;
+}
+
+
+.tournament-card.finished:hover {
+  transform: none;
+  box-shadow: var(--shadow);
+  border-color: var(--border);
+}
+
+
+
+
 .tournament-card:hover {
   transform: translateY(-2px);
   border-color: rgba(56, 189, 248, 0.35);
@@ -305,6 +320,12 @@ body {
   background-color: rgba(245, 158, 11, 0.15);
   color: #f59e0b;
 }
+
+.badge.finished {
+  background-color: rgba(107, 114, 128, 0.18);
+  color: var(--state-finished);
+}
+
 
 .tournament-card h3 {
   font-size: 16px;
@@ -1756,3 +1777,87 @@ body {
   border: 2px solid var(--brand);
   background: rgba(56, 189, 248, 0.08);
 }
+
+
+.match-card.finals.played {
+  background: rgba(56, 189, 248, 0.14);
+  border-color: var(--brand-hover);
+}
+
+
+.match-card.locked {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.match-card.locked::before {
+  content: "Bloccata";
+  position: absolute;
+  top: 10px;
+  left: 10px;
+
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+
+  padding: 3px 6px;
+  border-radius: 4px;
+
+  background-color: rgba(107, 114, 128, 0.18);
+  color: var(--state-finished);
+}
+
+
+.standings-layout.finished .score-input,
+.standings-layout.finished .btn {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+
+.finals-box.finished::before {
+  content: "Torneo concluso";
+  display: inline-block;
+  margin-bottom: 12px;
+
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+
+  padding: 6px 10px;
+  border-radius: 999px;
+
+  background-color: rgba(107, 114, 128, 0.18);
+  color: var(--state-finished);
+}
+
+
+.winner-select {
+  margin-top: 8px;
+  padding: 8px 10px;
+
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(56, 189, 248, 0.35);
+  border-radius: var(--radius);
+}
+
+.winner-select label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.winner-select select {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 13px;
+
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+

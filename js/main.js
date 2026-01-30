@@ -6,7 +6,7 @@ const container = document.getElementById("tournaments");
 
 // URL della Web App (doGet)
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbxfpbny6yzOBXP44OQtfUqrmx5TjxCodgiV0Tue3SHIbogFjO0zVBUrtLyBYBt9dBMV/exec";
+  "https://script.google.com/macros/s/AKfycbzxur76IjDP0AyMRUzKefmRJUFH-arRQX2-Z7HxEEaK5QNTxq-k76ZT5jm5V1VB5vbl6Q/exec";
 
 // ===============================
 // FETCH TORNEI DAL BACKEND
@@ -52,8 +52,10 @@ function renderTournaments(tournaments) {
     open: 1,
     live: 2,
     final_phase: 3,
-    full: 4
+    full: 4,
+    finished: 5
   };
+
 
 
   // 2️⃣ ordina tornei
@@ -73,7 +75,9 @@ function renderTournaments(tournaments) {
     if (t.status === "live") statusLabel = "IN CORSO";
     if (t.status === "final_phase") statusLabel = "FASE FINALE";
     if (t.status === "full") statusLabel = "COMPLETO";
-    if (t.status === "needs_attention") statusLabel = "DECIDING FINALS";
+    if (t.status === "needs_attention") statusLabel = "FINALS IN FASE DI DECISIONE";
+    if (t.status === "finished") statusLabel = "TORNEO CONCLUSO";
+
 
 
 
