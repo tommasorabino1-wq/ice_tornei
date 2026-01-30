@@ -69,6 +69,13 @@ function renderTournaments(tournaments) {
     card.className = "tournament-card";
     card.dataset.id = t.tournament_id;
 
+    if (t.status === "finished") {
+      card.classList.add("finished");
+    }
+
+    card.className = "tournament-card";
+    card.dataset.id = t.tournament_id;
+
     let statusLabel = "";
 
     if (t.status === "open") statusLabel = "ISCRIZIONI APERTE";
