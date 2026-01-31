@@ -622,6 +622,12 @@ function renderFinalsBracket(bracket, tournamentId) {
   const container = document.getElementById("finals-bracket-content");
   if (!container) return;
 
+  // Nascondi skeleton finals
+  const finalsSkeleton = document.querySelector(".finals-section .finals-skeleton");
+  if (finalsSkeleton) {
+    finalsSkeleton.classList.add("hidden");
+  }
+
   container.innerHTML = "";
 
   const rounds = Object.keys(bracket.rounds)

@@ -721,7 +721,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  max-height: 600px;
+  min-height: 200px;
   overflow: hidden;
 }
 
@@ -1764,6 +1764,27 @@ body {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
   gap: 24px;
+  align-items: start;
+}
+
+/* Forza altezza uguale quando necessario */
+.main-standings-row .standings-results-box {
+  max-height: none;
+}
+
+/* Il contenuto scrollabile prende l'altezza disponibile */
+.main-standings-row .standings-results-box .standings-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.main-standings-row .standings-results-box .matches-scroll {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 450px;
 }
 
 
@@ -1914,13 +1935,15 @@ body {
   padding: 20px;
 }
 
+
+
 .finals-section-title {
   font-size: 18px;
   font-weight: 700;
   color: var(--text-main);
   margin-bottom: 24px;
   padding-bottom: 12px;
-  border-bottom: 2px solid var(--state-final);
+  border-bottom: 2px solid rgba(139, 92, 246, 0.6);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1943,7 +1966,7 @@ body {
   color: var(--text-main);
   margin-bottom: 20px;
   padding-bottom: 12px;
-  border-bottom: 2px solid var(--brand);
+  border-bottom: 2px solid rgba(139, 92, 246, 0.6);
   display: flex;
   align-items: center;
   gap: 10px;
