@@ -715,15 +715,14 @@ body {
 
 /* BOX SINISTRO */
 .standings-results-box {
-  display: flex;
-  flex-direction: column;
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  min-height: 200px;
-  overflow: hidden;
+  padding: 16px;
 }
+
+
 
 .standings-results-box h3 {
   font-size: 15px;
@@ -731,35 +730,14 @@ body {
 }
 
 
-/* SCROLL MATCH */
+/* MATCHES LIST */
 .matches-scroll {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 8px;
+  gap: 14px;
 }
 
 
-/* Scrollbar più visibile */
-.matches-scroll::-webkit-scrollbar {
-  width: 7px;
-}
-
-.matches-scroll::-webkit-scrollbar-track {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-}
-
-.matches-scroll::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.35); /* ↑ più chiara */
-  border-radius: 4px;
-}
-
-.matches-scroll::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.5);
-}
 
 
 /* CARD MATCH */
@@ -847,13 +825,11 @@ body {
 
 /* BOX CLASSIFICA (DX) */
 .standings-table-box {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+  padding: 16px;
 }
 
 .standings-table-box h3 {
@@ -1109,8 +1085,7 @@ body {
 
 
 #standings {
-  flex: 1;
-  overflow-y: auto;
+  /* Altezza naturale, nessuno scroll */
 }
 
 
@@ -1766,32 +1741,6 @@ body {
   grid-template-columns: 1.2fr 1fr;
   gap: 24px;
   align-items: start;
-}
-
-/* Il box match ha altezza controllata da JS */
-.main-standings-row .standings-results-box {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* Il contenuto scrollabile */
-.main-standings-row .standings-results-box .standings-content {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-  padding: 16px;
-}
-
-.main-standings-row .standings-results-box .matches-scroll {
-  flex: 1;
-  overflow-y: auto;
-}
-
-/* Il box classifica ha altezza naturale */
-.main-standings-row .standings-table-box {
-  height: auto;
 }
 
 
