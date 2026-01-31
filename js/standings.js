@@ -3,7 +3,7 @@
 // ===============================
 
 // ⚠️ INSERISCI QUI L’URL DELLA TUA WEB APP
-const API_URL = "https://script.google.com/macros/s/AKfycbzxur76IjDP0AyMRUzKefmRJUFH-arRQX2-Z7HxEEaK5QNTxq-k76ZT5jm5V1VB5vbl6Q/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzUiub5CtKe7Ct37UhMQyZh9XMzdnxbF99ezksfSskXyV_NJ0d-5DXM2WXNyR7rscE8Ow/exec";
 
 let TOURNAMENT_STATUS = null;
 
@@ -314,19 +314,6 @@ function loadStandings(tournamentId) {
 
 
 
-// ===============================
-// RENDER MATCH LIST
-// ===============================
-
-
-
-
-
-
-
-// ===============================
-// SUBMIT RESULT
-// ===============================
 // ===============================
 // SUBMIT RESULT (WITH LOADING STATE)
 // ===============================
@@ -644,6 +631,18 @@ function renderFinalsMatchCard(match, tournamentId) {
   if (isPlayed) card.classList.add("played");
   if (tournamentLocked) card.classList.add("locked");
 
+  // Determina testo e classe del bottone
+  let btnText = "Invia risultato";
+  let btnClass = "btn primary submit-result";
+
+  if (tournamentLocked) {
+    btnText = "Torneo concluso";
+    btnClass = "btn secondary submit-result";
+  } else if (isPlayed) {
+    btnText = "Modifica risultato";
+    btnClass = "btn secondary submit-result";
+  }
+
   card.innerHTML = `
     <div class="match-teams">
       <span class="team">${escapeHTML(formatTeam(match.team_a))}</span>
@@ -651,14 +650,14 @@ function renderFinalsMatchCard(match, tournamentId) {
       <input type="number"
         class="score-input"
         ${tournamentLocked ? "disabled" : ""}
-        value="${match.score_a ?? ""}">
+        value="${isPlayed ? (match.score_a ?? "") : ""}">
 
       <span class="dash">-</span>
 
       <input type="number"
         class="score-input"
         ${tournamentLocked ? "disabled" : ""}
-        value="${match.score_b ?? ""}">
+        value="${isPlayed ? (match.score_b ?? "") : ""}">
 
       <span class="team">${escapeHTML(formatTeam(match.team_b))}</span>
     </div>
@@ -672,8 +671,8 @@ function renderFinalsMatchCard(match, tournamentId) {
       </select>
     </div>
 
-    <button class="btn secondary submit-result" ${tournamentLocked ? "disabled" : ""}>
-      ${tournamentLocked ? "Torneo concluso" : isPlayed ? "Modifica risultato" : "Invia risultato"}
+    <button class="${btnClass}" ${tournamentLocked ? "disabled" : ""}>
+      ${btnText}
     </button>
   `;
 
@@ -705,7 +704,13 @@ function renderFinalsMatchCard(match, tournamentId) {
 
 
 function submitFinalResult(card, match, tournamentId, winnerTeamId) {
+  if (TOURNAMENT_STATUS === "finished") {
+    showToast("Torneo concluso 🔒");
+    return;
+  }
+
   const inputs = card.querySelectorAll(".score-input");
+  const btn = card.querySelector(".submit-result");
   const scoreA = inputs[0].value;
   const scoreB = inputs[1].value;
 
@@ -731,19 +736,91 @@ function submitFinalResult(card, match, tournamentId, winnerTeamId) {
     formData.append("winner_team_id", winnerTeamId);
   }
 
+  // --- STATO LOADING ---
+  btn.innerHTML = `
+    <span class="spinner"></span>
+    Salvataggio...
+  `;
+  btn.classList.add("disabled");
+  btn.disabled = true;
+  inputs.forEach(input => input.disabled = true);
+
   fetch(API_URL, { method: "POST", body: formData })
     .then(res => res.text())
     .then(resp => {
       if (resp === "RESULT_SAVED") {
+        card.classList.add("played");
+
+        // Cambia bottone in "Modifica risultato" con classe secondary
+        btn.className = "btn secondary submit-result";
+        btn.textContent = "Modifica risultato";
+        btn.disabled = false;
+        btn.classList.remove("disabled");
+
+        // Riabilita input per eventuale modifica futura
+        inputs.forEach(input => input.disabled = false);
+
         showToast("Risultato finale salvato ✔️");
-        loadFinalsBracket(tournamentId)
-          .then(bracket => renderFinalsBracket(bracket, tournamentId));
+
+        // Aggiorna status torneo (potrebbe diventare finished)
+        fetch(API_URL)
+          .then(r => r.json())
+          .then(tournaments => {
+            const t = tournaments.find(x => x.tournament_id === tournamentId);
+            const oldStatus = TOURNAMENT_STATUS;
+            TOURNAMENT_STATUS = t?.status || TOURNAMENT_STATUS;
+
+            // Ricarica bracket (potrebbe esserci un nuovo round)
+            loadFinalsBracket(tournamentId)
+              .then(bracket => {
+                if (bracket) renderFinalsBracket(bracket, tournamentId);
+              });
+
+            // Se il torneo è diventato finished, applica layout
+            if (TOURNAMENT_STATUS === "finished" && oldStatus !== "finished") {
+              applyLayoutByStatus();
+            }
+          })
+          .catch(() => {
+            // Fallback: ricarica bracket comunque
+            loadFinalsBracket(tournamentId)
+              .then(bracket => {
+                if (bracket) renderFinalsBracket(bracket, tournamentId);
+              });
+          });
+
+      } else if (resp === "FINAL_ROUND_LOCKED") {
+        showToast("Round bloccato: esiste già un round successivo 🔒");
+        restoreUI();
+      } else if (resp === "TOURNAMENT_FINISHED_LOCKED") {
+        showToast("Torneo concluso 🔒");
+        restoreUI();
       } else {
         showToast("Errore nel salvataggio ❌");
+        restoreUI();
       }
+    })
+    .catch(() => {
+      showToast("Errore di rete ❌");
+      restoreUI();
     });
-}
 
+  // --- RIPRISTINO UI ---
+  function restoreUI() {
+    btn.className = card.classList.contains("played")
+      ? "btn secondary submit-result"
+      : "btn primary submit-result";
+
+    btn.textContent = card.classList.contains("played")
+      ? "Modifica risultato"
+      : "Invia risultato";
+
+    btn.disabled = false;
+    btn.classList.remove("disabled");
+
+    inputs.forEach(input => input.disabled = false);
+  }
+}
 
 
 
