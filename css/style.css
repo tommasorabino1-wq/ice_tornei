@@ -1764,12 +1764,14 @@ body {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
 }
 
-/* Forza altezza uguale quando necessario */
+/* Il box match si adatta all'altezza del box classifica */
 .main-standings-row .standings-results-box {
-  max-height: none;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 /* Il contenuto scrollabile prende l'altezza disponibile */
@@ -1779,12 +1781,18 @@ body {
   flex: 1;
   overflow: hidden;
   padding: 16px;
+  min-height: 0;
 }
 
 .main-standings-row .standings-results-box .matches-scroll {
   flex: 1;
   overflow-y: auto;
-  max-height: 450px;
+  min-height: 0;
+}
+
+/* Il box classifica definisce l'altezza della riga */
+.main-standings-row .standings-table-box {
+  height: fit-content;
 }
 
 
