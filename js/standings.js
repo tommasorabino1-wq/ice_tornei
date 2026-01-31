@@ -10,6 +10,8 @@ let TOURNAMENT_STATUS = null;
 let ALL_MATCHES = [];
 let AVAILABLE_ROUNDS = [];
 let FINALS_MATCHES = [];
+let FINALS_SELECTED_ROUND_ID = null;
+
 
 
 
@@ -565,6 +567,83 @@ function renderRoundFilter(rounds) {
 }
 
 
+function renderFinalsRoundFilter(rounds, bracket) {
+  const select = document.getElementById("finals-round-filter");
+  if (!select || !Array.isArray(rounds)) return;
+
+  select.innerHTML = "";
+
+  rounds.forEach(roundId => {
+    const matchCount = (bracket.rounds?.[roundId] || []).length;
+    const label = getRoundLabel(matchCount);
+
+    const option = document.createElement("option");
+    option.value = roundId;
+    option.textContent = label;
+
+    if (Number(roundId) === Number(FINALS_SELECTED_ROUND_ID)) {
+      option.selected = true;
+    }
+
+    select.appendChild(option);
+  });
+
+  // evita doppio binding
+  if (select.dataset.initialized === "true") return;
+  select.dataset.initialized = "true";
+
+  select.addEventListener("change", e => {
+    onFinalsRoundChange(e.target.value);
+  });
+}
+
+function onFinalsRoundChange(value) {
+  if (!value) return;
+
+  FINALS_SELECTED_ROUND_ID = Number(value);
+
+  // rileggo l’ultimo bracket “già renderizzato” dal DOM:
+  // qui la strategia minima è: ricarico dal backend e rerender.
+  // MA per restare minimo e veloce: uso l’ultimo bracket passato a renderFinalsBracket
+  // -> quindi chiamiamo renderFinalsMatchesByRound solo se abbiamo un bracket in scope.
+  // Per farlo semplice: quando cambia, cerco il bracket dal tabellone già presente?
+  // No: meglio minimale e robusto -> ricarico bracket.
+  const tournamentId = getTournamentIdFromUrl();
+  if (!tournamentId) return;
+
+  loadFinalsBracket(tournamentId).then(bracket => {
+    if (bracket) renderFinalsBracket(bracket, tournamentId);
+  });
+}
+
+function renderFinalsMatchesByRound(roundId, bracket, tournamentId) {
+  const container = document.getElementById("finals-bracket-content");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const matchesInRound = bracket.rounds?.[roundId] || [];
+  const roundLabel = getRoundLabel(matchesInRound.length);
+
+  if (matchesInRound.length === 0) {
+    container.innerHTML = "<p class='placeholder'>Nessun match per questa fase</p>";
+    return;
+  }
+
+  const roundBox = document.createElement("div");
+  roundBox.className = "finals-round";
+  roundBox.innerHTML = `<h3>${escapeHTML(roundLabel)}</h3>`;
+
+  matchesInRound.forEach(match => {
+    const card = renderFinalsMatchCard(match, tournamentId, roundLabel);
+    roundBox.appendChild(card);
+  });
+
+  container.appendChild(roundBox);
+}
+
+
+
 
 function loadFinalsBracket(tournamentId) {
   return fetch(`${API_URL}?action=get_bracket&tournament_id=${encodeURIComponent(tournamentId)}`)
@@ -617,7 +696,7 @@ function getRoundLabel(matchCount) {
 function renderFinalsBracket(bracket, tournamentId) {
   const container = document.getElementById("finals-bracket-content");
   const visualContainer = document.getElementById("finals-bracket-visual");
-  
+
   if (!container) return;
 
   // Nascondi skeleton finals
@@ -626,36 +705,35 @@ function renderFinalsBracket(bracket, tournamentId) {
     finalsSkeleton.classList.add("hidden");
   }
 
-  // Renderizza le card per inserire risultati (colonna sinistra)
-  container.innerHTML = "";
-
+  // Lista rounds disponibili (ordinati)
   const rounds = Object.keys(bracket.rounds)
     .map(Number)
     .sort((a, b) => a - b);
 
-  rounds.forEach(roundId => {
-    const matchesInRound = bracket.rounds[roundId];
-    const matchCount = matchesInRound.length;
-    const roundLabel = getRoundLabel(matchCount);
+  // Niente round -> placeholder
+  if (rounds.length === 0) {
+    container.innerHTML = "<p class='placeholder'>Nessun match disponibile</p>";
+    if (visualContainer) visualContainer.innerHTML = "";
+    return;
+  }
 
-    const roundBox = document.createElement("div");
-    roundBox.className = "finals-round";
+  // ✅ Selezione round di default (persistente)
+  if (FINALS_SELECTED_ROUND_ID === null || !rounds.includes(Number(FINALS_SELECTED_ROUND_ID))) {
+    FINALS_SELECTED_ROUND_ID = rounds[0];
+  }
 
-    roundBox.innerHTML = `<h3>${escapeHTML(roundLabel)}</h3>`;
+  // ✅ Render filtro "Fase"
+  renderFinalsRoundFilter(rounds, bracket);
 
-    matchesInRound.forEach(match => {
-      const card = renderFinalsMatchCard(match, tournamentId);
-      roundBox.appendChild(card);
-    });
+  // ✅ Render SOLO i match del round selezionato (colonna sinistra)
+  renderFinalsMatchesByRound(FINALS_SELECTED_ROUND_ID, bracket, tournamentId);
 
-    container.appendChild(roundBox);
-  });
-
-  // Renderizza il bracket visuale (colonna destra)
+  // Render bracket visuale (colonna destra) - sempre completo
   if (visualContainer) {
     renderBracketVisual(bracket, visualContainer);
   }
 }
+
 
 
 // ===============================
@@ -865,7 +943,7 @@ function createBracketMatch(match) {
 
 
 
-function renderFinalsMatchCard(match, tournamentId) {
+function renderFinalsMatchCard(match, tournamentId, roundLabel = "Fase Finale") {
   const card = document.createElement("div");
   card.className = "match-card finals";
 
@@ -878,7 +956,7 @@ function renderFinalsMatchCard(match, tournamentId) {
   if (isPlayed) card.classList.add("played");
   if (tournamentLocked) card.classList.add("locked");
 
-  // Determina testo e classe del bottone
+  // Testo e classe bottone
   let btnText = "Invia risultato";
   let btnClass = "btn primary submit-result";
 
@@ -890,20 +968,21 @@ function renderFinalsMatchCard(match, tournamentId) {
     btnClass = "btn secondary submit-result";
   }
 
-  // Verifica se è un pareggio con vincitore già selezionato
+  // Tie + winner selected
   const scoreA = match.score_a;
   const scoreB = match.score_b;
-  const isTieWithWinner = isPlayed && 
-    scoreA !== "" && scoreB !== "" && 
-    String(scoreA) === String(scoreB) && 
-    match.winner_team_id;
 
-  // Determina il round label per il meta
-  const roundLabel = getRoundLabel(1); // fallback, verrà sovrascritto se necessario
+  const isTieWithWinner =
+    isPlayed &&
+    scoreA !== "" &&
+    scoreB !== "" &&
+    String(scoreA) === String(scoreB) &&
+    match.winner_team_id;
 
   card.innerHTML = `
     <div class="match-meta">
-      <span class="match-round">Fase Finale</span>
+      <span class="match-round">${escapeHTML(roundLabel)}</span>
+      <span class="match-group">Fase Finale</span>
     </div>
 
     <div class="match-teams">
@@ -962,6 +1041,7 @@ function renderFinalsMatchCard(match, tournamentId) {
 
   return card;
 }
+
 
 
 
