@@ -1910,9 +1910,13 @@ body {
 }
 
 /* =========================
-   GIRONI SECTION WRAPPER
+   GIRONI SECTION WRAPPER (MATCH FINALS LOOK)
 ========================= */
 .gironi-section {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
   margin-bottom: 0;
 }
 
@@ -1920,12 +1924,21 @@ body {
   font-size: 18px;
   font-weight: 700;
   color: var(--text-main);
-  margin-bottom: 20px;
+  margin-bottom: 24px;              /* come finals */
   padding-bottom: 12px;
   border-bottom: 2px solid rgba(139, 92, 246, 0.6);
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.gironi-section-title .section-icon {
+  font-size: 20px;                  /* come finals */
+}
+
+/* spacing interno come finals-layout */
+.gironi-section .main-standings-row {
+  margin-top: 20px;
 }
 
 
