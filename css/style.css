@@ -1927,3 +1927,371 @@ body {
   align-items: center;
   gap: 10px;
 }
+
+
+/* =========================
+   FINALS LAYOUT (TWO COLUMNS)
+========================= */
+.finals-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 32px;
+  margin-top: 20px;
+}
+
+.finals-matches-column,
+.finals-bracket-column {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.finals-column-title {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* =========================
+   BRACKET VISUAL - TOURNAMENT TREE
+========================= */
+.bracket-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 20px 10px;
+  overflow-x: auto;
+}
+
+/* Ogni round è una colonna verticale */
+.bracket-round {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  min-width: 140px;
+  position: relative;
+}
+
+/* Spacer per centrare i round successivi */
+.bracket-round.left {
+  align-items: flex-end;
+}
+
+.bracket-round.right {
+  align-items: flex-start;
+}
+
+.bracket-round.center {
+  align-items: center;
+  min-width: 100px;
+}
+
+/* Singolo match nel bracket */
+.bracket-match {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 8px 0;
+  position: relative;
+}
+
+/* Team slot */
+.bracket-team {
+  background-color: var(--bg-main);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-main);
+  min-width: 120px;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.bracket-team:first-child {
+  border-radius: var(--radius) var(--radius) 0 0;
+  border-bottom: none;
+}
+
+.bracket-team:last-child {
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+/* Team name */
+.bracket-team-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Score */
+.bracket-team-score {
+  font-weight: 700;
+  margin-left: 8px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Winner highlight */
+.bracket-team.winner {
+  background-color: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #22c55e;
+}
+
+.bracket-team.winner .bracket-team-score {
+  color: #22c55e;
+}
+
+/* Loser dimmed */
+.bracket-team.loser {
+  opacity: 0.5;
+}
+
+/* TBD / Empty slot */
+.bracket-team.tbd {
+  color: var(--text-muted);
+  font-style: italic;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* =========================
+   BRACKET CONNECTORS (LINES)
+========================= */
+.bracket-match::after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  width: 20px;
+  height: 2px;
+  background-color: var(--border);
+}
+
+.bracket-round.right .bracket-match::after {
+  right: auto;
+  left: -20px;
+}
+
+.bracket-round.center .bracket-match::after {
+  display: none;
+}
+
+/* Vertical connectors */
+.bracket-connector {
+  position: absolute;
+  width: 2px;
+  background-color: var(--border);
+}
+
+/* =========================
+   FINAL MATCH (CENTER)
+========================= */
+.bracket-final {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.bracket-final .bracket-match {
+  margin: 0;
+}
+
+.bracket-final .bracket-match::after {
+  display: none;
+}
+
+.bracket-trophy {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.bracket-winner-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--brand);
+  margin-top: 8px;
+}
+
+.bracket-champion {
+  font-size: 14px;
+  font-weight: 700;
+  color: #22c55e;
+  padding: 8px 16px;
+  background-color: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: var(--radius);
+  margin-top: 8px;
+}
+
+/* =========================
+   RESPONSIVE BRACKET
+========================= */
+@media (max-width: 1000px) {
+  .finals-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .bracket-container {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+  
+  .bracket-team {
+    min-width: 100px;
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+}
+
+/* =========================
+   BRACKET ROUND LABELS
+========================= */
+.bracket-round-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--border);
+}
+
+
+/* =========================
+   SYMMETRIC BRACKET LAYOUT
+========================= */
+.bracket-symmetric {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bracket-side {
+  display: flex;
+  align-items: center;
+}
+
+.bracket-left {
+  flex-direction: row;
+}
+
+.bracket-right {
+  flex-direction: row-reverse;
+}
+
+.bracket-left .bracket-round {
+  margin-right: 24px;
+}
+
+.bracket-right .bracket-round {
+  margin-left: 24px;
+}
+
+/* Spacing between rounds increases toward center */
+.bracket-left .bracket-round:last-child {
+  margin-right: 40px;
+}
+
+.bracket-right .bracket-round:first-child {
+  margin-left: 40px;
+}
+
+/* Match spacing per round */
+.bracket-round .bracket-match {
+  margin: 12px 0;
+}
+
+/* Increase spacing for later rounds */
+.bracket-side .bracket-round:nth-child(2) .bracket-match {
+  margin: 24px 0;
+}
+
+.bracket-side .bracket-round:nth-child(3) .bracket-match {
+  margin: 48px 0;
+}
+
+.bracket-side .bracket-round:nth-child(4) .bracket-match {
+  margin: 96px 0;
+}
+
+/* =========================
+   LINEAR BRACKET LAYOUT
+========================= */
+.bracket-linear {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.bracket-linear .bracket-round {
+  margin-right: 32px;
+}
+
+.bracket-linear .bracket-round:last-child {
+  margin-right: 0;
+}
+
+/* =========================
+   BRACKET CONNECTORS (LINES)
+========================= */
+.bracket-left .bracket-match::after {
+  content: "";
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  width: 12px;
+  height: 2px;
+  background-color: var(--border);
+}
+
+.bracket-right .bracket-match::after {
+  content: "";
+  position: absolute;
+  left: -12px;
+  right: auto;
+  top: 50%;
+  width: 12px;
+  height: 2px;
+  background-color: var(--border);
+}
+
+.bracket-final .bracket-match::after {
+  display: none;
+}
+
+/* =========================
+   BRACKET FINAL CENTER
+========================= */
+.bracket-final {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  min-width: 160px;
+}
+
+.bracket-final .bracket-match {
+  margin: 0;
+}
+
+.bracket-final .bracket-team {
+  min-width: 140px;
+}

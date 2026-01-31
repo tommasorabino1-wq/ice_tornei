@@ -614,9 +614,10 @@ function getRoundLabel(matchCount) {
 
 
 
-
 function renderFinalsBracket(bracket, tournamentId) {
   const container = document.getElementById("finals-bracket-content");
+  const visualContainer = document.getElementById("finals-bracket-visual");
+  
   if (!container) return;
 
   // Nascondi skeleton finals
@@ -625,6 +626,7 @@ function renderFinalsBracket(bracket, tournamentId) {
     finalsSkeleton.classList.add("hidden");
   }
 
+  // Renderizza le card per inserire risultati (colonna sinistra)
   container.innerHTML = "";
 
   const rounds = Object.keys(bracket.rounds)
@@ -648,6 +650,217 @@ function renderFinalsBracket(bracket, tournamentId) {
 
     container.appendChild(roundBox);
   });
+
+  // Renderizza il bracket visuale (colonna destra)
+  if (visualContainer) {
+    renderBracketVisual(bracket, visualContainer);
+  }
+}
+
+
+// ===============================
+// RENDER BRACKET VISUAL (TREE)
+// ===============================
+function renderBracketVisual(bracket, container) {
+  container.innerHTML = "";
+
+  const rounds = Object.keys(bracket.rounds)
+    .map(Number)
+    .sort((a, b) => a - b);
+
+  if (rounds.length === 0) {
+    container.innerHTML = "<p class='placeholder'>Nessun match disponibile</p>";
+    return;
+  }
+
+  const totalRounds = rounds.length;
+  const firstRoundMatches = bracket.rounds[rounds[0]].length;
+
+  // Determina se usare layout simmetrico (bracket stile Champions)
+  // Per ora usiamo un layout lineare per semplicità
+  const isSymmetric = firstRoundMatches >= 4;
+
+  if (isSymmetric && totalRounds >= 2) {
+    renderSymmetricBracket(bracket, rounds, container);
+  } else {
+    renderLinearBracket(bracket, rounds, container);
+  }
+}
+
+// ===============================
+// RENDER LINEAR BRACKET (SIMPLE)
+// ===============================
+function renderLinearBracket(bracket, rounds, container) {
+  const bracketEl = document.createElement("div");
+  bracketEl.className = "bracket-container bracket-linear";
+
+  rounds.forEach((roundId, index) => {
+    const matches = bracket.rounds[roundId];
+    const roundLabel = getRoundLabel(matches.length);
+
+    const roundEl = document.createElement("div");
+    roundEl.className = "bracket-round";
+
+    roundEl.innerHTML = `<div class="bracket-round-label">${escapeHTML(roundLabel)}</div>`;
+
+    matches.forEach(match => {
+      const matchEl = createBracketMatch(match);
+      roundEl.appendChild(matchEl);
+    });
+
+    bracketEl.appendChild(roundEl);
+  });
+
+  container.appendChild(bracketEl);
+}
+
+// ===============================
+// RENDER SYMMETRIC BRACKET (CHAMPIONS STYLE)
+// ===============================
+function renderSymmetricBracket(bracket, rounds, container) {
+  const bracketEl = document.createElement("div");
+  bracketEl.className = "bracket-container bracket-symmetric";
+
+  const totalRounds = rounds.length;
+  const midRound = Math.ceil(totalRounds / 2);
+
+  // Dividi i match del primo round in due metà
+  const firstRoundMatches = bracket.rounds[rounds[0]];
+  const halfCount = Math.ceil(firstRoundMatches.length / 2);
+
+  // LEFT SIDE (prima metà del bracket)
+  const leftSide = document.createElement("div");
+  leftSide.className = "bracket-side bracket-left";
+
+  // RIGHT SIDE (seconda metà del bracket)
+  const rightSide = document.createElement("div");
+  rightSide.className = "bracket-side bracket-right";
+
+  // CENTER (finale)
+  const centerEl = document.createElement("div");
+  centerEl.className = "bracket-final";
+
+  // Processa ogni round
+  rounds.forEach((roundId, roundIndex) => {
+    const matches = bracket.rounds[roundId];
+    const roundLabel = getRoundLabel(matches.length);
+    const isFinal = matches.length === 1;
+
+    if (isFinal) {
+      // Finale al centro
+      centerEl.innerHTML = `
+        <div class="bracket-trophy">🏆</div>
+        <div class="bracket-round-label">Finale</div>
+      `;
+      const matchEl = createBracketMatch(matches[0]);
+      centerEl.appendChild(matchEl);
+
+      // Mostra campione se il match è giocato
+      if (matches[0].winner_team_id) {
+        const championEl = document.createElement("div");
+        championEl.className = "bracket-champion";
+        championEl.textContent = formatTeam(matches[0].winner_team_id);
+        centerEl.appendChild(championEl);
+      }
+    } else {
+      // Dividi i match tra sinistra e destra
+      const leftMatches = matches.slice(0, Math.ceil(matches.length / 2));
+      const rightMatches = matches.slice(Math.ceil(matches.length / 2));
+
+      // Round sinistra
+      if (leftMatches.length > 0) {
+        const leftRoundEl = document.createElement("div");
+        leftRoundEl.className = "bracket-round left";
+        leftRoundEl.innerHTML = `<div class="bracket-round-label">${escapeHTML(roundLabel)}</div>`;
+        
+        leftMatches.forEach(match => {
+          const matchEl = createBracketMatch(match);
+          leftRoundEl.appendChild(matchEl);
+        });
+        
+        leftSide.appendChild(leftRoundEl);
+      }
+
+      // Round destra
+      if (rightMatches.length > 0) {
+        const rightRoundEl = document.createElement("div");
+        rightRoundEl.className = "bracket-round right";
+        rightRoundEl.innerHTML = `<div class="bracket-round-label">${escapeHTML(roundLabel)}</div>`;
+        
+        rightMatches.forEach(match => {
+          const matchEl = createBracketMatch(match);
+          rightRoundEl.appendChild(matchEl);
+        });
+        
+        rightSide.insertBefore(rightRoundEl, rightSide.firstChild);
+      }
+    }
+  });
+
+  bracketEl.appendChild(leftSide);
+  bracketEl.appendChild(centerEl);
+  bracketEl.appendChild(rightSide);
+
+  container.appendChild(bracketEl);
+}
+
+// ===============================
+// CREATE SINGLE BRACKET MATCH
+// ===============================
+function createBracketMatch(match) {
+  const matchEl = document.createElement("div");
+  matchEl.className = "bracket-match";
+
+  const isPlayed = match.played === true || String(match.played).toUpperCase() === "TRUE";
+  const scoreA = match.score_a;
+  const scoreB = match.score_b;
+
+  // Determina vincitore
+  let winnerTeam = null;
+  if (isPlayed) {
+    if (match.winner_team_id) {
+      winnerTeam = match.winner_team_id;
+    } else if (scoreA !== "" && scoreB !== "") {
+      winnerTeam = Number(scoreA) > Number(scoreB) ? match.team_a : match.team_b;
+    }
+  }
+
+  // Team A
+  const teamAEl = document.createElement("div");
+  teamAEl.className = "bracket-team";
+  if (match.team_a) {
+    if (winnerTeam === match.team_a) teamAEl.classList.add("winner");
+    else if (winnerTeam && winnerTeam !== match.team_a) teamAEl.classList.add("loser");
+    
+    teamAEl.innerHTML = `
+      <span class="bracket-team-name">${escapeHTML(formatTeam(match.team_a))}</span>
+      <span class="bracket-team-score">${isPlayed && scoreA !== "" ? scoreA : "-"}</span>
+    `;
+  } else {
+    teamAEl.classList.add("tbd");
+    teamAEl.innerHTML = `<span class="bracket-team-name">TBD</span><span class="bracket-team-score">-</span>`;
+  }
+
+  // Team B
+  const teamBEl = document.createElement("div");
+  teamBEl.className = "bracket-team";
+  if (match.team_b) {
+    if (winnerTeam === match.team_b) teamBEl.classList.add("winner");
+    else if (winnerTeam && winnerTeam !== match.team_b) teamBEl.classList.add("loser");
+    
+    teamBEl.innerHTML = `
+      <span class="bracket-team-name">${escapeHTML(formatTeam(match.team_b))}</span>
+      <span class="bracket-team-score">${isPlayed && scoreB !== "" ? scoreB : "-"}</span>
+    `;
+  } else {
+    teamBEl.classList.add("tbd");
+    teamBEl.innerHTML = `<span class="bracket-team-name">TBD</span><span class="bracket-team-score">-</span>`;
+  }
+
+  matchEl.appendChild(teamAEl);
+  matchEl.appendChild(teamBEl);
+
+  return matchEl;
 }
 
 
