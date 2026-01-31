@@ -1760,40 +1760,42 @@ body {
 }
 
 
+
 .main-standings-row {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
   gap: 24px;
-  align-items: stretch;
+  align-items: start;
 }
 
-/* Il box match si adatta all'altezza del box classifica */
+/* Il box match ha altezza controllata da JS */
 .main-standings-row .standings-results-box {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  overflow: hidden;
 }
 
-/* Il contenuto scrollabile prende l'altezza disponibile */
+/* Il contenuto scrollabile */
 .main-standings-row .standings-results-box .standings-content {
   display: flex;
   flex-direction: column;
   flex: 1;
   overflow: hidden;
   padding: 16px;
-  min-height: 0;
 }
 
 .main-standings-row .standings-results-box .matches-scroll {
   flex: 1;
   overflow-y: auto;
-  min-height: 0;
 }
 
-/* Il box classifica definisce l'altezza della riga */
+/* Il box classifica ha altezza naturale */
 .main-standings-row .standings-table-box {
-  height: fit-content;
+  height: auto;
 }
+
+
+
 
 
 @media (max-width: 900px) {

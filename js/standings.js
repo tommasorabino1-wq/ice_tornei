@@ -64,6 +64,39 @@ function hideSkeletons() {
 
 
 
+// ===============================
+// SYNC BOX HEIGHTS
+// ===============================
+function syncMatchesBoxHeight() {
+  const matchesBox = document.querySelector(".main-standings-row .standings-results-box");
+  const standingsBox = document.querySelector(".main-standings-row .standings-table-box");
+
+  if (!matchesBox || !standingsBox) return;
+
+  // Reset altezza per misurare correttamente
+  matchesBox.style.height = "auto";
+  matchesBox.style.maxHeight = "none";
+
+  // Aspetta il rendering
+  requestAnimationFrame(() => {
+    const standingsHeight = standingsBox.offsetHeight;
+    const matchesNaturalHeight = matchesBox.scrollHeight;
+
+    // Se i match sono più alti della classifica, limita e attiva scroll
+    if (matchesNaturalHeight > standingsHeight && standingsHeight > 0) {
+      matchesBox.style.height = `${standingsHeight}px`;
+      matchesBox.style.maxHeight = `${standingsHeight}px`;
+    } else {
+      // Altrimenti usa l'altezza naturale (ma mai più alta della classifica)
+      matchesBox.style.height = "auto";
+      matchesBox.style.maxHeight = standingsHeight > 0 ? `${standingsHeight}px` : "none";
+    }
+  });
+}
+
+
+
+
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -76,13 +109,19 @@ document.addEventListener("DOMContentLoaded", () => {
   if (tournamentId) {
     hideTournamentFilter();
     loadStandingsPage(tournamentId);
-    return; // ⬅️ FONDAMENTALE
+
+    // ✅ Risincronizza su resize finestra
+    window.addEventListener("resize", () => {
+      clearTimeout(window._resizeSyncTimeout);
+      window._resizeSyncTimeout = setTimeout(syncMatchesBoxHeight, 150);
+    });
+
+    return;
   }
 
   hideSkeletons();
   showTournamentFilter();
 });
-
 
 
 
@@ -186,11 +225,13 @@ function loadMatches(tournamentId) {
       document
         .querySelector(".standings-results-box")
         ?.classList.remove("loading");
+
+      // ✅ Sincronizza altezze dopo un breve delay per assicurare il rendering
+      setTimeout(syncMatchesBoxHeight, 100);
     })
     .catch(() => {
       list.innerHTML = "<p class='error'>Errore caricamento match</p>";
     });
-
 }
 
 
@@ -277,6 +318,9 @@ function renderMatchesByRound(roundId) {
 function onRoundChange(value) {
   if (!value) return;
   renderMatchesByRound(Number(value));
+
+  // ✅ Risincronizza altezze dopo cambio giornata
+  setTimeout(syncMatchesBoxHeight, 50);
 }
 
 
@@ -301,6 +345,9 @@ function loadStandings(tournamentId) {
     .then(data => {
       fadeOutSkeleton(skeleton);
       renderStandings(data);
+
+      // ✅ Sincronizza altezze dopo il rendering della classifica
+      setTimeout(syncMatchesBoxHeight, 100);
     })
     .catch(() => {
       standingsEl.innerHTML =
