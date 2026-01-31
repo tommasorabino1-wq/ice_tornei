@@ -51,6 +51,8 @@
   </div>
 </nav>
 
+
+
 <!-- =====================
      MAIN
 ===================== -->
@@ -67,93 +69,107 @@
       class="finals-section hidden"
       aria-label="Fase finale torneo">
 
+      <h3 class="finals-section-title">
+        <span class="section-icon">🏆</span>
+        Fasi Finali
+      </h3>
+
       <!-- Skeleton Finals -->
       <div class="standings-skeleton finals-skeleton">
-        <h3 class="skeleton skeleton-title"></h3>
         <div class="finals-bracket">
           <div class="skeleton-match"></div>
           <div class="skeleton-match"></div>
         </div>
       </div>
 
-      <!-- Real Finals Bracket -->
-      <div class="finals-bracket">
-        <!-- popolato da standings.js -->
-      </div>
+      <!-- Real Finals Bracket (popolato da JS) -->
+      <div id="finals-bracket-content"></div>
 
     </section>
 
     <!-- =====================
-         MAIN ROW
+         GIRONI SECTION
     ====================== -->
-    <section class="main-standings-row">
+    <section class="gironi-section">
+
+      <h3 class="gironi-section-title">
+        <span class="section-icon">⚽</span>
+        Fase a Gironi
+      </h3>
 
       <!-- =====================
-           MATCHES (GIRONI)
+           MAIN ROW
       ====================== -->
-      <section
-        id="matches-container"
-        class="standings-results-box loading"
-        aria-label="Match gironi">
+      <section class="main-standings-row">
 
-        <!-- Tournament Filter -->
-        <div
-          id="tournament-filter"
-          class="tournament-filter-box standings hidden">
-          <label for="tournament-select">Seleziona torneo</label>
-          <select id="tournament-select"></select>
-        </div>
+        <!-- =====================
+             MATCHES (GIRONI)
+        ====================== -->
+        <section
+          id="matches-container"
+          class="standings-results-box loading"
+          aria-label="Match gironi">
 
-        <!-- Skeleton Matches -->
-        <div class="standings-skeleton" id="matches-skeleton">
-          <h3 class="skeleton skeleton-title"></h3>
-          <div class="matches-scroll">
-            <div class="skeleton-match"></div>
-            <div class="skeleton-match"></div>
-          </div>
-        </div>
-
-        <!-- Real Matches -->
-        <div class="standings-content">
-
-          <div class="round-filter-box">
-            <label for="round-filter">Giornata</label>
-            <select id="round-filter"></select>
-          </div>
-
+          <!-- Tournament Filter -->
           <div
-            id="matches-list"
-            class="matches-scroll"
-            aria-live="polite">
+            id="tournament-filter"
+            class="tournament-filter-box standings hidden">
+            <label for="tournament-select">Seleziona torneo</label>
+            <select id="tournament-select"></select>
           </div>
 
-        </div>
-
-      </section>
-
-      <!-- =====================
-           STANDINGS TABLE
-      ====================== -->
-      <section
-        id="standings-container"
-        class="standings-table-box"
-        aria-label="Classifiche gironi">
-
-        <!-- Skeleton Standings -->
-        <div class="standings-skeleton" id="standings-skeleton">
-          <h3 class="skeleton skeleton-title"></h3>
-          <div class="standings-group skeleton">
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line short"></div>
+          <!-- Skeleton Matches -->
+          <div class="standings-skeleton" id="matches-skeleton">
+            <h3 class="skeleton skeleton-title"></h3>
+            <div class="matches-scroll">
+              <div class="skeleton-match"></div>
+              <div class="skeleton-match"></div>
+            </div>
           </div>
-        </div>
 
-        <!-- Real Standings -->
-        <div
-          id="standings"
-          class="standings-content hidden">
-        </div>
+          <!-- Real Matches -->
+          <div class="standings-content">
+
+            <div class="round-filter-box">
+              <label for="round-filter">Giornata</label>
+              <select id="round-filter"></select>
+            </div>
+
+            <div
+              id="matches-list"
+              class="matches-scroll"
+              aria-live="polite">
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- =====================
+             STANDINGS TABLE
+        ====================== -->
+        <section
+          id="standings-container"
+          class="standings-table-box"
+          aria-label="Classifiche gironi">
+
+          <!-- Skeleton Standings -->
+          <div class="standings-skeleton" id="standings-skeleton">
+            <h3 class="skeleton skeleton-title"></h3>
+            <div class="standings-group skeleton">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+          </div>
+
+          <!-- Real Standings -->
+          <div
+            id="standings"
+            class="standings-content hidden">
+          </div>
+
+        </section>
 
       </section>
 
@@ -161,6 +177,8 @@
 
   </section>
 </main>
+
+
 
 <!-- =====================
      FOOTER

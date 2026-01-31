@@ -619,7 +619,7 @@ function getRoundLabel(matchCount) {
 
 
 function renderFinalsBracket(bracket, tournamentId) {
-  const container = document.getElementById("finals-container");
+  const container = document.getElementById("finals-bracket-content");
   if (!container) return;
 
   container.innerHTML = "";
@@ -646,7 +646,6 @@ function renderFinalsBracket(bracket, tournamentId) {
     container.appendChild(roundBox);
   });
 }
-
 
 
 
@@ -683,7 +682,14 @@ function renderFinalsMatchCard(match, tournamentId) {
     String(scoreA) === String(scoreB) && 
     match.winner_team_id;
 
+  // Determina il round label per il meta
+  const roundLabel = getRoundLabel(1); // fallback, verrà sovrascritto se necessario
+
   card.innerHTML = `
+    <div class="match-meta">
+      <span class="match-round">Fase Finale</span>
+    </div>
+
     <div class="match-teams">
       <span class="team">${escapeHTML(formatTeam(match.team_a))}</span>
 
@@ -740,6 +746,13 @@ function renderFinalsMatchCard(match, tournamentId) {
 
   return card;
 }
+
+
+
+
+
+
+
 
 
 function submitFinalResult(card, match, tournamentId, winnerTeamId) {
@@ -812,7 +825,9 @@ function submitFinalResult(card, match, tournamentId, winnerTeamId) {
             // Ricarica bracket (potrebbe esserci un nuovo round)
             loadFinalsBracket(tournamentId)
               .then(bracket => {
-                if (bracket) renderFinalsBracket(bracket, tournamentId);
+                if (bracket) {
+                  renderFinalsBracket(bracket, tournamentId);
+                }
               });
 
             // Se il torneo è diventato finished, applica layout
@@ -824,7 +839,9 @@ function submitFinalResult(card, match, tournamentId, winnerTeamId) {
             // Fallback: ricarica bracket comunque
             loadFinalsBracket(tournamentId)
               .then(bracket => {
-                if (bracket) renderFinalsBracket(bracket, tournamentId);
+                if (bracket) {
+                  renderFinalsBracket(bracket, tournamentId);
+                }
               });
           });
 
