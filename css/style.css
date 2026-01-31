@@ -1737,7 +1737,7 @@ body {
 .standings-layout {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 48px;
 }
 
 
@@ -1774,8 +1774,8 @@ body {
 
 
 .match-card.finals {
-  border: 2px solid var(--brand);
-  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid var(--border);
+  background: rgba(56, 189, 248, 0.04);
 }
 
 
@@ -1791,20 +1791,7 @@ body {
 }
 
 .match-card.locked::before {
-  content: "Bloccata";
-  position: absolute;
-  top: 10px;
-  left: 10px;
-
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-
-  padding: 3px 6px;
-  border-radius: 4px;
-
-  background-color: rgba(107, 114, 128, 0.18);
-  color: var(--state-finished);
+  display: none;
 }
 
 
@@ -1861,3 +1848,25 @@ body {
   border-radius: var(--radius);
 }
 
+
+/* =========================
+   FINALS ROUNDS SPACING
+========================= */
+.finals-round {
+  margin-bottom: 28px;
+}
+
+.finals-round:last-child {
+  margin-bottom: 0;
+}
+
+.finals-round h3 {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  padding-left: 10px;
+  border-left: 3px solid var(--brand);
+}

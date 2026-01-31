@@ -592,6 +592,32 @@ function applyLayoutByStatus() {
 
 
 
+
+function getRoundLabel(matchCount) {
+  switch (matchCount) {
+    case 16:
+      return "Sedicesimi di Finale";
+    case 8:
+      return "Ottavi di Finale";
+    case 4:
+      return "Quarti di Finale";
+    case 2:
+      return "Semifinali";
+    case 1:
+      return "Finale";
+    default:
+      return `Round (${matchCount} partite)`;
+  }
+}
+
+
+
+
+
+
+
+
+
 function renderFinalsBracket(bracket, tournamentId) {
   const container = document.getElementById("finals-container");
   if (!container) return;
@@ -603,12 +629,16 @@ function renderFinalsBracket(bracket, tournamentId) {
     .sort((a, b) => a - b);
 
   rounds.forEach(roundId => {
+    const matchesInRound = bracket.rounds[roundId];
+    const matchCount = matchesInRound.length;
+    const roundLabel = getRoundLabel(matchCount);
+
     const roundBox = document.createElement("div");
     roundBox.className = "finals-round";
 
-    roundBox.innerHTML = `<h3>Round ${roundId}</h3>`;
+    roundBox.innerHTML = `<h3>${escapeHTML(roundLabel)}</h3>`;
 
-    bracket.rounds[roundId].forEach(match => {
+    matchesInRound.forEach(match => {
       const card = renderFinalsMatchCard(match, tournamentId);
       roundBox.appendChild(card);
     });
@@ -616,6 +646,8 @@ function renderFinalsBracket(bracket, tournamentId) {
     container.appendChild(roundBox);
   });
 }
+
+
 
 
 function renderFinalsMatchCard(match, tournamentId) {
@@ -643,6 +675,14 @@ function renderFinalsMatchCard(match, tournamentId) {
     btnClass = "btn secondary submit-result";
   }
 
+  // Verifica se è un pareggio con vincitore già selezionato
+  const scoreA = match.score_a;
+  const scoreB = match.score_b;
+  const isTieWithWinner = isPlayed && 
+    scoreA !== "" && scoreB !== "" && 
+    String(scoreA) === String(scoreB) && 
+    match.winner_team_id;
+
   card.innerHTML = `
     <div class="match-teams">
       <span class="team">${escapeHTML(formatTeam(match.team_a))}</span>
@@ -662,12 +702,12 @@ function renderFinalsMatchCard(match, tournamentId) {
       <span class="team">${escapeHTML(formatTeam(match.team_b))}</span>
     </div>
 
-    <div class="winner-select hidden">
-      <label>Winner</label>
+    <div class="winner-select ${isTieWithWinner ? "" : "hidden"}">
+      <label>Vincitore spareggio</label>
       <select ${tournamentLocked ? "disabled" : ""}>
         <option value="">Seleziona</option>
-        <option value="${match.team_a}">${formatTeam(match.team_a)}</option>
-        <option value="${match.team_b}">${formatTeam(match.team_b)}</option>
+        <option value="${match.team_a}" ${match.winner_team_id === match.team_a ? "selected" : ""}>${formatTeam(match.team_a)}</option>
+        <option value="${match.team_b}" ${match.winner_team_id === match.team_b ? "selected" : ""}>${formatTeam(match.team_b)}</option>
       </select>
     </div>
 
@@ -700,7 +740,6 @@ function renderFinalsMatchCard(match, tournamentId) {
 
   return card;
 }
-
 
 
 function submitFinalResult(card, match, tournamentId, winnerTeamId) {
