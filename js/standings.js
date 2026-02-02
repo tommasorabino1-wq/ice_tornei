@@ -793,18 +793,11 @@ function renderLinearBracket(bracket, rounds, container) {
 }
 
 // ===============================
-// RENDER SYMMETRIC BRACKET (CHAMPIONS STYLE)
+// RENDER SYMMETRIC BRACKET (CHAMPIONS STYLE) - FIXED
 // ===============================
 function renderSymmetricBracket(bracket, rounds, container) {
   const bracketEl = document.createElement("div");
   bracketEl.className = "bracket-container bracket-symmetric";
-
-  const totalRounds = rounds.length;
-  const midRound = Math.ceil(totalRounds / 2);
-
-  // Dividi i match del primo round in due metà
-  const firstRoundMatches = bracket.rounds[rounds[0]];
-  const halfCount = Math.ceil(firstRoundMatches.length / 2);
 
   // LEFT SIDE (prima metà del bracket)
   const leftSide = document.createElement("div");
@@ -845,7 +838,9 @@ function renderSymmetricBracket(bracket, rounds, container) {
       const leftMatches = matches.slice(0, Math.ceil(matches.length / 2));
       const rightMatches = matches.slice(Math.ceil(matches.length / 2));
 
-      // Round sinistra
+      // =============================
+      // ROUND SINISTRA (normale)
+      // =============================
       if (leftMatches.length > 0) {
         const leftRoundEl = document.createElement("div");
         leftRoundEl.className = "bracket-round left";
@@ -856,10 +851,13 @@ function renderSymmetricBracket(bracket, rounds, container) {
           leftRoundEl.appendChild(matchEl);
         });
         
+        // ✅ Aggiungi in ordine normale (da sinistra a destra)
         leftSide.appendChild(leftRoundEl);
       }
 
-      // Round destra
+      // =============================
+      // ROUND DESTRA (invertito)
+      // =============================
       if (rightMatches.length > 0) {
         const rightRoundEl = document.createElement("div");
         rightRoundEl.className = "bracket-round right";
@@ -870,7 +868,9 @@ function renderSymmetricBracket(bracket, rounds, container) {
           rightRoundEl.appendChild(matchEl);
         });
         
-        rightSide.insertBefore(rightRoundEl, rightSide.firstChild);
+        // ✅ CHIAVE: Aggiungi in ordine normale, 
+        // il CSS con flex-direction: row-reverse farà l'inversione visiva
+        rightSide.appendChild(rightRoundEl);
       }
     }
   });
