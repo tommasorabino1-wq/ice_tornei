@@ -1885,6 +1885,9 @@ body {
    FINALS SECTION CONTAINER
 ========================= */
 .finals-section {
+  width: 100%;
+  max-width: 100%;
+  
   background-color: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -1947,9 +1950,10 @@ body {
 ========================= */
 .finals-layout {
   display: grid;
-  grid-template-columns: 1fr 1.5fr;
+  grid-template-columns: minmax(400px, 0.8fr) 1fr;
   gap: 32px;
   margin-top: 20px;
+  width: 100%;
 }
 
 .finals-matches-column,
@@ -1958,6 +1962,11 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
+}
+
+.finals-bracket-column {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .finals-column-title {
@@ -1983,8 +1992,9 @@ body {
   justify-content: center;
   gap: 0;
   padding: 40px 20px;
-  overflow-x: auto;
+  overflow-x: visible;
   min-height: 500px;
+  min-width: min-content;
 }
 
 /* =============================
@@ -2384,7 +2394,23 @@ body {
 /* =============================
    RESPONSIVE BRACKET
 ============================= */
+@media (max-width: 1400px) {
+  .finals-layout {
+    grid-template-columns: minmax(350px, 0.7fr) 1fr;
+    gap: 24px;
+  }
+  
+  .bracket-container {
+    padding: 30px 15px;
+  }
+}
+
 @media (max-width: 1200px) {
+  .finals-layout {
+    grid-template-columns: minmax(320px, 0.6fr) 1fr;
+    gap: 20px;
+  }
+  
   .bracket-symmetric {
     gap: 40px;
   }
@@ -2409,12 +2435,19 @@ body {
   }
 }
 
+
 @media (max-width: 1000px) {
   .finals-layout {
     grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .finals-bracket-column {
+    overflow-x: auto;
   }
   
   .bracket-container {
+    justify-content: flex-start;
     padding: 30px 15px;
     min-height: 400px;
   }
