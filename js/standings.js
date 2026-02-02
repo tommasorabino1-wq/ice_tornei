@@ -658,14 +658,11 @@ function loadFinalsBracket(tournamentId) {
 
 function applyLayoutByStatus() {
   const finals = document.getElementById("finals-container");
-  const bracketSection = document.getElementById("bracket-container-section");
 
   finals.classList.add("hidden");
-  if (bracketSection) bracketSection.classList.add("hidden");
 
   if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished") {
     finals.classList.remove("hidden");
-    if (bracketSection) bracketSection.classList.remove("hidden");
   }
 }
 
@@ -750,34 +747,35 @@ function renderFinalsBracket(bracket, tournamentId) {
 
 
 // ===============================
-// RENDER QUALIFIED TEAMS
+// RENDER QUALIFIED TEAMS (PER ROUND SELEZIONATO)
 // ===============================
 function renderQualifiedTeams(bracket, container) {
   if (!container) return;
 
-  // Estrai tutte le squadre uniche dal primo round
-  const firstRound = bracket.rounds[Object.keys(bracket.rounds).sort((a, b) => Number(a) - Number(b))[0]];
+  // Usa il round attualmente selezionato
+  const selectedRound = FINALS_SELECTED_ROUND_ID;
+  const currentRoundMatches = bracket.rounds?.[selectedRound];
   
-  if (!firstRound || firstRound.length === 0) {
+  if (!currentRoundMatches || currentRoundMatches.length === 0) {
     container.innerHTML = "<p class='qualified-empty'>Nessuna squadra qualificata</p>";
     return;
   }
 
-  // Raccogli tutte le squadre
+  // Raccogli tutte le squadre del round selezionato
   const teams = [];
-  firstRound.forEach((match, index) => {
+  let seedCounter = 1;
+  
+  currentRoundMatches.forEach(match => {
     if (match.team_a) {
       teams.push({
         name: formatTeam(match.team_a),
-        seed: (index * 2) + 1,
-        group: match.team_a.includes('_') ? match.team_a.split('_')[0].split('-').pop() : '?'
+        seed: seedCounter++
       });
     }
     if (match.team_b) {
       teams.push({
         name: formatTeam(match.team_b),
-        seed: (index * 2) + 2,
-        group: match.team_b.includes('_') ? match.team_b.split('_')[0].split('-').pop() : '?'
+        seed: seedCounter++
       });
     }
   });
@@ -787,14 +785,13 @@ function renderQualifiedTeams(bracket, container) {
     return;
   }
 
-  // Renderizza lista
+  // Renderizza lista (SENZA badge "G1")
   container.innerHTML = `
     <div class="qualified-teams-list">
       ${teams.map(team => `
         <div class="qualified-team-item">
           <span class="qualified-team-seed">${team.seed}</span>
           <span class="qualified-team-name">${escapeHTML(team.name)}</span>
-          <span class="qualified-team-group">G${team.group}</span>
         </div>
       `).join('')}
     </div>

@@ -82,37 +82,50 @@
         </div>
       </div>
 
-      <!-- Layout a due colonne: Match input + Squadre qualificate -->
-      <div class="finals-layout">
+      <!-- SUBSECTION 1: Match input + Squadre qualificate -->
+      <div class="finals-subsection">
+        <h4 class="finals-subsection-title">Gestione Risultati</h4>
+        
+        <div class="finals-layout">
 
-        <!-- COLONNA SINISTRA: Match cards per inserire risultati -->
-        <div class="finals-matches-column">
-          <h4 class="finals-column-title">Inserisci Risultati</h4>
+          <!-- COLONNA SINISTRA: Match cards per inserire risultati -->
+          <div class="finals-matches-column">
+            <h5 class="finals-column-title">Inserisci Risultati</h5>
 
-          <!-- Filter Finals -->
-          <div class="round-filter-box">
-            <label for="finals-round-filter">Fase</label>
-            <select id="finals-round-filter"></select>
+            <!-- Filter Finals -->
+            <div class="round-filter-box">
+              <label for="finals-round-filter">Fase</label>
+              <select id="finals-round-filter"></select>
+            </div>
+
+            <div id="finals-bracket-content"></div>
           </div>
 
-          <div id="finals-bracket-content"></div>
-        </div>
-
-        <!-- COLONNA DESTRA: Squadre qualificate -->
-        <div class="qualified-teams-column">
-          <h4 class="finals-column-title">Squadre Qualificate</h4>
-          
-          <!-- Skeleton Qualified Teams -->
-          <div class="qualified-skeleton hidden" id="qualified-skeleton">
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line"></div>
-            <div class="skeleton-line short"></div>
+          <!-- COLONNA DESTRA: Squadre qualificate -->
+          <div class="qualified-teams-column">
+            <h5 class="finals-column-title">Squadre Qualificate</h5>
+            
+            <!-- Skeleton Qualified Teams -->
+            <div class="qualified-skeleton hidden" id="qualified-skeleton">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+            
+            <!-- Real Qualified Teams -->
+            <div id="qualified-teams-list"></div>
           </div>
-          
-          <!-- Real Qualified Teams -->
-          <div id="qualified-teams-list"></div>
-        </div>
 
+        </div>
+      </div>
+
+      <!-- SUBSECTION 2: Tabellone full-width -->
+      <div class="finals-subsection">
+        <h4 class="finals-subsection-title">Tabellone</h4>
+        
+        <div class="finals-bracket-column">
+          <div id="finals-bracket-visual"></div>
+        </div>
       </div>
 
     </section>
@@ -127,7 +140,7 @@
 
       <h3 class="bracket-section-title">
         <span class="section-icon">📊</span>
-        Tabellone
+        Tabellone Fasi Finali
       </h3>
 
       <div class="finals-bracket-column">

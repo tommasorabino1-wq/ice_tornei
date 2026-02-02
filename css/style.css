@@ -1965,52 +1965,41 @@ body {
 }
 
 .finals-column-title {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-muted);
-  margin-bottom: 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 
 /* =========================
-   BRACKET SECTION (FULL WIDTH)
+   FINALS SUBSECTIONS
 ========================= */
-.bracket-section {
-  width: 100%;
-  max-width: 100%;
-  
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 56px;
+.finals-subsection {
+  margin-top: 32px;
 }
 
-.bracket-section.hidden {
-  display: none;
+.finals-subsection:first-of-type {
+  margin-top: 0;
 }
 
-.bracket-section-title {
-  font-size: 18px;
+.finals-subsection-title {
+  font-size: 16px;
   font-weight: 700;
   color: var(--text-main);
-  margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid rgba(139, 92, 246, 0.6);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.bracket-section-title .section-icon {
-  font-size: 20px;
-}
-
-.bracket-section .finals-bracket-column {
+.finals-subsection .finals-bracket-column {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -2590,7 +2579,7 @@ body {
     gap: 24px;
   }
   
-  .bracket-section .finals-bracket-column {
+  .finals-subsection .finals-bracket-column {
     overflow-x: auto;
   }
   
