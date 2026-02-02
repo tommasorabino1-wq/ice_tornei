@@ -883,7 +883,7 @@ function renderSymmetricBracket(bracket, rounds, container) {
 }
 
 // ===============================
-// CREATE SINGLE BRACKET MATCH
+// CREATE SINGLE BRACKET MATCH (REFINED)
 // ===============================
 function createBracketMatch(match) {
   const matchEl = document.createElement("div");
@@ -898,41 +898,64 @@ function createBracketMatch(match) {
   if (isPlayed) {
     if (match.winner_team_id) {
       winnerTeam = match.winner_team_id;
-    } else if (scoreA !== "" && scoreB !== "") {
-      winnerTeam = Number(scoreA) > Number(scoreB) ? match.team_a : match.team_b;
+    } else if (scoreA !== "" && scoreB !== "" && scoreA !== null && scoreB !== null) {
+      const numA = Number(scoreA);
+      const numB = Number(scoreB);
+      if (numA > numB) {
+        winnerTeam = match.team_a;
+      } else if (numB > numA) {
+        winnerTeam = match.team_b;
+      }
+      // Se parità e nessun winner_team_id, nessun vincitore visivamente
     }
   }
 
   // Team A
   const teamAEl = document.createElement("div");
   teamAEl.className = "bracket-team";
+  
   if (match.team_a) {
-    if (winnerTeam === match.team_a) teamAEl.classList.add("winner");
-    else if (winnerTeam && winnerTeam !== match.team_a) teamAEl.classList.add("loser");
+    // Applica classi winner/loser
+    if (winnerTeam === match.team_a) {
+      teamAEl.classList.add("winner");
+    } else if (winnerTeam && winnerTeam !== match.team_a) {
+      teamAEl.classList.add("loser");
+    }
     
     teamAEl.innerHTML = `
       <span class="bracket-team-name">${escapeHTML(formatTeam(match.team_a))}</span>
-      <span class="bracket-team-score">${isPlayed && scoreA !== "" ? scoreA : "-"}</span>
+      <span class="bracket-team-score">${isPlayed && scoreA !== "" && scoreA !== null ? scoreA : "−"}</span>
     `;
   } else {
     teamAEl.classList.add("tbd");
-    teamAEl.innerHTML = `<span class="bracket-team-name">TBD</span><span class="bracket-team-score">-</span>`;
+    teamAEl.innerHTML = `
+      <span class="bracket-team-name">TBD</span>
+      <span class="bracket-team-score">−</span>
+    `;
   }
 
   // Team B
   const teamBEl = document.createElement("div");
   teamBEl.className = "bracket-team";
+  
   if (match.team_b) {
-    if (winnerTeam === match.team_b) teamBEl.classList.add("winner");
-    else if (winnerTeam && winnerTeam !== match.team_b) teamBEl.classList.add("loser");
+    // Applica classi winner/loser
+    if (winnerTeam === match.team_b) {
+      teamBEl.classList.add("winner");
+    } else if (winnerTeam && winnerTeam !== match.team_b) {
+      teamBEl.classList.add("loser");
+    }
     
     teamBEl.innerHTML = `
       <span class="bracket-team-name">${escapeHTML(formatTeam(match.team_b))}</span>
-      <span class="bracket-team-score">${isPlayed && scoreB !== "" ? scoreB : "-"}</span>
+      <span class="bracket-team-score">${isPlayed && scoreB !== "" && scoreB !== null ? scoreB : "−"}</span>
     `;
   } else {
     teamBEl.classList.add("tbd");
-    teamBEl.innerHTML = `<span class="bracket-team-name">TBD</span><span class="bracket-team-score">-</span>`;
+    teamBEl.innerHTML = `
+      <span class="bracket-team-name">TBD</span>
+      <span class="bracket-team-score">−</span>
+    `;
   }
 
   matchEl.appendChild(teamAEl);
