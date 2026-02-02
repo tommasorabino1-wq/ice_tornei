@@ -1950,23 +1950,18 @@ body {
 ========================= */
 .finals-layout {
   display: grid;
-  grid-template-columns: minmax(400px, 0.8fr) 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 32px;
   margin-top: 20px;
   width: 100%;
 }
 
 .finals-matches-column,
-.finals-bracket-column {
+.qualified-teams-column {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
-}
-
-.finals-bracket-column {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .finals-column-title {
@@ -1978,6 +1973,159 @@ body {
   margin-bottom: 16px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
+}
+
+
+/* =========================
+   BRACKET SECTION (FULL WIDTH)
+========================= */
+.bracket-section {
+  width: 100%;
+  max-width: 100%;
+  
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 56px;
+}
+
+.bracket-section.hidden {
+  display: none;
+}
+
+.bracket-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(139, 92, 246, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bracket-section-title .section-icon {
+  font-size: 20px;
+}
+
+.bracket-section .finals-bracket-column {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* =========================
+   QUALIFIED TEAMS LIST
+========================= */
+.qualified-teams-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qualified-team-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.qualified-team-item:hover {
+  transform: translateX(2px);
+  background-color: rgba(56, 189, 248, 0.06);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+.qualified-team-seed {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  font-size: 13px;
+  font-weight: 800;
+  
+  background-color: rgba(56, 189, 248, 0.18);
+  color: var(--brand);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.qualified-team-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.qualified-team-group {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  
+  padding: 4px 8px;
+  border-radius: 999px;
+  
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.qualified-empty {
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius);
+}
+
+/* =========================
+   QUALIFIED TEAMS SKELETON
+========================= */
+.qualified-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+}
+
+.qualified-skeleton .skeleton-line {
+  height: 28px;
+  width: 100%;
+  border-radius: var(--radius);
+  
+  background: linear-gradient(
+    90deg,
+    #1f2933 25%,
+    #2a3441 37%,
+    #1f2933 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+.qualified-skeleton .skeleton-line.short {
+  width: 70%;
 }
 
 
@@ -2442,7 +2590,7 @@ body {
     gap: 24px;
   }
   
-  .finals-bracket-column {
+  .bracket-section .finals-bracket-column {
     overflow-x: auto;
   }
   

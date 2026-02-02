@@ -82,14 +82,14 @@
         </div>
       </div>
 
-      <!-- Layout a due colonne: Match input + Bracket visuale -->
+      <!-- Layout a due colonne: Match input + Squadre qualificate -->
       <div class="finals-layout">
 
         <!-- COLONNA SINISTRA: Match cards per inserire risultati -->
         <div class="finals-matches-column">
           <h4 class="finals-column-title">Inserisci Risultati</h4>
 
-          <!-- ✅ Filter Finals (stessa UI dei gironi) -->
+          <!-- Filter Finals -->
           <div class="round-filter-box">
             <label for="finals-round-filter">Fase</label>
             <select id="finals-round-filter"></select>
@@ -98,13 +98,40 @@
           <div id="finals-bracket-content"></div>
         </div>
 
-
-        <!-- COLONNA DESTRA: Bracket visuale -->
-        <div class="finals-bracket-column">
-          <h4 class="finals-column-title">Tabellone</h4>
-          <div id="finals-bracket-visual"></div>
+        <!-- COLONNA DESTRA: Squadre qualificate -->
+        <div class="qualified-teams-column">
+          <h4 class="finals-column-title">Squadre Qualificate</h4>
+          
+          <!-- Skeleton Qualified Teams -->
+          <div class="qualified-skeleton hidden" id="qualified-skeleton">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
+          </div>
+          
+          <!-- Real Qualified Teams -->
+          <div id="qualified-teams-list"></div>
         </div>
 
+      </div>
+
+    </section>
+
+    <!-- =====================
+        BRACKET SECTION (FULL WIDTH)
+    ====================== -->
+    <section
+      id="bracket-container-section"
+      class="bracket-section hidden"
+      aria-label="Tabellone fasi finali">
+
+      <h3 class="bracket-section-title">
+        <span class="section-icon">📊</span>
+        Tabellone
+      </h3>
+
+      <div class="finals-bracket-column">
+        <div id="finals-bracket-visual"></div>
       </div>
 
     </section>
