@@ -818,9 +818,10 @@ function renderBracketVisual(bracket, container) {
   const totalRounds = rounds.length;
   const firstRoundMatches = bracket.rounds[rounds[0]].length;
 
-  // Determina se usare layout simmetrico (bracket stile Champions)
-  // Per ora usiamo un layout lineare per semplicità
-  const isSymmetric = firstRoundMatches >= 4;
+  // Determina se usare layout simmetrico
+  // Caso 1: ≥4 match nel primo round (quarti, ottavi, etc.)
+  // Caso 2: Esattamente 2 match nel primo round + almeno una finale (semifinali + finale)
+  const isSymmetric = firstRoundMatches >= 4 || (firstRoundMatches === 2 && totalRounds >= 2);
 
   if (isSymmetric && totalRounds >= 2) {
     renderSymmetricBracket(bracket, rounds, container);
@@ -828,6 +829,9 @@ function renderBracketVisual(bracket, container) {
     renderLinearBracket(bracket, rounds, container);
   }
 }
+
+
+
 
 // ===============================
 // RENDER LINEAR BRACKET (SIMPLE)
