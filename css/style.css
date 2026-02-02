@@ -2011,7 +2011,7 @@ body {
 
 .bracket-right {
   flex-direction: row-reverse;
-  justify-content: flex-end;
+  justify-content: flex-start;  /* ✅ allinea verso sinistra (centro) */
 }
 
 /* Ogni round è una colonna verticale */
