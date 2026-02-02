@@ -2004,14 +2004,16 @@ body {
   gap: 48px;
 }
 
+/* LATO SINISTRO: rounds da sinistra verso centro (→) */
 .bracket-left {
   flex-direction: row;
   justify-content: flex-end;
 }
 
+/* LATO DESTRO: rounds da destra verso centro (←) */
 .bracket-right {
   flex-direction: row-reverse;
-  justify-content: flex-start;  /* ✅ allinea verso sinistra (centro) */
+  justify-content: flex-start;
 }
 
 /* Ogni round è una colonna verticale */
@@ -2024,11 +2026,13 @@ body {
   gap: 0;
 }
 
-/* Allineamento round */
+/* ALLINEAMENTO ROUND */
+/* Sinistra: allinea a destra (verso il centro) */
 .bracket-round.left {
   align-items: flex-end;
 }
 
+/* Destra: allinea a sinistra (verso il centro) */
 .bracket-round.right {
   align-items: flex-start;
 }
@@ -2238,7 +2242,7 @@ body {
    BRACKET CONNECTORS (LINES)
 ============================= */
 
-/* Linea orizzontale base */
+/* LINEA ORIZZONTALE SINISTRA: dalla card verso destra (→) */
 .bracket-left .bracket-match::after {
   content: "";
   position: absolute;
@@ -2254,6 +2258,7 @@ body {
   );
 }
 
+/* LINEA ORIZZONTALE DESTRA: dalla card verso sinistra (←) */
 .bracket-right .bracket-match::after {
   content: "";
   position: absolute;
