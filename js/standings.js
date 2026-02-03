@@ -3,7 +3,7 @@
 // ===============================
 
 // ⚠️ INSERISCI QUI L’URL DELLA TUA WEB APP
-const API_URL = "https://script.google.com/macros/s/AKfycbx_J7kEn3eI87crMvo6lKLBp5bmbT5ukCcYhYsl9DCIjFxEZjbgxPKCvj-kWNzJdWvhQA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxUrXYVTvf784kbRIWssmu37VJVZVuJ9YuCLh0yL-t5BN3VJJuhNk5Xr5hhKCx_nDibCQ/exec";
 
 let TOURNAMENT_STATUS = null;
 
