@@ -220,14 +220,7 @@ function mapDaysToText(days) {
   const mappings = {
     "lun-ven": "lun-ven",
     "lun-dom": "ogni giorno",
-    "sab-dom": "weekend",
-    "lun": "lunedì",
-    "mar": "martedì",
-    "mer": "mercoledì",
-    "gio": "giovedì",
-    "ven": "venerdì",
-    "sab": "sabato",
-    "dom": "domenica"
+    "sab-dom": "weekend"
   };
 
   return mappings[daysLower] || days;

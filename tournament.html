@@ -255,6 +255,9 @@
           <p id="subscribe-message"></p>
 
           <form id="registration-form">
+            <!-- =============================
+                CAMPI BASE (SEMPRE PRESENTI)
+            ============================= -->
             <label>
               Nome squadra
               <input type="text" name="team_name" required>
@@ -269,6 +272,12 @@
               Telefono
               <input type="tel" name="phone" required>
             </label>
+
+            <!-- =============================
+                CAMPI AGGIUNTIVI (SOLO SE fixed_court = FALSE)
+                Popolati dinamicamente dal JavaScript
+            ============================= -->
+            <div id="extra-fields-container"></div>
 
             <button type="submit" class="btn primary">
               Invia iscrizione

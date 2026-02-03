@@ -134,6 +134,9 @@ function renderGenericRegulation(tournaments) {
 // ===============================
 // 6. RENDER TORNEO SPECIFICO
 // ===============================
+// ===============================
+// 6. RENDER TORNEO SPECIFICO
+// ===============================
 function renderTournament(tournament) {
   genericSection.classList.add("hidden");
   tournamentSection.classList.remove("hidden");
@@ -156,12 +159,202 @@ function renderTournament(tournament) {
   applyTournamentState(tournament);
 
   if (tournament.status === "open") {
+    // ✅ NUOVO: popola campi extra PRIMA di gestire submit
+    populateExtraFields(tournament);
     handleFormSubmit(tournament);
   }
 
-  // ✅ NEW: Load + render teams list block under the two columns
+  // ✅ Load + render teams list block
   loadAndRenderTeamsList(tournament);
 }
+
+
+
+// ===============================
+// 6B. POPOLA CAMPI EXTRA FORM (NEW)
+// ===============================
+function populateExtraFields(tournament) {
+  const container = document.getElementById("extra-fields-container");
+  container.innerHTML = ""; // reset
+
+  const fixedCourt = String(tournament.fixed_court).toUpperCase() === "TRUE";
+
+  // CASO A: fixed_court = TRUE → nessun campo extra
+  if (fixedCourt) return;
+
+  // CASO B: fixed_court = FALSE → campi extra
+  const availableDays = String(tournament.available_days || "").trim();
+  const availableHours = String(tournament.available_hours || "").trim();
+
+  // =============================
+  // CAMPO 1: ZONA PREFERITA
+  // =============================
+  const zoneField = document.createElement("label");
+  zoneField.innerHTML = `
+    Zona preferita
+    <span class="field-helper">Indica la zona di Torino e provincia dove preferisci giocare (es. Moncalieri, Zona Lingotto, Zona Crocetta)</span>
+    <input type="text" name="preferred_zone" required placeholder="Es. Moncalieri">
+  `;
+  container.appendChild(zoneField);
+
+  // =============================
+  // CAMPO 2: GIORNI PREFERITI
+  // =============================
+  if (availableDays && availableDays !== "NA") {
+    const daysField = buildDaysField(availableDays);
+    container.appendChild(daysField);
+  }
+
+  // =============================
+  // CAMPO 3: ORARIO PREFERITO
+  // =============================
+  if (availableHours && availableHours !== "NA") {
+    const hoursField = buildHoursField(availableHours);
+    container.appendChild(hoursField);
+  }
+}
+
+// ===============================
+// BUILD DAYS FIELD (NEW)
+// ===============================
+function buildDaysField(availableDays) {
+  const wrapper = document.createElement("div");
+  
+  // Mappa giorni disponibili
+  const daysMap = parseDaysRange(availableDays);
+  
+  // Determina quanti giorni servono
+  const minDays = (availableDays === "sab-dom") ? 1 : 2;
+  
+  const label = (minDays === 1) 
+    ? "Giorno preferito" 
+    : `Giorni preferiti (seleziona almeno ${minDays})`;
+
+  wrapper.innerHTML = `
+    <label style="display: flex; flex-direction: column;">
+      ${label}
+      <span class="field-helper">Seleziona ${minDays === 1 ? 'il giorno' : 'i giorni'} in cui preferisci giocare</span>
+    </label>
+  `;
+
+  const checkboxGroup = document.createElement("div");
+  checkboxGroup.className = "checkbox-group";
+  checkboxGroup.dataset.minDays = minDays;
+
+  daysMap.forEach(day => {
+    const item = document.createElement("div");
+    item.className = "checkbox-item";
+    
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.name = "preferred_days[]";
+    checkbox.value = day.value;
+    checkbox.id = `day-${day.value}`;
+    
+    const itemLabel = document.createElement("label");
+    itemLabel.setAttribute("for", `day-${day.value}`);
+    itemLabel.textContent = day.label;
+    
+    item.appendChild(checkbox);
+    item.appendChild(itemLabel);
+    checkboxGroup.appendChild(item);
+  });
+
+  wrapper.appendChild(checkboxGroup);
+  return wrapper;
+}
+
+// ===============================
+// BUILD HOURS FIELD (NEW)
+// ===============================
+function buildHoursField(availableHours) {
+  const wrapper = document.createElement("label");
+  
+  const slots = parseHoursSlots(availableHours);
+  
+  wrapper.innerHTML = `
+    Orario preferito
+    <span class="field-helper">Scegli lo slot orario in cui preferisci giocare</span>
+  `;
+
+  const select = document.createElement("select");
+  select.name = "preferred_hours";
+  select.required = true;
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Seleziona uno slot";
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  select.appendChild(placeholder);
+
+  slots.forEach(slot => {
+    const option = document.createElement("option");
+    option.value = slot.value;
+    option.textContent = slot.label;
+    select.appendChild(option);
+  });
+
+  wrapper.appendChild(select);
+  return wrapper;
+}
+
+// ===============================
+// PARSE DAYS RANGE (NEW)
+// ===============================
+function parseDaysRange(range) {
+  const allDays = [
+    { value: "lun", label: "Lunedì" },
+    { value: "mar", label: "Martedì" },
+    { value: "mer", label: "Mercoledì" },
+    { value: "gio", label: "Giovedì" },
+    { value: "ven", label: "Venerdì" },
+    { value: "sab", label: "Sabato" },
+    { value: "dom", label: "Domenica" }
+  ];
+
+  const rangeLower = range.toLowerCase();
+
+  if (rangeLower === "lun-ven") {
+    return allDays.slice(0, 5); // lun → ven
+  }
+  
+  if (rangeLower === "sab-dom") {
+    return allDays.slice(5, 7); // sab, dom
+  }
+  
+  if (rangeLower === "lun-dom") {
+    return allDays; // tutti
+  }
+
+  return allDays;
+}
+
+// ===============================
+// PARSE HOURS SLOTS (NEW)
+// ===============================
+function parseHoursSlots(range) {
+  const rangeLower = range.toLowerCase();
+  
+  // Estrai ore di inizio e fine
+  const [start, end] = rangeLower.split("-").map(Number);
+  
+  if (!start || !end || end <= start) return [];
+
+  const slots = [];
+  
+  // Genera slot di 2 ore
+  for (let h = start; h <= end - 2; h++) {
+    slots.push({
+      value: `${h}-${h + 2}`,
+      label: `${String(h).padStart(2, "0")}:00 - ${String(h + 2).padStart(2, "0")}:00`
+    });
+  }
+
+  return slots;
+}
+
+
 
 
 
@@ -210,20 +403,35 @@ function applyTournamentState(tournament) {
 }
 
 
-// ===============================
-// 8. SUBMIT ISCRIZIONE
-// ===============================
+
 // ===============================
 // 8. SUBMIT ISCRIZIONE (WITH LOADING STATE)
+// ===============================
+// ===============================
+// 8. SUBMIT ISCRIZIONE (WITH VALIDATION)
 // ===============================
 function handleFormSubmit(tournament) {
   form.addEventListener("submit", function (e) {
     e.preventDefault();
 
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const inputs = form.querySelectorAll("input");
+    // =============================
+    // VALIDAZIONE GIORNI (SE PRESENTI)
+    // =============================
+    const checkboxGroup = form.querySelector(".checkbox-group");
+    if (checkboxGroup) {
+      const minDays = Number(checkboxGroup.dataset.minDays);
+      const checked = form.querySelectorAll('input[name="preferred_days[]"]:checked');
+      
+      if (checked.length < minDays) {
+        showToast(`Devi selezionare almeno ${minDays} ${minDays === 1 ? 'giorno' : 'giorni'} ⚠️`);
+        return;
+      }
+    }
 
-    // ✅ CREA PRIMA I DATI
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const inputs = form.querySelectorAll("input, select");
+
+    // ✅ CREA FORM DATA
     const formData = new FormData(form);
     formData.append("tournament_id", tournament.tournament_id);
 
@@ -283,8 +491,9 @@ function handleFormSubmit(tournament) {
       inputs.forEach(input => input.disabled = false);
     }
 
-  }, { once: true }); // 🔥 QUESTA È LA CHIAVE
+  }, { once: true });
 }
+
 
 
 
