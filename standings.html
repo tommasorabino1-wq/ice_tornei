@@ -139,91 +139,81 @@
       </h3>
 
       <!-- =====================
-          GIRONI SECTION
+          SUBSECTION 1: INSERISCI RISULTATI
       ====================== -->
-      <section class="gironi-section">
+      <div class="gironi-subsection">
+        <h4 class="gironi-subsection-title">Inserisci Risultati</h4>
+        
+        <section
+          id="matches-container"
+          class="standings-results-box-fullwidth loading"
+          aria-label="Match gironi">
 
-        <h3 class="gironi-section-title">
-          <span class="section-icon">⚽</span>
-          Fase a Gironi
-        </h3>
+          <!-- Tournament Filter -->
+          <div
+            id="tournament-filter"
+            class="tournament-filter-box standings hidden">
+            <label for="tournament-select">Seleziona torneo</label>
+            <select id="tournament-select"></select>
+          </div>
 
-        <!-- =====================
-            SUBSECTION 1: INSERISCI RISULTATI
-        ====================== -->
-        <div class="gironi-subsection">
-          <h4 class="gironi-subsection-title">Inserisci Risultati</h4>
-          
-          <section
-            id="matches-container"
-            class="standings-results-box-fullwidth loading"
-            aria-label="Match gironi">
+          <!-- Skeleton Matches -->
+          <div class="standings-skeleton" id="matches-skeleton">
+            <h3 class="skeleton skeleton-title"></h3>
+            <div class="matches-scroll">
+              <div class="skeleton-match"></div>
+              <div class="skeleton-match"></div>
+            </div>
+          </div>
 
-            <!-- Tournament Filter -->
+          <!-- Real Matches -->
+          <div class="standings-content">
+            <div class="round-filter-box">
+              <label for="round-filter">Giornata</label>
+              <select id="round-filter"></select>
+            </div>
+
             <div
-              id="tournament-filter"
-              class="tournament-filter-box standings hidden">
-              <label for="tournament-select">Seleziona torneo</label>
-              <select id="tournament-select"></select>
+              id="matches-list"
+              class="matches-scroll"
+              aria-live="polite">
             </div>
+          </div>
 
-            <!-- Skeleton Matches -->
-            <div class="standings-skeleton" id="matches-skeleton">
-              <h3 class="skeleton skeleton-title"></h3>
-              <div class="matches-scroll">
-                <div class="skeleton-match"></div>
-                <div class="skeleton-match"></div>
-              </div>
+        </section>
+      </div>
+
+      <!-- =====================
+          SUBSECTION 2: CLASSIFICA GIRONI
+      ====================== -->
+      <div class="gironi-subsection">
+        <h4 class="gironi-subsection-title">Classifica Gironi</h4>
+        
+        <section
+          id="standings-container"
+          class="standings-table-box-fullwidth"
+          aria-label="Classifiche gironi">
+
+          <!-- Skeleton Standings -->
+          <div class="standings-skeleton" id="standings-skeleton">
+            <h3 class="skeleton skeleton-title"></h3>
+            <div class="standings-group skeleton">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
             </div>
+          </div>
 
-            <!-- Real Matches -->
-            <div class="standings-content">
-              <div class="round-filter-box">
-                <label for="round-filter">Giornata</label>
-                <select id="round-filter"></select>
-              </div>
+          <!-- Real Standings -->
+          <div
+            id="standings"
+            class="standings-content hidden">
+          </div>
 
-              <div
-                id="matches-list"
-                class="matches-scroll"
-                aria-live="polite">
-              </div>
-            </div>
+        </section>
+      </div>
 
-          </section>
-        </div>
-
-        <!-- =====================
-            SUBSECTION 2: CLASSIFICA GIRONI
-        ====================== -->
-        <div class="gironi-subsection">
-          <h4 class="gironi-subsection-title">Classifica Gironi</h4>
-          
-          <section
-            id="standings-container"
-            class="standings-table-box-fullwidth"
-            aria-label="Classifiche gironi">
-
-            <!-- Skeleton Standings -->
-            <div class="standings-skeleton" id="standings-skeleton">
-              <h3 class="skeleton skeleton-title"></h3>
-              <div class="standings-group skeleton">
-                <div class="skeleton-line"></div>
-                <div class="skeleton-line"></div>
-                <div class="skeleton-line short"></div>
-              </div>
-            </div>
-
-            <!-- Real Standings -->
-            <div
-              id="standings"
-              class="standings-content hidden">
-            </div>
-
-          </section>
-        </div>
-
-      </section>
+    </section>
 
   </section>
 </main>
