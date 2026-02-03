@@ -84,6 +84,9 @@ sportFilter.addEventListener("change", (e) => {
 // ===============================
 // RENDER CARD TORNEI (ORDERED)
 // ===============================
+// ===============================
+// RENDER CARD TORNEI (ORDERED)
+// ===============================
 function renderTournaments(tournaments) {
 
   // 1️⃣ priorità stati
@@ -131,6 +134,9 @@ function renderTournaments(tournaments) {
 
     const iscrizioniAperte = t.status === "open";
 
+    // ✅ LOGICA CAMPI/GIORNI/ORARI
+    const courtInfo = buildCourtInfoMessage(t);
+
     card.innerHTML = `
       <div class="card-header">
         <span class="badge ${t.status}">${statusLabel}</span>
@@ -142,6 +148,7 @@ function renderTournaments(tournaments) {
         <span>🏐 ${t.sport}</span>
         <span>📍 ${t.location}</span>
         <span>📅 ${t.date}</span>
+        <span>⏰ ${courtInfo}</span>
       </div>
 
       <div class="card-stats">
@@ -162,6 +169,89 @@ function renderTournaments(tournaments) {
 
     container.appendChild(card);
   });
+}
+
+
+// ===============================
+// BUILD COURT INFO MESSAGE (NEW)
+// ===============================
+function buildCourtInfoMessage(tournament) {
+  const fixedCourt = String(tournament.fixed_court).toUpperCase() === "TRUE";
+  const days = String(tournament.available_days || "").trim();
+  const hours = String(tournament.available_hours || "").trim();
+
+  // CASO 1: Campi fissi → organizzazione decide tutto
+  if (fixedCourt) {
+    return "Campi, giorni e orari prefissati";
+  }
+
+  // CASO 2: Campi a scelta
+  let message = "Campi a scelta";
+
+  // Se mancano info su giorni/orari → solo "Campi a scelta"
+  if (!days || days === "NA" || !hours || hours === "NA") {
+    return message;
+  }
+
+  // Mapping giorni
+  const daysText = mapDaysToText(days);
+  
+  // Mapping orari
+  const hoursText = mapHoursToText(hours);
+
+  // Costruisci messaggio completo
+  if (daysText && hoursText) {
+    message += ` - ${daysText} ${hoursText}`;
+  } else if (daysText) {
+    message += ` - ${daysText}`;
+  } else if (hoursText) {
+    message += ` - ${hoursText}`;
+  }
+
+  return message;
+}
+
+// ===============================
+// MAP DAYS TO TEXT (NEW)
+// ===============================
+function mapDaysToText(days) {
+  const daysLower = days.toLowerCase();
+
+  const mappings = {
+    "lun-ven": "lun-ven",
+    "lun-dom": "ogni giorno",
+    "sab-dom": "weekend",
+    "lun": "lunedì",
+    "mar": "martedì",
+    "mer": "mercoledì",
+    "gio": "giovedì",
+    "ven": "venerdì",
+    "sab": "sabato",
+    "dom": "domenica"
+  };
+
+  return mappings[daysLower] || days;
+}
+
+// ===============================
+// MAP HOURS TO TEXT (NEW)
+// ===============================
+function mapHoursToText(hours) {
+  const hoursLower = hours.toLowerCase();
+
+  const mappings = {
+    "10-19": "10-19",
+    "19-22": "19-22",
+    "10-22": "10-22"
+  };
+
+  const mapped = mappings[hoursLower];
+  
+  if (!mapped) return hours;
+
+  // Estrai ore
+  const [start, end] = mapped.split("-");
+  return `dalle ${start} alle ${end}`;
 }
 
 
