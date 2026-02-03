@@ -2115,6 +2115,35 @@ body {
 
 
 
+/* =========================
+   GIRONI SUBSECTIONS - UNIFIED STYLE
+========================= */
+.gironi-subsection {
+  margin-top: 32px;
+}
+
+.gironi-subsection:first-of-type {
+  margin-top: 0;
+}
+
+.gironi-subsection-title {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(156, 163, 175, 0.9);
+  margin-bottom: 18px;
+  padding-bottom: 8px;
+  padding-left: 10px;
+  border-left: 3px solid rgba(56, 189, 248, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
+
+
 
 /* =========================
    FINALS MATCHES - FULL WIDTH
