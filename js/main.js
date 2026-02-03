@@ -3,10 +3,14 @@
 // ===============================
 
 const container = document.getElementById("tournaments");
+const sportFilter = document.getElementById("sport-filter");
 
 // URL della Web App (doGet)
 const API_URL =
   "https://script.google.com/macros/s/AKfycbx_J7kEn3eI87crMvo6lKLBp5bmbT5ukCcYhYsl9DCIjFxEZjbgxPKCvj-kWNzJdWvhQA/exec";
+
+// Variabile globale per conservare tutti i tornei
+let ALL_TOURNAMENTS = [];
 
 // ===============================
 // FETCH TORNEI DAL BACKEND
@@ -18,6 +22,9 @@ fetch(API_URL)
       throw new Error("Formato dati non valido");
     }
 
+    // Salva tutti i tornei
+    ALL_TOURNAMENTS = tournaments;
+
     // ✅ ora è sicuro rimuovere la skeleton
     // 1️⃣ seleziono tutte le skeleton card
     const skeletons = container.querySelectorAll(".tournament-card.skeleton");
@@ -25,10 +32,13 @@ fetch(API_URL)
     // 2️⃣ attivo fade-out
     skeletons.forEach(card => card.classList.add("fade-out"));
 
-    // 3️⃣ aspetto la fine dell’animazione
+    // 3️⃣ aspetto la fine dell'animazione
     setTimeout(() => {
       container.innerHTML = "";
-      renderTournaments(tournaments);
+      renderTournaments(ALL_TOURNAMENTS);
+      
+      // ✅ Popola dinamicamente il filtro sport
+      populateSportFilter(ALL_TOURNAMENTS);
     }, 350);
 
   })
@@ -39,8 +49,38 @@ fetch(API_URL)
   });
 
 // ===============================
-// RENDER CARD TORNEI
+// POPOLA FILTRO SPORT DINAMICAMENTE
 // ===============================
+function populateSportFilter(tournaments) {
+  // Estrai sport unici dai tornei
+  const sports = [...new Set(tournaments.map(t => t.sport))].sort();
+  
+  // Rimuovi le opzioni esistenti tranne "Tutti gli sport"
+  sportFilter.innerHTML = '<option value="all">Tutti gli sport</option>';
+  
+  // Aggiungi gli sport trovati
+  sports.forEach(sport => {
+    const option = document.createElement("option");
+    option.value = sport;
+    option.textContent = sport;
+    sportFilter.appendChild(option);
+  });
+}
+
+// ===============================
+// EVENT LISTENER FILTRO SPORT
+// ===============================
+sportFilter.addEventListener("change", (e) => {
+  const selectedSport = e.target.value;
+  
+  if (selectedSport === "all") {
+    renderTournaments(ALL_TOURNAMENTS);
+  } else {
+    const filtered = ALL_TOURNAMENTS.filter(t => t.sport === selectedSport);
+    renderTournaments(filtered);
+  }
+});
+
 // ===============================
 // RENDER CARD TORNEI (ORDERED)
 // ===============================
@@ -56,12 +96,19 @@ function renderTournaments(tournaments) {
     finished: 5
   };
 
-
-
   // 2️⃣ ordina tornei
   tournaments.sort((a, b) => {
     return statusPriority[a.status] - statusPriority[b.status];
   });
+
+  // Pulisci container
+  container.innerHTML = "";
+
+  // Controllo se non ci sono tornei
+  if (tournaments.length === 0) {
+    container.innerHTML = "<p class='placeholder' style='grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);'>Nessun torneo trovato per questo sport.</p>";
+    return;
+  }
 
   // 3️⃣ render normale
   tournaments.forEach(t => {
@@ -73,9 +120,6 @@ function renderTournaments(tournaments) {
       card.classList.add("finished");
     }
 
-    card.className = "tournament-card";
-    card.dataset.id = t.tournament_id;
-
     let statusLabel = "";
 
     if (t.status === "open") statusLabel = "ISCRIZIONI APERTE";
@@ -84,9 +128,6 @@ function renderTournaments(tournaments) {
     if (t.status === "full") statusLabel = "COMPLETO";
     if (t.status === "needs_attention") statusLabel = "FINALS IN FASE DI DECISIONE";
     if (t.status === "finished") statusLabel = "TORNEO CONCLUSO";
-
-
-
 
     const iscrizioniAperte = t.status === "open";
 
