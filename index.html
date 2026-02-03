@@ -55,18 +55,21 @@
 
   <!-- CONTENT -->
   <main class="container">
-    <h2>Tornei attivi</h2>
-    
-    <!-- SPORT FILTER -->
-    <div class="tournament-filter-box">
-      <label for="sport-filter">Filtra per sport</label>
-      <select id="sport-filter">
-        <option value="all">Tutti gli sport</option>
-        <option value="Padel">Padel</option>
-        <option value="Calcio">Calcio</option>
-        <option value="Basket">Beach Volley</option>
-        <option value="Volley">Magic e Yu-Gi-Oh</option>
-      </select>
+    <!-- HEADER ROW: Title + Filter -->
+    <div class="page-header">
+      <h2>Tornei attivi</h2>
+      
+      <!-- SPORT FILTER (INLINE) -->
+      <div class="sport-filter-inline">
+        <label for="sport-filter">Sport</label>
+        <select id="sport-filter">
+          <option value="all">Tutti</option>
+          <option value="Padel">Padel</option>
+          <option value="Calcio">Calcio</option>
+          <option value="Beach Volley">Beach Volley</option>
+          <option value="Magic">Magic & Yu-Gi-Oh</option>
+        </select>
+      </div>
     </div>
     
     <div id="tournaments" class="tournament-list">
