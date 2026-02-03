@@ -7,7 +7,7 @@ const sportFilter = document.getElementById("sport-filter");
 
 // URL della Web App (doGet)
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbxUrXYVTvf784kbRIWssmu37VJVZVuJ9YuCLh0yL-t5BN3VJJuhNk5Xr5hhKCx_nDibCQ/exec";
+  "https://script.google.com/macros/s/AKfycbxxgJnLoxkP_XDhQxRtqrZ0M_trOlVOmjIpsVACug1dlfSmfZz0fWXcdADvI0XcP7W3-A/exec";
 
 // Variabile globale per conservare tutti i tornei
 let ALL_TOURNAMENTS = [];
