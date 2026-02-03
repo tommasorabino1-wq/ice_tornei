@@ -630,61 +630,76 @@ body {
 
 
 /* =========================
-   TOURNAMENT FILTER (SHARED)
+   TOURNAMENT FILTER (SHARED) - REFINED
 ========================= */
 
 .tournament-filter-box {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  box-shadow: var(--shadow);
+  background-color: rgba(22, 29, 39, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 8px;
+  padding: 10px 14px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
 
-  max-width: 420px;          /* ⬅️ NON full width */
-  margin-bottom: 36px;       /* ⬅️ spazio netto sotto */
+  max-width: 360px;
+  margin-bottom: 28px;
 }
 
 /* Label filtro */
 .tournament-filter-box label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 /* Select */
 .tournament-filter-box select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background-color: var(--bg-main);
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  background-color: rgba(11, 15, 20, 0.8);
   color: var(--text-main);
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
 
   transition:
     border-color 0.2s ease,
+    background-color 0.2s ease,
     box-shadow 0.2s ease;
 }
 
 /* Hover + focus (brand azzurro) */
-.tournament-filter-box select:hover,
+.tournament-filter-box select:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+  background-color: rgba(11, 15, 20, 0.95);
+}
+
 .tournament-filter-box select:focus {
   outline: none;
   border-color: var(--brand);
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35);
+  background-color: rgba(11, 15, 20, 1);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
 }
 
-/* Option */
+/* Option (styling migliorato) */
 .tournament-filter-box option {
-  background-color: var(--bg-main);
+  background-color: var(--bg-secondary);
   color: var(--text-main);
+  padding: 8px;
 }
 
+.tournament-filter-box option:hover {
+  background-color: rgba(56, 189, 248, 0.1);
+}
 
 
 
@@ -1399,8 +1414,8 @@ body {
 /* grid chips */
 .teams-chips-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px; /* ✅ Ridotto da 10px */
 }
 
 /* chip team */
@@ -1619,7 +1634,7 @@ body {
 
 
 /* =========================
-   ROUND FILTER (STANDINGS)
+   ROUND FILTER (STANDINGS) - REFINED
 ========================= */
 
 .round-filter-box {
@@ -1628,76 +1643,95 @@ body {
   gap: 12px;
 
   margin-bottom: 18px;
-  padding: 12px 14px;
+  padding: 10px 14px;
 
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background-color: rgba(22, 29, 39, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
 }
 
 .round-filter-box label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
   white-space: nowrap;
 }
 
 .round-filter-box select {
   flex: 1;
-  padding: 8px 10px;
+  padding: 7px 10px;
   font-size: 13px;
+  font-weight: 500;
 
-  background-color: var(--bg-main);
+  background-color: rgba(11, 15, 20, 0.8);
   color: var(--text-main);
 
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 6px;
   cursor: pointer;
 
   transition:
     border-color 0.2s ease,
+    background-color 0.2s ease,
     box-shadow 0.2s ease;
 }
 
-.round-filter-box select:hover,
+.round-filter-box select:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+  background-color: rgba(11, 15, 20, 0.95);
+}
+
 .round-filter-box select:focus {
   outline: none;
   border-color: var(--brand);
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35);
+  background-color: rgba(11, 15, 20, 1);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
 }
 
 
+
+
 /* =========================
-   MATCH META (ROUND + GROUP)
+   MATCH META (ROUND + GROUP) - REFINED
 ========================= */
 
 .match-meta {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .match-round,
 .match-group {
-  padding: 4px 8px;
+  padding: 3px 8px;
   border-radius: 999px;
 
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.04);
   color: var(--text-muted);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* evidenzia la giornata */
+/* evidenzia la fase (azzurro brand) */
 .match-round {
-  background-color: rgba(56, 189, 248, 0.15);
+  background-color: rgba(56, 189, 248, 0.12);
   color: var(--brand);
-  border-color: rgba(56, 189, 248, 0.35);
+  border-color: rgba(56, 189, 248, 0.3);
+  font-weight: 800;
 }
+
+/* Nascondi badge "Fase Finale" nei match finals */
+.match-card.finals .match-group {
+  display: none;
+}
+
 
 
 /* Nasconde il filtro finché la pagina è in loading */
@@ -1738,6 +1772,11 @@ body {
   grid-template-columns: 1.2fr 1fr;
   gap: 24px;
   align-items: start;
+}
+
+/* Nascondi badge "Fase Finale" nei match finals */
+.match-card.finals .match-group {
+  display: none;
 }
 
 
@@ -1882,19 +1921,22 @@ body {
 }
 
 /* =========================
-   FINALS SECTION CONTAINER
+   FINALS SECTION CONTAINER - REFINED
 ========================= */
 .finals-section {
   width: 100%;
   max-width: 100%;
   
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(18, 24, 32, 0.95) 0%,
+    rgba(22, 29, 39, 0.95) 100%
+  );
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
-
-
 
 .finals-section-title {
   font-size: 18px;
@@ -1902,56 +1944,68 @@ body {
   color: var(--text-main);
   margin-bottom: 24px;
   padding-bottom: 12px;
-  border-bottom: 2px solid rgba(139, 92, 246, 0.6);
+  border-bottom: 2px solid rgba(139, 92, 246, 0.4);
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .finals-section-title .section-icon {
-  font-size: 20px;
+  font-size: 22px;
+  filter: drop-shadow(0 2px 4px rgba(139, 92, 246, 0.4));
 }
 
+
+
+
+
 /* =========================
-   GIRONI SECTION WRAPPER (MATCH FINALS LOOK)
+   GIRONI SECTION WRAPPER - REFINED
 ========================= */
 .gironi-section {
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(18, 24, 32, 0.95) 0%,
+    rgba(22, 29, 39, 0.95) 100%
+  );
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 10px;
+  padding: 24px;
   margin-bottom: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .gironi-section-title {
   font-size: 18px;
   font-weight: 700;
   color: var(--text-main);
-  margin-bottom: 24px;              /* come finals */
+  margin-bottom: 24px;
   padding-bottom: 12px;
-  border-bottom: 2px solid rgba(139, 92, 246, 0.6);
+  border-bottom: 2px solid rgba(139, 92, 246, 0.4);
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .gironi-section-title .section-icon {
-  font-size: 20px;                  /* come finals */
+  font-size: 22px;
+  filter: drop-shadow(0 2px 4px rgba(139, 92, 246, 0.4));
 }
 
-/* spacing interno come finals-layout */
 .gironi-section .main-standings-row {
   margin-top: 20px;
 }
 
 
+
+
 /* =========================
-   FINALS LAYOUT (TWO COLUMNS)
+   FINALS LAYOUT (TWO COLUMNS) - EQUALIZED
 ========================= */
 .finals-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 32px;
+  gap: 24px;
   margin-top: 20px;
   width: 100%;
 }
@@ -1962,22 +2016,24 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
+  min-width: 0; /* ✅ Previene overflow */
 }
 
 .finals-column-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
 }
 
 
+
 /* =========================
-   FINALS SUBSECTIONS
+   FINALS SUBSECTIONS - REFINED
 ========================= */
 .finals-subsection {
   margin-top: 32px;
@@ -1988,12 +2044,15 @@ body {
 }
 
 .finals-subsection-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(156, 163, 175, 0.9);
+  margin-bottom: 18px;
+  padding-bottom: 8px;
+  padding-left: 10px;
+  border-left: 3px solid rgba(56, 189, 248, 0.6);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2001,29 +2060,32 @@ body {
 
 .finals-subsection .finals-bracket-column {
   background-color: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 8px;
+  padding: 20px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
+
+
+
 /* =========================
-   QUALIFIED TEAMS LIST
+   QUALIFIED TEAMS LIST (CHIP STYLE)
 ========================= */
 .qualified-teams-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 8px;
 }
 
 .qualified-team-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   
-  padding: 12px 14px;
-  border-radius: var(--radius);
+  padding: 8px 10px;
+  border-radius: 999px;
   
   background-color: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -2035,51 +2097,44 @@ body {
 }
 
 .qualified-team-item:hover {
-  transform: translateX(2px);
+  transform: translateY(-1px);
   background-color: rgba(56, 189, 248, 0.06);
   border-color: rgba(56, 189, 248, 0.25);
 }
 
 .qualified-team-seed {
-  min-width: 28px;
-  height: 28px;
+  min-width: 20px;
+  height: 20px;
   border-radius: 999px;
   
   display: inline-flex;
   align-items: center;
   justify-content: center;
   
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   
   background-color: rgba(56, 189, 248, 0.18);
   color: var(--brand);
   border: 1px solid rgba(56, 189, 248, 0.25);
+  
+  flex-shrink: 0;
 }
 
 .qualified-team-name {
   flex: 1;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-main);
-}
-
-.qualified-team-group {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   
-  padding: 4px 8px;
-  border-radius: 999px;
-  
-  background-color: rgba(255, 255, 255, 0.06);
-  color: var(--text-muted);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .qualified-empty {
-  padding: 16px;
+  grid-column: 1 / -1;
+  padding: 20px;
   text-align: center;
   font-size: 13px;
   color: var(--text-muted);
@@ -2087,6 +2142,9 @@ body {
   border: 1px dashed rgba(255, 255, 255, 0.12);
   border-radius: var(--radius);
 }
+
+
+
 
 /* =========================
    QUALIFIED TEAMS SKELETON
