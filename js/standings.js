@@ -70,7 +70,7 @@ function hideSkeletons() {
 
 document.addEventListener("DOMContentLoaded", () => {
   document
-    .querySelector(".standings-results-box")
+    .querySelector(".standings-results-box-fullwidth")  // ✅ CLASSE NUOVA
     ?.classList.add("loading");
 
   const tournamentId = getTournamentIdFromUrl();
@@ -138,7 +138,7 @@ function showTournamentFilter() {
     );
 
     document
-      .querySelectorAll(".standings-results-box, .standings-table-box")
+      .querySelectorAll(".standings-results-box-fullwidth, .standings-table-box-fullwidth")  // ✅ CLASSI NUOVE
       .forEach(box => box.classList.remove("hidden"));
 
     hideTournamentFilter();
@@ -161,7 +161,7 @@ function hideTournamentFilter() {
 // ===============================
 function loadMatches(tournamentId) {
   const skeleton = document.querySelector(
-    ".standings-results-box .standings-skeleton"
+    ".standings-results-box-fullwidth .standings-skeleton"  // ✅ CLASSE NUOVA
   );
   const list = document.getElementById("matches-list");
 
@@ -184,7 +184,7 @@ function loadMatches(tournamentId) {
       renderMatchesByRound(AVAILABLE_ROUNDS[0]);
 
       document
-        .querySelector(".standings-results-box")
+        .querySelector(".standings-results-box-fullwidth")  // ✅ CLASSE NUOVA
         ?.classList.remove("loading");
     })
     .catch(() => {
@@ -288,7 +288,7 @@ function onRoundChange(value) {
 // ===============================
 function loadStandings(tournamentId) {
   const skeleton = document.querySelector(
-    ".standings-table-box .standings-skeleton"
+    ".standings-table-box-fullwidth .standings-skeleton"  // ✅ CLASSE NUOVA
   );
   const standingsEl = document.getElementById("standings");
 
@@ -696,7 +696,6 @@ function getRoundLabel(matchCount) {
 function renderFinalsBracket(bracket, tournamentId) {
   const container = document.getElementById("finals-bracket-content");
   const visualContainer = document.getElementById("finals-bracket-visual");
-  const qualifiedList = document.getElementById("qualified-teams-list");
 
   if (!container) return;
 
@@ -704,12 +703,6 @@ function renderFinalsBracket(bracket, tournamentId) {
   const finalsSkeleton = document.querySelector(".finals-section .finals-skeleton");
   if (finalsSkeleton) {
     finalsSkeleton.classList.add("hidden");
-  }
-
-  // Nascondi skeleton qualified teams
-  const qualifiedSkeleton = document.getElementById("qualified-skeleton");
-  if (qualifiedSkeleton) {
-    qualifiedSkeleton.classList.add("hidden");
   }
 
   // Lista rounds disponibili (ordinati)
@@ -721,7 +714,6 @@ function renderFinalsBracket(bracket, tournamentId) {
   if (rounds.length === 0) {
     container.innerHTML = "<p class='placeholder'>Nessun match disponibile</p>";
     if (visualContainer) visualContainer.innerHTML = "";
-    if (qualifiedList) qualifiedList.innerHTML = "<p class='qualified-empty'>Nessuna squadra qualificata</p>";
     return;
   }
 
@@ -733,11 +725,8 @@ function renderFinalsBracket(bracket, tournamentId) {
   // ✅ Render filtro "Fase"
   renderFinalsRoundFilter(rounds, bracket);
 
-  // ✅ Render SOLO i match del round selezionato (colonna sinistra)
+  // ✅ Render SOLO i match del round selezionato (FULL WIDTH)
   renderFinalsMatchesByRound(FINALS_SELECTED_ROUND_ID, bracket, tournamentId);
-
-  // ✅ Render squadre qualificate (colonna destra)
-  renderQualifiedTeams(bracket, qualifiedList);
 
   // Render bracket visuale (sezione separata full-width)
   if (visualContainer) {
@@ -746,59 +735,15 @@ function renderFinalsBracket(bracket, tournamentId) {
 }
 
 
+
+
 // ===============================
-// RENDER QUALIFIED TEAMS (PER ROUND SELEZIONATO)
+// RENDER QUALIFIED TEAMS - REMOVED
 // ===============================
 function renderQualifiedTeams(bracket, container) {
-  if (!container) return;
-
-  // Usa il round attualmente selezionato
-  const selectedRound = FINALS_SELECTED_ROUND_ID;
-  const currentRoundMatches = bracket.rounds?.[selectedRound];
-  
-  if (!currentRoundMatches || currentRoundMatches.length === 0) {
-    container.innerHTML = "<p class='qualified-empty'>Nessuna squadra qualificata</p>";
-    return;
-  }
-
-  // Raccogli tutte le squadre del round selezionato
-  const teams = [];
-  let seedCounter = 1;
-  
-  currentRoundMatches.forEach(match => {
-    if (match.team_a) {
-      teams.push({
-        name: formatTeam(match.team_a),
-        seed: seedCounter++
-      });
-    }
-    if (match.team_b) {
-      teams.push({
-        name: formatTeam(match.team_b),
-        seed: seedCounter++
-      });
-    }
-  });
-
-  if (teams.length === 0) {
-    container.innerHTML = "<p class='qualified-empty'>Nessuna squadra qualificata</p>";
-    return;
-  }
-
-  // Renderizza lista (SENZA badge "G1")
-  container.innerHTML = `
-    <div class="qualified-teams-list">
-      ${teams.map(team => `
-        <div class="qualified-team-item">
-          <span class="qualified-team-seed">${team.seed}</span>
-          <span class="qualified-team-name">${escapeHTML(team.name)}</span>
-        </div>
-      `).join('')}
-    </div>
-  `;
+  // ✅ Funzione rimossa: non renderizziamo più le squadre qualificate
+  return;
 }
-
-
 
 // ===============================
 // RENDER BRACKET VISUAL (TREE)

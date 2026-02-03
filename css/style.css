@@ -784,16 +784,14 @@ body {
 
 
 /* =========================
-   STANDINGS PAGE (REFINED)
+   STANDINGS PAGE (REFINED) - FULL WIDTH LAYOUT
 ========================= */
 
 .standings-layout {
-  display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
   margin-top: 26px;
-
-  align-items: stretch; /* 🔥 CHIAVE */
 }
 
 
@@ -807,20 +805,22 @@ body {
 
 
 
-/* BOX SINISTRO */
-.standings-results-box {
+/* =========================
+   MATCHES BOX - FULL WIDTH
+========================= */
+.standings-results-box-fullwidth {
+  width: 100%;
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 16px;
+  padding: 20px;
+  margin-bottom: 32px;
 }
 
-
-
-.standings-results-box h3 {
-  font-size: 15px;
-  margin-bottom: 12px;
+.standings-results-box-fullwidth h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
 }
 
 
@@ -917,19 +917,33 @@ body {
 }
 
 
-/* BOX CLASSIFICA (DX) */
-.standings-table-box {
+/* STANDINGS TABLE BOX - FULL WIDTH */
+.standings-table-box-fullwidth {
+  width: 100%;
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 16px;
+  padding: 20px;
 }
 
-.standings-table-box h3 {
-  font-size: 15px;
-  margin-bottom: 8px;
+.standings-table-box-fullwidth h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
 }
+
+/* FILTER POSITIONING */
+.tournament-filter-box.standings {
+  max-width: 360px;
+  margin-bottom: 20px;
+}
+
+/* Hide filter during loading */
+.standings-results-box-fullwidth.loading #tournament-filter,
+.standings-results-box-fullwidth.loading .round-filter-box {
+  display: none;
+}
+
 
 
 /* PLACEHOLDER / ERROR */
@@ -1884,12 +1898,7 @@ body {
 
 
 
-.main-standings-row {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 24px;
-  align-items: start;
-}
+
 
 /* Nascondi badge "Fase Finale" nei match finals */
 .match-card.finals .match-group {
@@ -1900,11 +1909,6 @@ body {
 
 
 
-@media (max-width: 900px) {
-  .main-standings-row {
-    grid-template-columns: 1fr;
-  }
-}
 
 
 .match-card.finals {
@@ -2109,43 +2113,25 @@ body {
   filter: drop-shadow(0 2px 4px rgba(139, 92, 246, 0.4));
 }
 
-.gironi-section .main-standings-row {
-  margin-top: 20px;
-}
-
 
 
 
 /* =========================
-   FINALS LAYOUT (TWO COLUMNS) - EQUALIZED
+   FINALS MATCHES - FULL WIDTH
 ========================= */
-.finals-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-top: 20px;
+.finals-matches-fullwidth {
   width: 100%;
-}
-
-.finals-matches-column,
-.qualified-teams-column {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px;
-  min-width: 0; /* ✅ Previene overflow */
+  padding: 20px;
 }
 
-.finals-column-title {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+.finals-matches-fullwidth .round-filter-box {
+  margin-bottom: 20px;
 }
+
+
 
 
 
@@ -2185,112 +2171,6 @@ body {
 }
 
 
-
-
-/* =========================
-   QUALIFIED TEAMS LIST (CHIP STYLE)
-========================= */
-.qualified-teams-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 8px;
-}
-
-.qualified-team-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  
-  padding: 8px 10px;
-  border-radius: 999px;
-  
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  
-  transition:
-    background-color 0.18s ease,
-    border-color 0.18s ease,
-    transform 0.18s ease;
-}
-
-.qualified-team-item:hover {
-  transform: translateY(-1px);
-  background-color: rgba(56, 189, 248, 0.06);
-  border-color: rgba(56, 189, 248, 0.25);
-}
-
-.qualified-team-seed {
-  min-width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  
-  font-size: 11px;
-  font-weight: 800;
-  
-  background-color: rgba(56, 189, 248, 0.18);
-  color: var(--brand);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  
-  flex-shrink: 0;
-}
-
-.qualified-team-name {
-  flex: 1;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-main);
-  
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.qualified-empty {
-  grid-column: 1 / -1;
-  padding: 20px;
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-muted);
-  background-color: rgba(255, 255, 255, 0.02);
-  border: 1px dashed rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius);
-}
-
-
-
-
-/* =========================
-   QUALIFIED TEAMS SKELETON
-========================= */
-.qualified-skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px 0;
-}
-
-.qualified-skeleton .skeleton-line {
-  height: 28px;
-  width: 100%;
-  border-radius: var(--radius);
-  
-  background: linear-gradient(
-    90deg,
-    #1f2933 25%,
-    #2a3441 37%,
-    #1f2933 63%
-  );
-  background-size: 400% 100%;
-  animation: skeleton-shimmer 1.4s ease infinite;
-}
-
-.qualified-skeleton .skeleton-line.short {
-  width: 70%;
-}
 
 
 

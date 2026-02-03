@@ -61,8 +61,9 @@
 
   <section class="standings-layout">
 
+
     <!-- =====================
-         FINALS / BRACKET
+        FINALS SECTION
     ====================== -->
     <section
       id="finals-container"
@@ -82,40 +83,18 @@
         </div>
       </div>
 
-      <!-- SUBSECTION 1: Match input + Squadre qualificate -->
+      <!-- SUBSECTION 1: Match input FULL WIDTH -->
       <div class="finals-subsection">
-        <h4 class="finals-subsection-title">Gestione Risultati</h4>
+        <h4 class="finals-subsection-title">Inserisci Risultati</h4>
         
-        <div class="finals-layout">
-
-          <!-- COLONNA SINISTRA: Match cards per inserire risultati -->
-          <div class="finals-matches-column">
-            <h5 class="finals-column-title">Inserisci Risultati</h5>
-
-            <!-- Filter Finals -->
-            <div class="round-filter-box">
-              <label for="finals-round-filter">Fase</label>
-              <select id="finals-round-filter"></select>
-            </div>
-
-            <div id="finals-bracket-content"></div>
+        <div class="finals-matches-fullwidth">
+          <!-- Filter Finals -->
+          <div class="round-filter-box">
+            <label for="finals-round-filter">Fase</label>
+            <select id="finals-round-filter"></select>
           </div>
 
-          <!-- COLONNA DESTRA: Squadre qualificate -->
-          <div class="qualified-teams-column">
-            <h5 class="finals-column-title">Squadre Qualificate</h5>
-            
-            <!-- Skeleton Qualified Teams -->
-            <div class="qualified-skeleton hidden" id="qualified-skeleton">
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line short"></div>
-            </div>
-            
-            <!-- Real Qualified Teams -->
-            <div id="qualified-teams-list"></div>
-          </div>
-
+          <div id="finals-bracket-content"></div>
         </div>
       </div>
 
@@ -150,7 +129,7 @@
     </section>
 
     <!-- =====================
-         GIRONI SECTION
+        GIRONI SECTION
     ====================== -->
     <section class="gironi-section">
 
@@ -160,78 +139,69 @@
       </h3>
 
       <!-- =====================
-           MAIN ROW
+          MATCHES (GIRONI) - FULL WIDTH
       ====================== -->
-      <section class="main-standings-row">
+      <section
+        id="matches-container"
+        class="standings-results-box-fullwidth loading"
+        aria-label="Match gironi">
 
-        <!-- =====================
-             MATCHES (GIRONI)
-        ====================== -->
-        <section
-          id="matches-container"
-          class="standings-results-box loading"
-          aria-label="Match gironi">
+        <!-- Tournament Filter -->
+        <div
+          id="tournament-filter"
+          class="tournament-filter-box standings hidden">
+          <label for="tournament-select">Seleziona torneo</label>
+          <select id="tournament-select"></select>
+        </div>
 
-          <!-- Tournament Filter -->
+        <!-- Skeleton Matches -->
+        <div class="standings-skeleton" id="matches-skeleton">
+          <h3 class="skeleton skeleton-title"></h3>
+          <div class="matches-scroll">
+            <div class="skeleton-match"></div>
+            <div class="skeleton-match"></div>
+          </div>
+        </div>
+
+        <!-- Real Matches -->
+        <div class="standings-content">
+          <div class="round-filter-box">
+            <label for="round-filter">Giornata</label>
+            <select id="round-filter"></select>
+          </div>
+
           <div
-            id="tournament-filter"
-            class="tournament-filter-box standings hidden">
-            <label for="tournament-select">Seleziona torneo</label>
-            <select id="tournament-select"></select>
+            id="matches-list"
+            class="matches-scroll"
+            aria-live="polite">
           </div>
+        </div>
 
-          <!-- Skeleton Matches -->
-          <div class="standings-skeleton" id="matches-skeleton">
-            <h3 class="skeleton skeleton-title"></h3>
-            <div class="matches-scroll">
-              <div class="skeleton-match"></div>
-              <div class="skeleton-match"></div>
-            </div>
+      </section>
+
+      <!-- =====================
+          STANDINGS TABLE - FULL WIDTH
+      ====================== -->
+      <section
+        id="standings-container"
+        class="standings-table-box-fullwidth"
+        aria-label="Classifiche gironi">
+
+        <!-- Skeleton Standings -->
+        <div class="standings-skeleton" id="standings-skeleton">
+          <h3 class="skeleton skeleton-title"></h3>
+          <div class="standings-group skeleton">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line short"></div>
           </div>
+        </div>
 
-          <!-- Real Matches -->
-          <div class="standings-content">
-
-            <div class="round-filter-box">
-              <label for="round-filter">Giornata</label>
-              <select id="round-filter"></select>
-            </div>
-
-            <div
-              id="matches-list"
-              class="matches-scroll"
-              aria-live="polite">
-            </div>
-
-          </div>
-
-        </section>
-
-        <!-- =====================
-             STANDINGS TABLE
-        ====================== -->
-        <section
-          id="standings-container"
-          class="standings-table-box"
-          aria-label="Classifiche gironi">
-
-          <!-- Skeleton Standings -->
-          <div class="standings-skeleton" id="standings-skeleton">
-            <h3 class="skeleton skeleton-title"></h3>
-            <div class="standings-group skeleton">
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line short"></div>
-            </div>
-          </div>
-
-          <!-- Real Standings -->
-          <div
-            id="standings"
-            class="standings-content hidden">
-          </div>
-
-        </section>
+        <!-- Real Standings -->
+        <div
+          id="standings"
+          class="standings-content hidden">
+        </div>
 
       </section>
 
