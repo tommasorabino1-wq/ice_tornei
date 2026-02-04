@@ -111,10 +111,10 @@ function renderGenericRegulation(tournaments) {
   tournamentSection.classList.add("hidden");
   tournamentSkeleton.classList.add("hidden");
 
-  // ✅ NUOVO: Nascondi regolamento full-width (solo per torneo specifico)
+  // ✅ NASCONDI regolamento full-width (non serve nella vista generale)
   const regulationBlock = document.querySelector(".tournament-general-regulation");
   if (regulationBlock) {
-    regulationBlock.classList.add("hidden");
+    regulationBlock.classList.add("hidden"); // ✅ Questo è corretto
   }
 
   // Reset select
@@ -188,7 +188,7 @@ function renderTournament(tournament) {
 function showGeneralRegulation() {
   const regulationBlock = document.querySelector(".tournament-general-regulation");
   if (regulationBlock) {
-    regulationBlock.classList.remove("hidden");
+    regulationBlock.classList.remove("hidden"); // ✅ Mostra il blocco
   }
 }
 
