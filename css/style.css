@@ -1753,6 +1753,13 @@ body {
   list-style: disc;
 }
 
+/* Evidenziazioni azzurre solo nel regolamento generale (navbar) */
+#generic-regulation-section .highlight-brand {
+  color: var(--brand);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
 
 
 /* =========================
