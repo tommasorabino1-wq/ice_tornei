@@ -258,9 +258,33 @@ function mapHoursToText(hours) {
 // ===============================
 // RENDER SPECIFIC COURT RULE (NEW)
 // ===============================
+// ===============================
+// RENDER SPECIFIC COURT RULE (NEW)
+// ===============================
 function renderSpecificCourtRule(tournament) {
   const container = document.getElementById("specific-court-rule");
   
+  // ✅ COSTRUISCI LE REGOLE SPECIFICHE
+  const rules = [];
+  
+  // REGOLA 1: Campi, giorni, orari
+  rules.push(buildCourtRule(tournament));
+  
+  // REGOLA 2: Formato torneo
+  rules.push(buildFormatRule(tournament));
+  
+  // ✅ RENDER FINALE CON STRUTTURA A BLOCCHI
+  container.innerHTML = `
+    <div class="specific-regulation-cards">
+      ${rules.join('')}
+    </div>
+  `;
+}
+
+// ===============================
+// BUILD COURT RULE (REGOLA 1)
+// ===============================
+function buildCourtRule(tournament) {
   const fixedCourt = String(tournament.fixed_court).toUpperCase() === "TRUE";
   const days = String(tournament.available_days || "").trim();
   const hours = String(tournament.available_hours || "").trim();
@@ -271,9 +295,10 @@ function renderSpecificCourtRule(tournament) {
     // CASO A: Campi fissi
     ruleText = `
       <p>
-        Per questo torneo, <strong>i campi, i giorni e gli orari sono prefissati</strong> 
-        dall'organizzazione. Il calendario completo delle partite sarà comunicato prima 
-        dell'inizio del torneo.
+        I <strong>campi, i giorni e gli orari</strong> sono <strong>prefissati</strong> dall'organizzazione.
+      </p>
+      <p>
+        Il calendario completo delle partite sarà comunicato prima dell'inizio del torneo.
       </p>
     `;
   } else {
@@ -283,29 +308,123 @@ function renderSpecificCourtRule(tournament) {
 
     let availabilityText = "";
     
-    if (daysText && hoursText) {
-      availabilityText = `<strong>${daysText}</strong> <strong>${hoursText}</strong>`;
-    } else if (daysText) {
-      availabilityText = `<strong>${daysText}</strong>`;
-    } else if (hoursText) {
-      availabilityText = `<strong>${hoursText}</strong>`;
+    if (daysText && daysText !== "NA" && hoursText && hoursText !== "NA") {
+      // Entrambi disponibili
+      if (daysText === "ogni giorno") {
+        availabilityText = `Le partite si svolgeranno <strong>tutti i giorni ${hoursText}</strong>.`;
+      } else if (daysText === "weekend") {
+        availabilityText = `Le partite si svolgeranno nel <strong>weekend ${hoursText}</strong>.`;
+      } else {
+        availabilityText = `Le partite si svolgeranno <strong>${daysText} ${hoursText}</strong>.`;
+      }
+    } else if (daysText && daysText !== "NA") {
+      // Solo giorni
+      if (daysText === "ogni giorno") {
+        availabilityText = `Le partite si svolgeranno <strong>tutti i giorni</strong>.`;
+      } else if (daysText === "weekend") {
+        availabilityText = `Le partite si svolgeranno nel <strong>weekend</strong>.`;
+      } else {
+        availabilityText = `Le partite si svolgeranno <strong>${daysText}</strong>.`;
+      }
+    } else if (hoursText && hoursText !== "NA") {
+      // Solo orari
+      availabilityText = `Le partite si svolgeranno <strong>${hoursText}</strong>.`;
     }
 
     ruleText = `
       <p>
-        Per questo torneo, <strong>i campi sono a scelta delle squadre</strong>. 
-        ${availabilityText ? `Le partite si svolgeranno ${availabilityText}.` : ''}
+        I <strong>campi sono a scelta delle squadre</strong>. ${availabilityText}
       </p>
       <p>
-        L'organizzazione prenoterà i campi seguendo le preferenze indicate 
-        dalle squadre in fase di iscrizione per le partite in cui giocano in casa.
+        L'organizzazione prenoterà i campi seguendo le preferenze indicate in fase di iscrizione 
+        per le partite in cui la squadra gioca <strong>in casa</strong>.
       </p>
     `;
   }
 
-  container.innerHTML = ruleText;
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">1</div>
+      <div class="specific-regulation-content">
+        <p><strong>Campi, giorni e orari</strong></p>
+        ${ruleText}
+      </div>
+    </div>
+  `;
 }
 
+// ===============================
+// BUILD FORMAT RULE (REGOLA 2)
+// ===============================
+function buildFormatRule(tournament) {
+  const teamsPerGroup = Number(tournament.teams_per_group) || 0;
+  const teamsInFinal = Number(tournament.teams_in_final) || 0;
+  const teamsMax = Number(tournament.teams_max) || 0;
+
+  let formatText = "";
+
+  // CASO 1: Gironi + Fase finale
+  if (teamsPerGroup > 0 && teamsInFinal > 0) {
+    const numGroups = Math.ceil(teamsMax / teamsPerGroup);
+    
+    formatText = `
+      <p>
+        Il torneo prevede una <strong>fase a gironi</strong> seguita da una <strong>fase finale</strong>.
+      </p>
+      <p>
+        Le <strong>${teamsMax} squadre</strong> saranno divise in <strong>${numGroups} ${numGroups === 1 ? 'girone' : 'gironi'}</strong> 
+        da <strong>${teamsPerGroup} squadre</strong> ciascuno.
+      </p>
+      <p>
+        Al termine della fase a gironi, le <strong>migliori ${teamsInFinal} squadre</strong> 
+        si qualificheranno per la fase finale.
+      </p>
+    `;
+  }
+  // CASO 2: Solo fase finale (tutti contro tutti o eliminazione diretta)
+  else if (teamsPerGroup === 0 && teamsInFinal > 0) {
+    formatText = `
+      <p>
+        Il torneo si svolgerà con <strong>fase finale diretta</strong> tra le <strong>${teamsMax} squadre</strong> iscritte.
+      </p>
+    `;
+  }
+  // CASO 3: Solo gironi (nessuna fase finale)
+  else if (teamsPerGroup > 0 && teamsInFinal === 0) {
+    const numGroups = Math.ceil(teamsMax / teamsPerGroup);
+    
+    formatText = `
+      <p>
+        Il torneo prevede una <strong>fase a gironi</strong>.
+      </p>
+      <p>
+        Le <strong>${teamsMax} squadre</strong> saranno divise in <strong>${numGroups} ${numGroups === 1 ? 'girone' : 'gironi'}</strong> 
+        da <strong>${teamsPerGroup} squadre</strong> ciascuno.
+      </p>
+    `;
+  }
+  // CASO 4: Formato sconosciuto (fallback)
+  else {
+    formatText = `
+      <p>
+        Il torneo prevede <strong>${teamsMax} squadre</strong> partecipanti.
+      </p>
+      <p>
+        Il formato dettagliato sarà comunicato prima dell'inizio del torneo.
+      </p>
+    `;
+  }
+
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">2</div>
+      <div class="specific-regulation-content">
+        <p><strong>Formato del torneo</strong></p>
+        ${formatText}
+      </div>
+    </div>
+  `;
+}
 
 
 // ===============================
