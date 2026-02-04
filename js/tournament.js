@@ -111,6 +111,11 @@ function renderGenericRegulation(tournaments) {
   tournamentSection.classList.add("hidden");
   tournamentSkeleton.classList.add("hidden");
 
+  // ✅ NUOVO: Nascondi regolamento full-width (solo per torneo specifico)
+  const regulationBlock = document.querySelector(".tournament-general-regulation");
+  if (regulationBlock) {
+    regulationBlock.classList.add("hidden");
+  }
 
   // Reset select
   tournamentSelect.innerHTML =
@@ -131,9 +136,9 @@ function renderGenericRegulation(tournaments) {
 }
 
 
-// ===============================
-// 6. RENDER TORNEO SPECIFICO
-// ===============================
+
+
+
 // ===============================
 // 6. RENDER TORNEO SPECIFICO
 // ===============================
@@ -172,8 +177,20 @@ function renderTournament(tournament) {
 
   // Load + render teams list block
   loadAndRenderTeamsList(tournament);
+
+  // ✅ NUOVO: Mostra regolamento generale full-width
+  showGeneralRegulation();
 }
 
+// ===============================
+// SHOW GENERAL REGULATION (FULL WIDTH) (NEW)
+// ===============================
+function showGeneralRegulation() {
+  const regulationBlock = document.querySelector(".tournament-general-regulation");
+  if (regulationBlock) {
+    regulationBlock.classList.remove("hidden");
+  }
+}
 
 // ===============================
 // BUILD COURT INFO MESSAGE (NEW)
