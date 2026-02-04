@@ -333,7 +333,7 @@ function buildCourtRule(tournament) {
 
     ruleText = `
       <p>
-        I <strong>campi sono a scelta delle squadre</strong>. ${availabilityText}
+        ${availabilityText} Per questo torneo, campi, giorni e orari delle partite vengono <strong>scelti delle squadre </strong> iscritte. 
       </p>
       <p>
         L'organizzazione prenoterà i campi seguendo le preferenze indicate in fase di iscrizione 
