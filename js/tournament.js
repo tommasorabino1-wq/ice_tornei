@@ -152,6 +152,13 @@ function renderTournament(tournament) {
   document.getElementById("info-date").textContent = tournament.date;
   document.getElementById("info-price").textContent = tournament.price;
 
+  // ✅ NUOVO: Court info message
+  const courtInfo = buildCourtInfoMessage(tournament);
+  document.getElementById("info-court").textContent = courtInfo;
+
+  // ✅ NUOVO: Regola specifica campi
+  renderSpecificCourtRule(tournament);
+
   // Existing counter (already in your UI)
   teamsInfo.textContent = `${tournament.teams_current} / ${tournament.teams_max}`;
 
@@ -159,13 +166,127 @@ function renderTournament(tournament) {
   applyTournamentState(tournament);
 
   if (tournament.status === "open") {
-    // ✅ NUOVO: popola campi extra PRIMA di gestire submit
     populateExtraFields(tournament);
     handleFormSubmit(tournament);
   }
 
-  // ✅ Load + render teams list block
+  // Load + render teams list block
   loadAndRenderTeamsList(tournament);
+}
+
+
+// ===============================
+// BUILD COURT INFO MESSAGE (NEW)
+// ===============================
+function buildCourtInfoMessage(tournament) {
+  const fixedCourt = String(tournament.fixed_court).toUpperCase() === "TRUE";
+  const days = String(tournament.available_days || "").trim();
+  const hours = String(tournament.available_hours || "").trim();
+
+  if (fixedCourt) {
+    return "Campi, giorni e orari prefissati";
+  }
+
+  let message = "Campi a scelta";
+
+  if (!days || days === "NA" || !hours || hours === "NA") {
+    return message;
+  }
+
+  const daysText = mapDaysToText(days);
+  const hoursText = mapHoursToText(hours);
+
+  if (daysText && hoursText) {
+    message += ` - ${daysText} ${hoursText}`;
+  }
+
+  return message;
+}
+
+// ===============================
+// MAP DAYS TO TEXT (NEW)
+// ===============================
+function mapDaysToText(days) {
+  const daysLower = days.toLowerCase();
+
+  const mappings = {
+    "lun-ven": "lun-ven",
+    "lun-dom": "ogni giorno",
+    "sab-dom": "weekend"
+  };
+
+  return mappings[daysLower] || days;
+}
+
+// ===============================
+// MAP HOURS TO TEXT (NEW)
+// ===============================
+function mapHoursToText(hours) {
+  const hoursLower = hours.toLowerCase();
+
+  const mappings = {
+    "10-19": "10-19",
+    "19-22": "19-22",
+    "10-22": "10-22"
+  };
+
+  const mapped = mappings[hoursLower];
+  
+  if (!mapped) return hours;
+
+  const [start, end] = mapped.split("-");
+  return `dalle ${start} alle ${end}`;
+}
+
+// ===============================
+// RENDER SPECIFIC COURT RULE (NEW)
+// ===============================
+function renderSpecificCourtRule(tournament) {
+  const container = document.getElementById("specific-court-rule");
+  
+  const fixedCourt = String(tournament.fixed_court).toUpperCase() === "TRUE";
+  const days = String(tournament.available_days || "").trim();
+  const hours = String(tournament.available_hours || "").trim();
+
+  let ruleText = "";
+
+  if (fixedCourt) {
+    // CASO A: Campi fissi
+    ruleText = `
+      <p>
+        Per questo torneo, <strong>i campi, i giorni e gli orari sono prefissati</strong> 
+        dall'organizzazione. Il calendario completo delle partite sarà comunicato prima 
+        dell'inizio del torneo.
+      </p>
+    `;
+  } else {
+    // CASO B: Campi a scelta
+    const daysText = mapDaysToText(days);
+    const hoursText = mapHoursToText(hours);
+
+    let availabilityText = "";
+    
+    if (daysText && hoursText) {
+      availabilityText = `<strong>${daysText}</strong> <strong>${hoursText}</strong>`;
+    } else if (daysText) {
+      availabilityText = `<strong>${daysText}</strong>`;
+    } else if (hoursText) {
+      availabilityText = `<strong>${hoursText}</strong>`;
+    }
+
+    ruleText = `
+      <p>
+        Per questo torneo, <strong>i campi sono a scelta delle squadre</strong>. 
+        ${availabilityText ? `Le partite si svolgeranno ${availabilityText}.` : ''}
+      </p>
+      <p>
+        L'organizzazione prenoterà i campi seguendo le preferenze indicate 
+        dalle squadre in fase di iscrizione per le partite in cui giocano in casa.
+      </p>
+    `;
+  }
+
+  container.innerHTML = ruleText;
 }
 
 

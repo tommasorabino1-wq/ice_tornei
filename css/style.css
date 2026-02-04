@@ -2880,3 +2880,76 @@ body {
 #registration-form button[type="submit"] {
   margin-top: 20px; /* ✅ Distanza chiara dal form */
 }
+
+
+
+/* =========================
+   TOURNAMENT SPECIFIC RULES (NEW)
+========================= */
+
+.tournament-specific-rules {
+  margin-top: 20px;
+  padding-top: 20px;
+}
+
+.rules-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.3) 50%,
+    transparent 100%
+  );
+  margin-bottom: 18px;
+}
+
+.rules-subtitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 12px;
+  letter-spacing: 0.02em;
+}
+
+.specific-rule-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-main);
+}
+
+.specific-rule-content p {
+  margin: 0 0 8px;
+}
+
+.specific-rule-content p:last-child {
+  margin-bottom: 0;
+}
+
+.specific-rule-content strong {
+  color: var(--brand);
+  font-weight: 600;
+}
+
+/* =========================
+   TOURNAMENT GENERAL REGULATION (FULL WIDTH)
+========================= */
+
+.tournament-general-regulation {
+  margin-top: 40px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+
+.regulation-general-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+}
+
+
