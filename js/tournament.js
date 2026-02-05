@@ -272,10 +272,8 @@ function buildCourtRule(tournament) {
     // =============================================
     ruleText = `
       <p>
-        I campi, i giorni e gli orari di tutte le partite sono <strong>stabiliti dall'organizzazione</strong>.
-      </p>
-      <p>
-        Il calendario completo sarà pubblicato prima dell'inizio del torneo.
+        In questo torneo, campi, giorni e orari delle partite vengono <strong>stabiliti dall'organizzazione</strong>, 
+        che provvederà a pubblicare il calendario completo prima dell'inizio del torneo.
       </p>
     `;
   } else {
@@ -286,11 +284,12 @@ function buildCourtRule(tournament) {
 
     ruleText = `
       <p>
-        ${availabilityPhrase}I campi, i giorni e gli orari delle partite sono <strong>concordati direttamente tra le squadre</strong>.
+        ${availabilityPhrase}In fase di iscrizione, le squadre potranno esprimere le proprie preferenze
+        relative a campi, giorni e orari di gioco
       </p>
       <p>
-        L'organizzazione provvederà a prenotare i campi per le partite casalinghe di ciascuna squadra, 
-        sulla base delle preferenze indicate in fase di iscrizione.
+        L’organizzazione provvederà alla prenotazione dei campi per le partite casalinghe di ciascuna squadra, 
+        tenendo conto delle preferenze indicate. 
       </p>
     `;
   }
@@ -323,16 +322,16 @@ function buildAvailabilityPhrase(days, hours) {
 
   // Solo giorni specificati
   if (daysPhrase && !hoursPhrase) {
-    return `Le partite si disputano <strong>${daysPhrase}</strong>. `;
+    return `In questo torneo, le partite potranno essere disputate <strong>${daysPhrase}</strong>. `;
   }
 
   // Solo orari specificati
   if (!daysPhrase && hoursPhrase) {
-    return `Le partite si disputano <strong>${hoursPhrase}</strong>. `;
+    return `In questo torneo, le partite potranno essere disputate <strong>${hoursPhrase}</strong>. `;
   }
 
   // Entrambi specificati
-  return `Le partite si disputano <strong>${daysPhrase}</strong>, <strong>${hoursPhrase}</strong>. `;
+  return `In questo torneo, le partite potranno essere disputate <strong>${daysPhrase}</strong>, <strong>${hoursPhrase}</strong>. `;
 }
 
 // ===============================
@@ -344,7 +343,7 @@ function mapDaysToPhrase(days) {
   }
 
   const mapping = {
-    "lun-dom": "tutti i giorni della settimana",
+    "lun-dom": "in qualsiasi giorno della settimana",
     "lun-ven": "dal lunedì al venerdì",
     "sab-dom": "il sabato e la domenica"
   };
@@ -361,9 +360,9 @@ function mapHoursToPhrase(hours) {
   }
 
   const mapping = {
-    "10-22": "in qualsiasi fascia oraria tra le 10:00 e le 22:00",
-    "10-19": "nella fascia oraria compresa tra le 10:00 e le 19:00",
-    "19-22": "nella fascia serale, tra le 19:00 e le 22:00"
+    "10-22": "e nella fascia oraria compresa tra le 10:00 e le 22:00",
+    "10-19": "e nella fascia oraria compresa tra le 10:00 e le 19:00",
+    "19-22": "e nella fascia serale, tra le 19:00 e le 22:00"
   };
 
   return mapping[hours] || null;
@@ -373,6 +372,9 @@ function mapHoursToPhrase(hours) {
 
 
 
+// ===============================
+// BUILD FORMAT RULE (REGOLA 2)
+// ===============================
 // ===============================
 // BUILD FORMAT RULE (REGOLA 2)
 // ===============================
@@ -386,18 +388,18 @@ function buildFormatRule(tournament) {
   // CASO 1: Gironi + Fase finale
   if (teamsPerGroup > 0 && teamsInFinal > 0) {
     const numGroups = Math.ceil(teamsMax / teamsPerGroup);
+    const qualificationPhrase = buildQualificationPhrase(numGroups, teamsInFinal);
     
     formatText = `
       <p>
         Il torneo prevede una <strong>fase a gironi</strong> seguita da una <strong>fase finale</strong>.
       </p>
       <p>
-        Le <strong>${teamsMax} squadre</strong> saranno divise in <strong>${numGroups} ${numGroups === 1 ? 'girone' : 'gironi'}</strong> 
+        Le <strong>${teamsMax} squadre</strong> iscritte saranno suddivise in <strong>${numGroups} ${numGroups === 1 ? 'girone' : 'gironi'}</strong> 
         da <strong>${teamsPerGroup} squadre</strong> ciascuno.
       </p>
       <p>
-        Al termine della fase a gironi, le <strong>migliori ${teamsInFinal} squadre</strong> 
-        si qualificheranno per la fase finale.
+        ${qualificationPhrase}
       </p>
     `;
   }
@@ -418,7 +420,7 @@ function buildFormatRule(tournament) {
         Il torneo prevede una <strong>fase a gironi</strong>.
       </p>
       <p>
-        Le <strong>${teamsMax} squadre</strong> saranno divise in <strong>${numGroups} ${numGroups === 1 ? 'girone' : 'gironi'}</strong> 
+        Le <strong>${teamsMax} squadre</strong> iscritte saranno suddivise in <strong>${numGroups} ${numGroups === 1 ? 'girone' : 'gironi'}</strong> 
         da <strong>${teamsPerGroup} squadre</strong> ciascuno.
       </p>
     `;
@@ -444,6 +446,45 @@ function buildFormatRule(tournament) {
       </div>
     </div>
   `;
+}
+
+
+// ===============================
+// BUILD QUALIFICATION PHRASE
+// ===============================
+function buildQualificationPhrase(numGroups, teamsInFinal) {
+  // Tutte le prime classificate si qualificano sempre
+  const firstPlaceQualifiers = numGroups;
+  
+  // Quante seconde classificate servono per raggiungere il totale?
+  const secondPlaceQualifiers = teamsInFinal - firstPlaceQualifiers;
+
+  // CASO A: Solo le prime classificate (nessuna seconda)
+  if (secondPlaceQualifiers <= 0) {
+    if (numGroups === 1) {
+      return `Solo la <strong>prima classificata</strong> del girone accederà alla fase finale.`;
+    }
+    return `Solo le <strong>prime classificate</strong> di ciascun girone accederanno alla fase finale.`;
+  }
+
+  // CASO B: Tutte le prime + tutte le seconde
+  if (secondPlaceQualifiers === numGroups) {
+    if (numGroups === 1) {
+      return `La <strong>prima</strong> e la <strong>seconda classificata</strong> del girone accederanno alla fase finale.`;
+    }
+    return `Le <strong>prime</strong> e le <strong>seconde classificate</strong> di ciascun girone accederanno alla fase finale.`;
+  }
+
+  // CASO C: Tutte le prime + alcune migliori seconde
+  if (numGroups === 1) {
+    return `La <strong>prima classificata</strong> del girone e la <strong>migliore seconda</strong> accederanno alla fase finale.`;
+  }
+  
+  const secondeText = secondPlaceQualifiers === 1 
+    ? `la <strong>migliore seconda classificata</strong>` 
+    : `le <strong>${secondPlaceQualifiers} migliori seconde classificate</strong>`;
+
+  return `Le <strong>prime classificate</strong> di ciascun girone e ${secondeText} accederanno alla fase finale.`;
 }
 
 
