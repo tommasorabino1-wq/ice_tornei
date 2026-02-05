@@ -193,71 +193,46 @@ function showGeneralRegulation() {
 }
 
 // ===============================
-// BUILD COURT INFO MESSAGE (NEW)
+// BUILD COURT INFO MESSAGE
 // ===============================
 function buildCourtInfoMessage(tournament) {
   const fixedCourt = String(tournament.fixed_court).toUpperCase() === "TRUE";
-  const days = String(tournament.available_days || "").trim();
-  const hours = String(tournament.available_hours || "").trim();
+  const days = String(tournament.available_days || "").trim().toLowerCase();
+  const hours = String(tournament.available_hours || "").trim().toLowerCase();
 
   if (fixedCourt) {
     return "Campi, giorni e orari prefissati";
   }
 
-  let message = "Campi a scelta";
-
-  if (!days || days === "NA" || !hours || hours === "NA") {
-    return message;
-  }
-
-  const daysText = mapDaysToText(days);
-  const hoursText = mapHoursToText(hours);
-
-  if (daysText && hoursText) {
-    message += ` - ${daysText} ${hoursText}`;
-  }
-
-  return message;
-}
-
-// ===============================
-// MAP DAYS TO TEXT (NEW)
-// ===============================
-function mapDaysToText(days) {
-  const daysLower = days.toLowerCase();
-
-  const mappings = {
+  const daysLabel = {
+    "lun-dom": "tutti i giorni",
     "lun-ven": "lun-ven",
-    "lun-dom": "ogni giorno",
     "sab-dom": "weekend"
-  };
+  }[days];
 
-  return mappings[daysLower] || days;
-}
-
-// ===============================
-// MAP HOURS TO TEXT (NEW)
-// ===============================
-function mapHoursToText(hours) {
-  const hoursLower = hours.toLowerCase();
-
-  const mappings = {
+  const hoursLabel = {
+    "10-22": "10-22",
     "10-19": "10-19",
-    "19-22": "19-22",
-    "10-22": "10-22"
-  };
+    "19-22": "19-22"
+  }[hours];
 
-  const mapped = mappings[hoursLower];
-  
-  if (!mapped) return hours;
+  if (daysLabel && hoursLabel) {
+    return `Campi a scelta · ${daysLabel} · ${hoursLabel}`;
+  }
 
-  const [start, end] = mapped.split("-");
-  return `dalle ${start} alle ${end}`;
+  if (daysLabel) {
+    return `Campi a scelta · ${daysLabel}`;
+  }
+
+  if (hoursLabel) {
+    return `Campi a scelta · ${hoursLabel}`;
+  }
+
+  return "Campi a scelta";
 }
 
-// ===============================
-// RENDER SPECIFIC COURT RULE (NEW)
-// ===============================
+
+
 // ===============================
 // RENDER SPECIFIC COURT RULE (NEW)
 // ===============================
@@ -286,58 +261,36 @@ function renderSpecificCourtRule(tournament) {
 // ===============================
 function buildCourtRule(tournament) {
   const fixedCourt = String(tournament.fixed_court).toUpperCase() === "TRUE";
-  const days = String(tournament.available_days || "").trim();
-  const hours = String(tournament.available_hours || "").trim();
+  const days = String(tournament.available_days || "").trim().toLowerCase();
+  const hours = String(tournament.available_hours || "").trim().toLowerCase();
 
   let ruleText = "";
 
   if (fixedCourt) {
-    // CASO A: Campi fissi
+    // =============================================
+    // CASO A: Programmazione stabilita dall'organizzazione
+    // =============================================
     ruleText = `
       <p>
-        I <strong>campi, i giorni e gli orari</strong> sono <strong>prefissati</strong> dall'organizzazione.
+        I campi, i giorni e gli orari di tutte le partite sono <strong>stabiliti dall'organizzazione</strong>.
       </p>
       <p>
-        Il calendario completo delle partite sarà comunicato prima dell'inizio del torneo.
+        Il calendario completo sarà pubblicato prima dell'inizio del torneo.
       </p>
     `;
   } else {
-    // CASO B: Campi a scelta
-    const daysText = mapDaysToText(days);
-    const hoursText = mapHoursToText(hours);
-
-    let availabilityText = "";
-    
-    if (daysText && daysText !== "NA" && hoursText && hoursText !== "NA") {
-      // Entrambi disponibili
-      if (daysText === "ogni giorno") {
-        availabilityText = `Le partite si svolgeranno <strong>tutti i giorni ${hoursText}</strong>.`;
-      } else if (daysText === "weekend") {
-        availabilityText = `Le partite si svolgeranno nel <strong>weekend ${hoursText}</strong>.`;
-      } else {
-        availabilityText = `Le partite si svolgeranno <strong>${daysText} ${hoursText}</strong>.`;
-      }
-    } else if (daysText && daysText !== "NA") {
-      // Solo giorni
-      if (daysText === "ogni giorno") {
-        availabilityText = `Le partite si svolgeranno <strong>tutti i giorni</strong>.`;
-      } else if (daysText === "weekend") {
-        availabilityText = `Le partite si svolgeranno nel <strong>weekend</strong>.`;
-      } else {
-        availabilityText = `Le partite si svolgeranno <strong>${daysText}</strong>.`;
-      }
-    } else if (hoursText && hoursText !== "NA") {
-      // Solo orari
-      availabilityText = `Le partite si svolgeranno <strong>${hoursText}</strong>.`;
-    }
+    // =============================================
+    // CASO B: Programmazione concordata tra le squadre
+    // =============================================
+    const availabilityPhrase = buildAvailabilityPhrase(days, hours);
 
     ruleText = `
       <p>
-        ${availabilityText} Per questo torneo, campi, giorni e orari delle partite vengono <strong>scelti delle squadre </strong> iscritte. 
+        ${availabilityPhrase}I campi, i giorni e gli orari delle partite sono <strong>concordati direttamente tra le squadre</strong>.
       </p>
       <p>
-        L'organizzazione prenoterà i campi seguendo le preferenze indicate in fase di iscrizione 
-        per le partite in cui la squadra gioca <strong>in casa</strong>.
+        L'organizzazione provvederà a prenotare i campi per le partite casalinghe di ciascuna squadra, 
+        sulla base delle preferenze indicate in fase di iscrizione.
       </p>
     `;
   }
@@ -352,6 +305,73 @@ function buildCourtRule(tournament) {
     </div>
   `;
 }
+
+
+
+
+// ===============================
+// BUILD AVAILABILITY PHRASE
+// ===============================
+function buildAvailabilityPhrase(days, hours) {
+  const daysPhrase = mapDaysToPhrase(days);
+  const hoursPhrase = mapHoursToPhrase(hours);
+
+  // Nessun vincolo specificato
+  if (!daysPhrase && !hoursPhrase) {
+    return "";
+  }
+
+  // Solo giorni specificati
+  if (daysPhrase && !hoursPhrase) {
+    return `Le partite si disputano <strong>${daysPhrase}</strong>. `;
+  }
+
+  // Solo orari specificati
+  if (!daysPhrase && hoursPhrase) {
+    return `Le partite si disputano <strong>${hoursPhrase}</strong>. `;
+  }
+
+  // Entrambi specificati
+  return `Le partite si disputano <strong>${daysPhrase}</strong>, <strong>${hoursPhrase}</strong>. `;
+}
+
+// ===============================
+// MAP DAYS TO PHRASE
+// ===============================
+function mapDaysToPhrase(days) {
+  if (!days || days === "na") {
+    return null;
+  }
+
+  const mapping = {
+    "lun-dom": "tutti i giorni della settimana",
+    "lun-ven": "dal lunedì al venerdì",
+    "sab-dom": "il sabato e la domenica"
+  };
+
+  return mapping[days] || null;
+}
+
+// ===============================
+// MAP HOURS TO PHRASE
+// ===============================
+function mapHoursToPhrase(hours) {
+  if (!hours || hours === "na") {
+    return null;
+  }
+
+  const mapping = {
+    "10-22": "in qualsiasi fascia oraria tra le 10:00 e le 22:00",
+    "10-19": "nella fascia oraria compresa tra le 10:00 e le 19:00",
+    "19-22": "nella fascia serale, tra le 19:00 e le 22:00"
+  };
+
+  return mapping[hours] || null;
+}
+
+
+
+
 
 // ===============================
 // BUILD FORMAT RULE (REGOLA 2)
