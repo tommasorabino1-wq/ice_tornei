@@ -236,6 +236,9 @@ function buildCourtInfoMessage(tournament) {
 // ===============================
 // RENDER SPECIFIC COURT RULE (NEW)
 // ===============================
+// ===============================
+// RENDER SPECIFIC COURT RULE
+// ===============================
 function renderSpecificCourtRule(tournament) {
   const container = document.getElementById("specific-court-rule");
   
@@ -247,6 +250,12 @@ function renderSpecificCourtRule(tournament) {
   
   // REGOLA 2: Formato torneo
   rules.push(buildFormatRule(tournament));
+  
+  // REGOLA 3: Criteri di classifica (solo se ci sono gironi)
+  const rankingRule = buildRankingRule(tournament);
+  if (rankingRule) {
+    rules.push(rankingRule);
+  }
   
   // ✅ RENDER FINALE CON STRUTTURA A BLOCCHI
   container.innerHTML = `
@@ -360,9 +369,9 @@ function mapHoursToPhrase(hours) {
   }
 
   const mapping = {
-    "10-22": "e nella fascia oraria compresa tra le 10:00 e le 22:00",
-    "10-19": "e nella fascia oraria compresa tra le 10:00 e le 19:00",
-    "19-22": "e nella fascia serale, tra le 19:00 e le 22:00"
+    "10-22": "nella fascia oraria compresa tra le 10:00 e le 22:00",
+    "10-19": "nella fascia oraria compresa tra le 10:00 e le 19:00",
+    "19-22": "nella fascia serale, tra le 19:00 e le 22:00"
   };
 
   return mapping[hours] || null;
@@ -372,6 +381,9 @@ function mapHoursToPhrase(hours) {
 
 
 
+// ===============================
+// BUILD FORMAT RULE (REGOLA 2)
+// ===============================
 // ===============================
 // BUILD FORMAT RULE (REGOLA 2)
 // ===============================
@@ -392,7 +404,7 @@ function buildFormatRule(tournament) {
     
     formatText = `
       <p>
-        Il torneo prevede una <strong>fase a gironi</strong> seguita da una <strong>fase finale</strong>.
+        Il torneo prevede una <strong>fase a gironi</strong> seguita da una <strong>fase finale a ${teamsInFinal} squadre</strong>.
       </p>
       <p>
         Le <strong>${teamsMax} squadre</strong> iscritte saranno suddivise in <strong>${numGroups} ${numGroups === 1 ? 'girone' : 'gironi'}</strong> 
@@ -485,6 +497,88 @@ function buildQualificationPhrase(numGroups, teamsInFinal) {
     : `le <strong>${secondPlaceQualifiers} migliori seconde classificate</strong>`;
 
   return `Le <strong>prime classificate</strong> di ciascun girone e ${secondeText} accederanno alla fase finale.`;
+}
+
+
+// ===============================
+// BUILD RANKING RULE (REGOLA 3)
+// ===============================
+function buildRankingRule(tournament) {
+  const teamsPerGroup = Number(tournament.teams_per_group) || 0;
+  const teamsInFinal = Number(tournament.teams_in_final) || 0;
+  const teamsMax = Number(tournament.teams_max) || 0;
+
+  // Se non ci sono gironi, non mostrare questa regola
+  if (teamsPerGroup === 0) {
+    return "";
+  }
+
+  const numGroups = Math.ceil(teamsMax / teamsPerGroup);
+
+  // Parte A: Classifica all'interno dello stesso girone (sempre presente)
+  const intraGroupText = `
+    <p>
+      <strong>Classifica all'interno dello stesso girone:</strong> in caso di parità di punti tra due o più squadre 
+      dello stesso girone, l'ordine in classifica sarà determinato dai seguenti criteri, in ordine di importanza: 
+      scontri diretti, differenza reti, gol fatti.
+    </p>
+  `;
+
+  // Parte B: Confronto tra gironi diversi (solo se necessario)
+  const crossGroupText = buildCrossGroupComparisonText(numGroups, teamsInFinal);
+
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">3</div>
+      <div class="specific-regulation-content">
+        <p><strong>Criteri di classifica</strong></p>
+        ${intraGroupText}
+        ${crossGroupText}
+      </div>
+    </div>
+  `;
+}
+
+// ===============================
+// BUILD CROSS GROUP COMPARISON TEXT
+// ===============================
+function buildCrossGroupComparisonText(numGroups, teamsInFinal) {
+  // Calcola quante prime e quante seconde si qualificano
+  const firstPlaceQualifiers = Math.min(numGroups, teamsInFinal);
+  const secondPlaceQualifiers = Math.max(0, teamsInFinal - numGroups);
+
+  // Calcola se serve un confronto tra gironi
+  const needsBestFirstComparison = teamsInFinal > 0 && teamsInFinal < numGroups;
+  const needsBestSecondComparison = secondPlaceQualifiers > 0 && secondPlaceQualifiers < numGroups;
+
+  // Se non serve confronto tra gironi, non mostrare nulla
+  if (!needsBestFirstComparison && !needsBestSecondComparison) {
+    return "";
+  }
+
+  // Costruisci la frase descrittiva
+  let comparisonTarget = "";
+
+  if (needsBestFirstComparison) {
+    // Caso: servono solo alcune prime (es. 5 gironi, 4 in finale)
+    const bestFirstCount = teamsInFinal;
+    comparisonTarget = bestFirstCount === 1 
+      ? `la migliore prima classificata` 
+      : `le ${bestFirstCount} migliori prime classificate`;
+  } else if (needsBestSecondComparison) {
+    // Caso: servono alcune migliori seconde (es. 6 gironi, 8 in finale → 2 migliori seconde)
+    comparisonTarget = secondPlaceQualifiers === 1 
+      ? `la migliore seconda classificata` 
+      : `le ${secondPlaceQualifiers} migliori seconde classificate`;
+  }
+
+  return `
+    <p>
+      <strong>Confronto tra squadre di gironi diversi:</strong> per determinare ${comparisonTarget}, 
+      in caso di parità di punti verranno considerati esclusivamente, e in questo ordine: 
+      differenza reti e gol fatti.
+    </p>
+  `;
 }
 
 
