@@ -239,6 +239,9 @@ function buildCourtInfoMessage(tournament) {
 // ===============================
 // RENDER SPECIFIC COURT RULE
 // ===============================
+// ===============================
+// RENDER SPECIFIC COURT RULE
+// ===============================
 function renderSpecificCourtRule(tournament) {
   const container = document.getElementById("specific-court-rule");
   
@@ -256,6 +259,9 @@ function renderSpecificCourtRule(tournament) {
   if (rankingRule) {
     rules.push(rankingRule);
   }
+  
+  // REGOLA 4: Riferimento al regolamento generale
+  rules.push(buildGeneralReferenceRule());
   
   // ✅ RENDER FINALE CON STRUTTURA A BLOCCHI
   container.innerHTML = `
@@ -574,6 +580,24 @@ function buildCrossGroupComparisonText(numGroups, teamsInFinal) {
       in caso di parità di punti verranno considerati esclusivamente, e in questo ordine: 
       differenza reti e gol fatti.
     </p>
+  `;
+}
+
+// ===============================
+// BUILD GENERAL REFERENCE RULE (REGOLA 4)
+// ===============================
+function buildGeneralReferenceRule() {
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">📄</div>
+      <div class="specific-regulation-content">
+        <p><strong>Altre disposizioni</strong></p>
+        <p>
+          Per tutte le altre norme relative a fair play, ritardi, rinvii e spostamenti delle partite, 
+          si rimanda al <strong>regolamento generale dei tornei ICE</strong> riportato in fondo a questa pagina.
+        </p>
+      </div>
+    </div>
   `;
 }
 
