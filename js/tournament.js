@@ -265,6 +265,7 @@ function renderSpecificCourtRule(tournament) {
   `;
 }
 
+
 // ===============================
 // BUILD COURT RULE (REGOLA 1)
 // ===============================
@@ -381,12 +382,7 @@ function mapHoursToPhrase(hours) {
 
 
 
-// ===============================
-// BUILD FORMAT RULE (REGOLA 2)
-// ===============================
-// ===============================
-// BUILD FORMAT RULE (REGOLA 2)
-// ===============================
+
 // ===============================
 // BUILD FORMAT RULE (REGOLA 2)
 // ===============================
@@ -404,7 +400,7 @@ function buildFormatRule(tournament) {
     
     formatText = `
       <p>
-        Il torneo prevede una <strong>fase a gironi</strong> seguita da una <strong>fase finale a ${teamsInFinal} squadre</strong>.
+        Il torneo prevede una <strong>fase a gironi</strong> seguita da una <strong>fase finale, a cui accederanno ${teamsInFinal} squadre</strong>.
       </p>
       <p>
         Le <strong>${teamsMax} squadre</strong> iscritte saranno suddivise in <strong>${numGroups} ${numGroups === 1 ? 'girone' : 'gironi'}</strong> 
