@@ -400,7 +400,7 @@ function buildFormatRule(tournament) {
     
     formatText = `
       <p>
-        Il torneo prevede una <strong>fase a gironi</strong> seguita da una <strong>fase finale, a cui accederanno ${teamsInFinal} squadre</strong>.
+        Il torneo prevede una <strong>fase a gironi</strong> seguita da una <strong>fase finale</strong>, a cui accederanno <strong>${teamsInFinal} squadre</strong>.
       </p>
       <p>
         Le <strong>${teamsMax} squadre</strong> iscritte saranno suddivise in <strong>${numGroups} ${numGroups === 1 ? 'girone' : 'gironi'}</strong> 
