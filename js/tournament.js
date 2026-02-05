@@ -233,12 +233,7 @@ function buildCourtInfoMessage(tournament) {
 
 
 
-// ===============================
-// RENDER SPECIFIC COURT RULE (NEW)
-// ===============================
-// ===============================
-// RENDER SPECIFIC COURT RULE
-// ===============================
+
 // ===============================
 // RENDER SPECIFIC COURT RULE
 // ===============================
@@ -836,9 +831,7 @@ function applyTournamentState(tournament) {
 
 
 
-// ===============================
-// 8. SUBMIT ISCRIZIONE (WITH LOADING STATE)
-// ===============================
+
 // ===============================
 // 8. SUBMIT ISCRIZIONE (WITH VALIDATION)
 // ===============================
