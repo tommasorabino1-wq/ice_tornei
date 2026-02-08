@@ -25,65 +25,50 @@ function handleOptions(req, res) {
 }
 
 // ===============================
-// GET TOURNAMENTS (DEBUG MODE)
+// GET TOURNAMENTS (FIXED)
 // ===============================
 exports.getTournaments = functions.https.onRequest(async (req, res) => {
   setCORS(res);
   if (handleOptions(req, res)) return;
 
   try {
-    console.log('🔍 getTournaments called');
-
-    // 1) Verifica connessione Firestore
     const snapshot = await db.collection('tournaments').get();
-    console.log('📊 Snapshot size:', snapshot.size);
-    console.log('📊 Snapshot empty:', snapshot.empty);
 
     if (snapshot.empty) {
-      console.log('⚠️ No documents in tournaments collection');
-      return res.status(200).json({
-        debug: true,
-        message: 'Collection tournaments is empty',
-        size: 0,
-        tournaments: []
-      });
+      return res.status(200).json([]);
     }
 
     const tournaments = [];
 
     for (const doc of snapshot.docs) {
       const data = doc.data();
-      console.log('📄 Document ID:', doc.id);
-      console.log('📄 Document data:', JSON.stringify(data, null, 2));
+      
+      // ✅ FIX: Usa doc.id se tournament_id non esiste
+      const tournamentId = data.tournament_id || doc.id;
       
       // Conta teams_current
       const subsSnapshot = await db.collection('subscriptions')
-        .where('tournament_id', '==', data.tournament_id)
+        .where('tournament_id', '==', tournamentId)
         .get();
       
-      console.log(`👥 Subscriptions for ${data.tournament_id}:`, subsSnapshot.size);
-      
+      // ✅ Aggiungi tournament_id ai dati se manca
+      data.tournament_id = tournamentId;
       data.teams_current = subsSnapshot.size;
+      
       tournaments.push(data);
     }
 
-    console.log('✅ Returning tournaments:', tournaments.length);
-
-    res.status(200).json({
-      debug: true,
-      count: tournaments.length,
-      tournaments: tournaments
-    });
+    res.status(200).json(tournaments);
 
   } catch (error) {
-    console.error('❌ getTournaments error:', error);
-    res.status(500).json({
-      debug: true,
-      error: error.message,
-      stack: error.stack
-    });
+    console.error('getTournaments error:', error);
+    res.status(500).json([]);
   }
 });
+
+
+
+
 
 // ===============================
 // GET STANDINGS
