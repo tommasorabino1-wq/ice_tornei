@@ -1,32 +1,239 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
 
-const {setGlobalOptions} = require("firebase-functions");
-const {onRequest} = require("firebase-functions/https");
-const logger = require("firebase-functions/logger");
+// Inizializza Firebase Admin (IMPORTANTE: va fatto UNA VOLTA SOLA)
+admin.initializeApp();
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+// Riferimento al database Firestore
+const db = admin.firestore();
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+// ===============================
+// HELPER: CORS (permette chiamate dal frontend)
+// ===============================
+function setCORS(res) {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+}
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+function handleOptions(req, res) {
+  if (req.method === 'OPTIONS') {
+    setCORS(res);
+    return res.status(204).send('');
+  }
+  return false;
+}
+
+// ===============================
+// GET TOURNAMENTS (senza parametri)
+// ===============================
+exports.getTournaments = functions.https.onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  try {
+    const snapshot = await db.collection('tournaments').get();
+    const tournaments = [];
+
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      
+      // Conta teams_current (come facevi con Sheets)
+      const subsSnapshot = await db.collection('subscriptions')
+        .where('tournament_id', '==', data.tournament_id)
+        .get();
+      
+      data.teams_current = subsSnapshot.size;
+      tournaments.push(data);
+    }
+
+    res.status(200).json(tournaments);
+  } catch (error) {
+    console.error('getTournaments error:', error);
+    res.status(500).json([]);
+  }
+});
+
+// ===============================
+// GET STANDINGS
+// ===============================
+exports.getStandings = functions.https.onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  try {
+    const tournamentId = req.query.tournament_id;
+    
+    if (!tournamentId) {
+      return res.status(200).json([]);
+    }
+
+    const snapshot = await db.collection('standings')
+      .where('tournament_id', '==', tournamentId)
+      .orderBy('group_id')
+      .orderBy('rank_level')
+      .get();
+
+    const standings = snapshot.docs.map(doc => doc.data());
+    res.status(200).json(standings);
+  } catch (error) {
+    console.error('getStandings error:', error);
+    res.status(500).json([]);
+  }
+});
+
+// ===============================
+// GET MATCHES (GIRONI)
+// ===============================
+exports.getMatches = functions.https.onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  try {
+    const tournamentId = req.query.tournament_id;
+    
+    if (!tournamentId) {
+      return res.status(200).json([]);
+    }
+
+    const snapshot = await db.collection('matches')
+      .where('tournament_id', '==', tournamentId)
+      .orderBy('group_id')
+      .orderBy('round_id')
+      .get();
+
+    const matches = snapshot.docs.map(doc => doc.data());
+    res.status(200).json(matches);
+  } catch (error) {
+    console.error('getMatches error:', error);
+    res.status(500).json([]);
+  }
+});
+
+// ===============================
+// GET FINALS
+// ===============================
+exports.getFinals = functions.https.onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  try {
+    const tournamentId = req.query.tournament_id;
+    
+    if (!tournamentId) {
+      return res.status(200).json([]);
+    }
+
+    const snapshot = await db.collection('finals')
+      .where('tournament_id', '==', tournamentId)
+      .orderBy('round_id')
+      .get();
+
+    const finals = snapshot.docs.map(doc => doc.data());
+    res.status(200).json(finals);
+  } catch (error) {
+    console.error('getFinals error:', error);
+    res.status(500).json([]);
+  }
+});
+
+// ===============================
+// GET TEAMS
+// ===============================
+exports.getTeams = functions.https.onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  try {
+    const tournamentId = req.query.tournament_id;
+    
+    if (!tournamentId) {
+      return res.status(200).json([]);
+    }
+
+    const snapshot = await db.collection('teams')
+      .where('tournament_id', '==', tournamentId)
+      .get();
+
+    const teams = snapshot.docs.map(doc => ({
+      team_id: doc.data().team_id,
+      team_name: doc.data().team_name
+    }));
+
+    res.status(200).json(teams);
+  } catch (error) {
+    console.error('getTeams error:', error);
+    res.status(500).json([]);
+  }
+});
+
+// ===============================
+// GET BRACKET (struttura finals)
+// ===============================
+exports.getBracket = functions.https.onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  try {
+    const tournamentId = req.query.tournament_id;
+    
+    if (!tournamentId) {
+      return res.status(200).json({ rounds: {}, paths: {} });
+    }
+
+    const snapshot = await db.collection('finals')
+      .where('tournament_id', '==', tournamentId)
+      .orderBy('round_id')
+      .get();
+
+    if (snapshot.empty) {
+      return res.status(200).json({ rounds: {}, paths: {} });
+    }
+
+    const rounds = {};
+    const paths = {};
+
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      const roundId = data.round_id;
+
+      // Aggiungi a rounds
+      if (!rounds[roundId]) rounds[roundId] = [];
+      rounds[roundId].push(data);
+
+      // Aggiungi a paths per team_a
+      if (data.team_a) {
+        if (!paths[data.team_a]) paths[data.team_a] = [];
+        paths[data.team_a].push({
+          round: roundId,
+          match_id: data.match_id,
+          side: "A"
+        });
+      }
+
+      // Aggiungi a paths per team_b
+      if (data.team_b) {
+        if (!paths[data.team_b]) paths[data.team_b] = [];
+        paths[data.team_b].push({
+          round: roundId,
+          match_id: data.match_id,
+          side: "B"
+        });
+      }
+    });
+
+    // Ordina paths per round
+    Object.keys(paths).forEach(teamId => {
+      paths[teamId].sort((a, b) => a.round - b.round);
+    });
+
+    res.status(200).json({
+      tournament_id: tournamentId,
+      rounds,
+      paths
+    });
+  } catch (error) {
+    console.error('getBracket error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
