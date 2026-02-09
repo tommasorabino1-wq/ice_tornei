@@ -253,3 +253,265 @@ exports.getBracket = functions.https.onRequest(async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
+// ===============================
+// IMPORT HELPERS
+// ===============================
+const { generateMatchesIfReady } = require('./helpers/matchGenerator');
+const { generateStandingsBackend } = require('./helpers/standingsCalculator');
+const { generateFinalsIfReady, tryGenerateNextFinalRound } = require('./helpers/finalsGenerator');
+const { updateTournamentStatus } = require('./helpers/tournamentStatus');
+
+// ===============================
+// POST: SUBMIT SUBSCRIPTION
+// ===============================
+exports.submitSubscription = functions.https.onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  if (req.method !== 'POST') {
+    return res.status(405).send('METHOD_NOT_ALLOWED');
+  }
+
+  try {
+    const { tournament_id, team_name, email, phone, preferred_zone, preferred_days, preferred_hours } = req.body;
+
+    // Validazione base
+    if (!tournament_id || !team_name || !email) {
+      return res.status(400).send('INVALID_DATA');
+    }
+
+    // 1) Verifica torneo esistente
+    const tournamentDoc = await db.collection('tournaments').doc(tournament_id).get();
+    if (!tournamentDoc.exists) {
+      return res.status(404).send('TOURNAMENT_NOT_FOUND');
+    }
+
+    const tournament = tournamentDoc.data();
+    const fixedCourt = tournament.fixed_court !== false; // default true
+
+    // 2) Blocco email duplicata
+    const duplicateCheck = await db.collection('subscriptions')
+      .where('tournament_id', '==', tournament_id)
+      .where('email', '==', email)
+      .get();
+
+    if (!duplicateCheck.empty) {
+      return res.status(409).send('DUPLICATE');
+    }
+
+    // 3) Crea subscription
+    const subscriptionData = {
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      tournament_id,
+      team_name,
+      email,
+      phone: phone || ''
+    };
+
+    // Campi extra se fixed_court = false
+    if (!fixedCourt) {
+      subscriptionData.preferred_zone = preferred_zone || '';
+      subscriptionData.preferred_days = preferred_days || '';
+      subscriptionData.preferred_hours = preferred_hours || '';
+    }
+
+    await db.collection('subscriptions').add(subscriptionData);
+
+    // 4) Crea/aggiorna team
+    const normalizedTeam = team_name.trim().toLowerCase();
+    const teamId = `${tournament_id}_${normalizedTeam}`;
+
+    await db.collection('teams').doc(teamId).set({
+      team_id: teamId,
+      tournament_id,
+      team_name
+    });
+
+    // 5) Genera match se pronto
+    await generateMatchesIfReady(tournament_id);
+    await generateStandingsBackend(tournament_id);
+    await updateTournamentStatus(tournament_id);
+
+    res.status(200).send('SUBSCRIPTION_SAVED');
+
+  } catch (error) {
+    console.error('submitSubscription error:', error);
+    res.status(500).send('ERROR');
+  }
+});
+
+
+// ===============================
+// POST: SUBMIT RESULT
+// ===============================
+exports.submitResult = functions.https.onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  if (req.method !== 'POST') {
+    return res.status(405).send('METHOD_NOT_ALLOWED');
+  }
+
+  try {
+    const { tournament_id, match_id, score_a, score_b, phase, winner_team_id } = req.body;
+
+    const isFinal = String(phase).toLowerCase() === 'final';
+    const scoreA = Number(score_a);
+    const scoreB = Number(score_b);
+
+    // Validazione
+    if (!tournament_id || !match_id || isNaN(scoreA) || isNaN(scoreB)) {
+      return res.status(400).send('INVALID_DATA');
+    }
+
+    if (scoreA < 0 || scoreB < 0) {
+      return res.status(400).send('INVALID_SCORE');
+    }
+
+    // BLOCCO: torneo finished
+    if (isFinal) {
+      const tournamentDoc = await db.collection('tournaments').doc(tournament_id).get();
+      if (tournamentDoc.exists && tournamentDoc.data().status === 'finished') {
+        return res.status(403).send('TOURNAMENT_FINISHED_LOCKED');
+      }
+    }
+
+    // Selezione collezione
+    const collection = isFinal ? 'finals' : 'matches';
+    const matchRef = db.collection(collection).doc(match_id);
+    const matchDoc = await matchRef.get();
+
+    if (!matchDoc.exists) {
+      return res.status(404).send('MATCH_NOT_FOUND');
+    }
+
+    const matchData = matchDoc.data();
+
+    // BLOCCO: round successivo esiste (solo finals)
+    if (isFinal) {
+      const currentRound = matchData.round_id;
+      const nextRoundCheck = await db.collection('finals')
+        .where('tournament_id', '==', tournament_id)
+        .where('round_id', '>', currentRound)
+        .limit(1)
+        .get();
+
+      if (!nextRoundCheck.empty) {
+        return res.status(403).send('FINAL_ROUND_LOCKED');
+      }
+    }
+
+    // INVALIDAZIONE FINALS (se modifica risultato gironi)
+    if (!isFinal && matchData.played) {
+      const prevScoreA = matchData.score_a;
+      const prevScoreB = matchData.score_b;
+
+      if (prevScoreA !== scoreA || prevScoreB !== scoreB) {
+        // Cancella finals
+        const finalsToDelete = await db.collection('finals')
+          .where('tournament_id', '==', tournament_id)
+          .get();
+
+        const batch = db.batch();
+        finalsToDelete.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+      }
+    }
+
+    // SCRITTURA RISULTATO
+    const updateData = {
+      score_a: scoreA,
+      score_b: scoreB,
+      played: true
+    };
+
+    if (isFinal) {
+      const teamA = matchData.team_a;
+      const teamB = matchData.team_b;
+
+      let winner = '';
+
+      if (scoreA !== scoreB) {
+        winner = scoreA > scoreB ? teamA : teamB;
+      } else {
+        // Pareggio → serve spareggio
+        if (!winner_team_id) {
+          return res.status(400).send('FINAL_WINNER_REQUIRED');
+        }
+
+        if (winner_team_id !== teamA && winner_team_id !== teamB) {
+          return res.status(400).send('INVALID_WINNER');
+        }
+
+        winner = winner_team_id;
+      }
+
+      updateData.winner_team_id = winner;
+    }
+
+    await matchRef.update(updateData);
+
+    // LOGICA POST-SCRITTURA
+    if (!isFinal) {
+      // Gironi
+      await generateStandingsBackend(tournament_id);
+      await updateTournamentStatus(tournament_id);
+
+      // Verifica se tutti i match sono giocati
+      const allMatchesSnapshot = await db.collection('matches')
+        .where('tournament_id', '==', tournament_id)
+        .get();
+
+      const allMatches = allMatchesSnapshot.docs.map(doc => doc.data());
+      const allPlayed = allMatches.every(m => m.played === true);
+
+      if (!allPlayed) {
+        // Cancella finals se esistono
+        const finalsToDelete = await db.collection('finals')
+          .where('tournament_id', '==', tournament_id)
+          .get();
+
+        if (!finalsToDelete.empty) {
+          const batch = db.batch();
+          finalsToDelete.docs.forEach(doc => batch.delete(doc.ref));
+          await batch.commit();
+        }
+      } else {
+        // Genera finals
+        try {
+          // Cancella vecchie finals prima
+          const finalsToDelete = await db.collection('finals')
+            .where('tournament_id', '==', tournament_id)
+            .get();
+
+          if (!finalsToDelete.empty) {
+            const batch = db.batch();
+            finalsToDelete.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+          }
+
+          await generateFinalsIfReady(tournament_id);
+        } catch (err) {
+          if (['E4', 'E6', 'E_HEADER'].includes(err.message)) {
+            // Errori attesi: ambiguità classifiche
+            console.log('Finals generation skipped:', err.message);
+          } else {
+            throw err;
+          }
+        }
+      }
+    } else {
+      // Finals
+      await tryGenerateNextFinalRound(tournament_id);
+      await updateTournamentStatus(tournament_id);
+    }
+
+    res.status(200).send('RESULT_SAVED');
+
+  } catch (error) {
+    console.error('submitResult error:', error);
+    res.status(500).send('ERROR');
+  }
+});
