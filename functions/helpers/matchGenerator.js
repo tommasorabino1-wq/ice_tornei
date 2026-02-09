@@ -77,7 +77,7 @@ function assignHomeAwayGreedy(roundPairs) {
 // ===============================
 async function generateMatchesIfReady(tournamentId) {
   try {
-    console.log(`⚽ Checking if matches can be generated for ${tournamentId}`);
+    console.log(`⚽ [START] Checking if matches can be generated for ${tournamentId}`);
 
     // 1) Leggi torneo
     const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
@@ -90,16 +90,20 @@ async function generateMatchesIfReady(tournamentId) {
     const teamsMax = Number(tournament.teams_max);
     const teamsPerGroup = Number(tournament.teams_per_group);
 
+    console.log(`📋 Tournament config: teamsMax=${teamsMax}, teamsPerGroup=${teamsPerGroup}`);
+
     if (!teamsMax || !teamsPerGroup) {
       console.log('⚠️ Invalid teams_max or teams_per_group');
       return;
     }
 
     if (teamsMax % teamsPerGroup !== 0) {
+      console.error(`❌ teams_max (${teamsMax}) not divisible by teams_per_group (${teamsPerGroup})`);
       throw new Error('teams_max not divisible by teams_per_group');
     }
 
     if (teamsPerGroup % 2 !== 0) {
+      console.error(`❌ teams_per_group (${teamsPerGroup}) is odd`);
       throw new Error('teams_per_group must be even');
     }
 
@@ -108,8 +112,10 @@ async function generateMatchesIfReady(tournamentId) {
       .where('tournament_id', '==', tournamentId)
       .get();
 
+    console.log(`👥 Teams registered: ${teamsSnapshot.size}/${teamsMax}`);
+
     if (teamsSnapshot.size !== teamsMax) {
-      console.log(`⚠️ Not enough teams: ${teamsSnapshot.size}/${teamsMax}`);
+      console.log(`⏳ Waiting for more teams: ${teamsSnapshot.size}/${teamsMax}`);
       return;
     }
 
@@ -120,18 +126,25 @@ async function generateMatchesIfReady(tournamentId) {
       .get();
 
     if (!matchesSnapshot.empty) {
-      console.log('⚠️ Matches already generated');
+      console.log('✅ Matches already generated (skipping)');
       return;
     }
 
+    console.log('🚀 All conditions met, generating matches...');
+
     // 4) Shuffle teams
     const teamIds = teamsSnapshot.docs.map(doc => doc.data().team_id);
+    console.log(`📝 Team IDs before shuffle: ${teamIds.join(', ')}`);
+
     for (let i = teamIds.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [teamIds[i], teamIds[j]] = [teamIds[j], teamIds[i]];
     }
 
+    console.log(`🔀 Team IDs after shuffle: ${teamIds.join(', ')}`);
+
     const numGroups = teamsMax / teamsPerGroup;
+    console.log(`📊 Number of groups: ${numGroups}`);
 
     // 5) Genera match per ogni gruppo
     const batch = db.batch();
@@ -140,6 +153,8 @@ async function generateMatchesIfReady(tournamentId) {
     for (let g = 0; g < numGroups; g++) {
       const groupId = `G${g + 1}`;
       const groupTeams = teamIds.slice(g * teamsPerGroup, (g + 1) * teamsPerGroup);
+
+      console.log(`🏟️ Generating matches for ${groupId}: ${groupTeams.join(', ')}`);
 
       const pairsByRound = buildRoundRobinPairsEven(groupTeams);
       const rounds = assignHomeAwayGreedy(pairsByRound);
@@ -163,17 +178,21 @@ async function generateMatchesIfReady(tournamentId) {
             played: false
           });
 
+          console.log(`   ✓ Match ${matchId}: ${m.home} vs ${m.away}`);
+
           globalMatchCounter++;
         });
       });
     }
 
     // 6) Commit batch
+    console.log(`💾 Committing ${globalMatchCounter - 1} matches...`);
     await batch.commit();
-    console.log(`✅ Generated ${globalMatchCounter - 1} matches for ${tournamentId}`);
+    console.log(`✅ [SUCCESS] Generated ${globalMatchCounter - 1} matches for ${tournamentId}`);
 
   } catch (error) {
-    console.error('generateMatchesIfReady error:', error);
+    console.error('❌ [ERROR] generateMatchesIfReady failed:', error);
+    console.error('Stack trace:', error.stack);
     throw error;
   }
 }
