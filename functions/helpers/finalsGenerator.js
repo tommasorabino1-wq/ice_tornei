@@ -237,5 +237,5 @@ async function tryGenerateNextFinalRound(tournamentId) {
 
 module.exports = {
   generateFinalsIfReady,
-  tryGenerateNextFinalRound
+  tryGenerateNextFinalRound: tryGenerateNextFinalRound  // ✅ esplicito
 };
