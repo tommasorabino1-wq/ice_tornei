@@ -2,19 +2,23 @@
 // STANDINGS JS
 // ===============================
 
-// ⚠️ INSERISCI QUI L’URL DELLA TUA WEB APP
-const API_URL = "https://script.google.com/macros/s/AKfycbxxgJnLoxkP_XDhQxRtqrZ0M_trOlVOmjIpsVACug1dlfSmfZz0fWXcdADvI0XcP7W3-A/exec";
+// ===============================
+// API URLS (FIREBASE FUNCTIONS)
+// ===============================
+const API_URLS = {
+  getTournaments: "https://gettournaments-dzvezz2yhq-uc.a.run.app",
+  getMatches: "https://getmatches-dzvezz2yhq-uc.a.run.app",
+  getStandings: "https://getstandings-dzvezz2yhq-uc.a.run.app",
+  getFinals: "https://getfinals-dzvezz2yhq-uc.a.run.app",
+  getBracket: "https://getbracket-dzvezz2yhq-uc.a.run.app",
+  submitResult: "https://submitresult-dzvezz2yhq-uc.a.run.app"
+};
 
 let TOURNAMENT_STATUS = null;
-
 let ALL_MATCHES = [];
 let AVAILABLE_ROUNDS = [];
 let FINALS_MATCHES = [];
 let FINALS_SELECTED_ROUND_ID = null;
-
-
-
-
 
 // ===============================
 // SKELETON HELPERS
@@ -28,8 +32,13 @@ function fadeOutSkeleton(wrapper) {
 }
 
 function loadStandingsPage(tournamentId) {
-  fetch(API_URL)
-    .then(res => res.json())
+  fetch(API_URLS.getTournaments)
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then(tournaments => {
       const t = tournaments.find(t => t.tournament_id === tournamentId);
       TOURNAMENT_STATUS = t?.status || null;
@@ -38,7 +47,6 @@ function loadStandingsPage(tournamentId) {
       if (layout) {
         layout.classList.toggle("finished", TOURNAMENT_STATUS === "finished");
       }
-
 
       loadMatches(tournamentId);
       loadStandings(tournamentId);
@@ -52,11 +60,11 @@ function loadStandingsPage(tournamentId) {
         FINALS_MATCHES = [];
         applyLayoutByStatus();
       }
+    })
+    .catch(err => {
+      console.error("Errore caricamento tornei:", err);
     });
 }
-
-
-
 
 function hideSkeletons() {
   document
@@ -64,13 +72,9 @@ function hideSkeletons() {
     .forEach(s => s.classList.add("hidden"));
 }
 
-
-
-
-
 document.addEventListener("DOMContentLoaded", () => {
   document
-    .querySelector(".standings-results-box-fullwidth")  // ✅ CLASSE NUOVA
+    .querySelector(".standings-results-box-fullwidth")
     ?.classList.add("loading");
 
   const tournamentId = getTournamentIdFromUrl();
@@ -85,11 +89,6 @@ document.addEventListener("DOMContentLoaded", () => {
   showTournamentFilter();
 });
 
-
-
-
-
-
 // ===============================
 // GET TOURNAMENT ID
 // ===============================
@@ -98,7 +97,6 @@ function getTournamentIdFromUrl() {
   return params.get("tournament_id");
 }
 
-
 // ===============================
 // SHOW TOURNAMENT FILTER
 // ===============================
@@ -106,14 +104,18 @@ function showTournamentFilter() {
   const filterBox = document.getElementById("tournament-filter");
   const select = document.getElementById("tournament-select");
 
-  // 🔒 protezione: inizializza UNA SOLA VOLTA
   if (select.dataset.initialized === "true") return;
   select.dataset.initialized = "true";
 
   filterBox.classList.remove("hidden");
 
-  fetch(API_URL)
-    .then(res => res.json())
+  fetch(API_URLS.getTournaments)
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then(tournaments => {
       select.innerHTML = `<option value="">Seleziona torneo</option>`;
 
@@ -123,6 +125,9 @@ function showTournamentFilter() {
         option.textContent = t.name;
         select.appendChild(option);
       });
+    })
+    .catch(err => {
+      console.error("Errore caricamento tornei:", err);
     });
 
   select.addEventListener("change", () => {
@@ -130,7 +135,6 @@ function showTournamentFilter() {
 
     const tournamentId = select.value;
 
-    // ✅ URL coerente
     history.replaceState(
       null,
       "",
@@ -138,7 +142,7 @@ function showTournamentFilter() {
     );
 
     document
-      .querySelectorAll(".standings-results-box-fullwidth, .standings-table-box-fullwidth")  // ✅ CLASSI NUOVE
+      .querySelectorAll(".standings-results-box-fullwidth, .standings-table-box-fullwidth")
       .forEach(box => box.classList.remove("hidden"));
 
     hideTournamentFilter();
@@ -146,29 +150,31 @@ function showTournamentFilter() {
   });
 }
 
-
-
 function hideTournamentFilter() {
   const filterBox = document.getElementById("tournament-filter");
   filterBox.classList.add("hidden");
 }
-
-
-
 
 // ===============================
 // LOAD MATCHES
 // ===============================
 function loadMatches(tournamentId) {
   const skeleton = document.querySelector(
-    ".standings-results-box-fullwidth .standings-skeleton"  // ✅ CLASSE NUOVA
+    ".standings-results-box-fullwidth .standings-skeleton"
   );
   const list = document.getElementById("matches-list");
 
   list.innerHTML = "";
 
-  fetch(`${API_URL}?action=get_matches&tournament_id=${encodeURIComponent(tournamentId)}`)
-    .then(res => res.json())
+  const url = `${API_URLS.getMatches}?tournament_id=${encodeURIComponent(tournamentId)}`;
+
+  fetch(url)
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then(matches => {
       fadeOutSkeleton(skeleton);
 
@@ -184,14 +190,14 @@ function loadMatches(tournamentId) {
       renderMatchesByRound(AVAILABLE_ROUNDS[0]);
 
       document
-        .querySelector(".standings-results-box-fullwidth")  // ✅ CLASSE NUOVA
+        .querySelector(".standings-results-box-fullwidth")
         ?.classList.remove("loading");
     })
-    .catch(() => {
+    .catch(err => {
+      console.error("Errore caricamento match:", err);
       list.innerHTML = "<p class='error'>Errore caricamento match</p>";
     });
 }
-
 
 function renderMatchesByRound(roundId) {
   const container = document.getElementById("matches-list");
@@ -207,7 +213,6 @@ function renderMatchesByRound(roundId) {
     return;
   }
 
-  // 🔒 BLOCCO LOGICO
   const tournamentLocked = TOURNAMENT_STATUS === "finished";
   const finalsStarted = TOURNAMENT_STATUS === "final_phase";
 
@@ -271,53 +276,47 @@ function renderMatchesByRound(roundId) {
   });
 }
 
-
-
 function onRoundChange(value) {
   if (!value) return;
   renderMatchesByRound(Number(value));
 }
-
-
-
-
-
 
 // ===============================
 // LOAD STANDINGS
 // ===============================
 function loadStandings(tournamentId) {
   const skeleton = document.querySelector(
-    ".standings-table-box-fullwidth .standings-skeleton"  // ✅ CLASSE NUOVA
+    ".standings-table-box-fullwidth .standings-skeleton"
   );
   const standingsEl = document.getElementById("standings");
 
   standingsEl.innerHTML = "";
   standingsEl.classList.remove("hidden");
 
-  fetch(`${API_URL}?action=get_standings&tournament_id=${encodeURIComponent(tournamentId)}`)
-    .then(res => res.json())
+  const url = `${API_URLS.getStandings}?tournament_id=${encodeURIComponent(tournamentId)}`;
+
+  fetch(url)
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then(data => {
       fadeOutSkeleton(skeleton);
       renderStandings(data);
     })
-    .catch(() => {
+    .catch(err => {
+      console.error("Errore caricamento standings:", err);
       standingsEl.innerHTML =
         "<p class='error'>Errore caricamento classifica</p>";
     });
 }
 
-
-
-
-
-
-
 // ===============================
-// SUBMIT RESULT (WITH LOADING STATE)
+// SUBMIT RESULT (GROUP MATCHES)
 // ===============================
 function submitResult(card, matchId, tournamentId, phase = "group") {
-
   if (TOURNAMENT_STATUS === "finished") {
     showToast("Torneo concluso 🔒");
     return;
@@ -334,33 +333,32 @@ function submitResult(card, matchId, tournamentId, phase = "group") {
     return;
   }
 
-  // ✅ CREA PRIMA I DATI
-  const formData = new URLSearchParams();
-  formData.append("action", "submit_result");
-  formData.append("tournament_id", tournamentId);
-  formData.append("match_id", matchId);
-  formData.append("score_a", scoreA);
-  formData.append("score_b", scoreB);
+  const payload = {
+    tournament_id: tournamentId,
+    match_id: matchId,
+    score_a: Number(scoreA),
+    score_b: Number(scoreB),
+    phase: phase
+  };
 
-  // --- STATO LOADING ---
+  // STATO LOADING
   btn.innerHTML = `
     <span class="spinner"></span>
     Salvataggio...
   `;
   btn.classList.add("disabled");
   btn.disabled = true;
-
   inputs.forEach(input => input.disabled = true);
 
-  formData.append("phase", phase);
-
-  fetch(API_URL, {
+  fetch(API_URLS.submitResult, {
     method: "POST",
-    body: formData
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
   })
     .then(res => res.text())
     .then(response => {
-
       if (response === "RESULT_SAVED") {
         card.classList.add("played");
 
@@ -370,22 +368,18 @@ function submitResult(card, matchId, tournamentId, phase = "group") {
 
         showToast("Risultato salvato ✔️");
 
-        // 🔁 riabilita input per eventuale modifica futura
         inputs.forEach(input => input.disabled = false);
         btn.disabled = false;
         btn.classList.remove("disabled");
 
-        // ✅ aggiorna classifica subito
         loadStandings(tournamentId);
 
-        // ✅ aggiorna status torneo (potrebbe diventare final_phase)
-        fetch(API_URL)
+        fetch(API_URLS.getTournaments)
           .then(r => r.json())
           .then(tournaments => {
             const t = tournaments.find(x => x.tournament_id === tournamentId);
             TOURNAMENT_STATUS = t?.status || TOURNAMENT_STATUS;
 
-            // se è entrato in final_phase, ricarico i match per bloccare gli input
             if (TOURNAMENT_STATUS === "final_phase") {
               loadMatches(tournamentId);
             }
@@ -395,16 +389,15 @@ function submitResult(card, matchId, tournamentId, phase = "group") {
         return;
       }
 
-
       showToast("Errore nel salvataggio ❌");
       restoreUI();
     })
-    .catch(() => {
+    .catch(err => {
+      console.error("Errore submit:", err);
       showToast("Errore di rete ❌");
       restoreUI();
     });
 
-  // --- RIPRISTINO UI ---
   function restoreUI() {
     btn.textContent = card.classList.contains("played")
       ? "Modifica risultato"
@@ -417,16 +410,10 @@ function submitResult(card, matchId, tournamentId, phase = "group") {
   }
 }
 
-
-
-
-
-
 // ===============================
 // HELPERS
 // ===============================
 function formatTeam(teamId) {
-  // ice-pad-1_squad8 → squad8
   return teamId.split("_").slice(1).join(" ");
 }
 
@@ -442,13 +429,8 @@ function showToast(message) {
   }, 2500);
 }
 
-
-
 // ===============================
 // RENDER STANDINGS
-// ===============================
-// ===============================
-// RENDER STANDINGS (NEW)
 // ===============================
 function renderStandings(data) {
   const standingsEl = document.getElementById("standings");
@@ -459,7 +441,6 @@ function renderStandings(data) {
     return;
   }
 
-  // ✅ raggruppa per GIRONE (group_id)
   const groupsMap = {};
   data.forEach(row => {
     const gid = row.group_id || "G?";
@@ -467,14 +448,12 @@ function renderStandings(data) {
     groupsMap[gid].push(row);
   });
 
-  // helper sort: "G1","G2"...
   const groupSort = (a, b) => {
     const na = parseInt(String(a).replace(/[^\d]/g, ""), 10) || 0;
     const nb = parseInt(String(b).replace(/[^\d]/g, ""), 10) || 0;
     return na - nb;
   };
 
-  // pulisci e renderizza per girone
   standingsEl.innerHTML = "";
 
   Object.keys(groupsMap)
@@ -526,8 +505,6 @@ function renderStandings(data) {
     });
 }
 
-
-
 function escapeHTML(str) {
   return String(str ?? "")
     .replace(/&/g, "&amp;")
@@ -537,13 +514,11 @@ function escapeHTML(str) {
     .replace(/'/g, "&#039;");
 }
 
-
 function renderRoundFilter(rounds) {
   const select = document.getElementById("round-filter");
 
   if (!select || !Array.isArray(rounds)) return;
 
-  // reset
   select.innerHTML = "";
 
   rounds.forEach((round, index) => {
@@ -551,13 +526,11 @@ function renderRoundFilter(rounds) {
     option.value = round;
     option.textContent = `Giornata ${round}`;
 
-    // default selezionata = prima giornata
     if (index === 0) option.selected = true;
 
     select.appendChild(option);
   });
 
-  // evita doppio binding
   if (select.dataset.initialized === "true") return;
   select.dataset.initialized = "true";
 
@@ -565,7 +538,6 @@ function renderRoundFilter(rounds) {
     onRoundChange(e.target.value);
   });
 }
-
 
 function renderFinalsRoundFilter(rounds, bracket) {
   const select = document.getElementById("finals-round-filter");
@@ -588,7 +560,6 @@ function renderFinalsRoundFilter(rounds, bracket) {
     select.appendChild(option);
   });
 
-  // evita doppio binding
   if (select.dataset.initialized === "true") return;
   select.dataset.initialized = "true";
 
@@ -602,12 +573,6 @@ function onFinalsRoundChange(value) {
 
   FINALS_SELECTED_ROUND_ID = Number(value);
 
-  // rileggo l’ultimo bracket “già renderizzato” dal DOM:
-  // qui la strategia minima è: ricarico dal backend e rerender.
-  // MA per restare minimo e veloce: uso l’ultimo bracket passato a renderFinalsBracket
-  // -> quindi chiamiamo renderFinalsMatchesByRound solo se abbiamo un bracket in scope.
-  // Per farlo semplice: quando cambia, cerco il bracket dal tabellone già presente?
-  // No: meglio minimale e robusto -> ricarico bracket.
   const tournamentId = getTournamentIdFromUrl();
   if (!tournamentId) return;
 
@@ -642,19 +607,24 @@ function renderFinalsMatchesByRound(roundId, bracket, tournamentId) {
   container.appendChild(roundBox);
 }
 
-
-
-
 function loadFinalsBracket(tournamentId) {
-  return fetch(`${API_URL}?action=get_bracket&tournament_id=${encodeURIComponent(tournamentId)}`)
-    .then(res => res.json())
+  const url = `${API_URLS.getBracket}?tournament_id=${encodeURIComponent(tournamentId)}`;
+
+  return fetch(url)
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then(data => {
       return data && data.rounds ? data : null;
     })
-    .catch(() => null);
+    .catch(err => {
+      console.error("Errore caricamento bracket:", err);
+      return null;
+    });
 }
-
-
 
 function applyLayoutByStatus() {
   const finals = document.getElementById("finals-container");
@@ -665,9 +635,6 @@ function applyLayoutByStatus() {
     finals.classList.remove("hidden");
   }
 }
-
-
-
 
 function getRoundLabel(matchCount) {
   switch (matchCount) {
@@ -686,68 +653,39 @@ function getRoundLabel(matchCount) {
   }
 }
 
-
-
-
-
-
-
-
 function renderFinalsBracket(bracket, tournamentId) {
   const container = document.getElementById("finals-bracket-content");
   const visualContainer = document.getElementById("finals-bracket-visual");
 
   if (!container) return;
 
-  // Nascondi skeleton finals
   const finalsSkeleton = document.querySelector(".finals-section .finals-skeleton");
   if (finalsSkeleton) {
     finalsSkeleton.classList.add("hidden");
   }
 
-  // Lista rounds disponibili (ordinati)
   const rounds = Object.keys(bracket.rounds)
     .map(Number)
     .sort((a, b) => a - b);
 
-  // Niente round -> placeholder
   if (rounds.length === 0) {
     container.innerHTML = "<p class='placeholder'>Nessun match disponibile</p>";
     if (visualContainer) visualContainer.innerHTML = "";
     return;
   }
 
-  // ✅ Selezione round di default (persistente)
   if (FINALS_SELECTED_ROUND_ID === null || !rounds.includes(Number(FINALS_SELECTED_ROUND_ID))) {
     FINALS_SELECTED_ROUND_ID = rounds[0];
   }
 
-  // ✅ Render filtro "Fase"
   renderFinalsRoundFilter(rounds, bracket);
-
-  // ✅ Render SOLO i match del round selezionato (FULL WIDTH)
   renderFinalsMatchesByRound(FINALS_SELECTED_ROUND_ID, bracket, tournamentId);
 
-  // Render bracket visuale (sezione separata full-width)
   if (visualContainer) {
     renderBracketVisual(bracket, visualContainer);
   }
 }
 
-
-
-
-// ===============================
-// RENDER QUALIFIED TEAMS - REMOVED
-// ===============================
-function renderQualifiedTeams(bracket, container) {
-  // ✅ Funzione rimossa: non renderizziamo più le squadre qualificate
-  return;
-}
-
-// ===============================
-// RENDER BRACKET VISUAL (TREE)
-// ===============================
 function renderBracketVisual(bracket, container) {
   container.innerHTML = "";
 
@@ -763,9 +701,6 @@ function renderBracketVisual(bracket, container) {
   const totalRounds = rounds.length;
   const firstRoundMatches = bracket.rounds[rounds[0]].length;
 
-  // Determina se usare layout simmetrico
-  // Caso 1: ≥4 match nel primo round (quarti, ottavi, etc.)
-  // Caso 2: Esattamente 2 match nel primo round + almeno una finale (semifinali + finale)
   const isSymmetric = firstRoundMatches >= 4 || (firstRoundMatches === 2 && totalRounds >= 2);
 
   if (isSymmetric && totalRounds >= 2) {
@@ -775,12 +710,6 @@ function renderBracketVisual(bracket, container) {
   }
 }
 
-
-
-
-// ===============================
-// RENDER LINEAR BRACKET (SIMPLE)
-// ===============================
 function renderLinearBracket(bracket, rounds, container) {
   const bracketEl = document.createElement("div");
   bracketEl.className = "bracket-container bracket-linear";
@@ -805,33 +734,25 @@ function renderLinearBracket(bracket, rounds, container) {
   container.appendChild(bracketEl);
 }
 
-// ===============================
-// RENDER SYMMETRIC BRACKET (CHAMPIONS STYLE) - FIXED
-// ===============================
 function renderSymmetricBracket(bracket, rounds, container) {
   const bracketEl = document.createElement("div");
   bracketEl.className = "bracket-container bracket-symmetric";
 
-  // LEFT SIDE (prima metà del bracket)
   const leftSide = document.createElement("div");
   leftSide.className = "bracket-side bracket-left";
 
-  // RIGHT SIDE (seconda metà del bracket)
   const rightSide = document.createElement("div");
   rightSide.className = "bracket-side bracket-right";
 
-  // CENTER (finale)
   const centerEl = document.createElement("div");
   centerEl.className = "bracket-final";
 
-  // Processa ogni round
   rounds.forEach((roundId, roundIndex) => {
     const matches = bracket.rounds[roundId];
     const roundLabel = getRoundLabel(matches.length);
     const isFinal = matches.length === 1;
 
     if (isFinal) {
-      // Finale al centro
       centerEl.innerHTML = `
         <div class="bracket-trophy">🏆</div>
         <div class="bracket-round-label">Finale</div>
@@ -839,7 +760,6 @@ function renderSymmetricBracket(bracket, rounds, container) {
       const matchEl = createBracketMatch(matches[0]);
       centerEl.appendChild(matchEl);
 
-      // Mostra campione se il match è giocato
       if (matches[0].winner_team_id) {
         const championEl = document.createElement("div");
         championEl.className = "bracket-champion";
@@ -847,13 +767,9 @@ function renderSymmetricBracket(bracket, rounds, container) {
         centerEl.appendChild(championEl);
       }
     } else {
-      // Dividi i match tra sinistra e destra
       const leftMatches = matches.slice(0, Math.ceil(matches.length / 2));
       const rightMatches = matches.slice(Math.ceil(matches.length / 2));
 
-      // =============================
-      // ROUND SINISTRA (normale)
-      // =============================
       if (leftMatches.length > 0) {
         const leftRoundEl = document.createElement("div");
         leftRoundEl.className = "bracket-round left";
@@ -864,13 +780,9 @@ function renderSymmetricBracket(bracket, rounds, container) {
           leftRoundEl.appendChild(matchEl);
         });
         
-        // ✅ Aggiungi in ordine normale (da sinistra a destra)
         leftSide.appendChild(leftRoundEl);
       }
 
-      // =============================
-      // ROUND DESTRA (invertito)
-      // =============================
       if (rightMatches.length > 0) {
         const rightRoundEl = document.createElement("div");
         rightRoundEl.className = "bracket-round right";
@@ -881,8 +793,6 @@ function renderSymmetricBracket(bracket, rounds, container) {
           rightRoundEl.appendChild(matchEl);
         });
         
-        // ✅ CHIAVE: Aggiungi in ordine normale, 
-        // il CSS con flex-direction: row-reverse farà l'inversione visiva
         rightSide.appendChild(rightRoundEl);
       }
     }
@@ -895,9 +805,6 @@ function renderSymmetricBracket(bracket, rounds, container) {
   container.appendChild(bracketEl);
 }
 
-// ===============================
-// CREATE SINGLE BRACKET MATCH (REFINED)
-// ===============================
 function createBracketMatch(match) {
   const matchEl = document.createElement("div");
   matchEl.className = "bracket-match";
@@ -906,7 +813,6 @@ function createBracketMatch(match) {
   const scoreA = match.score_a;
   const scoreB = match.score_b;
 
-  // Determina vincitore
   let winnerTeam = null;
   if (isPlayed) {
     if (match.winner_team_id) {
@@ -919,16 +825,13 @@ function createBracketMatch(match) {
       } else if (numB > numA) {
         winnerTeam = match.team_b;
       }
-      // Se parità e nessun winner_team_id, nessun vincitore visivamente
     }
   }
 
-  // Team A
   const teamAEl = document.createElement("div");
   teamAEl.className = "bracket-team";
   
   if (match.team_a) {
-    // Applica classi winner/loser
     if (winnerTeam === match.team_a) {
       teamAEl.classList.add("winner");
     } else if (winnerTeam && winnerTeam !== match.team_a) {
@@ -947,12 +850,10 @@ function createBracketMatch(match) {
     `;
   }
 
-  // Team B
   const teamBEl = document.createElement("div");
   teamBEl.className = "bracket-team";
   
   if (match.team_b) {
-    // Applica classi winner/loser
     if (winnerTeam === match.team_b) {
       teamBEl.classList.add("winner");
     } else if (winnerTeam && winnerTeam !== match.team_b) {
@@ -977,8 +878,6 @@ function createBracketMatch(match) {
   return matchEl;
 }
 
-
-
 function renderFinalsMatchCard(match, tournamentId, roundLabel = "Fase Finale") {
   const card = document.createElement("div");
   card.className = "match-card finals";
@@ -992,7 +891,6 @@ function renderFinalsMatchCard(match, tournamentId, roundLabel = "Fase Finale") 
   if (isPlayed) card.classList.add("played");
   if (tournamentLocked) card.classList.add("locked");
 
-  // Testo e classe bottone
   let btnText = "Invia risultato";
   let btnClass = "btn primary submit-result";
 
@@ -1004,7 +902,6 @@ function renderFinalsMatchCard(match, tournamentId, roundLabel = "Fase Finale") 
     btnClass = "btn secondary submit-result";
   }
 
-  // Tie + winner selected
   const scoreA = match.score_a;
   const scoreB = match.score_b;
 
@@ -1078,15 +975,6 @@ function renderFinalsMatchCard(match, tournamentId, roundLabel = "Fase Finale") 
   return card;
 }
 
-
-
-
-
-
-
-
-
-
 function submitFinalResult(card, match, tournamentId, winnerTeamId) {
   if (TOURNAMENT_STATUS === "finished") {
     showToast("Torneo concluso 🔒");
@@ -1108,19 +996,19 @@ function submitFinalResult(card, match, tournamentId, winnerTeamId) {
     return;
   }
 
-  const formData = new URLSearchParams();
-  formData.append("action", "submit_result");
-  formData.append("phase", "final");
-  formData.append("tournament_id", tournamentId);
-  formData.append("match_id", match.match_id);
-  formData.append("score_a", scoreA);
-  formData.append("score_b", scoreB);
+  const payload = {
+    tournament_id: tournamentId,
+    match_id: match.match_id,
+    score_a: Number(scoreA),
+    score_b: Number(scoreB),
+    phase: "final"
+  };
 
   if (winnerTeamId) {
-    formData.append("winner_team_id", winnerTeamId);
+    payload.winner_team_id = winnerTeamId;
   }
 
-  // --- STATO LOADING ---
+  // STATO LOADING
   btn.innerHTML = `
     <span class="spinner"></span>
     Salvataggio...
@@ -1129,32 +1017,34 @@ function submitFinalResult(card, match, tournamentId, winnerTeamId) {
   btn.disabled = true;
   inputs.forEach(input => input.disabled = true);
 
-  fetch(API_URL, { method: "POST", body: formData })
+  fetch(API_URLS.submitResult, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  })
     .then(res => res.text())
     .then(resp => {
       if (resp === "RESULT_SAVED") {
         card.classList.add("played");
 
-        // Cambia bottone in "Modifica risultato" con classe secondary
         btn.className = "btn secondary submit-result";
         btn.textContent = "Modifica risultato";
         btn.disabled = false;
         btn.classList.remove("disabled");
 
-        // Riabilita input per eventuale modifica futura
         inputs.forEach(input => input.disabled = false);
 
         showToast("Risultato finale salvato ✔️");
 
-        // Aggiorna status torneo (potrebbe diventare finished)
-        fetch(API_URL)
+        fetch(API_URLS.getTournaments)
           .then(r => r.json())
           .then(tournaments => {
             const t = tournaments.find(x => x.tournament_id === tournamentId);
             const oldStatus = TOURNAMENT_STATUS;
             TOURNAMENT_STATUS = t?.status || TOURNAMENT_STATUS;
 
-            // Ricarica bracket (potrebbe esserci un nuovo round)
             loadFinalsBracket(tournamentId)
               .then(bracket => {
                 if (bracket) {
@@ -1162,13 +1052,11 @@ function submitFinalResult(card, match, tournamentId, winnerTeamId) {
                 }
               });
 
-            // Se il torneo è diventato finished, applica layout
             if (TOURNAMENT_STATUS === "finished" && oldStatus !== "finished") {
               applyLayoutByStatus();
             }
           })
           .catch(() => {
-            // Fallback: ricarica bracket comunque
             loadFinalsBracket(tournamentId)
               .then(bracket => {
                 if (bracket) {
@@ -1188,12 +1076,12 @@ function submitFinalResult(card, match, tournamentId, winnerTeamId) {
         restoreUI();
       }
     })
-    .catch(() => {
+    .catch(err => {
+      console.error("Errore submit final:", err);
       showToast("Errore di rete ❌");
       restoreUI();
     });
 
-  // --- RIPRISTINO UI ---
   function restoreUI() {
     btn.className = card.classList.contains("played")
       ? "btn secondary submit-result"
@@ -1209,6 +1097,3 @@ function submitFinalResult(card, match, tournamentId, winnerTeamId) {
     inputs.forEach(input => input.disabled = false);
   }
 }
-
-
-
