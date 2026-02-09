@@ -263,6 +263,8 @@ const { generateStandingsBackend } = require('./helpers/standingsCalculator');
 const { generateFinalsIfReady, tryGenerateNextFinalRound } = require('./helpers/finalsGenerator');
 const { updateTournamentStatus } = require('./helpers/tournamentStatus');
 
+
+
 // ===============================
 // POST: SUBMIT SUBSCRIPTION
 // ===============================
@@ -301,8 +303,17 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
       return res.status(409).send('DUPLICATE');
     }
 
-    // 3) Crea subscription
+    // ✅ 3) Conta subscriptions esistenti per generare ID incrementale
+    const existingSubsSnapshot = await db.collection('subscriptions')
+      .where('tournament_id', '==', tournament_id)
+      .get();
+
+    const subsCount = existingSubsSnapshot.size + 1;
+    const subscriptionId = `${tournament_id}_sub${subsCount}`;
+
+    // 4) Crea subscription con ID deterministico
     const subscriptionData = {
+      subscription_id: subscriptionId, // ✅ Aggiungi anche nei dati
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       tournament_id,
       team_name,
@@ -317,9 +328,10 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
       subscriptionData.preferred_hours = preferred_hours || '';
     }
 
-    await db.collection('subscriptions').add(subscriptionData);
+    // ✅ Usa .doc(subscriptionId).set() invece di .add()
+    await db.collection('subscriptions').doc(subscriptionId).set(subscriptionData);
 
-    // 4) Crea/aggiorna team
+    // 5) Crea/aggiorna team
     const normalizedTeam = team_name.trim().toLowerCase();
     const teamId = `${tournament_id}_${normalizedTeam}`;
 
@@ -329,7 +341,7 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
       team_name
     });
 
-    // 5) Genera match se pronto
+    // 6) Genera match se pronto
     await generateMatchesIfReady(tournament_id);
     await generateStandingsBackend(tournament_id);
     await updateTournamentStatus(tournament_id);
