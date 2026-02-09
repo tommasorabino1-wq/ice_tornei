@@ -5,9 +5,9 @@
 const container = document.getElementById("tournaments");
 const sportFilter = document.getElementById("sport-filter");
 
-// URL della Web App (doGet)
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbxxgJnLoxkP_XDhQxRtqrZ0M_trOlVOmjIpsVACug1dlfSmfZz0fWXcdADvI0XcP7W3-A/exec";
+// ⚠️ IMPORTANTE: Sostituisci con il tuo URL di Firebase Functions
+// Dopo il deploy, sarà tipo: https://us-central1-YOUR_PROJECT_ID.cloudfunctions.net/getTournaments
+const API_URL = "https://gettournaments-dzvezz2yhq-uc.a.run.app";
 
 // Variabile globale per conservare tutti i tornei
 let ALL_TOURNAMENTS = [];
@@ -16,7 +16,12 @@ let ALL_TOURNAMENTS = [];
 // FETCH TORNEI DAL BACKEND
 // ===============================
 fetch(API_URL)
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    return res.json();
+  })
   .then(tournaments => {
     if (!Array.isArray(tournaments)) {
       throw new Error("Formato dati non valido");
@@ -42,10 +47,9 @@ fetch(API_URL)
     }, 350);
 
   })
-
   .catch(err => {
-    console.error(err);
-    container.innerHTML = "<p>Errore nel caricamento dei tornei.</p>";
+    console.error("Errore nel caricamento dei tornei:", err);
+    container.innerHTML = "<p>Errore nel caricamento dei tornei. Riprova più tardi.</p>";
   });
 
 // ===============================
@@ -53,10 +57,10 @@ fetch(API_URL)
 // ===============================
 function populateSportFilter(tournaments) {
   // Estrai sport unici dai tornei
-  const sports = [...new Set(tournaments.map(t => t.sport))].sort();
+  const sports = [...new Set(tournaments.map(t => t.sport))].filter(Boolean).sort();
   
   // Rimuovi le opzioni esistenti tranne "Tutti gli sport"
-  sportFilter.innerHTML = '<option value="all">Tutti gli sport</option>';
+  sportFilter.innerHTML = '<option value="all">Tutti</option>';
   
   // Aggiungi gli sport trovati
   sports.forEach(sport => {
@@ -81,9 +85,6 @@ sportFilter.addEventListener("change", (e) => {
   }
 });
 
-// ===============================
-// RENDER CARD TORNEI (ORDERED)
-// ===============================
 // ===============================
 // RENDER CARD TORNEI (ORDERED)
 // ===============================
@@ -173,10 +174,10 @@ function renderTournaments(tournaments) {
 
 
 // ===============================
-// BUILD COURT INFO MESSAGE (NEW)
+// BUILD COURT INFO MESSAGE
 // ===============================
 function buildCourtInfoMessage(tournament) {
-  const fixedCourt = String(tournament.fixed_court).toUpperCase() === "TRUE";
+  const fixedCourt = tournament.fixed_court === true || String(tournament.fixed_court).toUpperCase() === "TRUE";
   const days = String(tournament.available_days || "").trim();
   const hours = String(tournament.available_hours || "").trim();
 
@@ -212,7 +213,7 @@ function buildCourtInfoMessage(tournament) {
 }
 
 // ===============================
-// MAP DAYS TO TEXT (NEW)
+// MAP DAYS TO TEXT
 // ===============================
 function mapDaysToText(days) {
   const daysLower = days.toLowerCase();
@@ -227,7 +228,7 @@ function mapDaysToText(days) {
 }
 
 // ===============================
-// MAP HOURS TO TEXT (NEW)
+// MAP HOURS TO TEXT
 // ===============================
 function mapHoursToText(hours) {
   const hoursLower = hours.toLowerCase();
