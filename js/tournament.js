@@ -8,7 +8,6 @@
 const params = new URLSearchParams(window.location.search);
 const tournamentId = params.get("tournament_id");
 
-
 // ===============================
 // 2. ELEMENTI DOM
 // ===============================
@@ -17,7 +16,6 @@ const tournamentId = params.get("tournament_id");
 const genericSection = document.getElementById("generic-regulation-section");
 const tournamentSection = document.getElementById("tournament-specific-section");
 const tournamentSkeleton = document.querySelector(".tournament-skeleton");
-
 
 // Torneo UI
 const badge = document.getElementById("tournament-status-badge");
@@ -30,17 +28,23 @@ const teamsListSection = document.getElementById("tournament-teams-section");
 const teamsListCount = document.getElementById("teams-list-count");
 const teamsListContainer = document.getElementById("teams-list-container");
 
-
 // Select tornei
 const tournamentSelect = document.getElementById("tournament-select");
 
 // ===============================
-// 3. API URL
+// 3. API URLS (FIREBASE FUNCTIONS)
 // ===============================
-const API_URL =
-  "https://script.google.com/macros/s/AKfycbxxgJnLoxkP_XDhQxRtqrZ0M_trOlVOmjIpsVACug1dlfSmfZz0fWXcdADvI0XcP7W3-A/exec";
+const API_URLS = {
+  getTournaments: "https://gettournaments-dzvezz2yhq-uc.a.run.app",
+  getTeams: "https://getteams-dzvezz2yhq-uc.a.run.app",
+  submitSubscription: "https://submitsubscription-dzvezz2yhq-uc.a.run.app"
+};
 
 
+
+// ===============================
+// 4. STATO INIZIALE UI
+// ===============================
 if (tournamentId) {
   genericSection.classList.add("hidden");
   tournamentSkeleton.classList.remove("hidden");
@@ -51,14 +55,16 @@ if (tournamentId) {
   tournamentSection.classList.add("hidden");
 }
 
-
-
-
 // ===============================
-// 4. FETCH TORNEI (WITH SKELETON FADE)
+// 5. FETCH TORNEI (WITH SKELETON FADE)
 // ===============================
-fetch(API_URL)
-  .then(res => res.json())
+fetch(API_URLS.getTournaments)
+  .then(res => {
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    return res.json();
+  })
   .then(tournaments => {
     if (!Array.isArray(tournaments)) {
       throw new Error("Formato dati non valido");
@@ -70,7 +76,6 @@ fetch(API_URL)
     }
 
     setTimeout(() => {
-
       if (tournamentId) {
         const tournament = tournaments.find(
           t => t.tournament_id === tournamentId
@@ -89,22 +94,19 @@ fetch(API_URL)
       }
 
       renderGenericRegulation(tournaments);
-
     }, 350);
 
   })
   .catch(err => {
-    console.error(err);
+    console.error("Errore nel caricamento dei tornei:", err);
     genericSection.classList.remove("hidden");
     tournamentSkeleton.classList.add("hidden");
     tournamentSection.classList.add("hidden");
     showToast("Errore nel caricamento dei dati ❌");
-
   });
 
-
 // ===============================
-// 5. REGOLAMENTO GENERALE + SELECT
+// 6. REGOLAMENTO GENERALE + SELECT
 // ===============================
 function renderGenericRegulation(tournaments) {
   genericSection.classList.remove("hidden");
@@ -114,12 +116,11 @@ function renderGenericRegulation(tournaments) {
   // ✅ NASCONDI regolamento full-width (non serve nella vista generale)
   const regulationBlock = document.querySelector(".tournament-general-regulation");
   if (regulationBlock) {
-    regulationBlock.classList.add("hidden"); // ✅ Questo è corretto
+    regulationBlock.classList.add("hidden");
   }
 
   // Reset select
-  tournamentSelect.innerHTML =
-    `<option value="">Seleziona un torneo</option>`;
+  tournamentSelect.innerHTML = `<option value="">Seleziona un torneo</option>`;
 
   tournaments.forEach(t => {
     const option = document.createElement("option");
@@ -135,12 +136,8 @@ function renderGenericRegulation(tournaments) {
   };
 }
 
-
-
-
-
 // ===============================
-// 6. RENDER TORNEO SPECIFICO
+// 7. RENDER TORNEO SPECIFICO
 // ===============================
 function renderTournament(tournament) {
   genericSection.classList.add("hidden");
@@ -157,14 +154,14 @@ function renderTournament(tournament) {
   document.getElementById("info-date").textContent = tournament.date;
   document.getElementById("info-price").textContent = tournament.price;
 
-  // ✅ NUOVO: Court info message
+  // ✅ Court info message
   const courtInfo = buildCourtInfoMessage(tournament);
   document.getElementById("info-court").textContent = courtInfo;
 
-  // ✅ NUOVO: Regola specifica campi
+  // ✅ Regola specifica campi
   renderSpecificCourtRule(tournament);
 
-  // Existing counter (already in your UI)
+  // Teams counter
   teamsInfo.textContent = `${tournament.teams_current} / ${tournament.teams_max}`;
 
   // Apply state & form behavior
@@ -178,25 +175,25 @@ function renderTournament(tournament) {
   // Load + render teams list block
   loadAndRenderTeamsList(tournament);
 
-  // ✅ NUOVO: Mostra regolamento generale full-width
+  // ✅ Mostra regolamento generale full-width
   showGeneralRegulation();
 }
 
 // ===============================
-// SHOW GENERAL REGULATION (FULL WIDTH) (NEW)
+// 8. SHOW GENERAL REGULATION (FULL WIDTH)
 // ===============================
 function showGeneralRegulation() {
   const regulationBlock = document.querySelector(".tournament-general-regulation");
   if (regulationBlock) {
-    regulationBlock.classList.remove("hidden"); // ✅ Mostra il blocco
+    regulationBlock.classList.remove("hidden");
   }
 }
 
 // ===============================
-// BUILD COURT INFO MESSAGE
+// 9. BUILD COURT INFO MESSAGE
 // ===============================
 function buildCourtInfoMessage(tournament) {
-  const fixedCourt = String(tournament.fixed_court).toUpperCase() === "TRUE";
+  const fixedCourt = tournament.fixed_court === true || String(tournament.fixed_court).toUpperCase() === "TRUE";
   const days = String(tournament.available_days || "").trim().toLowerCase();
   const hours = String(tournament.available_hours || "").trim().toLowerCase();
 
@@ -231,11 +228,8 @@ function buildCourtInfoMessage(tournament) {
   return "Campi a scelta";
 }
 
-
-
-
 // ===============================
-// RENDER SPECIFIC COURT RULE
+// 10. RENDER SPECIFIC COURT RULE
 // ===============================
 function renderSpecificCourtRule(tournament) {
   const container = document.getElementById("specific-court-rule");
@@ -266,21 +260,17 @@ function renderSpecificCourtRule(tournament) {
   `;
 }
 
-
 // ===============================
-// BUILD COURT RULE (REGOLA 1)
+// 11. BUILD COURT RULE (REGOLA 1)
 // ===============================
 function buildCourtRule(tournament) {
-  const fixedCourt = String(tournament.fixed_court).toUpperCase() === "TRUE";
+  const fixedCourt = tournament.fixed_court === true || String(tournament.fixed_court).toUpperCase() === "TRUE";
   const days = String(tournament.available_days || "").trim().toLowerCase();
   const hours = String(tournament.available_hours || "").trim().toLowerCase();
 
   let ruleText = "";
 
   if (fixedCourt) {
-    // =============================================
-    // CASO A: Programmazione stabilita dall'organizzazione
-    // =============================================
     ruleText = `
       <p>
         In questo torneo, campi, giorni e orari delle partite vengono <strong>stabiliti dall'organizzazione</strong>, 
@@ -288,9 +278,6 @@ function buildCourtRule(tournament) {
       </p>
     `;
   } else {
-    // =============================================
-    // CASO B: Programmazione concordata tra le squadre
-    // =============================================
     const availabilityPhrase = buildAvailabilityPhrase(days, hours);
 
     ruleText = `
@@ -299,7 +286,7 @@ function buildCourtRule(tournament) {
         relative a campi, giorni e orari di gioco
       </p>
       <p>
-        L’organizzazione provvederà alla prenotazione dei campi per le partite casalinghe di ciascuna squadra, 
+        L'organizzazione provvederà alla prenotazione dei campi per le partite casalinghe di ciascuna squadra, 
         tenendo conto delle preferenze indicate. 
       </p>
     `;
@@ -316,37 +303,30 @@ function buildCourtRule(tournament) {
   `;
 }
 
-
-
-
 // ===============================
-// BUILD AVAILABILITY PHRASE
+// 12. BUILD AVAILABILITY PHRASE
 // ===============================
 function buildAvailabilityPhrase(days, hours) {
   const daysPhrase = mapDaysToPhrase(days);
   const hoursPhrase = mapHoursToPhrase(hours);
 
-  // Nessun vincolo specificato
   if (!daysPhrase && !hoursPhrase) {
     return "";
   }
 
-  // Solo giorni specificati
   if (daysPhrase && !hoursPhrase) {
     return `In questo torneo, le partite potranno essere disputate <strong>${daysPhrase}</strong>. `;
   }
 
-  // Solo orari specificati
   if (!daysPhrase && hoursPhrase) {
     return `In questo torneo, le partite potranno essere disputate <strong>${hoursPhrase}</strong>. `;
   }
 
-  // Entrambi specificati
   return `In questo torneo, le partite potranno essere disputate <strong>${daysPhrase}</strong>, <strong>${hoursPhrase}</strong>. `;
 }
 
 // ===============================
-// MAP DAYS TO PHRASE
+// 13. MAP DAYS TO PHRASE
 // ===============================
 function mapDaysToPhrase(days) {
   if (!days || days === "na") {
@@ -363,7 +343,7 @@ function mapDaysToPhrase(days) {
 }
 
 // ===============================
-// MAP HOURS TO PHRASE
+// 14. MAP HOURS TO PHRASE
 // ===============================
 function mapHoursToPhrase(hours) {
   if (!hours || hours === "na") {
@@ -379,13 +359,8 @@ function mapHoursToPhrase(hours) {
   return mapping[hours] || null;
 }
 
-
-
-
-
-
 // ===============================
-// BUILD FORMAT RULE (REGOLA 2)
+// 15. BUILD FORMAT RULE (REGOLA 2)
 // ===============================
 function buildFormatRule(tournament) {
   const teamsPerGroup = Number(tournament.teams_per_group) || 0;
@@ -394,7 +369,6 @@ function buildFormatRule(tournament) {
 
   let formatText = "";
 
-  // CASO 1: Gironi + Fase finale
   if (teamsPerGroup > 0 && teamsInFinal > 0) {
     const numGroups = Math.ceil(teamsMax / teamsPerGroup);
     const qualificationPhrase = buildQualificationPhrase(numGroups, teamsInFinal);
@@ -411,17 +385,13 @@ function buildFormatRule(tournament) {
         ${qualificationPhrase}
       </p>
     `;
-  }
-  // CASO 2: Solo fase finale (tutti contro tutti o eliminazione diretta)
-  else if (teamsPerGroup === 0 && teamsInFinal > 0) {
+  } else if (teamsPerGroup === 0 && teamsInFinal > 0) {
     formatText = `
       <p>
         Il torneo si svolgerà con <strong>fase finale diretta</strong> tra le <strong>${teamsMax} squadre</strong> iscritte.
       </p>
     `;
-  }
-  // CASO 3: Solo gironi (nessuna fase finale)
-  else if (teamsPerGroup > 0 && teamsInFinal === 0) {
+  } else if (teamsPerGroup > 0 && teamsInFinal === 0) {
     const numGroups = Math.ceil(teamsMax / teamsPerGroup);
     
     formatText = `
@@ -433,9 +403,7 @@ function buildFormatRule(tournament) {
         da <strong>${teamsPerGroup} squadre</strong> ciascuno.
       </p>
     `;
-  }
-  // CASO 4: Formato sconosciuto (fallback)
-  else {
+  } else {
     formatText = `
       <p>
         Il torneo prevede <strong>${teamsMax} squadre</strong> partecipanti.
@@ -457,18 +425,13 @@ function buildFormatRule(tournament) {
   `;
 }
 
-
 // ===============================
-// BUILD QUALIFICATION PHRASE
+// 16. BUILD QUALIFICATION PHRASE
 // ===============================
 function buildQualificationPhrase(numGroups, teamsInFinal) {
-  // Tutte le prime classificate si qualificano sempre
   const firstPlaceQualifiers = numGroups;
-  
-  // Quante seconde classificate servono per raggiungere il totale?
   const secondPlaceQualifiers = teamsInFinal - firstPlaceQualifiers;
 
-  // CASO A: Solo le prime classificate (nessuna seconda)
   if (secondPlaceQualifiers <= 0) {
     if (numGroups === 1) {
       return `Solo la <strong>prima classificata</strong> del girone accederà alla fase finale.`;
@@ -476,7 +439,6 @@ function buildQualificationPhrase(numGroups, teamsInFinal) {
     return `Solo le <strong>prime classificate</strong> di ciascun girone accederanno alla fase finale.`;
   }
 
-  // CASO B: Tutte le prime + tutte le seconde
   if (secondPlaceQualifiers === numGroups) {
     if (numGroups === 1) {
       return `La <strong>prima</strong> e la <strong>seconda classificata</strong> del girone accederanno alla fase finale.`;
@@ -484,7 +446,6 @@ function buildQualificationPhrase(numGroups, teamsInFinal) {
     return `Le <strong>prime</strong> e le <strong>seconde classificate</strong> di ciascun girone accederanno alla fase finale.`;
   }
 
-  // CASO C: Tutte le prime + alcune migliori seconde
   if (numGroups === 1) {
     return `La <strong>prima classificata</strong> del girone e la <strong>migliore seconda</strong> accederanno alla fase finale.`;
   }
@@ -496,23 +457,20 @@ function buildQualificationPhrase(numGroups, teamsInFinal) {
   return `Le <strong>prime classificate</strong> di ciascun girone e ${secondeText} accederanno alla fase finale.`;
 }
 
-
 // ===============================
-// BUILD RANKING RULE (REGOLA 3)
+// 17. BUILD RANKING RULE (REGOLA 3)
 // ===============================
 function buildRankingRule(tournament) {
   const teamsPerGroup = Number(tournament.teams_per_group) || 0;
   const teamsInFinal = Number(tournament.teams_in_final) || 0;
   const teamsMax = Number(tournament.teams_max) || 0;
 
-  // Se non ci sono gironi, non mostrare questa regola
   if (teamsPerGroup === 0) {
     return "";
   }
 
   const numGroups = Math.ceil(teamsMax / teamsPerGroup);
 
-  // Parte A: Classifica all'interno dello stesso girone (sempre presente)
   const intraGroupText = `
     <p>
       <strong>Classifica all'interno dello stesso girone:</strong> in caso di parità di punti tra due o più squadre 
@@ -521,7 +479,6 @@ function buildRankingRule(tournament) {
     </p>
   `;
 
-  // Parte B: Confronto tra gironi diversi (solo se necessario)
   const crossGroupText = buildCrossGroupComparisonText(numGroups, teamsInFinal);
 
   return `
@@ -537,33 +494,27 @@ function buildRankingRule(tournament) {
 }
 
 // ===============================
-// BUILD CROSS GROUP COMPARISON TEXT
+// 18. BUILD CROSS GROUP COMPARISON TEXT
 // ===============================
 function buildCrossGroupComparisonText(numGroups, teamsInFinal) {
-  // Calcola quante prime e quante seconde si qualificano
   const firstPlaceQualifiers = Math.min(numGroups, teamsInFinal);
   const secondPlaceQualifiers = Math.max(0, teamsInFinal - numGroups);
 
-  // Calcola se serve un confronto tra gironi
   const needsBestFirstComparison = teamsInFinal > 0 && teamsInFinal < numGroups;
   const needsBestSecondComparison = secondPlaceQualifiers > 0 && secondPlaceQualifiers < numGroups;
 
-  // Se non serve confronto tra gironi, non mostrare nulla
   if (!needsBestFirstComparison && !needsBestSecondComparison) {
     return "";
   }
 
-  // Costruisci la frase descrittiva
   let comparisonTarget = "";
 
   if (needsBestFirstComparison) {
-    // Caso: servono solo alcune prime (es. 5 gironi, 4 in finale)
     const bestFirstCount = teamsInFinal;
     comparisonTarget = bestFirstCount === 1 
       ? `la migliore prima classificata` 
       : `le ${bestFirstCount} migliori prime classificate`;
   } else if (needsBestSecondComparison) {
-    // Caso: servono alcune migliori seconde (es. 6 gironi, 8 in finale → 2 migliori seconde)
     comparisonTarget = secondPlaceQualifiers === 1 
       ? `la migliore seconda classificata` 
       : `le ${secondPlaceQualifiers} migliori seconde classificate`;
@@ -579,7 +530,7 @@ function buildCrossGroupComparisonText(numGroups, teamsInFinal) {
 }
 
 // ===============================
-// BUILD GENERAL REFERENCE RULE (REGOLA 4)
+// 19. BUILD GENERAL REFERENCE RULE (REGOLA 4)
 // ===============================
 function buildGeneralReferenceRule() {
   return `
@@ -596,26 +547,21 @@ function buildGeneralReferenceRule() {
   `;
 }
 
-
 // ===============================
-// 6B. POPOLA CAMPI EXTRA FORM (NEW)
+// 20. POPOLA CAMPI EXTRA FORM
 // ===============================
 function populateExtraFields(tournament) {
   const container = document.getElementById("extra-fields-container");
-  container.innerHTML = ""; // reset
+  container.innerHTML = "";
 
-  const fixedCourt = String(tournament.fixed_court).toUpperCase() === "TRUE";
+  const fixedCourt = tournament.fixed_court === true || String(tournament.fixed_court).toUpperCase() === "TRUE";
 
-  // CASO A: fixed_court = TRUE → nessun campo extra
   if (fixedCourt) return;
 
-  // CASO B: fixed_court = FALSE → campi extra
   const availableDays = String(tournament.available_days || "").trim();
   const availableHours = String(tournament.available_hours || "").trim();
 
-  // =============================
   // CAMPO 1: ZONA PREFERITA
-  // =============================
   const zoneField = document.createElement("label");
   zoneField.innerHTML = `
     Zona preferita
@@ -624,17 +570,13 @@ function populateExtraFields(tournament) {
   `;
   container.appendChild(zoneField);
 
-  // =============================
   // CAMPO 2: GIORNI PREFERITI
-  // =============================
   if (availableDays && availableDays !== "NA") {
     const daysField = buildDaysField(availableDays);
     container.appendChild(daysField);
   }
 
-  // =============================
   // CAMPO 3: ORARIO PREFERITO
-  // =============================
   if (availableHours && availableHours !== "NA") {
     const hoursField = buildHoursField(availableHours);
     container.appendChild(hoursField);
@@ -642,15 +584,12 @@ function populateExtraFields(tournament) {
 }
 
 // ===============================
-// BUILD DAYS FIELD (NEW)
+// 21. BUILD DAYS FIELD
 // ===============================
 function buildDaysField(availableDays) {
   const wrapper = document.createElement("div");
   
-  // Mappa giorni disponibili
   const daysMap = parseDaysRange(availableDays);
-  
-  // Determina quanti giorni servono
   const minDays = (availableDays === "sab-dom") ? 1 : 2;
   
   const label = (minDays === 1) 
@@ -692,7 +631,7 @@ function buildDaysField(availableDays) {
 }
 
 // ===============================
-// BUILD HOURS FIELD (NEW)
+// 22. BUILD HOURS FIELD
 // ===============================
 function buildHoursField(availableHours) {
   const wrapper = document.createElement("label");
@@ -727,7 +666,7 @@ function buildHoursField(availableHours) {
 }
 
 // ===============================
-// PARSE DAYS RANGE (NEW)
+// 23. PARSE DAYS RANGE
 // ===============================
 function parseDaysRange(range) {
   const allDays = [
@@ -743,34 +682,31 @@ function parseDaysRange(range) {
   const rangeLower = range.toLowerCase();
 
   if (rangeLower === "lun-ven") {
-    return allDays.slice(0, 5); // lun → ven
+    return allDays.slice(0, 5);
   }
   
   if (rangeLower === "sab-dom") {
-    return allDays.slice(5, 7); // sab, dom
+    return allDays.slice(5, 7);
   }
   
   if (rangeLower === "lun-dom") {
-    return allDays; // tutti
+    return allDays;
   }
 
   return allDays;
 }
 
 // ===============================
-// PARSE HOURS SLOTS (NEW)
+// 24. PARSE HOURS SLOTS
 // ===============================
 function parseHoursSlots(range) {
   const rangeLower = range.toLowerCase();
-  
-  // Estrai ore di inizio e fine
   const [start, end] = rangeLower.split("-").map(Number);
   
   if (!start || !end || end <= start) return [];
 
   const slots = [];
   
-  // Genera slot di 2 ore
   for (let h = start; h <= end - 2; h++) {
     slots.push({
       value: `${h}-${h + 2}`,
@@ -781,12 +717,8 @@ function parseHoursSlots(range) {
   return slots;
 }
 
-
-
-
-
 // ===============================
-// 7. STATO TORNEO (UI)
+// 25. STATO TORNEO (UI)
 // ===============================
 function applyTournamentState(tournament) {
   form.style.display = "none";
@@ -811,13 +743,12 @@ function applyTournamentState(tournament) {
   }
 
   if (tournament.status === "final_phase") {
-  badge.textContent = "FASE FINALE";
-  badge.classList.add("final_phase");
-  subscribeMessage.textContent =
-    "Il torneo è entrato nella fase finale. Le iscrizioni sono chiuse.";
-  return;
-}
-
+    badge.textContent = "FASE FINALE";
+    badge.classList.add("final_phase");
+    subscribeMessage.textContent =
+      "Il torneo è entrato nella fase finale. Le iscrizioni sono chiuse.";
+    return;
+  }
 
   if (tournament.status === "live") {
     badge.textContent = "IN CORSO";
@@ -825,23 +756,16 @@ function applyTournamentState(tournament) {
     subscribeMessage.textContent =
       "Il torneo è in corso. Le iscrizioni sono chiuse.";
   }
-
-
 }
 
-
-
-
 // ===============================
-// 8. SUBMIT ISCRIZIONE (WITH VALIDATION)
+// 26. SUBMIT ISCRIZIONE (FIREBASE)
 // ===============================
 function handleFormSubmit(tournament) {
   form.addEventListener("submit", function (e) {
     e.preventDefault();
 
-    // =============================
     // VALIDAZIONE GIORNI (SE PRESENTI)
-    // =============================
     const checkboxGroup = form.querySelector(".checkbox-group");
     if (checkboxGroup) {
       const minDays = Number(checkboxGroup.dataset.minDays);
@@ -856,27 +780,48 @@ function handleFormSubmit(tournament) {
     const submitBtn = form.querySelector('button[type="submit"]');
     const inputs = form.querySelectorAll("input, select");
 
-    // ✅ CREA FORM DATA
-    const formData = new FormData(form);
-    formData.append("tournament_id", tournament.tournament_id);
+    // Costruisci payload JSON
+    const payload = {
+      tournament_id: tournament.tournament_id,
+      team_name: form.querySelector('[name="team_name"]').value,
+      email: form.querySelector('[name="email"]').value,
+      phone: form.querySelector('[name="phone"]').value
+    };
 
-    // --- STATO LOADING ---
+    // Campi extra (se presenti)
+    const zoneInput = form.querySelector('[name="preferred_zone"]');
+    if (zoneInput) {
+      payload.preferred_zone = zoneInput.value;
+    }
+
+    const daysChecked = form.querySelectorAll('[name="preferred_days[]"]:checked');
+    if (daysChecked.length > 0) {
+      payload.preferred_days = Array.from(daysChecked).map(cb => cb.value).join(", ");
+    }
+
+    const hoursSelect = form.querySelector('[name="preferred_hours"]');
+    if (hoursSelect) {
+      payload.preferred_hours = hoursSelect.value;
+    }
+
+    // STATO LOADING
     submitBtn.innerHTML = `
       <span class="spinner"></span>
       Iscrizione in corso...
     `;
     submitBtn.classList.add("disabled");
     submitBtn.disabled = true;
-
     inputs.forEach(input => input.disabled = true);
 
-    fetch(API_URL, {
+    fetch(API_URLS.submitSubscription, {
       method: "POST",
-      body: formData
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
     })
       .then(res => res.text())
       .then(response => {
-
         if (response === "TOURNAMENT_NOT_FOUND") {
           showToast("Torneo non valido ❌");
           restoreForm();
@@ -904,8 +849,9 @@ function handleFormSubmit(tournament) {
         showToast("Errore inatteso ❌");
         restoreForm();
       })
-      .catch(() => {
-        showToast("Errore inatteso ❌");
+      .catch(err => {
+        console.error("Errore submit:", err);
+        showToast("Errore di connessione ❌");
         restoreForm();
       });
 
@@ -919,36 +865,30 @@ function handleFormSubmit(tournament) {
   }, { once: true });
 }
 
-
-
-
-
-
 // ===============================
-// 9. LOAD + RENDER TEAMS LIST (NEW)
+// 27. LOAD + RENDER TEAMS LIST
 // ===============================
 function loadAndRenderTeamsList(tournament) {
-  // If HTML block not present, avoid breaking the page
   if (!teamsListSection || !teamsListContainer || !teamsListCount) return;
 
-  // Show block + reset UI
   teamsListSection.classList.remove("hidden");
   teamsListContainer.innerHTML = "";
   teamsListCount.textContent = `${tournament.teams_current} / ${tournament.teams_max}`;
 
-  // Skeleton placeholders (simple, CSS later)
   renderTeamsSkeleton(8);
 
-  const url = `${API_URL}?action=get_teams&tournament_id=${encodeURIComponent(
-    tournament.tournament_id
-  )}`;
+  const url = `${API_URLS.getTeams}?tournament_id=${encodeURIComponent(tournament.tournament_id)}`;
 
   fetch(url)
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
     .then(teams => {
       if (!Array.isArray(teams)) throw new Error("Formato teams non valido");
 
-      // Clear skeleton
       teamsListContainer.innerHTML = "";
 
       if (teams.length === 0) {
@@ -959,19 +899,18 @@ function loadAndRenderTeamsList(tournament) {
       renderTeamsChips(teams);
     })
     .catch(err => {
-      console.error(err);
+      console.error("Errore caricamento teams:", err);
       teamsListContainer.innerHTML = "";
       renderTeamsErrorState();
     });
 }
 
 function renderTeamsChips(teams) {
-  // teams: [{team_id, team_name}]
   const frag = document.createDocumentFragment();
 
   teams.forEach((t, idx) => {
     const chip = document.createElement("div");
-    chip.className = "team-chip"; // CSS later
+    chip.className = "team-chip";
 
     chip.innerHTML = `
       <span class="team-chip-index">${idx + 1}</span>
@@ -985,7 +924,7 @@ function renderTeamsChips(teams) {
 }
 
 // ===============================
-// TEAMS LIST STATES (NEW)
+// 28. TEAMS LIST STATES
 // ===============================
 function renderTeamsSkeleton(count) {
   const frag = document.createDocumentFragment();
@@ -1005,19 +944,18 @@ function renderTeamsSkeleton(count) {
 
 function renderTeamsEmptyState() {
   const el = document.createElement("div");
-  el.className = "teams-empty"; // CSS later
+  el.className = "teams-empty";
   el.textContent = "Nessuna squadra iscritta al momento.";
   teamsListContainer.appendChild(el);
 }
 
 function renderTeamsErrorState() {
   const el = document.createElement("div");
-  el.className = "teams-error"; // CSS later
+  el.className = "teams-error";
   el.textContent = "Errore nel caricamento delle squadre ❌";
   teamsListContainer.appendChild(el);
 }
 
-// Minimal escaping to avoid HTML injection via team_name
 function escapeHTML(str) {
   return String(str)
     .replaceAll("&", "&amp;")
@@ -1027,11 +965,9 @@ function escapeHTML(str) {
     .replaceAll("'", "&#039;");
 }
 
-
-
-
-
-
+// ===============================
+// 29. TOAST NOTIFICATION
+// ===============================
 function showToast(message) {
   const toast = document.createElement("div");
   toast.className = "toast";
@@ -1043,7 +979,3 @@ function showToast(message) {
     toast.remove();
   }, 2500);
 }
-
-
-
-
