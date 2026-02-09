@@ -134,17 +134,20 @@ function rankGroupTeams(teamsStats, groupMatches) {
 // ===============================
 async function generateStandingsBackend(tournamentId) {
   try {
+    console.log(`📊 [START] Generating standings for ${tournamentId}`);
+
     // 1) Recupera match
     const matchesSnapshot = await db.collection('matches')
       .where('tournament_id', '==', tournamentId)
       .get();
 
     if (matchesSnapshot.empty) {
-      console.log('No matches found for', tournamentId);
+      console.log('⚠️ No matches found for', tournamentId);
       return;
     }
 
     const matches = matchesSnapshot.docs.map(doc => doc.data());
+    console.log(`📋 Found ${matches.length} matches`);
 
     // 2) Mappa team → group
     const teamGroupMap = {};
@@ -159,11 +162,12 @@ async function generateStandingsBackend(tournamentId) {
       .get();
 
     if (teamsSnapshot.empty) {
-      console.log('No teams found for', tournamentId);
+      console.log('⚠️ No teams found for', tournamentId);
       return;
     }
 
     const teams = teamsSnapshot.docs.map(doc => doc.data());
+    console.log(`👥 Found ${teams.length} teams`);
 
     // 4) Calcola statistiche per gruppo
     const byGroup = {};
@@ -173,7 +177,10 @@ async function generateStandingsBackend(tournamentId) {
       const teamName = t.team_name;
       const groupId = teamGroupMap[teamId];
 
-      if (!teamId || !groupId) return;
+      if (!teamId || !groupId) {
+        console.log(`⚠️ Skipping team without ID or group: ${teamName}`);
+        return;
+      }
 
       const stats = {
         team_id: teamId,
@@ -221,6 +228,8 @@ async function generateStandingsBackend(tournamentId) {
       byGroup[groupId].push(stats);
     });
 
+    console.log(`📊 Groups found: ${Object.keys(byGroup).join(', ')}`);
+
     // 5) Ranking per girone + scrittura batch
     const batch = db.batch();
 
@@ -229,24 +238,37 @@ async function generateStandingsBackend(tournamentId) {
       .where('tournament_id', '==', tournamentId)
       .get();
 
+    console.log(`🗑️ Deleting ${existingStandings.size} existing standings`);
+
     existingStandings.docs.forEach(doc => {
       batch.delete(doc.ref);
     });
 
-    // Poi crea nuove standings
+    // Poi crea nuove standings con ID deterministico
+    let standingsCount = 0;
+
     Object.keys(byGroup).forEach(groupId => {
       const groupTeams = byGroup[groupId];
       const anyPlayed = groupTeams.some(t => t.matches_played > 0);
 
+      console.log(`🏟️ Processing ${groupId}: ${groupTeams.length} teams, anyPlayed=${anyPlayed}`);
+
       if (!anyPlayed) {
         // Nessun match giocato: tutti rank 1
         groupTeams.forEach(t => {
-          const standingRef = db.collection('standings').doc();
+          // ✅ ID DETERMINISTICO: standings_tournamentId_teamId
+          const standingId = `standings_${t.team_id}`;
+          const standingRef = db.collection('standings').doc(standingId);
+
           batch.set(standingRef, {
+            standing_id: standingId, // ✅ Aggiungi anche nei dati
             ...t,
             rank_level: 1,
             rank_group: 'INIT'
           });
+
+          console.log(`   ✓ Standing ${standingId}: ${t.team_name} (rank 1, INIT)`);
+          standingsCount++;
         });
         return;
       }
@@ -265,19 +287,28 @@ async function generateStandingsBackend(tournamentId) {
           t.goals_for
         ].join('|');
 
-        const standingRef = db.collection('standings').doc();
+        // ✅ ID DETERMINISTICO: standings_tournamentId_teamId
+        const standingId = `standings_${t.team_id}`;
+        const standingRef = db.collection('standings').doc(standingId);
+
         batch.set(standingRef, {
+          standing_id: standingId, // ✅ Aggiungi anche nei dati
           ...t,
           rank_group: rankGroupKey
         });
+
+        console.log(`   ✓ Standing ${standingId}: ${t.team_name} (rank ${t.rank_level}, ${t.points} pts)`);
+        standingsCount++;
       });
     });
 
+    console.log(`💾 Committing ${standingsCount} standings...`);
     await batch.commit();
-    console.log(`✅ Standings generated for ${tournamentId}`);
+    console.log(`✅ [SUCCESS] Generated ${standingsCount} standings for ${tournamentId}`);
 
   } catch (error) {
-    console.error('generateStandingsBackend error:', error);
+    console.error('❌ [ERROR] generateStandingsBackend failed:', error);
+    console.error('Stack trace:', error.stack);
     throw error;
   }
 }
