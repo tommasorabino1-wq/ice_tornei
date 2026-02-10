@@ -84,13 +84,23 @@ exports.getStandings = functions.https.onRequest(async (req, res) => {
       return res.status(200).json([]);
     }
 
+    // ✅ Rimuovi orderBy, ordina in memoria
     const snapshot = await db.collection('standings')
       .where('tournament_id', '==', tournamentId)
-      .orderBy('group_id')
-      .orderBy('rank_level')
       .get();
 
     const standings = snapshot.docs.map(doc => doc.data());
+
+    // ✅ Ordina in memoria
+    standings.sort((a, b) => {
+      // Prima per group_id
+      const groupCompare = String(a.group_id || '').localeCompare(String(b.group_id || ''));
+      if (groupCompare !== 0) return groupCompare;
+      
+      // Poi per rank_level
+      return Number(a.rank_level || 0) - Number(b.rank_level || 0);
+    });
+
     res.status(200).json(standings);
   } catch (error) {
     console.error('getStandings error:', error);
@@ -112,13 +122,23 @@ exports.getMatches = functions.https.onRequest(async (req, res) => {
       return res.status(200).json([]);
     }
 
+    // ✅ Rimuovi orderBy, ordina in memoria
     const snapshot = await db.collection('matches')
       .where('tournament_id', '==', tournamentId)
-      .orderBy('group_id')
-      .orderBy('round_id')
       .get();
 
     const matches = snapshot.docs.map(doc => doc.data());
+
+    // ✅ Ordina in memoria
+    matches.sort((a, b) => {
+      // Prima per group_id
+      const groupCompare = String(a.group_id || '').localeCompare(String(b.group_id || ''));
+      if (groupCompare !== 0) return groupCompare;
+      
+      // Poi per round_id
+      return Number(a.round_id || 0) - Number(b.round_id || 0);
+    });
+
     res.status(200).json(matches);
   } catch (error) {
     console.error('getMatches error:', error);
@@ -140,12 +160,16 @@ exports.getFinals = functions.https.onRequest(async (req, res) => {
       return res.status(200).json([]);
     }
 
+    // ✅ Rimuovi orderBy, ordina in memoria
     const snapshot = await db.collection('finals')
       .where('tournament_id', '==', tournamentId)
-      .orderBy('round_id')
       .get();
 
     const finals = snapshot.docs.map(doc => doc.data());
+
+    // ✅ Ordina in memoria
+    finals.sort((a, b) => Number(a.round_id || 0) - Number(b.round_id || 0));
+
     res.status(200).json(finals);
   } catch (error) {
     console.error('getFinals error:', error);
@@ -197,9 +221,9 @@ exports.getBracket = functions.https.onRequest(async (req, res) => {
       return res.status(200).json({ rounds: {}, paths: {} });
     }
 
+    // ✅ Rimuovi orderBy, ordina dopo
     const snapshot = await db.collection('finals')
       .where('tournament_id', '==', tournamentId)
-      .orderBy('round_id')
       .get();
 
     if (snapshot.empty) {
@@ -238,9 +262,16 @@ exports.getBracket = functions.https.onRequest(async (req, res) => {
       }
     });
 
-    // Ordina paths per round
+    // ✅ Ordina paths per round in memoria
     Object.keys(paths).forEach(teamId => {
       paths[teamId].sort((a, b) => a.round - b.round);
+    });
+
+    // ✅ Ordina anche i rounds
+    Object.keys(rounds).forEach(roundId => {
+      rounds[roundId].sort((a, b) => {
+        return String(a.match_id || '').localeCompare(String(b.match_id || ''));
+      });
     });
 
     res.status(200).json({
