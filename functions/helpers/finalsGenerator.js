@@ -6,7 +6,7 @@ const db = admin.firestore();
 // ===============================
 async function generateFinalsIfReady(tournamentId) {
   try {
-    console.log(`🏆 Checking if finals can be generated for ${tournamentId}`);
+    console.log(`🏆 [START] Checking if finals can be generated for ${tournamentId}`);
 
     // 1) Recupera standings
     const standingsSnapshot = await db.collection('standings')
@@ -19,6 +19,7 @@ async function generateFinalsIfReady(tournamentId) {
     }
 
     const standings = standingsSnapshot.docs.map(doc => doc.data());
+    console.log(`📊 Found ${standings.length} standings`);
 
     // 2) Raggruppa per girone
     const byGroup = {};
@@ -27,6 +28,8 @@ async function generateFinalsIfReady(tournamentId) {
       if (!byGroup[groupId]) byGroup[groupId] = [];
       byGroup[groupId].push(s);
     });
+
+    console.log(`🏟️ Groups: ${Object.keys(byGroup).join(', ')}`);
 
     // 3) Estrai primi e secondi
     const firsts = [];
@@ -42,6 +45,7 @@ async function generateFinalsIfReady(tournamentId) {
 
       // Deve esserci esattamente 1 primo
       if (!byRank[1] || byRank[1].length !== 1) {
+        console.error('❌ Multiple teams at rank 1 in a group');
         throw new Error('E6');
       }
       firsts.push(byRank[1][0]);
@@ -49,11 +53,15 @@ async function generateFinalsIfReady(tournamentId) {
       // Secondi (opzionale)
       if (byRank[2]) {
         if (byRank[2].length !== 1) {
+          console.error('❌ Multiple teams at rank 2 in a group');
           throw new Error('E6');
         }
         seconds.push(byRank[2][0]);
       }
     });
+
+    console.log(`🥇 First-placed teams: ${firsts.length}`);
+    console.log(`🥈 Second-placed teams: ${seconds.length}`);
 
     // 4) Recupera torneo per sapere quanti slot
     const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
@@ -69,6 +77,8 @@ async function generateFinalsIfReady(tournamentId) {
       console.log('⚠️ Invalid teams_in_final');
       return;
     }
+
+    console.log(`🎯 Finals slots: ${slots}`);
 
     let qualified = [...firsts];
 
@@ -87,6 +97,8 @@ async function generateFinalsIfReady(tournamentId) {
 
     const need = slots - qualified.length;
 
+    console.log(`📊 Need ${need} more teams from second-placed`);
+
     // 6) Controllo ambiguità E4 (solo se serve almeno 1 seconda)
     if (need > 0 && seconds.length > need) {
       const A = seconds[need - 1];
@@ -98,11 +110,14 @@ async function generateFinalsIfReady(tournamentId) {
         A.goals_for === B.goals_for;
 
       if (same) {
+        console.error('❌ Ambiguity in second-placed teams selection');
         throw new Error('E4');
       }
     }
 
     qualified = qualified.concat(seconds.slice(0, need));
+
+    console.log(`✅ Qualified teams: ${qualified.map(q => q.team_name).join(', ')}`);
 
     // 7) Verifica se finals già esistono
     const existingFinals = await db.collection('finals')
@@ -121,8 +136,10 @@ async function generateFinalsIfReady(tournamentId) {
     const roundId = 1;
     let matchIndex = 1;
 
+    console.log(`🏗️ Creating ${teams.length / 2} finals matches (Round ${roundId})`);
+
     for (let i = 0; i < teams.length / 2; i++) {
-      const matchId = `${tournamentId}_FINAL_R${roundId}_M${matchIndex++}`;
+      const matchId = `${tournamentId}_FINAL_R${roundId}_M${matchIndex}`;
       const finalRef = db.collection('finals').doc(matchId);
 
       batch.set(finalRef, {
@@ -136,13 +153,18 @@ async function generateFinalsIfReady(tournamentId) {
         winner_team_id: null,
         played: false
       });
+
+      console.log(`   ✓ Match ${matchId}: ${teams[i]} vs ${teams[teams.length - 1 - i]}`);
+
+      matchIndex++;
     }
 
     await batch.commit();
-    console.log(`✅ Finals generated for ${tournamentId}: ${teams.length / 2} matches`);
+    console.log(`✅ [SUCCESS] Finals generated for ${tournamentId}: ${teams.length / 2} matches`);
 
   } catch (error) {
-    console.error('generateFinalsIfReady error:', error);
+    console.error('❌ [ERROR] generateFinalsIfReady failed:', error);
+    console.error('Stack trace:', error.stack);
     throw error;
   }
 }
@@ -152,12 +174,11 @@ async function generateFinalsIfReady(tournamentId) {
 // ===============================
 async function tryGenerateNextFinalRound(tournamentId) {
   try {
-    console.log(`🏆 Checking if next final round can be generated for ${tournamentId}`);
+    console.log(`🏆 [START] Checking if next final round can be generated for ${tournamentId}`);
 
-    // 1) Recupera tutte le finals
+    // ✅ RIMUOVI orderBy, ordina in memoria
     const finalsSnapshot = await db.collection('finals')
       .where('tournament_id', '==', tournamentId)
-      .orderBy('round_id')
       .get();
 
     if (finalsSnapshot.empty) {
@@ -167,19 +188,30 @@ async function tryGenerateNextFinalRound(tournamentId) {
 
     const finals = finalsSnapshot.docs.map(doc => doc.data());
 
+    // ✅ Ordina in memoria per round_id
+    finals.sort((a, b) => Number(a.round_id || 0) - Number(b.round_id || 0));
+
+    console.log(`📋 Found ${finals.length} finals matches`);
+
     // 2) Trova ultimo round
     const rounds = finals.map(f => f.round_id).filter(r => Number.isFinite(r));
     const lastRound = Math.max(...rounds);
 
+    console.log(`🎯 Last round: ${lastRound}`);
+
     const lastRoundMatches = finals.filter(f => f.round_id === lastRound);
 
+    console.log(`📊 Matches in last round: ${lastRoundMatches.length}`);
+
     if (lastRoundMatches.length < 2) {
-      console.log('✅ Already at final match');
+      console.log('✅ Already at final match (only 1 match in last round)');
       return;
     }
 
     // 3) Verifica che siano tutti giocati
     const allPlayed = lastRoundMatches.every(f => f.played === true);
+
+    console.log(`✔️ All matches played: ${allPlayed}`);
 
     if (!allPlayed) {
       console.log('⚠️ Not all matches in last round are played');
@@ -195,22 +227,30 @@ async function tryGenerateNextFinalRound(tournamentId) {
       return;
     }
 
+    console.log(`🏗️ Generating next round: ${nextRound}`);
+
     // 5) Estrai vincitori (ordine stabile)
     const winners = lastRoundMatches.map(f => {
       if (!f.winner_team_id) {
+        console.error(`❌ Match ${f.match_id} has no winner_team_id`);
         throw new Error('FINAL_WINNER_MISSING');
       }
       return f.winner_team_id;
     });
+
+    console.log(`🏆 Winners: ${winners.join(', ')}`);
 
     // 6) Crea nuovi match
     const batch = db.batch();
     let matchIndex = 1;
 
     for (let i = 0; i < winners.length; i += 2) {
-      if (!winners[i + 1]) break;
+      if (!winners[i + 1]) {
+        console.log(`⚠️ Skipping odd winner at index ${i}`);
+        break;
+      }
 
-      const matchId = `${tournamentId}_FINAL_R${nextRound}_M${matchIndex++}`;
+      const matchId = `${tournamentId}_FINAL_R${nextRound}_M${matchIndex}`;
       const finalRef = db.collection('finals').doc(matchId);
 
       batch.set(finalRef, {
@@ -224,18 +264,23 @@ async function tryGenerateNextFinalRound(tournamentId) {
         winner_team_id: null,
         played: false
       });
+
+      console.log(`   ✓ Match ${matchId}: ${winners[i]} vs ${winners[i + 1]}`);
+
+      matchIndex++;
     }
 
     await batch.commit();
-    console.log(`✅ Next final round (R${nextRound}) generated for ${tournamentId}`);
+    console.log(`✅ [SUCCESS] Next final round (R${nextRound}) generated for ${tournamentId}`);
 
   } catch (error) {
-    console.error('tryGenerateNextFinalRound error:', error);
+    console.error('❌ [ERROR] tryGenerateNextFinalRound failed:', error);
+    console.error('Stack trace:', error.stack);
     throw error;
   }
 }
 
 module.exports = {
   generateFinalsIfReady,
-  tryGenerateNextFinalRound: tryGenerateNextFinalRound  // ✅ esplicito
+  tryGenerateNextFinalRound
 };
