@@ -432,16 +432,21 @@ exports.submitResult = functions.https.onRequest(async (req, res) => {
 
     const matchData = matchDoc.data();
 
-    // BLOCCO: round successivo esiste (solo finals)
+    // ✅ BLOCCO: round successivo esiste (solo finals) - VERSIONE SENZA INDICE COMPOSITO
     if (isFinal) {
       const currentRound = matchData.round_id;
-      const nextRoundCheck = await db.collection('finals')
+      
+      // FETCH ALL finals e controlla in memoria (evita indice composito)
+      const allFinalsSnapshot = await db.collection('finals')
         .where('tournament_id', '==', tournament_id)
-        .where('round_id', '>', currentRound)
-        .limit(1)
         .get();
-
-      if (!nextRoundCheck.empty) {
+      
+      const allFinals = allFinalsSnapshot.docs.map(doc => doc.data());
+      
+      // Controlla se esiste un round successivo
+      const hasNextRound = allFinals.some(f => Number(f.round_id) > Number(currentRound));
+      
+      if (hasNextRound) {
         return res.status(403).send('FINAL_ROUND_LOCKED');
       }
     }
