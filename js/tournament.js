@@ -249,7 +249,10 @@ function renderSpecificCourtRule(tournament) {
     rules.push(rankingRule);
   }
   
-  // REGOLA 4: Riferimento al regolamento generale
+  // ✅ REGOLA 4: Arbitraggio
+  rules.push(buildRefereeRule(tournament));
+  
+  // REGOLA 5: Riferimento al regolamento generale
   rules.push(buildGeneralReferenceRule());
   
   // ✅ RENDER FINALE CON STRUTTURA A BLOCCHI
@@ -529,8 +532,56 @@ function buildCrossGroupComparisonText(numGroups, teamsInFinal) {
   `;
 }
 
+
 // ===============================
-// 19. BUILD GENERAL REFERENCE RULE (REGOLA 4)
+// 19. BUILD REFEREE RULE (REGOLA 4)
+// ===============================
+function buildRefereeRule(tournament) {
+  const hasReferee = tournament.referee === true || String(tournament.referee).toUpperCase() === "TRUE";
+  
+  let ruleText = "";
+  let ruleNumber = "4";
+  
+  if (hasReferee) {
+    ruleText = `
+      <p>
+        Per tutte le partite del torneo, l'organizzazione provvederà a designare un <strong>arbitro ufficiale</strong> 
+        che sarà presente in campo per garantire il corretto svolgimento della gara.
+      </p>
+      <p>
+        Le decisioni arbitrali sono <strong>insindacabili</strong> e vincolanti per entrambe le squadre.
+      </p>
+    `;
+  } else {
+    ruleText = `
+      <p>
+        Le partite di questo torneo seguono la formula dell'<strong>auto-arbitraggio</strong>.
+      </p>
+      <p>
+        Le squadre sono tenute a <strong>rispettare le regole del gioco</strong> e a <strong>risolvere eventuali 
+        controversie in modo sportivo e rispettoso</strong>, nel pieno spirito del fair play.
+      </p>
+      <p>
+        In caso di dispute irrisolvibili, le squadre potranno contattare l'organizzazione, 
+        che valuterà la situazione e adotterà i provvedimenti necessari.
+      </p>
+    `;
+  }
+  
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Arbitraggio</strong></p>
+        ${ruleText}
+      </div>
+    </div>
+  `;
+}
+
+
+// ===============================
+// 20. BUILD GENERAL REFERENCE RULE (REGOLA 4)
 // ===============================
 function buildGeneralReferenceRule() {
   return `
@@ -548,7 +599,7 @@ function buildGeneralReferenceRule() {
 }
 
 // ===============================
-// 20. POPOLA CAMPI EXTRA FORM
+// 21. POPOLA CAMPI EXTRA FORM
 // ===============================
 function populateExtraFields(tournament) {
   const container = document.getElementById("extra-fields-container");
@@ -584,7 +635,7 @@ function populateExtraFields(tournament) {
 }
 
 // ===============================
-// 21. BUILD DAYS FIELD
+// 22. BUILD DAYS FIELD
 // ===============================
 function buildDaysField(availableDays) {
   const wrapper = document.createElement("div");
@@ -631,7 +682,7 @@ function buildDaysField(availableDays) {
 }
 
 // ===============================
-// 22. BUILD HOURS FIELD
+// 23. BUILD HOURS FIELD
 // ===============================
 function buildHoursField(availableHours) {
   const wrapper = document.createElement("label");
@@ -666,7 +717,7 @@ function buildHoursField(availableHours) {
 }
 
 // ===============================
-// 23. PARSE DAYS RANGE
+// 24. PARSE DAYS RANGE
 // ===============================
 function parseDaysRange(range) {
   const allDays = [
@@ -697,7 +748,7 @@ function parseDaysRange(range) {
 }
 
 // ===============================
-// 24. PARSE HOURS SLOTS
+// 25. PARSE HOURS SLOTS
 // ===============================
 function parseHoursSlots(range) {
   const rangeLower = range.toLowerCase();
@@ -718,7 +769,7 @@ function parseHoursSlots(range) {
 }
 
 // ===============================
-// 25. STATO TORNEO (UI)
+// 26. STATO TORNEO (UI)
 // ===============================
 function applyTournamentState(tournament) {
   form.style.display = "none";
@@ -759,7 +810,7 @@ function applyTournamentState(tournament) {
 }
 
 // ===============================
-// 26. SUBMIT ISCRIZIONE (FIREBASE)
+// 27. SUBMIT ISCRIZIONE (FIREBASE)
 // ===============================
 function handleFormSubmit(tournament) {
   form.addEventListener("submit", function (e) {
@@ -866,7 +917,7 @@ function handleFormSubmit(tournament) {
 }
 
 // ===============================
-// 27. LOAD + RENDER TEAMS LIST
+// 28. LOAD + RENDER TEAMS LIST
 // ===============================
 function loadAndRenderTeamsList(tournament) {
   if (!teamsListSection || !teamsListContainer || !teamsListCount) return;
@@ -924,7 +975,7 @@ function renderTeamsChips(teams) {
 }
 
 // ===============================
-// 28. TEAMS LIST STATES
+// 29. TEAMS LIST STATES
 // ===============================
 function renderTeamsSkeleton(count) {
   const frag = document.createDocumentFragment();
@@ -966,7 +1017,7 @@ function escapeHTML(str) {
 }
 
 // ===============================
-// 29. TOAST NOTIFICATION
+// 30. TOAST NOTIFICATION
 // ===============================
 function showToast(message) {
   const toast = document.createElement("div");
