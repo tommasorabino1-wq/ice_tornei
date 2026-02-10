@@ -213,15 +213,15 @@ function renderMatchesByRound(roundId) {
     return;
   }
 
+  // ✅ SOLO torneo "finished" blocca i match dei gironi
   const tournamentLocked = TOURNAMENT_STATUS === "finished";
-  const finalsStarted = TOURNAMENT_STATUS === "final_phase";
 
   matches.forEach(match => {
     const isPlayed =
       match.played === true ||
       String(match.played).toUpperCase() === "TRUE";
 
-    const locked = tournamentLocked || finalsStarted;
+    const locked = tournamentLocked;  // ✅ Rimosso "finalsStarted"
 
     const card = document.createElement("div");
     card.className = "match-card";
@@ -256,11 +256,9 @@ function renderMatchesByRound(roundId) {
         ${
           tournamentLocked
             ? "Torneo concluso"
-            : finalsStarted
-              ? "Fase finale avviata"
-              : isPlayed
-                ? "Modifica risultato"
-                : "Invia risultato"
+            : isPlayed
+              ? "Modifica risultato"
+              : "Invia risultato"
         }
       </button>
     `;
