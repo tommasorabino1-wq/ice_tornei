@@ -317,12 +317,14 @@ body {
 
 .tournament-card h3 {
   font-size: 38px;
-  line-height: 0;
+  line-height: 1.2;
 }
 
 .card-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .card-meta {

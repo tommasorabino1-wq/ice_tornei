@@ -140,6 +140,7 @@ function renderTournaments(tournaments) {
 
     card.innerHTML = `
       <div class="card-header">
+        <h3>${t.name}</h3>
         <span class="badge ${t.status}">${statusLabel}</span>
       </div>
 
