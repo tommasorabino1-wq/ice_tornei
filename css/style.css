@@ -145,7 +145,7 @@ body {
 }
 
 .page-header h2 {
-  font-size: 46px;
+  font-size: 66px;
 }
 
 
@@ -316,7 +316,7 @@ body {
 }
 
 .tournament-card h3 {
-  font-size: 26px;
+  font-size: 30px;
   line-height: 1.4;
 }
 
@@ -328,8 +328,8 @@ body {
 .card-meta {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  font-size: 21px;
+  gap: 14px;
+  font-size: 23px;
   color: var(--text-muted);
 }
 
@@ -368,9 +368,9 @@ body {
    BADGES
 ========================= */
 .badge {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 1000;
-  padding: 10px 16px;
+  padding: 14px 18px;
   border-radius: 7px;
   text-transform: uppercase;
 }
