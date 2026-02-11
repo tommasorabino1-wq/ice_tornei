@@ -145,7 +145,7 @@ body {
 }
 
 .page-header h2 {
-  font-size: 30px;
+  font-size: 40px;
 }
 
 
@@ -219,8 +219,8 @@ body {
 }
 
 .footer-container {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 24px;
   padding: 32px 16px;
 }
@@ -231,25 +231,25 @@ body {
 }
 
 .footer-brand p {
-  font-size: 13px;
+  font-size: 16px;
   color: var(--text-muted);
 }
 
 .footer-contacts h4,
 .footer-legal h4 {
-  font-size: 14px;
-  margin-bottom: 8px;
+  font-size: 15px;
+  margin-bottom: 10px;
 }
 
 .footer-contacts p {
-  font-size: 13px;
+  font-size: 16px;
   color: var(--text-muted);
   margin-bottom: 6px;
 }
 
 .footer-legal a {
   display: block;
-  font-size: 13px;
+  font-size: 16px;
   color: var(--text-muted);
   text-decoration: none;
   margin-bottom: 6px;
@@ -265,6 +265,10 @@ body {
   padding: 12px 16px;
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.footer-brand {
+  grid-column: 1 / -1;
 }
 
 
@@ -311,7 +315,7 @@ body {
 }
 
 .tournament-card h3 {
-  font-size: 15px;
+  font-size: 22px;
   line-height: 1.4;
 }
 
@@ -323,8 +327,8 @@ body {
 .card-meta {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
+  gap: 6px;
+  font-size: 18px;
   color: var(--text-muted);
 }
 
@@ -397,16 +401,16 @@ body {
 .card-actions {
   display: flex;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 16px;
 }
 
 .btn {
   flex: 1;
   text-align: center;
-  padding: 14px;
+  padding: 16px;
   border-radius: var(--radius);
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 1000;
   text-decoration: none;
   cursor: pointer;
   border: none;
