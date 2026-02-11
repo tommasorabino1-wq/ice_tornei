@@ -144,8 +144,6 @@ function renderTournaments(tournaments) {
         <span class="badge ${t.status}">${statusLabel}</span>
       </div>
 
-      <h3>${t.name}</h3>
-
       <div class="card-meta">
         <span>🏐 ${t.sport}</span>
         <span>📍 ${t.location}</span>
