@@ -209,6 +209,7 @@ body {
 }
 
 
+
 /* =========================
    FOOTER
 ========================= */
@@ -219,58 +220,77 @@ body {
 }
 
 .footer-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px 16px;
-  padding: 32px 16px;
+  padding: 32px 20px;
+}
+
+/* BRAND - Centrato in alto */
+.footer-brand {
+  text-align: center;
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
 }
 
 .footer-brand img {
-  width: 50px;
-  margin-bottom: 8px;
+  width: 70px;
+  margin-bottom: 12px;
 }
 
 .footer-brand p {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--text-muted);
+  letter-spacing: 0.02em;
 }
 
-.footer-contacts h4,
-.footer-legal h4 {
-  font-size: 15px;
-  margin-bottom: 10px;
+/* FOOTER CONTENT - Due colonne */
+.footer-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
 }
 
-.footer-contacts p {
-  font-size: 16px;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-}
-
-.footer-legal a {
-  display: block;
-  font-size: 16px;
-  color: var(--text-muted);
-  text-decoration: none;
-  margin-bottom: 6px;
-}
-
-.footer-legal a:hover {
+/* SEZIONI */
+.footer-section h4 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--text-main);
+  margin-bottom: 14px;
 }
 
+.footer-section p,
+.footer-section a {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.footer-section p {
+  margin-bottom: 8px;
+}
+
+.footer-section a {
+  display: block;
+  text-decoration: none;
+  margin-bottom: 10px;
+  transition: color 0.2s ease;
+}
+
+.footer-section a:hover {
+  color: var(--brand);
+}
+
+/* BOTTOM BAR */
 .footer-bottom {
+  margin-top: 28px;
+  padding-top: 20px;
   border-top: 1px solid var(--border);
   text-align: center;
-  padding: 12px 16px;
   font-size: 12px;
   color: var(--text-muted);
 }
 
-.footer-brand {
-  grid-column: 1 / -1;
-  margin-bottom: 8px;
-}
 
 
 /* =========================
@@ -327,17 +347,34 @@ body {
   gap: 12px;
 }
 
-.card-header-right {
+.card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.card-side {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 14px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.card-header-right .price {
-  font-size: 36px;
+.card-side .price {
+  font-size: 26px;
   font-weight: 600;
   color: var(--text-main);
+  margin-top: 20px;
+  margin-right: 12px;
+}
+
+.card-side .teams {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 12px;
 }
 
 .card-meta {
@@ -346,25 +383,6 @@ body {
   gap: 14px;
   font-size: 26px;
   color: var(--text-muted);
-}
-
-.card-stats {
-  display: flex;
-  justify-content: space-between;
-  font-size: 26px;
-  color: var(--text-muted);
-}
-
-.card-stats .price {
-  font-size: 36px;
-  font-weight: 600;
-  color: var(--text-main);
-}
-
-
-.card-stats .teams {
-  font-size: 26px;
-  font-weight: 600;
 }
 
 
@@ -423,7 +441,8 @@ body {
 .card-actions {
   display: flex;
   gap: 10px;
-  margin-top: 30px;
+  margin-top: 40px;
+  margin-bottom: 20px;
 }
 
 .btn {

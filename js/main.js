@@ -141,21 +141,20 @@ function renderTournaments(tournaments) {
     card.innerHTML = `
       <div class="card-header">
         <h3>${t.name}</h3>
-        <div class="card-header-right">
-          <span class="badge ${t.status}">${statusLabel}</span>
-          <span class="price">💰 €${t.price}</span>
+        <span class="badge ${t.status}">${statusLabel}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="card-meta">
+          <span>🏐 ${t.sport}</span>
+          <span>📍 ${t.location}</span>
+          <span>📅 ${t.date}</span>
+          <span>⏰ ${courtInfo}</span>
         </div>
-      </div>
-
-      <div class="card-meta">
-        <span>🏐 ${t.sport}</span>
-        <span>📍 ${t.location}</span>
-        <span>📅 ${t.date}</span>
-        <span>⏰ ${courtInfo}</span>
-      </div>
-
-      <div class="card-stats">
-        <span class="teams">👥 ${t.teams_current} / ${t.teams_max} squadre</span>
+        <div class="card-side">
+          <span class="price">💰 €${t.price}</span>
+          <span class="teams">👥 ${t.teams_current} / ${t.teams_max}</span>
+        </div>
       </div>
 
       <div class="card-actions">
