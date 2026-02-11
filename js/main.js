@@ -154,7 +154,7 @@ function renderTournaments(tournaments) {
 
       <div class="card-stats">
         <span>👥 ${t.teams_current} / ${t.teams_max} squadre</span>
-        <span>💰 €${t.price}</span>
+        <span class="price">💰 €${t.price}</span>
       </div>
 
       <div class="card-actions">
