@@ -56,7 +56,7 @@ body {
 .main-header-container {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 12px 16px;
 }
 
@@ -69,7 +69,7 @@ body {
 }
 
 .brand img {
-  width: 60px;
+  width: 100px;
 }
 
 /* SEARCH - nascosta su mobile */
@@ -118,10 +118,10 @@ body {
 }
 
 .main-nav a {
-  padding: 12px 14px;
+  padding: 14px 16px;
   text-decoration: none;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 15px;
   white-space: nowrap;
   border-bottom: 2px solid transparent;
 }
@@ -144,6 +144,10 @@ body {
   margin-bottom: 0;
 }
 
+.page-header h2 {
+  font-size: 22px;
+}
+
 
 /* =========================
    PAGE HEADER
@@ -154,6 +158,16 @@ body {
   align-items: flex-start;
   gap: 16px;
   margin-bottom: 24px;
+}
+
+.filter-sport {
+  padding: 12px 16px;
+  font-size: 15px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  width: 100%;
 }
 
 
@@ -317,9 +331,16 @@ body {
 .card-stats {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text-muted);
 }
+
+.card-stats .price {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
 
 .card-cta {
   margin-top: 8px;
@@ -342,9 +363,9 @@ body {
    BADGES
 ========================= */
 .badge {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 4px 8px;
+  padding: 5px 10px;
   border-radius: 4px;
   text-transform: uppercase;
 }
@@ -382,9 +403,9 @@ body {
 .btn {
   flex: 1;
   text-align: center;
-  padding: 10px;
+  padding: 12px;
   border-radius: var(--radius);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -430,6 +451,24 @@ body {
   border-color: #374151;
   color: #9ca3af;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* =========================
    PAGINA TORNEO
