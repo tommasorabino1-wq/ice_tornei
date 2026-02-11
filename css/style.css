@@ -327,6 +327,19 @@ body {
   gap: 12px;
 }
 
+.card-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.card-header-right .price {
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
 .card-meta {
   display: flex;
   flex-direction: column;
@@ -338,12 +351,12 @@ body {
 .card-stats {
   display: flex;
   justify-content: space-between;
-  font-size: 18px;
+  font-size: 26px;
   color: var(--text-muted);
 }
 
 .card-stats .price {
-  font-size: 26px;
+  font-size: 36px;
   font-weight: 600;
   color: var(--text-main);
 }
@@ -410,7 +423,7 @@ body {
 .card-actions {
   display: flex;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 30px;
 }
 
 .btn {
