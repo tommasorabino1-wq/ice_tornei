@@ -343,14 +343,14 @@ body {
 }
 
 .card-stats .price {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 600;
   color: var(--text-main);
 }
 
 
 .card-stats .teams {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 600;
 }
 
