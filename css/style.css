@@ -294,6 +294,10 @@ body {
   text-align: right;
 }
 
+.footer-nav {
+  text-align: center;
+}
+
 /* BOTTOM BAR */
 .footer-bottom {
   margin-top: 20px;
