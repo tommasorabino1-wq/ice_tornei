@@ -121,7 +121,7 @@ body {
   padding: 22px 32px;
   text-decoration: none;
   color: var(--text-muted);
-  font-size: 24px;
+  font-size: 29px;
   white-space: nowrap;
   border-bottom: 3px solid transparent;
 }
@@ -158,16 +158,6 @@ body {
   align-items: flex-start;
   gap: 16px;
   margin-bottom: 24px;
-}
-
-.filter-sport {
-  padding: 24px 32px;
-  font-size: 26px;
-  border-radius: var(--radius);
-  border: 3px solid var(--border);
-  background-color: var(--bg-card);
-  color: var(--text-main);
-  width: 100%;
 }
 
 
@@ -817,9 +807,9 @@ body {
 }
 
 .sport-filter-inline select {
-  padding: 4px 8px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 6px 10px;
+  font-size: 22px;
+  font-weight: 600;
   
   background-color: transparent;
   color: var(--text-main);
