@@ -46,7 +46,7 @@ body {
 
 
 /* =========================
-   MAIN HEADER
+   MAIN HEADER (UNIFIED)
 ========================= */
 .main-header {
   background-color: var(--bg-secondary);
@@ -56,74 +56,42 @@ body {
 .main-header-container {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 14px 18px;
+  padding: 0 16px;
+  gap: 20px;
 }
 
+/* BRAND */
 .brand {
+  flex-shrink: 0;
+}
+
+.brand a {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 16px;
 }
 
 .brand img {
-  width: 100px;
+  width: 70px;
+  height: auto;
 }
 
-/* SEARCH - nascosta su mobile */
-.search-box {
-  display: none;
-}
-
-.search-box input {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 8px 12px;
-  width: 100%;
-  color: var(--text-main);
-  font-size: 14px;
-}
-
-.search-box input::placeholder {
-  color: var(--text-muted);
-}
-
-/* ACTIONS */
-.header-actions {
+/* NAV */
+.main-nav {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.header-actions span {
-  cursor: pointer;
-  opacity: 0.8;
-}
-
-
-/* =========================
-   NAV BAR
-========================= */
-.main-nav {
-  background-color: var(--bg-secondary);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-.main-nav-container {
-  display: flex;
-}
-
 .main-nav a {
-  padding: 22px 32px;
+  padding: 20px 24px;
   text-decoration: none;
   color: var(--text-muted);
-  font-size: 29px;
+  font-size: 16px;
+  font-weight: 500;
   white-space: nowrap;
   border-bottom: 3px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
 }
 
 .main-nav a:hover,
