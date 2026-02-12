@@ -118,12 +118,12 @@ body {
 }
 
 .main-nav a {
-  padding: 16px 18px;
+  padding: 22px 32px;
   text-decoration: none;
   color: var(--text-muted);
-  font-size: 15px;
+  font-size: 24px;
   white-space: nowrap;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
 }
 
 .main-nav a:hover,
@@ -161,10 +161,10 @@ body {
 }
 
 .filter-sport {
-  padding: 16px 20px;
-  font-size: 18px;
+  padding: 24px 32px;
+  font-size: 26px;
   border-radius: var(--radius);
-  border: 1px solid var(--border);
+  border: 3px solid var(--border);
   background-color: var(--bg-card);
   color: var(--text-main);
   width: 100%;
