@@ -71,7 +71,7 @@ body {
 }
 
 .brand img {
-  width: 70px;
+  width: 80px;
   height: auto;
 }
 
@@ -87,7 +87,7 @@ body {
   padding: 20px 24px;
   text-decoration: none;
   color: var(--text-muted);
-  font-size: 34px;
+  font-size: 26px;
   font-weight: 600;
   white-space: nowrap;
   border-bottom: 3px solid transparent;
@@ -608,6 +608,12 @@ body {
 
 
 
+
+
+
+
+
+
 /* =========================
    REGOLAMENTO GENERALE
 ========================= */
@@ -660,9 +666,8 @@ body {
 }
 
 
-/* =========================
-   VISIBILITÀ SEZIONI TORNEO
-========================= */
+
+
 
 /* =========================
    VISIBILITÀ BASE SEZIONI
@@ -805,6 +810,22 @@ body {
   color: var(--text-main);
   padding: 8px;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
