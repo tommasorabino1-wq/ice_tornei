@@ -926,7 +926,7 @@ body {
 }
 
 .tournament-action p {
-  font-size: 14px;
+  font-size: 20px;
   color: var(--text-muted);
   margin-bottom: 15px;
 }
@@ -951,7 +951,7 @@ body {
 #registration-form label {
   display: flex;
   flex-direction: column;
-  font-size: 13px;
+  font-size: 20px;
   color: var(--text-muted);
 }
 
@@ -988,7 +988,7 @@ body {
 #registration-form label {
   display: flex;
   flex-direction: column;
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 600; /* ✅ Più bold per maggiore gerarchia */
   color: var(--text-main); /* ✅ Colore principale (non muted) */
   letter-spacing: 0.02em;
@@ -997,7 +997,7 @@ body {
 
 /* Helper text sotto label */
 .field-helper {
-  font-size: 11.5px;
+  font-size: 17px;
   color: var(--text-muted);
   margin-top: 4px;
   margin-bottom: 2px;
@@ -1049,14 +1049,14 @@ body {
 .checkbox-item input[type="checkbox"] {
   cursor: pointer;
   accent-color: var(--brand);
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
 }
 
 .checkbox-item label {
   cursor: pointer;
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 500;
   color: var(--text-main);
   flex: 1;
@@ -1072,7 +1072,7 @@ body {
   border: 1px solid var(--border);
   background-color: var(--bg-main);
   color: var(--text-main);
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 500;
   cursor: pointer;
   
@@ -1103,7 +1103,7 @@ body {
   border: 1px solid var(--border);
   background-color: var(--bg-main);
   color: var(--text-main);
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 400;
   
   transition: 
@@ -1135,7 +1135,7 @@ body {
 
 /* Button submit con spacing */
 #registration-form button[type="submit"] {
-  margin-top: 20px; /* ✅ Distanza chiara dal form */
+  margin-top: 30px; /* ✅ Distanza chiara dal form */
 }
 
 
@@ -1894,7 +1894,7 @@ body {
 }
 
 .tournament-registration-block h3 {
-  font-size: 18px;
+  font-size: 30px;
   font-weight: 700;
   margin-bottom: 12px;
 }
