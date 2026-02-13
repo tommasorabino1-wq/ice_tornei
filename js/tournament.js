@@ -175,22 +175,12 @@ function renderTournament(tournament) {
   // Load + render teams list block
   loadAndRenderTeamsList(tournament);
 
-  // ✅ Mostra regolamento generale full-width
-  showGeneralRegulation();
+  // ✅ Il regolamento generale è già nell'HTML, non serve mostrarlo separatamente
 }
 
-// ===============================
-// 8. SHOW GENERAL REGULATION (FULL WIDTH)
-// ===============================
-function showGeneralRegulation() {
-  const regulationBlock = document.querySelector(".tournament-general-regulation");
-  if (regulationBlock) {
-    regulationBlock.classList.remove("hidden");
-  }
-}
 
 // ===============================
-// 9. BUILD COURT INFO MESSAGE
+// 8. BUILD COURT INFO MESSAGE
 // ===============================
 function buildCourtInfoMessage(tournament) {
   const fixedCourt = tournament.fixed_court === true || String(tournament.fixed_court).toUpperCase() === "TRUE";
@@ -229,7 +219,7 @@ function buildCourtInfoMessage(tournament) {
 }
 
 // ===============================
-// 10. RENDER SPECIFIC COURT RULE
+// 9. RENDER SPECIFIC COURT RULE
 // ===============================
 function renderSpecificCourtRule(tournament) {
   const container = document.getElementById("specific-court-rule");
@@ -264,7 +254,7 @@ function renderSpecificCourtRule(tournament) {
 }
 
 // ===============================
-// 11. BUILD COURT RULE (REGOLA 1)
+// 10. BUILD COURT RULE (REGOLA 1)
 // ===============================
 function buildCourtRule(tournament) {
   const fixedCourt = tournament.fixed_court === true || String(tournament.fixed_court).toUpperCase() === "TRUE";
@@ -307,7 +297,7 @@ function buildCourtRule(tournament) {
 }
 
 // ===============================
-// 12. BUILD AVAILABILITY PHRASE
+// 11. BUILD AVAILABILITY PHRASE
 // ===============================
 function buildAvailabilityPhrase(days, hours) {
   const daysPhrase = mapDaysToPhrase(days);
@@ -329,7 +319,7 @@ function buildAvailabilityPhrase(days, hours) {
 }
 
 // ===============================
-// 13. MAP DAYS TO PHRASE
+// 12. MAP DAYS TO PHRASE
 // ===============================
 function mapDaysToPhrase(days) {
   if (!days || days === "na") {
@@ -346,7 +336,7 @@ function mapDaysToPhrase(days) {
 }
 
 // ===============================
-// 14. MAP HOURS TO PHRASE
+// 13. MAP HOURS TO PHRASE
 // ===============================
 function mapHoursToPhrase(hours) {
   if (!hours || hours === "na") {
@@ -363,7 +353,7 @@ function mapHoursToPhrase(hours) {
 }
 
 // ===============================
-// 15. BUILD FORMAT RULE (REGOLA 2)
+// 14. BUILD FORMAT RULE (REGOLA 2)
 // ===============================
 function buildFormatRule(tournament) {
   const teamsPerGroup = Number(tournament.teams_per_group) || 0;
@@ -429,7 +419,7 @@ function buildFormatRule(tournament) {
 }
 
 // ===============================
-// 16. BUILD QUALIFICATION PHRASE
+// 15. BUILD QUALIFICATION PHRASE
 // ===============================
 function buildQualificationPhrase(numGroups, teamsInFinal) {
   const firstPlaceQualifiers = numGroups;
@@ -461,7 +451,7 @@ function buildQualificationPhrase(numGroups, teamsInFinal) {
 }
 
 // ===============================
-// 17. BUILD RANKING RULE (REGOLA 3)
+// 16. BUILD RANKING RULE (REGOLA 3)
 // ===============================
 function buildRankingRule(tournament) {
   const teamsPerGroup = Number(tournament.teams_per_group) || 0;
@@ -497,7 +487,7 @@ function buildRankingRule(tournament) {
 }
 
 // ===============================
-// 18. BUILD CROSS GROUP COMPARISON TEXT
+// 17. BUILD CROSS GROUP COMPARISON TEXT
 // ===============================
 function buildCrossGroupComparisonText(numGroups, teamsInFinal) {
   const firstPlaceQualifiers = Math.min(numGroups, teamsInFinal);
@@ -534,7 +524,7 @@ function buildCrossGroupComparisonText(numGroups, teamsInFinal) {
 
 
 // ===============================
-// 19. BUILD REFEREE RULE (REGOLA 4)
+// 18. BUILD REFEREE RULE (REGOLA 4)
 // ===============================
 function buildRefereeRule(tournament) {
   const hasReferee = tournament.referee === true || String(tournament.referee).toUpperCase() === "TRUE";
@@ -581,7 +571,7 @@ function buildRefereeRule(tournament) {
 
 
 // ===============================
-// 20. BUILD GENERAL REFERENCE RULE (REGOLA 4)
+// 19. BUILD GENERAL REFERENCE RULE (REGOLA 4)
 // ===============================
 function buildGeneralReferenceRule() {
   return `
@@ -599,7 +589,7 @@ function buildGeneralReferenceRule() {
 }
 
 // ===============================
-// 21. POPOLA CAMPI EXTRA FORM
+// 20. POPOLA CAMPI EXTRA FORM
 // ===============================
 function populateExtraFields(tournament) {
   const container = document.getElementById("extra-fields-container");
@@ -635,7 +625,7 @@ function populateExtraFields(tournament) {
 }
 
 // ===============================
-// 22. BUILD DAYS FIELD
+// 21. BUILD DAYS FIELD
 // ===============================
 function buildDaysField(availableDays) {
   const wrapper = document.createElement("div");
@@ -682,7 +672,7 @@ function buildDaysField(availableDays) {
 }
 
 // ===============================
-// 23. BUILD HOURS FIELD
+// 22. BUILD HOURS FIELD
 // ===============================
 function buildHoursField(availableHours) {
   const wrapper = document.createElement("label");
@@ -717,7 +707,7 @@ function buildHoursField(availableHours) {
 }
 
 // ===============================
-// 24. PARSE DAYS RANGE
+// 23. PARSE DAYS RANGE
 // ===============================
 function parseDaysRange(range) {
   const allDays = [
@@ -748,7 +738,7 @@ function parseDaysRange(range) {
 }
 
 // ===============================
-// 25. PARSE HOURS SLOTS
+// 24. PARSE HOURS SLOTS
 // ===============================
 function parseHoursSlots(range) {
   const rangeLower = range.toLowerCase();
@@ -769,7 +759,7 @@ function parseHoursSlots(range) {
 }
 
 // ===============================
-// 26. STATO TORNEO (UI)
+// 25. STATO TORNEO (UI)
 // ===============================
 function applyTournamentState(tournament) {
   form.style.display = "none";
@@ -810,7 +800,7 @@ function applyTournamentState(tournament) {
 }
 
 // ===============================
-// 27. SUBMIT ISCRIZIONE (FIREBASE)
+// 26. SUBMIT ISCRIZIONE (FIREBASE)
 // ===============================
 function handleFormSubmit(tournament) {
   form.addEventListener("submit", function (e) {
@@ -917,7 +907,7 @@ function handleFormSubmit(tournament) {
 }
 
 // ===============================
-// 28. LOAD + RENDER TEAMS LIST
+// 27. LOAD + RENDER TEAMS LIST
 // ===============================
 function loadAndRenderTeamsList(tournament) {
   if (!teamsListSection || !teamsListContainer || !teamsListCount) return;
@@ -975,7 +965,7 @@ function renderTeamsChips(teams) {
 }
 
 // ===============================
-// 29. TEAMS LIST STATES
+// 28. TEAMS LIST STATES
 // ===============================
 function renderTeamsSkeleton(count) {
   const frag = document.createDocumentFragment();
@@ -1017,7 +1007,7 @@ function escapeHTML(str) {
 }
 
 // ===============================
-// 30. TOAST NOTIFICATION
+// 29. TOAST NOTIFICATION
 // ===============================
 function showToast(message) {
   const toast = document.createElement("div");

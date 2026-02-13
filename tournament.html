@@ -269,7 +269,7 @@
     ========================== -->
     <section id="tournament-specific-section" class="hidden">
 
-      <!-- HEADER TORNEO -->
+      <!-- 1. HEADER TORNEO -->
       <section class="tournament-header">
         <div class="tournament-title-row">
           <h1 id="tournament-name"></h1>
@@ -278,75 +278,61 @@
         <p id="tournament-subtitle" class="tournament-subtitle"></p>
       </section>
 
-      <!-- LAYOUT TORNEO -->
-      <section class="tournament-layout">
+      <!-- 2. INFO TORNEO (FULL WIDTH) -->
+      <section class="tournament-info-block">
+        <h3>Informazioni torneo</h3>
 
-        <!-- INFO TORNEO -->
-        <div class="tournament-info">
-          <h3>Informazioni torneo</h3>
-
-          <div class="tournament-meta">
-            <div class="meta-item"><span class="meta-icon">🏐</span><span id="info-sport"></span></div>
-            <div class="meta-item"><span class="meta-icon">📍</span><span id="info-location"></span></div>
-            <div class="meta-item"><span class="meta-icon">📅</span><span id="info-date"></span></div>
-            <div class="meta-item"><span class="meta-icon">⏰</span><span id="info-court"></span></div>
-            <div class="meta-item"><span class="meta-icon">👥</span><span id="info-teams"></span> squadre</div>
-            <div class="meta-item"><span class="meta-icon">💰</span>€<span id="info-price"></span></div>
-          </div>
-
-          <!-- ✅ NUOVO: Divider + Regole specifiche -->
-          <div class="tournament-specific-rules">
-            <div class="rules-divider"></div>
-            
-            <h4 class="rules-subtitle">Regole specifiche per questo torneo</h4>
-            
-            <div id="specific-court-rule" class="specific-rule-content">
-              <!-- Popolato dinamicamente dal JS con struttura a blocchi -->
-            </div>
-          </div>
+        <div class="tournament-meta">
+          <div class="meta-item"><span class="meta-icon">🏐</span><span id="info-sport"></span></div>
+          <div class="meta-item"><span class="meta-icon">📍</span><span id="info-location"></span></div>
+          <div class="meta-item"><span class="meta-icon">📅</span><span id="info-date"></span></div>
+          <div class="meta-item"><span class="meta-icon">⏰</span><span id="info-court"></span></div>
+          <div class="meta-item"><span class="meta-icon">👥</span><span id="info-teams"></span> squadre</div>
+          <div class="meta-item"><span class="meta-icon">💰</span>€<span id="info-price"></span></div>
         </div>
-
-        <!-- ISCRIZIONE -->
-        <div class="tournament-action">
-          <h3>Iscrizione</h3>
-          <p id="subscribe-message"></p>
-
-          <form id="registration-form">
-            <!-- =============================
-                CAMPI BASE (SEMPRE PRESENTI)
-            ============================= -->
-            <label>
-              Nome squadra
-              <input type="text" name="team_name" required>
-            </label>
-
-            <label>
-              Email
-              <input type="email" name="email" required>
-            </label>
-
-            <label>
-              Telefono
-              <input type="tel" name="phone" required>
-            </label>
-
-            <!-- =============================
-                CAMPI AGGIUNTIVI (SOLO SE fixed_court = FALSE)
-                Popolati dinamicamente dal JavaScript
-            ============================= -->
-            <div id="extra-fields-container"></div>
-
-            <button type="submit" class="btn primary">
-              Invia iscrizione
-            </button>
-          </form>
-        </div>
-
       </section>
 
-      <!-- =========================
-          TEAMS LIST – BLOCCO FULL WIDTH (NEW)
-      ========================== -->
+      <!-- 3. ISCRIZIONE (FULL WIDTH) -->
+      <section class="tournament-registration-block">
+        <h3>Iscrizione</h3>
+        <p id="subscribe-message"></p>
+
+        <form id="registration-form">
+          <!-- CAMPI BASE -->
+          <label>
+            Nome squadra
+            <input type="text" name="team_name" required>
+          </label>
+
+          <label>
+            Email
+            <input type="email" name="email" required>
+          </label>
+
+          <label>
+            Telefono
+            <input type="tel" name="phone" required>
+          </label>
+
+          <!-- CAMPI AGGIUNTIVI (popolati da JS) -->
+          <div id="extra-fields-container"></div>
+
+          <button type="submit" class="btn primary">
+            Invia iscrizione
+          </button>
+        </form>
+      </section>
+
+      <!-- 4. REGOLAMENTO SPECIFICO (FULL WIDTH) -->
+      <section class="tournament-specific-rules-block">
+        <h3 class="rules-subtitle">Regole specifiche per questo torneo</h3>
+        
+        <div id="specific-court-rule" class="specific-rule-content">
+          <!-- Popolato dinamicamente dal JS -->
+        </div>
+      </section>
+
+      <!-- 5. SQUADRE ISCRITTE (FULL WIDTH) -->
       <section id="tournament-teams-section" class="tournament-teams-block hidden">
         <div class="teams-block-header">
           <h3 class="teams-block-title">Squadre iscritte</h3>
@@ -356,160 +342,74 @@
           </div>
         </div>
 
-        <!-- JS riempie qui: skeleton → chips → empty/error -->
         <div id="teams-list-container" class="teams-chips-grid"></div>
       </section>
 
-    </section>
+      <!-- 6. REGOLAMENTO GENERALE ICE (FULL WIDTH) -->
+      <section id="tournament-general-regulation-block" class="tournament-general-regulation">
+        <h3 class="regulation-general-title">📋 Regolamento Generale Tornei ICE</h3>
+        
+        <div class="generic-regulation-cards">
 
-
-    <!-- =========================
-        REGOLAMENTO GENERALE ICE (FULL WIDTH)
-    ========================== -->
-    <section class="tournament-general-regulation hidden">
-      <h3 class="regulation-general-title">📋 Regolamento Generale Tornei ICE</h3>
-      
-      <div class="generic-regulation-cards">
-
-        <div class="regulation-card">
-          <div class="regulation-icon">1</div>
-          <div class="regulation-content">
-            <p>
-              <strong>Data di inizio torneo</strong>
-            </p>
-
-            <p>
-              La data di inizio del torneo è da considerarsi indicativa.
-            </p>
-
-            <p>
-              Qualora non venga raggiunto il numero minimo di squadre,
-              l'organizzazione si riserva il diritto di posticipare la data di inizio del torneo 
-              (fino ad un massimo di 30 giorni) o, solo in caso di comprovata necessità, di annullare 
-              il torneo con rimborso completo della quota di iscrizione.
-            </p>
+          <div class="regulation-card">
+            <div class="regulation-icon">1</div>
+            <div class="regulation-content">
+              <p><strong>Data di inizio torneo</strong></p>
+              <p>La data di inizio del torneo è da considerarsi indicativa.</p>
+              <p>Qualora non venga raggiunto il numero minimo di squadre, l'organizzazione si riserva il diritto di posticipare la data di inizio del torneo (fino ad un massimo di 30 giorni) o, solo in caso di comprovata necessità, di annullare il torneo con rimborso completo della quota di iscrizione.</p>
+            </div>
           </div>
-        </div>
 
-        <div class="regulation-card">
-          <div class="regulation-icon">2</div>
-          <div class="regulation-content">
-            <p>
-              <strong>Campi di gioco, giorni e orari</strong>
-            </p>
-
-            <p>
-              La prenotazione dei campi è sempre a carico dell'organizzazione.
-            </p>
-
-            <p>
-              In alcuni tornei, le partite si svolgono su campi fissi con giorni e orari prefissati,
-              comunicati all'inizio del torneo.
-            </p>
-
-            <p>
-              In altri tornei, invece, gli iscritti possono indicare le loro preferenze su zona,
-              giorni e orari. L'organizzazione si occuperà di prenotare i campi seguendo queste
-              preferenze per le partite in cui la squadra gioca in casa.
-            </p>
-
-            <p>
-              Nei limiti del possibile, l'organizzazione resta disponibile a valutare richieste
-              di modifica anche dopo la pubblicazione del calendario.
-            </p>
+          <div class="regulation-card">
+            <div class="regulation-icon">2</div>
+            <div class="regulation-content">
+              <p><strong>Campi di gioco, giorni e orari</strong></p>
+              <p>La prenotazione dei campi è sempre a carico dell'organizzazione.</p>
+              <p>In alcuni tornei, le partite si svolgono su campi fissi con giorni e orari prefissati, comunicati all'inizio del torneo.</p>
+              <p>In altri tornei, invece, gli iscritti possono indicare le loro preferenze su zona, giorni e orari. L'organizzazione si occuperà di prenotare i campi seguendo queste preferenze per le partite in cui la squadra gioca in casa.</p>
+              <p>Nei limiti del possibile, l'organizzazione resta disponibile a valutare richieste di modifica anche dopo la pubblicazione del calendario.</p>
+            </div>
           </div>
-        </div>
 
-        <div class="regulation-card">
-          <div class="regulation-icon">3</div>
-          <div class="regulation-content">
-            <p>
-              <strong>Inserimento dei risultati</strong>
-            </p>
-
-            <p>
-              Gli iscritti effettueranno autonomamente l'inserimento e l'eventuale modifica
-              dei risultati delle proprie partite.<br>
-              L'inserimento di risultati non veritieri o l'alterazione intenzionale dei dati 
-              comporteranno l'esclusione immediata dal torneo.
-            </p>
+          <div class="regulation-card">
+            <div class="regulation-icon">3</div>
+            <div class="regulation-content">
+              <p><strong>Inserimento dei risultati</strong></p>
+              <p>Gli iscritti effettueranno autonomamente l'inserimento e l'eventuale modifica dei risultati delle proprie partite.<br>L'inserimento di risultati non veritieri o l'alterazione intenzionale dei dati comporteranno l'esclusione immediata dal torneo.</p>
+            </div>
           </div>
-        </div>
 
-        <div class="regulation-card">
-          <div class="regulation-icon">4</div>
-          <div class="regulation-content">
-            <p>
-              <strong>Fair play e comportamento</strong>
-            </p>
-
-            <p>
-              Tutti i partecipanti si impegnano a mantenere un comportamento rispettoso
-              verso avversari, organizzatori e arbitri. Comportamenti antisportivi o
-              offensivi possono portare all'esclusione dal torneo senza diritto di rimborso della quota di iscrizione.
-            </p>
+          <div class="regulation-card">
+            <div class="regulation-icon">4</div>
+            <div class="regulation-content">
+              <p><strong>Fair play e comportamento</strong></p>
+              <p>Tutti i partecipanti si impegnano a mantenere un comportamento rispettoso verso avversari, organizzatori e arbitri. Comportamenti antisportivi o offensivi possono portare all'esclusione dal torneo senza diritto di rimborso della quota di iscrizione.</p>
+            </div>
           </div>
-        </div>
 
-        <div class="regulation-card">
-          <div class="regulation-icon">5</div>
-          <div class="regulation-content">
-            <p>
-              <strong>Partite non disputate</strong>
-            </p>
-
-            <p>
-              In caso di mancata presentazione di una squadra senza preavviso, la partita
-              verrà assegnata 3-0 a tavolino alla squadra avversaria.
-            </p>
-
-            <p>
-              Qualora una squadra comunichi l'impossibilità a disputare l'incontro con almeno 48 ore di 
-              preavviso, l'organizzazione potrà valutare una riprogrammazione della partita esclusivamente 
-              previa accettazione da parte della squadra avversaria.
-            </p>
+          <div class="regulation-card">
+            <div class="regulation-icon">5</div>
+            <div class="regulation-content">
+              <p><strong>Partite non disputate</strong></p>
+              <p>In caso di mancata presentazione di una squadra senza preavviso, la partita verrà assegnata 3-0 a tavolino alla squadra avversaria.</p>
+              <p>Qualora una squadra comunichi l'impossibilità a disputare l'incontro con almeno 48 ore di preavviso, l'organizzazione potrà valutare una riprogrammazione della partita esclusivamente previa accettazione da parte della squadra avversaria.</p>
+            </div>
           </div>
-        </div>
 
-        <div class="regulation-card">
-          <div class="regulation-icon">6</div>
-          <div class="regulation-content">
-            <p>
-              <strong>Classifiche e fase finale</strong>
-            </p>
-
-            <p>
-              Le classifiche vengono aggiornate automaticamente al termine di ogni partita.
-            </p>
-
-            <p>
-              <strong>Classifica all'interno dello stesso girone</strong><br>
-              In caso di parità di punti tra due o più squadre dello stesso girone, l'ordine in classifica
-              sarà determinato dai seguenti criteri (in ordine di importanza): scontri diretti, 
-              differenza reti, gol fatti.
-            </p>
-
-            <p>
-              <strong>Confronto tra squadre di gironi diversi</strong><br>
-              Qualora sia necessario confrontare squadre appartenenti a gironi differenti
-              (ad esempio per individuare la miglior seconda), in caso di parità di punti
-              verranno considerati esclusivamente e in questo ordine: differenza reti e gol fatti.
-            </p>
-
-            <p>
-              Qualora non fosse possibile determinare le squadre qualificate applicando i criteri sopra indicati,
-              l'organizzazione, sentite le squadre interessate, valuterà se procedere con spareggi
-              o con il sorteggio delle squadre qualificate.
-            </p>
-
-            <p>
-              Il numero di squadre qualificate alla fase finale sarà definito dal regolamento specifico del torneo.
-            </p>
+          <div class="regulation-card">
+            <div class="regulation-icon">6</div>
+            <div class="regulation-content">
+              <p><strong>Classifiche e fase finale</strong></p>
+              <p>Le classifiche vengono aggiornate automaticamente al termine di ogni partita.</p>
+              <p><strong>Classifica all'interno dello stesso girone</strong><br>In caso di parità di punti tra due o più squadre dello stesso girone, l'ordine in classifica sarà determinato dai seguenti criteri (in ordine di importanza): scontri diretti, differenza reti, gol fatti.</p>
+              <p><strong>Confronto tra squadre di gironi diversi</strong><br>Qualora sia necessario confrontare squadre appartenenti a gironi differenti (ad esempio per individuare la miglior seconda), in caso di parità di punti verranno considerati esclusivamente e in questo ordine: differenza reti e gol fatti.</p>
+              <p>Qualora non fosse possibile determinare le squadre qualificate applicando i criteri sopra indicati, l'organizzazione, sentite le squadre interessate, valuterà se procedere con spareggi o con il sorteggio delle squadre qualificate.</p>
+              <p>Il numero di squadre qualificate alla fase finale sarà definito dal regolamento specifico del torneo.</p>
+            </div>
           </div>
-        </div>
 
-      </div>
-    </section>
+        </div>
+      </section>
 
     </section>
 

@@ -1741,7 +1741,7 @@ body {
 
 /* Distanza tra regole */
 #generic-regulation-section .generic-regulation-cards {
-  gap: 24px;
+  gap: 32px;
   margin-top: 24px;
 }
 
@@ -1767,6 +1767,73 @@ body {
   padding: 10px 16px;
   min-width: 200px;
 }
+
+
+/* =========================
+   TOURNAMENT SPECIFIC PAGE - FULL WIDTH LAYOUT
+========================= */
+
+/* Info block full width */
+.tournament-info-block {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.tournament-info-block h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+/* Registration block full width */
+.tournament-registration-block {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.tournament-registration-block h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.tournament-registration-block p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* Specific rules block full width */
+.tournament-specific-rules-block {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.tournament-specific-rules-block .rules-subtitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+/* General regulation dentro tournament specific */
+#tournament-specific-section .tournament-general-regulation {
+  margin-top: 24px;
+}
+
+
+
+
+
+
 
 
 
