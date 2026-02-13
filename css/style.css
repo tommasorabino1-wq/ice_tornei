@@ -1697,7 +1697,76 @@ body {
 
 
 
+/* =========================
+   REGULATION PAGE - FULL WIDTH LAYOUT
+========================= */
 
+/* Rimuove margin-top quando è nella vista regolamento generale */
+#generic-regulation-section .tournament-general-regulation {
+  margin-top: 24px;
+}
+
+/* Titolo regolamento generale - GRANDE */
+#generic-regulation-section .regulation-general-title {
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 32px;
+  padding-bottom: 18px;
+  border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+}
+
+/* Cards regolamento - dimensioni aumentate */
+#generic-regulation-section .regulation-card {
+  padding: 18px 20px;
+  gap: 16px;
+}
+
+/* Icona regola - più grande */
+#generic-regulation-section .regulation-icon {
+  min-width: 32px;
+  height: 32px;
+  font-size: 16px;
+}
+
+/* Testo regole - font più grande */
+#generic-regulation-section .regulation-content {
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+#generic-regulation-section .regulation-content p {
+  margin: 0 0 12px;
+}
+
+/* Distanza tra regole */
+#generic-regulation-section .generic-regulation-cards {
+  gap: 24px;
+  margin-top: 24px;
+}
+
+/* Highlight brand visibile nella vista generale */
+#generic-regulation-section .highlight-brand {
+  color: var(--brand);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Filtro torneo - più grande e visibile */
+#generic-regulation-section .sport-filter-inline {
+  padding: 14px 20px;
+  gap: 16px;
+}
+
+#generic-regulation-section .sport-filter-inline label {
+  font-size: 28px;
+}
+
+#generic-regulation-section .sport-filter-inline select {
+  font-size: 28px;
+  padding: 10px 16px;
+  min-width: 200px;
+}
 
 
 
