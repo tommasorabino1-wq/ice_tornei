@@ -311,6 +311,106 @@ body {
 
 
 
+/* =========================
+   BUTTON LOADING (INLINE SPINNER)
+========================= */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px; /* spazio tra spinner e testo */
+}
+
+/* Spinner base */
+.btn .spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.25);
+  border-top-color: #000;
+  animation: btn-spin 0.8s linear infinite;
+}
+
+/* Animazione */
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Stato disabled con spinner (coerente) */
+.btn.disabled .spinner {
+  border-color: rgba(0, 0, 0, 0.2);
+  border-top-color: rgba(0, 0, 0, 0.6);
+}
+
+
+
+
+/* =========================
+   MATCH BUTTON – LOADING VARIANTS
+========================= */
+
+/* Spinner su bottone SECONDARY (modifica risultato) */
+.match-card .btn.secondary .spinner {
+  border-color: rgba(229, 231, 235, 0.35);   /* text-main soft */
+  border-top-color: var(--text-main);
+}
+
+/* Spinner su bottone PRIMARY (invio risultato) */
+.match-card .btn.primary .spinner {
+  border-color: rgba(0, 0, 0, 0.25);
+  border-top-color: #000;
+}
+
+/* Stato disabled nei match (più neutro) */
+.match-card .btn.disabled {
+  background-color: rgba(55, 65, 81, 0.6);
+  border-color: rgba(55, 65, 81, 0.6);
+}
+
+
+.badge.final_phase {
+  background-color: rgba(139, 92, 246, 0.15);
+  color: var(--state-final);
+}
+
+
+.badge.needs_attention {
+  background: #4f44ef;
+  color: white;
+}
+
+
+
+.team-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rank-badge {
+  min-width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--brand, #38bdf8);
+  color: #0b0f14;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.team-name {
+  white-space: nowrap;
+}
+
+
+
+
+
 
 /* =========================
    UTILITIES
@@ -1821,6 +1921,33 @@ body {
 
 
 
+
+
+/* =========================
+   ROUNDS - GIRONI
+========================= */
+.round-group {
+  margin-bottom: 28px;          /* ↑ spazio netto tra gironi */
+  padding-bottom: 22px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+
+.round-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  padding-left: 6px;
+  border-left: 3px solid var(--brand);
+}
+
+
+
+
+
 /* =========================
    COLLAPSABLE ROUNDS
 ========================= */
@@ -3185,41 +3312,6 @@ body {
 
 
 
-/* =========================
-   PARTI SENZA SEZIONE CHE NON SO DOVE METTERE
-========================= */
-
-
-
-
-
-
-
-.round-group {
-  margin-bottom: 28px;          /* ↑ spazio netto tra gironi */
-  padding-bottom: 22px;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
-}
-
-
-.round-title {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 14px;
-  padding-left: 6px;
-  border-left: 3px solid var(--brand);
-}
-
-
-
-
-
-
-
-
 
 
 
@@ -3235,102 +3327,8 @@ body {
 
 
 /* =========================
-   BUTTON LOADING (INLINE SPINNER)
+   PARTE 5 - RESPONSIVENESS
 ========================= */
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px; /* spazio tra spinner e testo */
-}
-
-/* Spinner base */
-.btn .spinner {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid rgba(0, 0, 0, 0.25);
-  border-top-color: #000;
-  animation: btn-spin 0.8s linear infinite;
-}
-
-/* Animazione */
-@keyframes btn-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Stato disabled con spinner (coerente) */
-.btn.disabled .spinner {
-  border-color: rgba(0, 0, 0, 0.2);
-  border-top-color: rgba(0, 0, 0, 0.6);
-}
-
-
-/* =========================
-   MATCH BUTTON – LOADING VARIANTS
-========================= */
-
-/* Spinner su bottone SECONDARY (modifica risultato) */
-.match-card .btn.secondary .spinner {
-  border-color: rgba(229, 231, 235, 0.35);   /* text-main soft */
-  border-top-color: var(--text-main);
-}
-
-/* Spinner su bottone PRIMARY (invio risultato) */
-.match-card .btn.primary .spinner {
-  border-color: rgba(0, 0, 0, 0.25);
-  border-top-color: #000;
-}
-
-/* Stato disabled nei match (più neutro) */
-.match-card .btn.disabled {
-  background-color: rgba(55, 65, 81, 0.6);
-  border-color: rgba(55, 65, 81, 0.6);
-}
-
-
-.badge.final_phase {
-  background-color: rgba(139, 92, 246, 0.15);
-  color: var(--state-final);
-}
-
-
-.badge.needs_attention {
-  background: #4f44ef;
-  color: white;
-}
-
-
-
-.team-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.rank-badge {
-  min-width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--brand, #38bdf8);
-  color: #0b0f14;
-  font-size: 13px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.team-name {
-  white-space: nowrap;
-}
-
-
-
-
 
 /* =========================
    RESPONSIVE
