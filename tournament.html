@@ -15,207 +15,195 @@
 
 <body>
 
-  <!-- HEADER -->
+  <!-- HEADER + NAV UNIFICATI -->
   <header class="main-header">
     <div class="main-header-container">
 
+      <!-- BRAND (LOGO) -->
       <div class="brand">
         <a href="index.html">
           <img src="assets/logo.png" alt="ICE logo">
         </a>
       </div>
 
-      <div class="search-box">
-        <input type="text" placeholder="Cerca tornei, città, squadre">
-      </div>
-
-      <div class="header-actions">
-        <span>🏆</span>
-        <span>📊</span>
-      </div>
+      <!-- NAVIGATION -->
+      <nav class="main-nav">
+        <a href="index.html">Tornei</a>
+        <a href="standings.html">Classifica</a>
+        <a href="tournament.html" class="active">Regolamento</a>
+      </nav>
 
     </div>
   </header>
-
-  <!-- NAV -->
-  <nav class="main-nav">
-    <div class="main-nav-container">
-      <a href="index.html">Tornei</a>
-      <a href="standings.html">Classifica</a>
-      <a href="tournament.html" class="active">Regolamento</a>
-    </div>
-  </nav>
 
   <!-- CONTENUTO -->
   <main class="container">
 
     <!-- =========================
-         REGOLAMENTO GENERALE
-         (visibile se NON c'è id)
+        REGOLAMENTO GENERALE
+        (visibile se NON c'è id)
     ========================== -->
     <section id="generic-regulation-section">
 
-      <div class="tournament-layout">
-
-        <!-- COLONNA SINISTRA -->
-        <div class="tournament-info">
-          <h3 class="generic-title">🏆 Regolamento Generale Tornei ICE</h3>
-
-          <div class="generic-regulation-cards">
-
-            <div class="regulation-card">
-              <div class="regulation-icon">1</div>
-              <div class="regulation-content">
-                <p>
-                  <strong>Data di inizio torneo</strong>
-                </p>
-
-                <p>
-                  La data di inizio del torneo è da considerarsi <span class="highlight-brand">indicativa</span>.
-                </p>
-
-                <p>
-                  Qualora non venga raggiunto il <span class="highlight-brand">numero minimo di squadre</span>,
-                  l'organizzazione si riserva il diritto di <span class="highlight-brand">posticipare</span> la data di inizio del torneo 
-                  (fino ad un massimo di <span class="highlight-brand">30 giorni</span>) o, solo in caso di comprovata necessità, di <span class="highlight-brand">annullare</span> 
-                  il torneo con <span class="highlight-brand">rimborso completo</span> della quota di iscrizione.
-                </p>
-              </div>
-            </div>
-
-            <div class="regulation-card">
-              <div class="regulation-icon">2</div>
-              <div class="regulation-content">
-                <p>
-                  <strong>Campi di gioco, giorni e orari</strong>
-                </p>
-
-                <p>
-                  La <span class="highlight-brand">prenotazione dei campi è sempre a carico dell'organizzazione</span>.
-                </p>
-
-                <p>
-                  In alcuni tornei, le partite si svolgono su <span class="highlight-brand">campi fissi</span> con giorni e orari prefissati,
-                  comunicati all'inizio del torneo.
-                </p>
-
-                <p>
-                  In altri tornei, invece, gli iscritti possono indicare le loro <span class="highlight-brand">preferenze su zona,
-                  giorni e orari</span>. L'organizzazione si occuperà di prenotare i campi seguendo queste
-                  preferenze per le <span class="highlight-brand">partite in cui la squadra gioca in casa</span>.
-                </p>
-
-                <p>
-                  Nei limiti del possibile, l'organizzazione resta disponibile a valutare richieste
-                  di modifica anche dopo la pubblicazione del calendario.
-                </p>
-              </div>
-            </div>
-
-            <div class="regulation-card">
-              <div class="regulation-icon">3</div>
-              <div class="regulation-content">
-                <p>
-                  <strong>Inserimento dei risultati</strong>
-                </p>
-
-                <p>
-                  Gli iscritti effettueranno <span class="highlight-brand">autonomamente</span> l'inserimento e l'eventuale modifica
-                  dei risultati delle proprie partite.<br>
-                  L'inserimento di <span class="highlight-brand">risultati non veritieri</span> o l'alterazione intenzionale dei dati 
-                  comporteranno l'<span class="highlight-brand">esclusione immediata</span> dal torneo.
-                </p>
-              </div>
-            </div>
-
-            <div class="regulation-card">
-              <div class="regulation-icon">4</div>
-              <div class="regulation-content">
-                <p>
-                  <strong>Fair play e comportamento</strong>
-                </p>
-
-                <p>
-                  Tutti i partecipanti si impegnano a mantenere un <span class="highlight-brand">comportamento rispettoso</span>
-                  verso avversari, organizzatori e arbitri. <span class="highlight-brand">Comportamenti antisportivi o
-                  offensivi</span> possono portare all'esclusione dal torneo <span class="highlight-brand">senza diritto di rimborso</span> della quota di iscrizione.
-                </p>
-              </div>
-            </div>
-
-            <div class="regulation-card">
-              <div class="regulation-icon">5</div>
-              <div class="regulation-content">
-                <p>
-                  <strong>Partite non disputate</strong>
-                </p>
-
-                <p>
-                  In caso di <span class="highlight-brand">mancata presentazione</span> di una squadra senza preavviso, la partita
-                  verrà assegnata <span class="highlight-brand">3-0 a tavolino</span> alla squadra avversaria.
-                </p>
-
-                <p>
-                  Qualora una squadra comunichi l'impossibilità a disputare l'incontro con almeno <span class="highlight-brand">48 ore di 
-                  preavviso</span>, l'organizzazione potrà valutare una <span class="highlight-brand">riprogrammazione</span> della partita esclusivamente 
-                  previa <span class="highlight-brand">accettazione da parte della squadra avversaria</span>.
-                </p>
-              </div>
-            </div>
-
-            <div class="regulation-card">
-              <div class="regulation-icon">6</div>
-              <div class="regulation-content">
-                <p>
-                  <strong>Classifiche e fase finale</strong>
-                </p>
-
-                <p>
-                  Le classifiche vengono aggiornate <span class="highlight-brand">automaticamente</span> al termine di ogni partita.
-                </p>
-
-                <p>
-                  <strong>Classifica all'interno dello stesso girone</strong><br>
-                  In caso di parità di punti tra due o più squadre dello stesso girone, l'ordine in classifica
-                  sarà determinato dai seguenti criteri (in ordine di importanza): <span class="highlight-brand">scontri diretti</span>, 
-                  <span class="highlight-brand">differenza reti</span>, <span class="highlight-brand">gol fatti</span>.
-                </p>
-
-                <p>
-                  <strong>Confronto tra squadre di gironi diversi</strong><br>
-                  Qualora sia necessario confrontare squadre appartenenti a <span class="highlight-brand">gironi differenti</span>
-                  (ad esempio per individuare la <span class="highlight-brand">miglior seconda</span>), in caso di parità di punti
-                  verranno considerati esclusivamente e in questo ordine: <span class="highlight-brand">differenza reti</span> e <span class="highlight-brand">gol fatti</span>.
-                </p>
-
-                <p>
-                  Qualora non fosse possibile determinare le squadre qualificate applicando i criteri sopra indicati,
-                  l'organizzazione, sentite le squadre interessate, valuterà se procedere con <span class="highlight-brand">spareggi</span>
-                  o con il <span class="highlight-brand">sorteggio</span> delle squadre qualificate.
-                </p>
-
-                <p>
-                  Il numero di squadre qualificate alla fase finale sarà definito dal regolamento specifico del torneo.
-                </p>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
-        <!-- COLONNA DESTRA -->
-        <div class="tournament-action">
-
-          <div class="tournament-filter-box">
-            <p class="select-helper">
-              Seleziona un torneo per visualizzare il regolamento completo
-            </p>
-
-            <select id="tournament-select"></select>
-          </div>
+      <!-- PAGE HEADER + FILTRO TORNEO -->
+      <div class="page-header">
+        <h2>Regolamento</h2>
+        
+        <!-- TOURNAMENT FILTER (INLINE) -->
+        <div class="sport-filter-inline">
+          <label for="tournament-select">Torneo</label>
+          <select id="tournament-select">
+            <option value="">Seleziona un torneo</option>
+          </select>
         </div>
       </div>
+
+      <!-- REGOLAMENTO FULL WIDTH -->
+      <div class="tournament-general-regulation">
+        <h3 class="regulation-general-title">📋 Regolamento Generale Tornei ICE</h3>
+        
+        <div class="generic-regulation-cards">
+
+          <div class="regulation-card">
+            <div class="regulation-icon">1</div>
+            <div class="regulation-content">
+              <p>
+                <strong>Data di inizio torneo</strong>
+              </p>
+
+              <p>
+                La data di inizio del torneo è da considerarsi <span class="highlight-brand">indicativa</span>.
+              </p>
+
+              <p>
+                Qualora non venga raggiunto il <span class="highlight-brand">numero minimo di squadre</span>,
+                l'organizzazione si riserva il diritto di <span class="highlight-brand">posticipare</span> la data di inizio del torneo 
+                (fino ad un massimo di <span class="highlight-brand">30 giorni</span>) o, solo in caso di comprovata necessità, di <span class="highlight-brand">annullare</span> 
+                il torneo con <span class="highlight-brand">rimborso completo</span> della quota di iscrizione.
+              </p>
+            </div>
+          </div>
+
+          <div class="regulation-card">
+            <div class="regulation-icon">2</div>
+            <div class="regulation-content">
+              <p>
+                <strong>Campi di gioco, giorni e orari</strong>
+              </p>
+
+              <p>
+                La <span class="highlight-brand">prenotazione dei campi è sempre a carico dell'organizzazione</span>.
+              </p>
+
+              <p>
+                In alcuni tornei, le partite si svolgono su <span class="highlight-brand">campi fissi</span> con giorni e orari prefissati,
+                comunicati all'inizio del torneo.
+              </p>
+
+              <p>
+                In altri tornei, invece, gli iscritti possono indicare le loro <span class="highlight-brand">preferenze su zona,
+                giorni e orari</span>. L'organizzazione si occuperà di prenotare i campi seguendo queste
+                preferenze per le <span class="highlight-brand">partite in cui la squadra gioca in casa</span>.
+              </p>
+
+              <p>
+                Nei limiti del possibile, l'organizzazione resta disponibile a valutare richieste
+                di modifica anche dopo la pubblicazione del calendario.
+              </p>
+            </div>
+          </div>
+
+          <div class="regulation-card">
+            <div class="regulation-icon">3</div>
+            <div class="regulation-content">
+              <p>
+                <strong>Inserimento dei risultati</strong>
+              </p>
+
+              <p>
+                Gli iscritti effettueranno <span class="highlight-brand">autonomamente</span> l'inserimento e l'eventuale modifica
+                dei risultati delle proprie partite.<br>
+                L'inserimento di <span class="highlight-brand">risultati non veritieri</span> o l'alterazione intenzionale dei dati 
+                comporteranno l'<span class="highlight-brand">esclusione immediata</span> dal torneo.
+              </p>
+            </div>
+          </div>
+
+          <div class="regulation-card">
+            <div class="regulation-icon">4</div>
+            <div class="regulation-content">
+              <p>
+                <strong>Fair play e comportamento</strong>
+              </p>
+
+              <p>
+                Tutti i partecipanti si impegnano a mantenere un <span class="highlight-brand">comportamento rispettoso</span>
+                verso avversari, organizzatori e arbitri. <span class="highlight-brand">Comportamenti antisportivi o
+                offensivi</span> possono portare all'esclusione dal torneo <span class="highlight-brand">senza diritto di rimborso</span> della quota di iscrizione.
+              </p>
+            </div>
+          </div>
+
+          <div class="regulation-card">
+            <div class="regulation-icon">5</div>
+            <div class="regulation-content">
+              <p>
+                <strong>Partite non disputate</strong>
+              </p>
+
+              <p>
+                In caso di <span class="highlight-brand">mancata presentazione</span> di una squadra senza preavviso, la partita
+                verrà assegnata <span class="highlight-brand">3-0 a tavolino</span> alla squadra avversaria.
+              </p>
+
+              <p>
+                Qualora una squadra comunichi l'impossibilità a disputare l'incontro con almeno <span class="highlight-brand">48 ore di 
+                preavviso</span>, l'organizzazione potrà valutare una <span class="highlight-brand">riprogrammazione</span> della partita esclusivamente 
+                previa <span class="highlight-brand">accettazione da parte della squadra avversaria</span>.
+              </p>
+            </div>
+          </div>
+
+          <div class="regulation-card">
+            <div class="regulation-icon">6</div>
+            <div class="regulation-content">
+              <p>
+                <strong>Classifiche e fase finale</strong>
+              </p>
+
+              <p>
+                Le classifiche vengono aggiornate <span class="highlight-brand">automaticamente</span> al termine di ogni partita.
+              </p>
+
+              <p>
+                <strong>Classifica all'interno dello stesso girone</strong><br>
+                In caso di parità di punti tra due o più squadre dello stesso girone, l'ordine in classifica
+                sarà determinato dai seguenti criteri (in ordine di importanza): <span class="highlight-brand">scontri diretti</span>, 
+                <span class="highlight-brand">differenza reti</span>, <span class="highlight-brand">gol fatti</span>.
+              </p>
+
+              <p>
+                <strong>Confronto tra squadre di gironi diversi</strong><br>
+                Qualora sia necessario confrontare squadre appartenenti a <span class="highlight-brand">gironi differenti</span>
+                (ad esempio per individuare la <span class="highlight-brand">miglior seconda</span>), in caso di parità di punti
+                verranno considerati esclusivamente e in questo ordine: <span class="highlight-brand">differenza reti</span> e <span class="highlight-brand">gol fatti</span>.
+              </p>
+
+              <p>
+                Qualora non fosse possibile determinare le squadre qualificate applicando i criteri sopra indicati,
+                l'organizzazione, sentite le squadre interessate, valuterà se procedere con <span class="highlight-brand">spareggi</span>
+                o con il <span class="highlight-brand">sorteggio</span> delle squadre qualificate.
+              </p>
+
+              <p>
+                Il numero di squadre qualificate alla fase finale sarà definito dal regolamento specifico del torneo.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
     </section>
 
 
@@ -528,37 +516,51 @@
 
   </main>
 
-  <!-- SCRIPT -->
-  <script src="js/tournament.js"></script>
-
   <!-- FOOTER -->
   <footer class="site-footer">
     <div class="footer-container">
 
+      <!-- BRAND TOP -->
       <div class="footer-brand">
         <img src="assets/logo.png" alt="ICE logo">
-        <p>Piattaforma ufficiale tornei ICE</p>
+        <p>La tua piattaforma per tornei sportivi</p>
       </div>
 
-      <div class="footer-contacts">
-        <h4>Contatti</h4>
-        <p>📞 +39 3396160901</p>
-        <p>✉️ tommaso.rabino1@gmail.com</p>
+      <!-- CONTENT -->
+      <div class="footer-content">
+        
+        <!-- CONTATTI -->
+        <div class="footer-section footer-contacts">
+          <h4>Contatti</h4>
+          <p>📞 +39 339 616 0901</p>
+          <p>✉️ info@icetournament.it</p>
+        </div>
+
+        <!-- NAVIGA -->
+        <div class="footer-section footer-nav">
+          <h4>Naviga</h4>
+          <a href="index.html">Homepage</a>
+          <a href="tournament.html">Regolamento</a>
+        </div>
+
+        <!-- LEGAL -->
+        <div class="footer-section footer-legal">
+          <h4>Legal</h4>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Termini e condizioni</a>
+        </div>
+
       </div>
 
-      <div class="footer-legal">
-        <h4>Informazioni legali</h4>
-        <a href="#">Privacy Policy</a>
-        <a href="#">Cookie Policy</a>
-        <a href="#">Termini e condizioni</a>
+      <!-- BOTTOM -->
+      <div class="footer-bottom">
+        © 2026 ICE Tournament. Tutti i diritti riservati.
       </div>
 
-    </div>
-
-    <div class="footer-bottom">
-      © 2026 ICE. Tutti i diritti riservati.
     </div>
   </footer>
+
+  <script src="js/tournament.js"></script>
 
 </body>
 </html>

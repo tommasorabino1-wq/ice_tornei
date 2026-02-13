@@ -113,10 +113,10 @@ function renderGenericRegulation(tournaments) {
   tournamentSection.classList.add("hidden");
   tournamentSkeleton.classList.add("hidden");
 
-  // ✅ NASCONDI regolamento full-width (non serve nella vista generale)
-  const regulationBlock = document.querySelector(".tournament-general-regulation");
-  if (regulationBlock) {
-    regulationBlock.classList.add("hidden");
+  // ✅ NASCONDI regolamento full-width duplicato (non serve nella vista generale)
+  const regulationBlockDuplicate = document.querySelector("#tournament-specific-section + .tournament-general-regulation");
+  if (regulationBlockDuplicate) {
+    regulationBlockDuplicate.classList.add("hidden");
   }
 
   // Reset select
@@ -125,7 +125,7 @@ function renderGenericRegulation(tournaments) {
   tournaments.forEach(t => {
     const option = document.createElement("option");
     option.value = t.tournament_id;
-    option.textContent = `${t.name} · ${t.date} · ${t.location}`;
+    option.textContent = `${t.name} · ${t.date}`;
     tournamentSelect.appendChild(option);
   });
 
