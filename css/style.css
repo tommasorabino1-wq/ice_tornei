@@ -1830,6 +1830,102 @@ body {
 }
 
 
+/* =========================
+   TOURNAMENT SPECIFIC PAGE - FULL WIDTH LAYOUT
+========================= */
+
+/* Header torneo - titolo grande */
+#tournament-specific-section .tournament-header h1 {
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Badge allineato a destra */
+#tournament-specific-section .tournament-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Subtitle più grande */
+#tournament-specific-section .tournament-subtitle {
+  font-size: 20px;
+  margin-top: 8px;
+}
+
+/* Info block full width */
+.tournament-info-block {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.tournament-info-block h3 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+/* Meta items più grandi */
+.tournament-info-block .tournament-meta {
+  gap: 16px;
+}
+
+.tournament-info-block .meta-item {
+  font-size: 22px;
+}
+
+.tournament-info-block .meta-icon {
+  width: 28px;
+  font-size: 22px;
+}
+
+/* Registration block full width */
+.tournament-registration-block {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.tournament-registration-block h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.tournament-registration-block p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* Specific rules block full width */
+.tournament-specific-rules-block {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.tournament-specific-rules-block .rules-subtitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+/* General regulation dentro tournament specific */
+#tournament-specific-section .tournament-general-regulation {
+  margin-top: 24px;
+}
+
+
 
 
 
