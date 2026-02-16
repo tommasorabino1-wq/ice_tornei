@@ -38,6 +38,7 @@ function fadeOutSkeleton(wrapper) {
   }, 350);
 }
 
+
 function loadStandingsPage(tournamentId) {
   fetch(API_URLS.getTournaments)
     .then(res => {
@@ -48,7 +49,20 @@ function loadStandingsPage(tournamentId) {
     })
     .then(tournaments => {
       const t = tournaments.find(t => t.tournament_id === tournamentId);
+      
+      if (!t) {
+        // Torneo non trovato
+        showTournamentNotFound();
+        return;
+      }
+
       TOURNAMENT_STATUS = t?.status || null;
+
+      // Se il torneo non è ancora iniziato (status = open o full)
+      if (TOURNAMENT_STATUS === "open" || TOURNAMENT_STATUS === "full") {
+        showTournamentNotStarted(t);
+        return;
+      }
 
       const layout = document.querySelector(".standings-layout");
       if (layout) {
@@ -72,6 +86,8 @@ function loadStandingsPage(tournamentId) {
       console.error("Errore caricamento tornei:", err);
     });
 }
+
+
 
 function hideSkeletons() {
   document
@@ -149,6 +165,80 @@ function loadTournamentSelect() {
       console.error("Errore caricamento tornei:", err);
       showToast("Errore nel caricamento dei tornei ❌");
     });
+}
+
+
+
+// ===============================
+// TOURNAMENT NOT STARTED
+// ===============================
+function showTournamentNotStarted(tournament) {
+  // Nascondi skeleton e sezioni specifiche
+  hideSkeletons();
+  
+  const specificSection = document.getElementById("standings-specific-section");
+  
+  // Svuota il contenuto esistente e mostra il placeholder
+  specificSection.innerHTML = `
+    <div class="standings-not-started">
+      <div class="standings-not-started-icon">🏁</div>
+      <h3>Torneo non ancora iniziato</h3>
+      <p class="tournament-name-label">${escapeHTML(tournament.name)}</p>
+      <p class="tournament-info-text">
+        Il torneo inizierà il <strong>${escapeHTML(tournament.date)}</strong>.<br>
+        Classifiche, risultati e tabellone saranno disponibili non appena verranno disputate le prime partite.
+      </p>
+      
+      <div class="standings-not-started-actions">
+        <a href="tournament.html?tournament_id=${tournament.tournament_id}" class="btn secondary">
+          📋 Vai al regolamento
+        </a>
+        <a href="standings.html" class="btn secondary">
+          ← Torna alla selezione
+        </a>
+      </div>
+
+      <div class="standings-not-started-info">
+        <div class="info-item">
+          <span class="info-icon">📍</span>
+          <span>${escapeHTML(tournament.location)}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">👥</span>
+          <span>${tournament.teams_current} / ${tournament.teams_max} squadre iscritte</span>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">🏐</span>
+          <span>${escapeHTML(tournament.sport)}</span>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  specificSection.classList.remove("hidden");
+}
+
+// ===============================
+// TOURNAMENT NOT FOUND
+// ===============================
+function showTournamentNotFound() {
+  hideSkeletons();
+  
+  const specificSection = document.getElementById("standings-specific-section");
+  
+  specificSection.innerHTML = `
+    <div class="standings-not-found">
+      <div class="standings-not-found-icon">❓</div>
+      <h3>Torneo non trovato</h3>
+      <p>Il torneo richiesto non esiste o è stato rimosso.</p>
+      
+      <a href="standings.html" class="btn secondary">
+        ← Torna alla selezione tornei
+      </a>
+    </div>
+  `;
+  
+  specificSection.classList.remove("hidden");
 }
 
 

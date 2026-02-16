@@ -1906,6 +1906,104 @@ body {
 
 
 
+/* =========================
+   STANDINGS - TORNEO NON INIZIATO
+========================= */
+
+.standings-not-started,
+.standings-not-found {
+  margin-top: 40px;
+  text-align: center;
+  padding: 60px 24px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.standings-not-started-icon,
+.standings-not-found-icon {
+  font-size: 72px;
+  margin-bottom: 24px;
+  opacity: 0.85;
+}
+
+.standings-not-started h3,
+.standings-not-found h3 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-main);
+}
+
+.standings-not-started .tournament-name-label {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--brand);
+  margin-bottom: 20px;
+}
+
+.standings-not-started .tournament-info-text,
+.standings-not-found p {
+  font-size: 18px;
+  color: var(--text-muted);
+  max-width: 500px;
+  margin: 0 auto 32px;
+  line-height: 1.6;
+}
+
+.standings-not-started .tournament-info-text strong {
+  color: var(--text-main);
+}
+
+/* Actions buttons */
+.standings-not-started-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.standings-not-started-actions .btn {
+  padding: 14px 24px;
+  font-size: 16px;
+}
+
+/* Info items */
+.standings-not-started-info {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.standings-not-started-info .info-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  color: var(--text-muted);
+}
+
+.standings-not-started-info .info-icon {
+  font-size: 22px;
+  opacity: 0.85;
+}
+
+/* Not found specifico */
+.standings-not-found {
+  padding: 80px 24px;
+}
+
+.standings-not-found .btn {
+  margin-top: 16px;
+  padding: 14px 24px;
+  font-size: 16px;
+}
+
+
 
 /* =========================
    MATCHES BOX
