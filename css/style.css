@@ -1850,6 +1850,7 @@ body {
   line-height: 1.2;
   color: var(--text-main);
   margin: 0;
+  margin-top: 20px
 }
 
 .standings-subtitle {
