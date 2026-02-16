@@ -185,7 +185,7 @@ function showTournamentNotStarted(tournament) {
       <h3>Torneo non ancora iniziato</h3>
       <p class="tournament-name-label">${escapeHTML(tournament.name)}</p>
       <p class="tournament-info-text">
-        Il torneo inizierà il <strong>${escapeHTML(tournament.date)}</strong>.<br>
+        Il torneo inizierà a <strong>${escapeHTML(tournament.date)}</strong>.<br>
         Classifiche, risultati e tabellone saranno disponibili non appena verranno disputate le prime partite.
       </p>
       

@@ -21,7 +21,7 @@
   --state-final: #8b5cf6;
   --state-finished: #6b7280;
 
-  --border: #1f2933;
+  --border: #3f4a55;
   --radius: 6px;
   --shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 
@@ -286,7 +286,7 @@ body {
 
 .btn.secondary {
   background-color: transparent;
-  border: 1px solid var(--border);
+  border: 3px solid var(--border);
   color: var(--text-main);
 }
 
@@ -1965,8 +1965,8 @@ body {
 }
 
 .standings-not-started-actions .btn {
-  padding: 14px 24px;
-  font-size: 16px;
+  padding: 16px 26px;
+  font-size: 20px;
 }
 
 /* Info items */
