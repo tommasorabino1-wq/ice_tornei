@@ -1855,6 +1855,59 @@ body {
 
 
 /* =========================
+   STANDINGS FILTER SELECT SECTION
+========================= */
+
+#standings-select-section .sport-filter-inline {
+  padding: 14px 20px;
+  gap: 16px;
+}
+
+#standings-select-section .sport-filter-inline label {
+  font-size: 28px;
+}
+
+#standings-select-section .sport-filter-inline select {
+  font-size: 28px;
+  padding: 10px 16px;
+  min-width: 200px;
+}
+
+/* Placeholder quando nessun torneo selezionato */
+.standings-placeholder {
+  margin-top: 60px;
+  text-align: center;
+  padding: 60px 20px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.standings-placeholder-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  opacity: 0.7;
+}
+
+.standings-placeholder h3 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-main);
+}
+
+.standings-placeholder p {
+  font-size: 18px;
+  color: var(--text-muted);
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+
+
+
+/* =========================
    MATCHES BOX
 ========================= */
 .standings-results-box-fullwidth {

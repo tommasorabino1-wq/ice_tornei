@@ -21,6 +21,13 @@ let FINALS_MATCHES = [];
 let FINALS_SELECTED_ROUND_ID = null;
 
 // ===============================
+// ELEMENTI DOM
+// ===============================
+const standingsSelectSection = document.getElementById("standings-select-section");
+const standingsSpecificSection = document.getElementById("standings-specific-section");
+const standingsTournamentSelect = document.getElementById("standings-tournament-select");
+
+// ===============================
 // SKELETON HELPERS
 // ===============================
 function fadeOutSkeleton(wrapper) {
@@ -72,21 +79,30 @@ function hideSkeletons() {
     .forEach(s => s.classList.add("hidden"));
 }
 
+// ===============================
+// INIT
+// ===============================
 document.addEventListener("DOMContentLoaded", () => {
-  document
-    .querySelector(".standings-results-box-fullwidth")
-    ?.classList.add("loading");
-
   const tournamentId = getTournamentIdFromUrl();
 
   if (tournamentId) {
-    hideTournamentFilter();
-    loadStandingsPage(tournamentId);
-    return;
-  }
+    // Mostra standings specifiche
+    standingsSelectSection.classList.add("hidden");
+    standingsSpecificSection.classList.remove("hidden");
 
-  hideSkeletons();
-  showTournamentFilter();
+    document
+      .querySelector(".standings-results-box-fullwidth")
+      ?.classList.add("loading");
+
+    loadStandingsPage(tournamentId);
+  } else {
+    // Mostra selezione torneo
+    standingsSelectSection.classList.remove("hidden");
+    standingsSpecificSection.classList.add("hidden");
+
+    hideSkeletons();
+    loadTournamentSelect();
+  }
 });
 
 // ===============================
@@ -98,17 +114,9 @@ function getTournamentIdFromUrl() {
 }
 
 // ===============================
-// SHOW TOURNAMENT FILTER
+// LOAD TOURNAMENT SELECT (NUOVO)
 // ===============================
-function showTournamentFilter() {
-  const filterBox = document.getElementById("tournament-filter");
-  const select = document.getElementById("tournament-select");
-
-  if (select.dataset.initialized === "true") return;
-  select.dataset.initialized = "true";
-
-  filterBox.classList.remove("hidden");
-
+function loadTournamentSelect() {
   fetch(API_URLS.getTournaments)
     .then(res => {
       if (!res.ok) {
@@ -117,51 +125,43 @@ function showTournamentFilter() {
       return res.json();
     })
     .then(tournaments => {
-      select.innerHTML = `<option value="">Seleziona torneo</option>`;
+      if (!Array.isArray(tournaments)) {
+        throw new Error("Formato dati non valido");
+      }
+
+      // Reset select
+      standingsTournamentSelect.innerHTML = `<option value="">Seleziona un torneo</option>`;
 
       tournaments.forEach(t => {
         const option = document.createElement("option");
         option.value = t.tournament_id;
-        option.textContent = t.name;
-        select.appendChild(option);
+        option.textContent = `${t.name} · ${t.date}`;
+        standingsTournamentSelect.appendChild(option);
       });
+
+      // Redirect su selezione
+      standingsTournamentSelect.onchange = function () {
+        if (!this.value) return;
+        window.location.href = `standings.html?tournament_id=${this.value}`;
+      };
     })
     .catch(err => {
       console.error("Errore caricamento tornei:", err);
+      showToast("Errore nel caricamento dei tornei ❌");
     });
-
-  select.addEventListener("change", () => {
-    if (!select.value) return;
-
-    const tournamentId = select.value;
-
-    history.replaceState(
-      null,
-      "",
-      `${window.location.pathname}?tournament_id=${tournamentId}`
-    );
-
-    document
-      .querySelectorAll(".standings-results-box-fullwidth, .standings-table-box-fullwidth")
-      .forEach(box => box.classList.remove("hidden"));
-
-    hideTournamentFilter();
-    loadStandingsPage(tournamentId);
-  });
 }
 
-function hideTournamentFilter() {
-  const filterBox = document.getElementById("tournament-filter");
-  filterBox.classList.add("hidden");
-}
+
+
+
+
+
 
 // ===============================
 // LOAD MATCHES
 // ===============================
 function loadMatches(tournamentId) {
-  const skeleton = document.querySelector(
-    ".standings-results-box-fullwidth .standings-skeleton"
-  );
+  const skeleton = document.getElementById("matches-skeleton");
   const list = document.getElementById("matches-list");
 
   list.innerHTML = "";

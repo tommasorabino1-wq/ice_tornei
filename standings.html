@@ -16,245 +16,261 @@
 
 <body>
 
-<!-- =====================
-     HEADER
-===================== -->
-<header class="main-header">
-  <div class="main-header-container">
+  <!-- HEADER + NAV UNIFICATI -->
+  <header class="main-header">
+    <div class="main-header-container">
 
-    <div class="brand">
-      <a href="index.html">
+      <!-- BRAND (LOGO) -->
+      <div class="brand">
+        <a href="index.html">
+          <img src="assets/logo.png" alt="ICE logo">
+        </a>
+      </div>
+
+      <!-- NAVIGATION -->
+      <nav class="main-nav">
+        <a href="index.html">Tornei</a>
+        <a href="standings.html" class="active">Classifica</a>
+        <a href="tournament.html">Regolamento</a>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- CONTENUTO -->
+  <main class="container">
+
+    <!-- =========================
+        SELEZIONE TORNEO
+        (visibile se NON c'è tournament_id)
+    ========================== -->
+    <section id="standings-select-section">
+
+      <!-- PAGE HEADER + FILTRO TORNEO -->
+      <div class="page-header">
+        
+        <!-- TOURNAMENT FILTER (INLINE) -->
+        <div class="sport-filter-inline">
+          <label for="standings-tournament-select">Torneo</label>
+          <select id="standings-tournament-select">
+            <option value="">Seleziona un torneo</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- PLACEHOLDER MESSAGE -->
+      <div class="standings-placeholder">
+        <div class="standings-placeholder-icon">📊</div>
+        <h3>Seleziona un torneo</h3>
+        <p>Scegli un torneo dal menu sopra per visualizzare classifiche, risultati e tabellone.</p>
+      </div>
+
+    </section>
+
+    <!-- =========================
+        STANDINGS TORNEO SPECIFICO
+        (visibile se c'è tournament_id)
+    ========================== -->
+    <section id="standings-specific-section" class="hidden">
+
+      <section class="standings-layout">
+
+        <!-- =====================
+            FINALS SECTION
+        ====================== -->
+        <section
+          id="finals-container"
+          class="finals-section hidden"
+          aria-label="Fase finale torneo">
+
+          <h3 class="finals-section-title">
+            <span class="section-icon">🏆</span>
+            Fasi Finali
+          </h3>
+
+          <!-- Skeleton Finals -->
+          <div class="standings-skeleton finals-skeleton" id="finals-skeleton">
+            <div class="finals-bracket">
+              <div class="skeleton-match"></div>
+              <div class="skeleton-match"></div>
+            </div>
+          </div>
+
+          <!-- SUBSECTION 1: Match input FULL WIDTH -->
+          <div class="finals-subsection">
+            <h4 class="finals-subsection-title">Inserisci Risultati</h4>
+            
+            <div class="finals-matches-fullwidth">
+              <!-- Filter Finals -->
+              <div class="round-filter-box">
+                <label for="finals-round-filter">Fase</label>
+                <select id="finals-round-filter"></select>
+              </div>
+
+              <div id="finals-bracket-content"></div>
+            </div>
+          </div>
+
+          <!-- SUBSECTION 2: Tabellone full-width -->
+          <div class="finals-subsection">
+            <h4 class="finals-subsection-title">Tabellone</h4>
+            
+            <div class="finals-bracket-column">
+              <div id="finals-bracket-visual"></div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- =====================
+            BRACKET SECTION (FULL WIDTH)
+        ====================== -->
+        <section
+          id="bracket-container-section"
+          class="bracket-section hidden"
+          aria-label="Tabellone fasi finali">
+
+          <h3 class="bracket-section-title">
+            <span class="section-icon">📊</span>
+            Tabellone Fasi Finali
+          </h3>
+
+          <div class="finals-bracket-column">
+            <div id="finals-bracket-visual"></div>
+          </div>
+
+        </section>
+
+        <!-- =====================
+            GIRONI SECTION
+        ====================== -->
+        <section class="gironi-section">
+
+          <h3 class="gironi-section-title">
+            <span class="section-icon">⚽</span>
+            Fase a Gironi
+          </h3>
+
+          <!-- =====================
+              SUBSECTION 1: INSERISCI RISULTATI
+          ====================== -->
+          <div class="gironi-subsection">
+            <h4 class="gironi-subsection-title">Inserisci Risultati</h4>
+            
+            <section
+              id="matches-container"
+              class="standings-results-box-fullwidth loading"
+              aria-label="Match gironi">
+
+              <!-- Skeleton Matches -->
+              <div class="standings-skeleton" id="matches-skeleton">
+                <h3 class="skeleton skeleton-title"></h3>
+                <div class="matches-scroll">
+                  <div class="skeleton-match"></div>
+                  <div class="skeleton-match"></div>
+                </div>
+              </div>
+
+              <!-- Real Matches -->
+              <div class="standings-content">
+                <div class="round-filter-box">
+                  <label for="round-filter">Giornata</label>
+                  <select id="round-filter"></select>
+                </div>
+
+                <div
+                  id="matches-list"
+                  class="matches-scroll"
+                  aria-live="polite">
+                </div>
+              </div>
+
+            </section>
+          </div>
+
+          <!-- =====================
+              SUBSECTION 2: CLASSIFICA GIRONI
+          ====================== -->
+          <div class="gironi-subsection">
+            <h4 class="gironi-subsection-title">Classifica Gironi</h4>
+            
+            <section
+              id="standings-container"
+              class="standings-table-box-fullwidth"
+              aria-label="Classifiche gironi">
+
+              <!-- Skeleton Standings -->
+              <div class="standings-skeleton" id="standings-skeleton">
+                <h3 class="skeleton skeleton-title"></h3>
+                <div class="standings-group skeleton">
+                  <div class="skeleton-line"></div>
+                  <div class="skeleton-line"></div>
+                  <div class="skeleton-line short"></div>
+                </div>
+              </div>
+
+              <!-- Real Standings -->
+              <div
+                id="standings"
+                class="standings-content hidden">
+              </div>
+
+            </section>
+          </div>
+
+        </section>
+
+      </section>
+
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-container">
+
+      <!-- BRAND TOP -->
+      <div class="footer-brand">
         <img src="assets/logo.png" alt="ICE logo">
-      </a>
-    </div>
+        <p>La tua piattaforma per tornei sportivi</p>
+      </div>
 
-    <div class="search-box">
-      <input type="text" placeholder="Cerca tornei, squadre">
-    </div>
-
-    <div class="header-actions">
-      <span>🏆</span>
-      <span>📊</span>
-    </div>
-
-  </div>
-</header>
-
-<!-- =====================
-     NAV
-===================== -->
-<nav class="main-nav">
-  <div class="main-nav-container">
-    <a href="index.html">Tornei</a>
-    <a href="standings.html" class="active">Classifica</a>
-    <a href="tournament.html">Regolamento</a>
-  </div>
-</nav>
-
-
-
-<!-- =====================
-     MAIN
-===================== -->
-<main class="container">
-  <h2>Classifiche torneo</h2>
-
-  <section class="standings-layout">
-
-
-    <!-- =====================
-        FINALS SECTION
-    ====================== -->
-    <section
-      id="finals-container"
-      class="finals-section hidden"
-      aria-label="Fase finale torneo">
-
-      <h3 class="finals-section-title">
-        <span class="section-icon">🏆</span>
-        Fasi Finali
-      </h3>
-
-      <!-- Skeleton Finals -->
-      <div class="standings-skeleton finals-skeleton" id="finals-skeleton">
-        <div class="finals-bracket">
-          <div class="skeleton-match"></div>
-          <div class="skeleton-match"></div>
+      <!-- CONTENT -->
+      <div class="footer-content">
+        
+        <!-- CONTATTI -->
+        <div class="footer-section footer-contacts">
+          <h4>Contatti</h4>
+          <p>📞 +39 339 616 0901</p>
+          <p>✉️ info@icetournament.it</p>
         </div>
-      </div>
 
-      <!-- SUBSECTION 1: Match input FULL WIDTH -->
-      <div class="finals-subsection">
-        <h4 class="finals-subsection-title">Inserisci Risultati</h4>
-        
-        <div class="finals-matches-fullwidth">
-          <!-- Filter Finals -->
-          <div class="round-filter-box">
-            <label for="finals-round-filter">Fase</label>
-            <select id="finals-round-filter"></select>
-          </div>
-
-          <div id="finals-bracket-content"></div>
+        <!-- NAVIGA -->
+        <div class="footer-section footer-nav">
+          <h4>Naviga</h4>
+          <a href="index.html">Homepage</a>
+          <a href="tournament.html">Regolamento</a>
         </div>
-      </div>
 
-      <!-- SUBSECTION 2: Tabellone full-width -->
-      <div class="finals-subsection">
-        <h4 class="finals-subsection-title">Tabellone</h4>
-        
-        <div class="finals-bracket-column">
-          <div id="finals-bracket-visual"></div>
+        <!-- LEGAL -->
+        <div class="footer-section footer-legal">
+          <h4>Legal</h4>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Termini e condizioni</a>
         </div>
+
       </div>
 
-    </section>
-
-    <!-- =====================
-        BRACKET SECTION (FULL WIDTH)
-    ====================== -->
-    <section
-      id="bracket-container-section"
-      class="bracket-section hidden"
-      aria-label="Tabellone fasi finali">
-
-      <h3 class="bracket-section-title">
-        <span class="section-icon">📊</span>
-        Tabellone Fasi Finali
-      </h3>
-
-      <div class="finals-bracket-column">
-        <div id="finals-bracket-visual"></div>
+      <!-- BOTTOM -->
+      <div class="footer-bottom">
+        © 2026 ICE Tournament. Tutti i diritti riservati.
       </div>
 
-    </section>
-
-    <!-- =====================
-        GIRONI SECTION
-    ====================== -->
-    <section class="gironi-section">
-
-      <h3 class="gironi-section-title">
-        <span class="section-icon">⚽</span>
-        Fase a Gironi
-      </h3>
-
-      <!-- =====================
-          SUBSECTION 1: INSERISCI RISULTATI
-      ====================== -->
-      <div class="gironi-subsection">
-        <h4 class="gironi-subsection-title">Inserisci Risultati</h4>
-        
-        <section
-          id="matches-container"
-          class="standings-results-box-fullwidth loading"
-          aria-label="Match gironi">
-
-          <!-- Tournament Filter -->
-          <div
-            id="tournament-filter"
-            class="tournament-filter-box standings hidden">
-            <label for="tournament-select">Seleziona torneo</label>
-            <select id="tournament-select"></select>
-          </div>
-
-          <!-- Skeleton Matches -->
-          <div class="standings-skeleton" id="matches-skeleton">
-            <h3 class="skeleton skeleton-title"></h3>
-            <div class="matches-scroll">
-              <div class="skeleton-match"></div>
-              <div class="skeleton-match"></div>
-            </div>
-          </div>
-
-          <!-- Real Matches -->
-          <div class="standings-content">
-            <div class="round-filter-box">
-              <label for="round-filter">Giornata</label>
-              <select id="round-filter"></select>
-            </div>
-
-            <div
-              id="matches-list"
-              class="matches-scroll"
-              aria-live="polite">
-            </div>
-          </div>
-
-        </section>
-      </div>
-
-      <!-- =====================
-          SUBSECTION 2: CLASSIFICA GIRONI
-      ====================== -->
-      <div class="gironi-subsection">
-        <h4 class="gironi-subsection-title">Classifica Gironi</h4>
-        
-        <section
-          id="standings-container"
-          class="standings-table-box-fullwidth"
-          aria-label="Classifiche gironi">
-
-          <!-- Skeleton Standings -->
-          <div class="standings-skeleton" id="standings-skeleton">
-            <h3 class="skeleton skeleton-title"></h3>
-            <div class="standings-group skeleton">
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line short"></div>
-            </div>
-          </div>
-
-          <!-- Real Standings -->
-          <div
-            id="standings"
-            class="standings-content hidden">
-          </div>
-
-        </section>
-      </div>
-
-    </section>
-
-  </section>
-</main>
-
-
-
-<!-- =====================
-     FOOTER
-===================== -->
-<footer class="site-footer">
-  <div class="footer-container">
-
-    <div class="footer-brand">
-      <img src="assets/logo.png" alt="ICE logo">
-      <p>Piattaforma ufficiale tornei ICE</p>
     </div>
+  </footer>
 
-    <div class="footer-contacts">
-      <h4>Contatti</h4>
-      <p>📞 +39 3396160901</p>
-      <p>✉️ tommaso.rabino1@gmail.com</p>
-    </div>
-
-    <div class="footer-legal">
-      <h4>Informazioni legali</h4>
-      <a href="#">Privacy Policy</a>
-      <a href="#">Cookie Policy</a>
-      <a href="#">Termini e condizioni</a>
-    </div>
-
-  </div>
-
-  <div class="footer-bottom">
-    © 2026 ICE. Tutti i diritti riservati.
-  </div>
-</footer>
-
-<!-- =====================
-     JS
-===================== -->
-<script src="js/standings.js"></script>
+  <script src="js/standings.js"></script>
 
 </body>
 </html>
