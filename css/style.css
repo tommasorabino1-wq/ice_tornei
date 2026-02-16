@@ -130,12 +130,12 @@ body {
 }
 
 .footer-brand img {
-  width: 32px;
+  width: 38px;
   height: auto;
 }
 
 .footer-brand p {
-  font-size: 14px;
+  font-size: 18px;
   color: var(--text-muted);
   margin: 0;
 }
@@ -150,7 +150,7 @@ body {
 
 /* SEZIONI */
 .footer-section h4 {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -160,7 +160,7 @@ body {
 
 .footer-section p,
 .footer-section a {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--text-muted);
   line-height: 1.5;
 }
@@ -199,7 +199,7 @@ body {
   padding-top: 16px;
   border-top: 1px solid var(--border);
   text-align: center;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-muted);
 }
 
