@@ -2377,7 +2377,7 @@ body {
 }
 
 .standings-title {
-  font-size: 18px;
+  font-size: 28px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2395,7 +2395,7 @@ body {
 
 .standings-table thead th {
   text-align: center;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--text-muted);
   padding: 10px 6px;
@@ -2427,13 +2427,13 @@ body {
 
 .standings-table td:nth-child(2) {
   font-weight: 800;
-  font-size: 18px;
+  font-size: 24px;
   color: var(--brand);
 }
 
 .standings-table td:nth-child(n+3) {
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 20px;
 }
 
 .team-cell {
@@ -2457,7 +2457,7 @@ body {
 }
 
 .team-name {
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 600;
 }
 
@@ -2480,7 +2480,7 @@ body {
 }
 
 .finals-section-title {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--text-main);
   margin-bottom: 28px;
@@ -2492,7 +2492,7 @@ body {
 }
 
 .finals-section-title .section-icon {
-  font-size: 28px;
+  font-size: 32px;
   filter: drop-shadow(0 2px 4px rgba(139, 92, 246, 0.4));
 }
 
@@ -2509,7 +2509,7 @@ body {
 }
 
 .finals-subsection-title {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2565,7 +2565,7 @@ body {
 }
 
 .finals-round h3 {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2644,7 +2644,7 @@ body {
 }
 
 .bracket-round-label {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -2707,7 +2707,7 @@ body {
   border: 1px solid rgba(56, 189, 248, 0.12);
   backdrop-filter: blur(8px);
   padding: 14px 18px;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 500;
   color: var(--text-main);
   min-width: 180px;
@@ -2764,7 +2764,7 @@ body {
 
 .bracket-team-score {
   font-weight: 700;
-  font-size: 18px;
+  font-size: 22px;
   min-width: 28px;
   text-align: center;
   font-variant-numeric: tabular-nums;
@@ -2914,7 +2914,7 @@ body {
    TROPHY & CHAMPION
 ============================= */
 .bracket-trophy {
-  font-size: 56px;
+  font-size: 64px;
   filter: drop-shadow(0 4px 12px rgba(255, 215, 0, 0.3));
   animation: trophy-glow 3s ease-in-out infinite;
 }
@@ -2929,7 +2929,7 @@ body {
 }
 
 .bracket-champion {
-  font-size: 18px;
+  font-size: 40px;
   font-weight: 700;
   color: var(--brand);
   padding: 14px 28px;
@@ -3065,6 +3065,11 @@ body {
 .hidden {
   display: none !important;
 }
+
+
+
+
+
 
 
 /* =============================
