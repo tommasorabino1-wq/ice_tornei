@@ -2025,7 +2025,7 @@ body {
 }
 
 .gironi-section-title {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--text-main);
   margin-bottom: 28px;
@@ -2037,7 +2037,7 @@ body {
 }
 
 .gironi-section-title .section-icon {
-  font-size: 28px;
+  font-size: 32px;
   filter: drop-shadow(0 2px 4px rgba(139, 92, 246, 0.4));
 }
 
@@ -2054,7 +2054,7 @@ body {
 }
 
 .gironi-subsection-title {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2205,7 +2205,7 @@ body {
   display: flex;
   gap: 10px;
   align-items: center;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -2244,7 +2244,7 @@ body {
 }
 
 .match-teams .team {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   flex: 1;
   text-align: center;
@@ -2252,7 +2252,7 @@ body {
 }
 
 .dash {
-  font-size: 18px;
+  font-size: 24px;
   opacity: 0.6;
 }
 
@@ -2268,7 +2268,7 @@ body {
   border: 1px solid var(--border);
   background-color: var(--bg-card);
   color: var(--text-main);
-  font-size: 20px;
+  font-size: 28px;
   font-weight: 700;
 }
 
@@ -2284,7 +2284,7 @@ body {
 ========================= */
 .match-card .btn {
   margin-top: 8px;
-  font-size: 16px;
+  font-size: 20px;
   padding: 14px 20px;
 }
 
@@ -2297,7 +2297,7 @@ body {
   position: absolute;
   top: 14px;
   right: 14px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
   padding: 5px 10px;
