@@ -64,6 +64,9 @@ function loadStandingsPage(tournamentId) {
         return;
       }
 
+      // Popola titolo e sottotitolo
+      renderStandingsHeader(t);
+
       const layout = document.querySelector(".standings-layout");
       if (layout) {
         layout.classList.toggle("finished", TOURNAMENT_STATUS === "finished");
@@ -85,6 +88,23 @@ function loadStandingsPage(tournamentId) {
     .catch(err => {
       console.error("Errore caricamento tornei:", err);
     });
+}
+
+
+// ===============================
+// RENDER STANDINGS HEADER
+// ===============================
+function renderStandingsHeader(tournament) {
+  const titleEl = document.getElementById("standings-tournament-title");
+  const subtitleEl = document.getElementById("standings-tournament-subtitle");
+
+  if (titleEl) {
+    titleEl.textContent = `Classifica ${tournament.name}`;
+  }
+
+  if (subtitleEl) {
+    subtitleEl.textContent = `${tournament.location} · ${tournament.date} · ${tournament.sport}`;
+  }
 }
 
 
