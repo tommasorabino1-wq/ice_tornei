@@ -827,6 +827,14 @@ body {
 
 
 
+
+
+
+
+
+
+
+
 /* =========================
    PARTE 3 - TOURNAMENT PAGE / REGOLAMENTO PAGE (tournament.html)
 ========================= */
@@ -841,9 +849,8 @@ body {
 }
 
 
-
 /* =========================
-   PAGINA TORNEO - HEADER & LAYOUT
+   PAGINA TORNEO - HEADER BASE
 ========================= */
 .tournament-header {
   margin-bottom: 30px;
@@ -859,38 +866,15 @@ body {
   color: var(--text-muted);
 }
 
-.tournament-layout {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 30px;
-}
-
-
-
-
-/* =========================
-   PAGINA TORNEO - TOURNAMENT INFO
-========================= */
-.tournament-info {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-}
-
-.tournament-info ul {
-  list-style: none;
-  margin-top: 15px;
-}
-
-.tournament-info li {
-  margin-bottom: 8px;
-  font-size: 14px;
+.tournament-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 
 /* =========================
-   TOURNAMENT META (INFO)
+   TOURNAMENT META (INFO) - BASE
 ========================= */
 .tournament-meta {
   display: flex;
@@ -914,85 +898,51 @@ body {
 }
 
 
-
 /* =========================
-   PAGINA TORNEO - TOURNAMENT ACTION
-========================= */
-.tournament-action {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-}
-
-.tournament-action p {
-  font-size: 20px;
-  color: var(--text-muted);
-  margin-bottom: 15px;
-}
-
-.tournament-title-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-
-/* =========================
-   FORM ISCRIZIONE (BASE FIELDS)
+   FORM ISCRIZIONE - BASE
 ========================= */
 #registration-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   margin-top: 10px;
+  counter-reset: form-field;
 }
 
-#registration-form label {
+#registration-form > label {
   display: flex;
   flex-direction: column;
   font-size: 20px;
-  color: var(--text-muted);
-}
-
-#registration-form input {
-  margin-top: 4px;
-  padding: 8px 10px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background-color: var(--bg-main);
+  font-weight: 600;
   color: var(--text-main);
-}
-
-#registration-form input:focus {
-  outline: none;
-  border-color: var(--brand);
-}
-
-
-/* =========================
-   FORM ISCRIZIONE (EXTRA FIELDS)
-========================= */
-
-/* Sezione campi extra */
-#extra-fields-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px; /* ✅ Aumentato da 12px a 20px */
-  margin-top: 8px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(56, 189, 248, 0.15); /* ✅ Separatore visivo */
-}
-
-/* Label principale con spacing migliorato */
-#registration-form label {
-  display: flex;
-  flex-direction: column;
-  font-size: 20px;
-  font-weight: 600; /* ✅ Più bold per maggiore gerarchia */
-  color: var(--text-main); /* ✅ Colore principale (non muted) */
   letter-spacing: 0.02em;
-  margin-bottom: 4px;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  padding-left: 48px;
+}
+
+#registration-form > label::before {
+  counter-increment: form-field;
+  content: counter(form-field);
+  position: absolute;
+  left: 0;
+  top: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(56, 189, 248, 0.18);
+  color: var(--brand);
+  font-size: 16px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+#registration-form > label:last-of-type {
+  border-bottom: none;
 }
 
 /* Helper text sotto label */
@@ -1003,17 +953,128 @@ body {
   margin-bottom: 2px;
   font-style: italic;
   line-height: 1.4;
-  font-weight: 400; /* ✅ Reset weight */
+  font-weight: 400;
 }
 
-/* Checkbox group per giorni */
+/* Input fields */
+#registration-form input[type="text"],
+#registration-form input[type="email"],
+#registration-form input[type="tel"] {
+  margin-top: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-size: 18px;
+  font-weight: 400;
+  transition: 
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+#registration-form input:hover {
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+#registration-form input:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+#registration-form input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* Select orario */
+#registration-form select {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-size: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+#registration-form select:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+  background-color: rgba(11, 15, 20, 0.95);
+}
+
+#registration-form select:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+}
+
+
+/* =========================
+   FORM - EXTRA FIELDS CONTAINER
+========================= */
+#extra-fields-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  counter-reset: extra-field 3;
+}
+
+#extra-fields-container > label,
+#extra-fields-container > div {
+  padding: 20px 0;
+  padding-left: 48px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+
+#extra-fields-container > label::before,
+#extra-fields-container > div::before {
+  counter-increment: extra-field;
+  content: counter(extra-field);
+  position: absolute;
+  left: 0;
+  top: 20px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(56, 189, 248, 0.18);
+  color: var(--brand);
+  font-size: 16px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+#extra-fields-container > label:last-child,
+#extra-fields-container > div:last-child {
+  border-bottom: none;
+}
+
+
+/* =========================
+   FORM - CHECKBOX GROUP (GIORNI)
+========================= */
 .checkbox-group {
   display: flex;
   flex-direction: column;
-  gap: 6px; /* ✅ Ridotto da 8px per compattezza */
+  gap: 6px;
   margin-top: 10px;
   padding: 10px;
-  background-color: rgba(255, 255, 255, 0.015); /* ✅ Background sottile */
+  background-color: rgba(255, 255, 255, 0.015);
   border-radius: calc(var(--radius) + 2px);
   border: 1px solid rgba(56, 189, 248, 0.08);
 }
@@ -1027,7 +1088,6 @@ body {
   background-color: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border);
   cursor: pointer;
-  
   transition: 
     background-color 0.2s ease, 
     border-color 0.2s ease,
@@ -1037,10 +1097,9 @@ body {
 .checkbox-item:hover {
   background-color: rgba(56, 189, 248, 0.08);
   border-color: rgba(56, 189, 248, 0.35);
-  transform: translateX(2px); /* ✅ Micro-interazione */
+  transform: translateX(2px);
 }
 
-/* Checkbox checked state */
 .checkbox-item:has(input:checked) {
   background-color: rgba(56, 189, 248, 0.12);
   border-color: rgba(56, 189, 248, 0.45);
@@ -1064,86 +1123,55 @@ body {
   user-select: none;
 }
 
-/* Select orario con styling migliorato */
-#registration-form select {
-  margin-top: 6px;
-  padding: 10px 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  font-size: 20px;
-  font-weight: 500;
-  cursor: pointer;
-  
-  transition: 
-    border-color 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
 
-#registration-form select:hover {
-  border-color: rgba(56, 189, 248, 0.35);
-  background-color: rgba(11, 15, 20, 0.95);
-}
-
-#registration-form select:focus {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
-}
-
-/* Input text con coerenza visiva */
-#registration-form input[type="text"],
-#registration-form input[type="email"],
-#registration-form input[type="tel"] {
-  margin-top: 6px;
-  padding: 10px 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  font-size: 20px;
-  font-weight: 400;
-  
-  transition: 
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-#registration-form input:hover {
-  border-color: rgba(56, 189, 248, 0.25);
-}
-
-#registration-form input:focus {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
-}
-
-/* Placeholder styling */
-#registration-form input::placeholder {
-  color: var(--text-muted);
-  opacity: 0.6;
-  font-style: italic;
-}
-
-/* Section divider per campi base vs extra */
-#registration-form > label:nth-of-type(3) {
-  margin-bottom: 0; /* ✅ Ultimo campo base senza margin extra */
-}
-
-/* Button submit con spacing */
+/* =========================
+   FORM - SUBMIT BUTTON
+========================= */
 #registration-form button[type="submit"] {
-  margin-top: 30px; /* ✅ Distanza chiara dal form */
+  margin-top: 32px;
+  padding: 18px 32px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--brand) 0%, #0ea5e9 100%);
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 
+    0 4px 14px rgba(56, 189, 248, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: 
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+#registration-form button[type="submit"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(56, 189, 248, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+#registration-form button[type="submit"]:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 8px rgba(56, 189, 248, 0.3),
+    0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+#registration-form button[type="submit"].disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 
 /* =========================
-   TOURNAMENT TEAMS LIST
+   TOURNAMENT TEAMS LIST - BASE
 ========================= */
-
-/* blocco full width sotto le 2 colonne */
 .tournament-teams-block {
   margin-top: 26px;
   background-color: var(--bg-card);
@@ -1153,7 +1181,6 @@ body {
   padding: 18px;
 }
 
-/* header blocco: titolo + contatore */
 .teams-block-header {
   display: flex;
   align-items: center;
@@ -1169,7 +1196,6 @@ body {
   margin: 0;
 }
 
-/* contatore "X / Y" */
 .teams-block-count {
   display: inline-flex;
   align-items: center;
@@ -1182,25 +1208,20 @@ body {
   background-color: rgba(255, 255, 255, 0.03);
 }
 
-/* grid chips */
 .teams-chips-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 8px; /* ✅ Ridotto da 10px */
+  gap: 8px;
 }
 
-/* chip team */
 .team-chip {
   display: flex;
   align-items: center;
   gap: 10px;
-
   padding: 10px 12px;
   border-radius: 999px;
-
   background-color: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-
   transition:
     transform 0.18s ease,
     border-color 0.18s ease,
@@ -1213,36 +1234,29 @@ body {
   background-color: rgba(56, 189, 248, 0.06);
 }
 
-/* numerino a sinistra (pill piccola) */
 .team-chip-index {
   min-width: 22px;
   height: 22px;
   border-radius: 999px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   font-size: 12px;
   font-weight: 800;
-
   background-color: rgba(56, 189, 248, 0.18);
   color: var(--brand);
   border: 1px solid rgba(56, 189, 248, 0.25);
 }
 
-/* nome team */
 .team-chip-name {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-main);
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* stati empty/error */
 .teams-empty,
 .teams-error {
   padding: 12px;
@@ -1283,7 +1297,6 @@ body {
   animation: skeleton-shimmer 1.4s ease infinite;
 }
 
-/* widths più realistici nello skeleton */
 .team-chip--skeleton .team-chip-index {
   width: 22px;
 }
@@ -1296,59 +1309,8 @@ body {
 
 
 /* =========================
-   REGOLAMENTO GENERALE
+   REGOLAMENTO – CARDS BASE
 ========================= */
-
-/* Titolo regolamento */
-.generic-title {
-  font-size: 18px;
-  margin-bottom: 15px;
-}
-
-/* Lista regolamento */
-.generic-regulation-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.generic-regulation-list li {
-  font-size: 14px;
-  color: var(--text-main);
-  line-height: 1.4;
-}
-
-/* Dropdown selezione torneo */
-#tournament-select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  font-size: 14px;
-  cursor: pointer;
-}
-
-#tournament-select option {
-  background-color: var(--bg-main);
-  color: var(--text-main);
-}
-
-/* Testo guida */
-.select-helper {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin: 0 0 6px 0; /* ✅ Reset margin */
-  line-height: 1.4;
-}
-
-
-/* =========================
-   REGOLAMENTO – SYSTEM STYLE
-========================= */
-
 .generic-regulation-cards {
   display: flex;
   flex-direction: column;
@@ -1356,24 +1318,19 @@ body {
   margin-top: 14px;
 }
 
-/* ogni regola = row soft */
 .regulation-card {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-
   padding: 10px 12px;
   border-radius: var(--radius);
-
   background-color: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-
   transition:
     background-color 0.18s ease,
     border-color 0.18s ease;
 }
 
-/* hover soft come team-chip */
 .regulation-card:hover {
   background-color: rgba(56, 189, 248, 0.05);
   border-color: rgba(56, 189, 248, 0.25);
@@ -1383,30 +1340,23 @@ body {
   min-width: 22px;
   height: 22px;
   border-radius: 999px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   font-size: 12px;
   font-weight: 800;
-
   background-color: rgba(56, 189, 248, 0.18);
   color: var(--brand);
   border: 1px solid rgba(56, 189, 248, 0.25);
-
   margin-top: 1px;
 }
 
-
-/* testo */
 .regulation-content {
   font-size: 13px;
   line-height: 1.5;
   color: var(--text-main);
 }
 
-/* paragrafi */
 .regulation-content p {
   margin: 0 0 6px;
 }
@@ -1415,82 +1365,10 @@ body {
   margin-bottom: 0;
 }
 
-/* sottolista (campi variabili) */
-.regulation-sublist {
-  margin: 6px 0 8px 16px;
-  padding: 0;
-}
-
-.regulation-sublist li {
-  font-size: 12.5px;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-  list-style: disc;
-}
-
-/* Evidenziazioni azzurre solo nel regolamento generale (navbar) */
-#generic-regulation-section .highlight-brand {
-  color: var(--brand);
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-
-
 
 /* =========================
-   TOURNAMENT SPECIFIC RULES (NEW)
+   SPECIFIC REGULATION CARDS - BASE
 ========================= */
-
-.tournament-specific-rules {
-  margin-top: 20px;
-  padding-top: 20px;
-}
-
-.rules-divider {
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(56, 189, 248, 0.3) 50%,
-    transparent 100%
-  );
-  margin-bottom: 18px;
-}
-
-.rules-subtitle {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: 12px;
-  letter-spacing: 0.02em;
-}
-
-.specific-rule-content {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text-main);
-}
-
-.specific-rule-content p {
-  margin: 0 0 8px;
-}
-
-.specific-rule-content p:last-child {
-  margin-bottom: 0;
-}
-
-.specific-rule-content strong {
-  color: var(--brand);
-  font-weight: 600;
-}
-
-
-/* =========================
-   SPECIFIC REGULATION CARDS (TOURNAMENT-LEVEL)
-========================= */
-
-/* Container cards regole specifiche */
 .specific-regulation-cards {
   display: flex;
   flex-direction: column;
@@ -1498,18 +1376,14 @@ body {
   margin-top: 0;
 }
 
-/* Ogni regola specifica = card soft */
 .specific-regulation-card {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-
   padding: 10px 12px;
   border-radius: var(--radius);
-
   background-color: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-
   transition:
     background-color 0.18s ease,
     border-color 0.18s ease;
@@ -1520,27 +1394,21 @@ body {
   border-color: rgba(56, 189, 248, 0.25);
 }
 
-/* Icona numerica regola specifica */
 .specific-regulation-icon {
   min-width: 22px;
   height: 22px;
   border-radius: 999px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   font-size: 12px;
   font-weight: 800;
-
   background-color: rgba(56, 189, 248, 0.18);
   color: var(--brand);
   border: 1px solid rgba(56, 189, 248, 0.25);
-
   margin-top: 1px;
 }
 
-/* Contenuto regola specifica */
 .specific-regulation-content {
   font-size: 13px;
   line-height: 1.6;
@@ -1561,12 +1429,9 @@ body {
 }
 
 
-
-
 /* =========================
-   TOURNAMENT GENERAL REGULATION (FULL WIDTH)
+   TOURNAMENT GENERAL REGULATION - BASE
 ========================= */
-
 .tournament-general-regulation {
   margin-top: 40px;
   background-color: var(--bg-card);
@@ -1586,91 +1451,41 @@ body {
 }
 
 
-
 /* =========================
-   TOURNAMENT FILTER (SHARED) - REFINED
+   DROPDOWN SELEZIONE TORNEO
 ========================= */
-
-.tournament-filter-box {
-  background-color: rgba(22, 29, 39, 0.6);
-  border: 1px solid rgba(56, 189, 248, 0.15);
-  border-radius: 8px;
-  padding: 14px 16px; /* ✅ Aumentato padding */
-  backdrop-filter: blur(8px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-
-  display: flex;
-  flex-direction: column; /* ✅ Cambiato da row a column */
-  gap: 10px; /* ✅ Ridotto gap */
-
-  max-width: 100%; /* ✅ Full width nella colonna */
-  margin-bottom: 0; /* ✅ Reset margin */
-}
-
-/* Select */
-.tournament-filter-box select {
-  flex: 1;
-  padding: 7px 10px;
-  border-radius: 6px;
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  background-color: rgba(11, 15, 20, 0.8);
+#tournament-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: var(--bg-main);
   color: var(--text-main);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
   cursor: pointer;
-
-  transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
 }
 
-/* Hover + focus (brand azzurro) */
-.tournament-filter-box select:hover {
-  border-color: rgba(56, 189, 248, 0.4);
-  background-color: rgba(11, 15, 20, 0.95);
-}
-
-.tournament-filter-box select:focus {
-  outline: none;
-  border-color: var(--brand);
-  background-color: rgba(11, 15, 20, 1);
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
-}
-
-/* Option (styling migliorato) */
-.tournament-filter-box option {
-  background-color: var(--bg-secondary);
+#tournament-select option {
+  background-color: var(--bg-main);
   color: var(--text-main);
-  padding: 8px;
 }
-
-.tournament-filter-box option:hover {
-  background-color: rgba(56, 189, 248, 0.1);
-}
-
-
 
 
 /* =========================
    SKELETON UI – TOURNAMENT PAGE
 ========================= */
-
 .tournament-skeleton {
   pointer-events: none;
   cursor: default;
-
   opacity: 1;
   filter: blur(0);
   transform: scale(1);
-
   transition:
     opacity 0.35s ease,
     filter 0.35s ease,
     transform 0.35s ease;
 }
 
-/* fade-out skeleton torneo */
 .tournament-skeleton.fade-out {
   opacity: 0;
   filter: blur(4px);
@@ -1678,35 +1493,15 @@ body {
 }
 
 
+/* ==========================================================
+   PAGINA REGOLAMENTO GENERALE (#generic-regulation-section)
+   Font e dimensioni aumentate per la vista standalone
+========================================================== */
 
-/* =========================
-   REGULATION PAGE - FULL WIDTH LAYOUT
-========================= */
-
-/* Rimuove margin-top quando è nella vista regolamento generale */
-#generic-regulation-section .tournament-general-regulation {
-  margin-top: 0;
-}
-
-/* Highlight brand visibile nella vista generale */
-#generic-regulation-section .highlight-brand {
-  color: var(--brand);
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-
-
-/* =========================
-   REGULATION PAGE - FULL WIDTH LAYOUT
-========================= */
-
-/* Rimuove margin-top quando è nella vista regolamento generale */
 #generic-regulation-section .tournament-general-regulation {
   margin-top: 24px;
 }
 
-/* Titolo regolamento generale - GRANDE */
 #generic-regulation-section .regulation-general-title {
   font-size: 42px;
   font-weight: 700;
@@ -1716,20 +1511,17 @@ body {
   border-bottom: 2px solid rgba(56, 189, 248, 0.3);
 }
 
-/* Cards regolamento - dimensioni aumentate */
 #generic-regulation-section .regulation-card {
   padding: 18px 20px;
   gap: 16px;
 }
 
-/* Icona regola - più grande */
 #generic-regulation-section .regulation-icon {
   min-width: 32px;
   height: 32px;
   font-size: 16px;
 }
 
-/* Testo regole - font più grande */
 #generic-regulation-section .regulation-content {
   font-size: 20px;
   line-height: 1.6;
@@ -1739,20 +1531,18 @@ body {
   margin: 0 0 12px;
 }
 
-/* Distanza tra regole */
 #generic-regulation-section .generic-regulation-cards {
   gap: 32px;
   margin-top: 24px;
 }
 
-/* Highlight brand visibile nella vista generale */
 #generic-regulation-section .highlight-brand {
   color: var(--brand);
   font-weight: 600;
   letter-spacing: 0.01em;
 }
 
-/* Filtro torneo - più grande e visibile */
+/* Filtro torneo - grande */
 #generic-regulation-section .sport-filter-inline {
   padding: 14px 20px;
   gap: 16px;
@@ -1769,79 +1559,22 @@ body {
 }
 
 
-/* =========================
-   TOURNAMENT SPECIFIC PAGE - FULL WIDTH LAYOUT
-========================= */
+/* ==========================================================
+   PAGINA TORNEO SPECIFICO (#tournament-specific-section)
+   Layout full-width con font aumentati
+========================================================== */
 
-/* Info block full width */
-.tournament-info-block {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 24px;
+/* Header torneo */
+#tournament-specific-section .tournament-header {
+  margin-bottom: 40px;
 }
 
-.tournament-info-block h3 {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-/* Registration block full width */
-.tournament-registration-block {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 24px;
-}
-
-.tournament-registration-block h3 {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.tournament-registration-block p {
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: 16px;
-}
-
-/* Specific rules block full width */
-.tournament-specific-rules-block {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 24px;
-}
-
-.tournament-specific-rules-block .rules-subtitle {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-/* General regulation dentro tournament specific */
-#tournament-specific-section .tournament-general-regulation {
-  margin-top: 24px;
-}
-
-
-/* =========================
-   TOURNAMENT SPECIFIC PAGE - FULL WIDTH LAYOUT
-========================= */
-
-/* Header torneo - titolo grande */
 #tournament-specific-section .tournament-header h1 {
   font-size: 42px;
   font-weight: 700;
   line-height: 1.2;
 }
 
-/* Badge allineato a destra */
 #tournament-specific-section .tournament-title-row {
   display: flex;
   align-items: center;
@@ -1849,19 +1582,18 @@ body {
   gap: 16px;
 }
 
-/* Subtitle più grande */
 #tournament-specific-section .tournament-subtitle {
   font-size: 20px;
   margin-top: 8px;
 }
 
-/* Info block full width */
+/* Info block */
 .tournament-info-block {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 24px;
+  padding: 24px;
+  margin-bottom: 40px;
 }
 
 .tournament-info-block h3 {
@@ -1870,7 +1602,6 @@ body {
   margin-bottom: 20px;
 }
 
-/* Meta items più grandi */
 .tournament-info-block .tournament-meta {
   gap: 16px;
 }
@@ -1884,57 +1615,151 @@ body {
   font-size: 22px;
 }
 
-/* Registration block full width */
+/* Registration block */
 .tournament-registration-block {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 24px;
+  padding: 24px;
+  margin-bottom: 40px;
 }
 
 .tournament-registration-block h3 {
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.tournament-registration-block p {
-  font-size: 14px;
-  color: var(--text-muted);
   margin-bottom: 16px;
 }
 
-/* Specific rules block full width */
+.tournament-registration-block > p {
+  font-size: 18px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.registration-closed-icon {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.tournament-registration-block p strong {
+  color: var(--text-main);
+  font-size: 20px;
+}
+
+/* Specific rules block */
 .tournament-specific-rules-block {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 24px;
+  padding: 24px;
+  margin-bottom: 40px;
 }
 
 .tournament-specific-rules-block .rules-subtitle {
-  font-size: 18px;
+  font-size: 28px;
   font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.tournament-specific-rules-block .specific-regulation-card {
+  padding: 16px 18px;
+  gap: 14px;
   margin-bottom: 16px;
 }
 
-/* General regulation dentro tournament specific */
-#tournament-specific-section .tournament-general-regulation {
-  margin-top: 24px;
+.tournament-specific-rules-block .specific-regulation-icon {
+  min-width: 28px;
+  height: 28px;
+  font-size: 14px;
 }
 
+.tournament-specific-rules-block .specific-regulation-content {
+  font-size: 18px;
+  line-height: 1.6;
+}
 
+.tournament-specific-rules-block .specific-regulation-content p {
+  margin: 0 0 10px;
+}
 
+.tournament-specific-rules-block .specific-regulation-cards {
+  gap: 16px;
+}
 
+/* Teams block */
+#tournament-specific-section .tournament-teams-block {
+  margin-top: 0;
+  margin-bottom: 40px;
+  padding: 24px;
+}
 
+#tournament-specific-section .teams-block-title {
+  font-size: 28px;
+  font-weight: 700;
+}
 
+#tournament-specific-section .teams-block-count {
+  font-size: 18px;
+  padding: 10px 16px;
+}
 
+#tournament-specific-section .team-chip {
+  padding: 14px 18px;
+  gap: 12px;
+}
 
+#tournament-specific-section .team-chip-index {
+  min-width: 28px;
+  height: 28px;
+  font-size: 14px;
+}
 
+#tournament-specific-section .team-chip-name {
+  font-size: 18px;
+}
 
+#tournament-specific-section .teams-chips-grid {
+  gap: 12px;
+}
 
+/* General regulation block */
+#tournament-specific-section .tournament-general-regulation {
+  margin-top: 0;
+  margin-bottom: 40px;
+  padding: 24px;
+}
+
+#tournament-specific-section .regulation-general-title {
+  font-size: 28px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+}
+
+#tournament-specific-section .regulation-card {
+  padding: 16px 18px;
+  gap: 14px;
+}
+
+#tournament-specific-section .regulation-icon {
+  min-width: 28px;
+  height: 28px;
+  font-size: 14px;
+}
+
+#tournament-specific-section .regulation-content {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+#tournament-specific-section .regulation-content p {
+  margin: 0 0 10px;
+}
+
+#tournament-specific-section .generic-regulation-cards {
+  gap: 16px;
+}
 
 
 

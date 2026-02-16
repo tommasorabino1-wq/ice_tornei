@@ -762,40 +762,66 @@ function parseHoursSlots(range) {
 // 25. STATO TORNEO (UI)
 // ===============================
 function applyTournamentState(tournament) {
+  const registrationBlock = document.querySelector(".tournament-registration-block");
+  
   form.style.display = "none";
   form.classList.remove("skeleton");
-
   badge.className = "badge";
 
   if (tournament.status === "open") {
     badge.textContent = "ISCRIZIONI APERTE";
     badge.classList.add("open");
-    subscribeMessage.textContent = "Le iscrizioni sono aperte.";
+    subscribeMessage.textContent = "Le iscrizioni sono aperte. Compila il form per iscrivere la tua squadra.";
     form.style.display = "flex";
+    registrationBlock.style.display = "block";
     return;
   }
 
   if (tournament.status === "full") {
     badge.textContent = "COMPLETO";
     badge.classList.add("full");
-    subscribeMessage.textContent =
-      "Le iscrizioni sono chiuse. Numero massimo di squadre raggiunto.";
+    subscribeMessage.innerHTML = `
+      <span class="registration-closed-icon">🚫</span>
+      <strong>Torneo al completo</strong><br>
+      Il numero massimo di squadre è stato raggiunto. Non è più possibile effettuare nuove iscrizioni.
+    `;
+    form.style.display = "none";
+    registrationBlock.style.display = "block";
     return;
   }
 
   if (tournament.status === "final_phase") {
     badge.textContent = "FASE FINALE";
     badge.classList.add("final_phase");
-    subscribeMessage.textContent =
-      "Il torneo è entrato nella fase finale. Le iscrizioni sono chiuse.";
+    subscribeMessage.innerHTML = `
+      <span class="registration-closed-icon">🏆</span>
+      <strong>Fase finale in corso</strong><br>
+      Il torneo è entrato nella fase finale. Le iscrizioni sono chiuse.
+    `;
+    form.style.display = "none";
+    registrationBlock.style.display = "block";
     return;
   }
 
   if (tournament.status === "live") {
     badge.textContent = "IN CORSO";
     badge.classList.add("live");
-    subscribeMessage.textContent =
-      "Il torneo è in corso. Le iscrizioni sono chiuse.";
+    subscribeMessage.innerHTML = `
+      <span class="registration-closed-icon">⚽</span>
+      <strong>Torneo in corso</strong><br>
+      Le partite sono già iniziate. Le iscrizioni sono chiuse.
+    `;
+    form.style.display = "none";
+    registrationBlock.style.display = "block";
+    return;
+  }
+
+  if (tournament.status === "finished") {
+    badge.textContent = "CONCLUSO";
+    badge.classList.add("finished");
+    // Nascondi completamente il blocco iscrizione per tornei conclusi
+    registrationBlock.style.display = "none";
+    return;
   }
 }
 
