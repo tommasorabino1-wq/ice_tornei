@@ -629,21 +629,28 @@ function populateExtraFields(tournament) {
 // ===============================
 function buildDaysField(availableDays) {
   const wrapper = document.createElement("div");
+  wrapper.className = "form-field-wrapper";
   
   const daysMap = parseDaysRange(availableDays);
-  const minDays = (availableDays === "sab-dom") ? 1 : 2;
+  const minDays = (availableDays.toLowerCase() === "sab-dom") ? 1 : 2;
   
-  const label = (minDays === 1) 
+  const labelText = (minDays === 1) 
     ? "Giorno preferito" 
     : `Giorni preferiti (seleziona almeno ${minDays})`;
 
-  wrapper.innerHTML = `
-    <label style="display: flex; flex-direction: column;">
-      ${label}
-      <span class="field-helper">Seleziona ${minDays === 1 ? 'il giorno' : 'i giorni'} in cui preferisci giocare</span>
-    </label>
-  `;
+  // Creo lo span per il titolo (non un label, per evitare conflitti CSS)
+  const titleSpan = document.createElement("span");
+  titleSpan.className = "form-field-title";
+  titleSpan.textContent = labelText;
+  wrapper.appendChild(titleSpan);
 
+  // Helper text
+  const helperSpan = document.createElement("span");
+  helperSpan.className = "field-helper";
+  helperSpan.textContent = `Seleziona ${minDays === 1 ? 'il giorno' : 'i giorni'} in cui preferisci giocare`;
+  wrapper.appendChild(helperSpan);
+
+  // Checkbox group
   const checkboxGroup = document.createElement("div");
   checkboxGroup.className = "checkbox-group";
   checkboxGroup.dataset.minDays = minDays;
@@ -678,12 +685,20 @@ function buildHoursField(availableHours) {
   const wrapper = document.createElement("label");
   
   const slots = parseHoursSlots(availableHours);
-  
-  wrapper.innerHTML = `
-    Orario preferito
-    <span class="field-helper">Scegli lo slot orario in cui preferisci giocare</span>
-  `;
 
+  // Titolo
+  const titleSpan = document.createElement("span");
+  titleSpan.className = "form-field-title";
+  titleSpan.textContent = "Orario preferito";
+  wrapper.appendChild(titleSpan);
+
+  // Helper
+  const helperSpan = document.createElement("span");
+  helperSpan.className = "field-helper";
+  helperSpan.textContent = "Scegli lo slot orario in cui preferisci giocare";
+  wrapper.appendChild(helperSpan);
+
+  // Select
   const select = document.createElement("select");
   select.name = "preferred_hours";
   select.required = true;
@@ -705,6 +720,8 @@ function buildHoursField(availableHours) {
   wrapper.appendChild(select);
   return wrapper;
 }
+
+
 
 // ===============================
 // 23. PARSE DAYS RANGE

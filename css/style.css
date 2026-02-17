@@ -1065,6 +1065,23 @@ body {
 
 
 /* =========================
+   FORM - EXTRA FIELDS - TITOLI
+========================= */
+#extra-fields-container .form-field-title {
+  display: block;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: 0.02em;
+}
+
+#extra-fields-container .form-field-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* =========================
    FORM - CHECKBOX GROUP (GIORNI)
 ========================= */
 .checkbox-group {
