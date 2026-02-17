@@ -588,6 +588,8 @@ function buildGeneralReferenceRule() {
   `;
 }
 
+
+
 // ===============================
 // 20. POPOLA CAMPI EXTRA FORM
 // ===============================
@@ -604,25 +606,40 @@ function populateExtraFields(tournament) {
 
   // CAMPO 1: ZONA PREFERITA
   const zoneField = document.createElement("label");
-  zoneField.innerHTML = `
-    Zona preferita
-    <span class="field-helper">Indica la zona di Torino e provincia dove preferisci giocare (es. Moncalieri, Zona Lingotto, Zona Crocetta)</span>
-    <input type="text" name="preferred_zone" required placeholder="Es. Moncalieri">
-  `;
+  
+  const zoneTitleSpan = document.createElement("span");
+  zoneTitleSpan.className = "form-field-title";
+  zoneTitleSpan.textContent = "Zona preferita";
+  zoneField.appendChild(zoneTitleSpan);
+
+  const zoneHelperSpan = document.createElement("span");
+  zoneHelperSpan.className = "field-helper";
+  zoneHelperSpan.textContent = "Indica la zona di Torino e provincia dove preferisci giocare (es. Moncalieri, Zona Lingotto, Zona Crocetta)";
+  zoneField.appendChild(zoneHelperSpan);
+
+  const zoneInput = document.createElement("input");
+  zoneInput.type = "text";
+  zoneInput.name = "preferred_zone";
+  zoneInput.required = true;
+  zoneInput.placeholder = "Es. Moncalieri";
+  zoneField.appendChild(zoneInput);
+
   container.appendChild(zoneField);
 
   // CAMPO 2: GIORNI PREFERITI
-  if (availableDays && availableDays !== "NA") {
+  if (availableDays && availableDays.toUpperCase() !== "NA") {
     const daysField = buildDaysField(availableDays);
     container.appendChild(daysField);
   }
 
   // CAMPO 3: ORARIO PREFERITO
-  if (availableHours && availableHours !== "NA") {
+  if (availableHours && availableHours.toUpperCase() !== "NA") {
     const hoursField = buildHoursField(availableHours);
     container.appendChild(hoursField);
   }
 }
+
+
 
 // ===============================
 // 21. BUILD DAYS FIELD
