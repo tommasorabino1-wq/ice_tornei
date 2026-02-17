@@ -623,7 +623,7 @@ exports.onSubscriptionCreated = onDocumentCreated(
       };
 
       // 3. Chiama Apps Script Webhook
-      const mailerUrl = "https://script.google.com/macros/s/AKfycbzSii462xRA2hcLeL0lbyb2vGNoi42wWRyUz0uUq_XKtzJ6DSgjB-7VLJr-rvaJnUPEGg/exec";
+      const mailerUrl = "https://script.google.com/macros/s/AKfycbwCy7dgq3Xs-TLXtQpuGPLYuNqFHtlNC46ZcGELNB4dWMMICluB5nC2_ucAYfoYzQY07g/exec";
       const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
       const payload = {
