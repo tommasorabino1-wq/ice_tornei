@@ -1,6 +1,10 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const axios = require("axios");
+
+
 // Inizializza Firebase Admin (IMPORTANTE: va fatto UNA VOLTA SOLA)
 admin.initializeApp();
 
@@ -563,3 +567,108 @@ exports.submitResult = functions.https.onRequest(async (req, res) => {
     res.status(500).send('ERROR');
   }
 });
+
+
+
+
+// ===============================
+// FIRESTORE TRIGGER: SEND PAYMENT EMAIL ON NEW SUBSCRIPTION
+// ===============================
+exports.onSubscriptionCreated = onDocumentCreated(
+  "subscriptions/{subscriptionId}",
+  async (event) => {
+    const subscription = event.data.data();
+    const subscriptionId = event.params.subscriptionId;
+
+    // Skip se email già inviata
+    if (subscription.emailStatus === "sent") {
+      console.log(`Email già inviata per subscription ${subscriptionId}`);
+      return null;
+    }
+
+    const tournamentId = subscription.tournament_id;
+    const teamName = subscription.team_name;
+    const email = subscription.email;
+
+    if (!tournamentId || !teamName || !email) {
+      console.error("Dati mancanti nella subscription:", subscriptionId);
+      await event.data.ref.update({ emailStatus: "error", emailError: "missing_data" });
+      return null;
+    }
+
+    try {
+      // 1. Leggi tournament per ottenere price e name
+      const tournamentDoc = await db.collection("tournaments").doc(tournamentId).get();
+
+      if (!tournamentDoc.exists) {
+        console.error(`Tournament ${tournamentId} non trovato`);
+        await event.data.ref.update({ emailStatus: "error", emailError: "tournament_not_found" });
+        return null;
+      }
+
+      const tournament = tournamentDoc.data();
+      const amount = tournament.price;
+      const tournamentName = tournament.name;
+
+      if (!amount) {
+        console.error(`Prezzo non definito per tournament ${tournamentId}`);
+        await event.data.ref.update({ emailStatus: "error", emailError: "price_not_defined" });
+        return null;
+      }
+
+      // 2. Configura dati pagamento
+      const paymentConfig = {
+        iban: "IT36T0200820097000105204736", // ← SOSTITUISCI CON IL TUO IBAN
+        paypalLink: `https://paypal.me/TommasoRabino/${amount}`, // ← SOSTITUISCI CON IL TUO USERNAME PAYPAL
+      };
+
+      // 3. Chiama Apps Script Webhook
+      const mailerUrl = "https://script.google.com/macros/s/AKfycbzSii462xRA2hcLeL0lbyb2vGNoi42wWRyUz0uUq_XKtzJ6DSgjB-7VLJr-rvaJnUPEGg/exec";
+      const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
+
+      const payload = {
+        token: mailerToken,
+        to: email,
+        team_name: teamName,
+        tournament_name: tournamentName,
+        amount: amount,
+        iban: paymentConfig.iban,
+        paypalLink: paymentConfig.paypalLink
+      };
+
+      const response = await axios.post(mailerUrl, payload, {
+        headers: { "Content-Type": "application/json" },
+        timeout: 30000
+      });
+
+      if (response.data === "OK") {
+        console.log(`Email inviata con successo a ${email} per subscription ${subscriptionId}`);
+        await event.data.ref.update({
+          emailStatus: "sent",
+          emailSentAt: new Date().toISOString()
+        });
+      } else {
+        console.error(`Risposta mailer non OK: ${response.data}`);
+        await event.data.ref.update({
+          emailStatus: "error",
+          emailError: `mailer_response_${response.data}`
+        });
+      }
+
+    } catch (error) {
+      console.error(`Errore invio email per subscription ${subscriptionId}:`, error.message);
+      await event.data.ref.update({
+        emailStatus: "error",
+        emailError: error.message
+      });
+    }
+
+    return null;
+  }
+);
+
+
+
+
+
+
