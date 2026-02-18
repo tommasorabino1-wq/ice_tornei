@@ -334,7 +334,11 @@ function renderMatchesByRound(roundId) {
       match.played === true ||
       String(match.played).toUpperCase() === "TRUE";
 
-    const locked = tournamentLocked;  // ✅ Rimosso "finalsStarted"
+    const locked = tournamentLocked;
+
+    // ✅ Usa team_a_name e team_b_name se disponibili, altrimenti fallback a formatTeam
+    const teamAName = match.team_a_name || formatTeam(match.team_a);
+    const teamBName = match.team_b_name || formatTeam(match.team_b);
 
     const card = document.createElement("div");
     card.className = "match-card";
@@ -348,7 +352,7 @@ function renderMatchesByRound(roundId) {
       </div>
 
       <div class="match-teams">
-        <span class="team">${escapeHTML(formatTeam(match.team_a))}</span>
+        <span class="team">${escapeHTML(teamAName)}</span>
 
         <input type="number"
           class="score-input"
@@ -362,7 +366,7 @@ function renderMatchesByRound(roundId) {
           ${locked ? "disabled" : ""}
           value="${isPlayed ? match.score_b ?? "" : ""}">
 
-        <span class="team">${escapeHTML(formatTeam(match.team_b))}</span>
+        <span class="team">${escapeHTML(teamBName)}</span>
       </div>
 
       <button class="btn secondary submit-result" ${locked ? "disabled" : ""}>
@@ -845,6 +849,8 @@ function renderLinearBracket(bracket, rounds, container) {
   container.appendChild(bracketEl);
 }
 
+
+
 function renderSymmetricBracket(bracket, rounds, container) {
   const bracketEl = document.createElement("div");
   bracketEl.className = "bracket-container bracket-symmetric";
@@ -864,17 +870,31 @@ function renderSymmetricBracket(bracket, rounds, container) {
     const isFinal = matches.length === 1;
 
     if (isFinal) {
+      const finalMatch = matches[0];
+      
+      // ✅ Usa team_a_name/team_b_name per trovare il nome del vincitore
+      let championName = "";
+      if (finalMatch.winner_team_id) {
+        if (finalMatch.winner_team_id === finalMatch.team_a) {
+          championName = finalMatch.team_a_name || formatTeam(finalMatch.team_a);
+        } else if (finalMatch.winner_team_id === finalMatch.team_b) {
+          championName = finalMatch.team_b_name || formatTeam(finalMatch.team_b);
+        } else {
+          championName = formatTeam(finalMatch.winner_team_id);
+        }
+      }
+
       centerEl.innerHTML = `
         <div class="bracket-trophy">🏆</div>
         <div class="bracket-round-label">Finale</div>
       `;
-      const matchEl = createBracketMatch(matches[0]);
+      const matchEl = createBracketMatch(finalMatch);
       centerEl.appendChild(matchEl);
 
-      if (matches[0].winner_team_id) {
+      if (championName) {
         const championEl = document.createElement("div");
         championEl.className = "bracket-champion";
-        championEl.textContent = formatTeam(matches[0].winner_team_id);
+        championEl.textContent = championName;
         centerEl.appendChild(championEl);
       }
     } else {
@@ -916,6 +936,9 @@ function renderSymmetricBracket(bracket, rounds, container) {
   container.appendChild(bracketEl);
 }
 
+
+
+
 function createBracketMatch(match) {
   const matchEl = document.createElement("div");
   matchEl.className = "bracket-match";
@@ -923,6 +946,10 @@ function createBracketMatch(match) {
   const isPlayed = match.played === true || String(match.played).toUpperCase() === "TRUE";
   const scoreA = match.score_a;
   const scoreB = match.score_b;
+
+  // ✅ Usa team_a_name e team_b_name se disponibili
+  const teamAName = match.team_a_name || formatTeam(match.team_a);
+  const teamBName = match.team_b_name || formatTeam(match.team_b);
 
   let winnerTeam = null;
   if (isPlayed) {
@@ -950,7 +977,7 @@ function createBracketMatch(match) {
     }
     
     teamAEl.innerHTML = `
-      <span class="bracket-team-name">${escapeHTML(formatTeam(match.team_a))}</span>
+      <span class="bracket-team-name">${escapeHTML(teamAName)}</span>
       <span class="bracket-team-score">${isPlayed && scoreA !== "" && scoreA !== null ? scoreA : "−"}</span>
     `;
   } else {
@@ -972,7 +999,7 @@ function createBracketMatch(match) {
     }
     
     teamBEl.innerHTML = `
-      <span class="bracket-team-name">${escapeHTML(formatTeam(match.team_b))}</span>
+      <span class="bracket-team-name">${escapeHTML(teamBName)}</span>
       <span class="bracket-team-score">${isPlayed && scoreB !== "" && scoreB !== null ? scoreB : "−"}</span>
     `;
   } else {
@@ -989,6 +1016,8 @@ function createBracketMatch(match) {
   return matchEl;
 }
 
+
+
 function renderFinalsMatchCard(match, tournamentId, roundLabel = "Fase Finale") {
   const card = document.createElement("div");
   card.className = "match-card finals";
@@ -1001,6 +1030,10 @@ function renderFinalsMatchCard(match, tournamentId, roundLabel = "Fase Finale") 
 
   if (isPlayed) card.classList.add("played");
   if (tournamentLocked) card.classList.add("locked");
+
+  // ✅ Usa team_a_name e team_b_name se disponibili
+  const teamAName = match.team_a_name || formatTeam(match.team_a);
+  const teamBName = match.team_b_name || formatTeam(match.team_b);
 
   let btnText = "Invia risultato";
   let btnClass = "btn primary submit-result";
@@ -1030,7 +1063,7 @@ function renderFinalsMatchCard(match, tournamentId, roundLabel = "Fase Finale") 
     </div>
 
     <div class="match-teams">
-      <span class="team">${escapeHTML(formatTeam(match.team_a))}</span>
+      <span class="team">${escapeHTML(teamAName)}</span>
 
       <input type="number"
         class="score-input"
@@ -1044,15 +1077,15 @@ function renderFinalsMatchCard(match, tournamentId, roundLabel = "Fase Finale") 
         ${tournamentLocked ? "disabled" : ""}
         value="${isPlayed ? (match.score_b ?? "") : ""}">
 
-      <span class="team">${escapeHTML(formatTeam(match.team_b))}</span>
+      <span class="team">${escapeHTML(teamBName)}</span>
     </div>
 
     <div class="winner-select ${isTieWithWinner ? "" : "hidden"}">
       <label>Vincitore spareggio</label>
       <select ${tournamentLocked ? "disabled" : ""}>
         <option value="">Seleziona</option>
-        <option value="${match.team_a}" ${match.winner_team_id === match.team_a ? "selected" : ""}>${formatTeam(match.team_a)}</option>
-        <option value="${match.team_b}" ${match.winner_team_id === match.team_b ? "selected" : ""}>${formatTeam(match.team_b)}</option>
+        <option value="${match.team_a}" ${match.winner_team_id === match.team_a ? "selected" : ""}>${escapeHTML(teamAName)}</option>
+        <option value="${match.team_b}" ${match.winner_team_id === match.team_b ? "selected" : ""}>${escapeHTML(teamBName)}</option>
       </select>
     </div>
 
@@ -1085,6 +1118,9 @@ function renderFinalsMatchCard(match, tournamentId, roundLabel = "Fase Finale") 
 
   return card;
 }
+
+
+
 
 function submitFinalResult(card, match, tournamentId, winnerTeamId) {
   if (TOURNAMENT_STATUS === "finished") {

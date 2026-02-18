@@ -75,6 +75,7 @@ function assignHomeAwayGreedy(roundPairs) {
 // ===============================
 // MAIN: Genera match se pronto
 // ===============================
+
 async function generateMatchesIfReady(tournamentId) {
   try {
     console.log(`⚽ [START] Checking if matches can be generated for ${tournamentId}`);
@@ -132,7 +133,7 @@ async function generateMatchesIfReady(tournamentId) {
 
     console.log('🚀 All conditions met, generating matches...');
 
-    // 4) Shuffle teams
+    // 4) Shuffle teams + crea mappa nomi
     const teamIds = teamsSnapshot.docs.map(doc => doc.data().team_id);
     const teamNamesMap = {};
     teamsSnapshot.docs.forEach(doc => {
@@ -185,12 +186,14 @@ async function generateMatchesIfReady(tournamentId) {
             round_id: roundNumber,
             team_a: m.home,
             team_b: m.away,
+            team_a_name: teamNamesMap[m.home] || m.home,
+            team_b_name: teamNamesMap[m.away] || m.away,
             score_a: null,
             score_b: null,
             played: false
           });
 
-          console.log(`   ✓ Match ${matchId}: ${m.home} vs ${m.away}`);
+          console.log(`   ✓ Match ${matchId}: ${teamNamesMap[m.home]} vs ${teamNamesMap[m.away]}`);
 
           globalMatchCounter++;
         });
@@ -241,7 +244,6 @@ async function generateMatchesIfReady(tournamentId) {
     throw error;
   }
 }
-
 
 
 module.exports = { generateMatchesIfReady };

@@ -21,6 +21,12 @@ async function generateFinalsIfReady(tournamentId) {
     const standings = standingsSnapshot.docs.map(doc => doc.data());
     console.log(`📊 Found ${standings.length} standings`);
 
+    // Crea mappa team_id -> team_name
+    const teamNamesMap = {};
+    standings.forEach(s => {
+      teamNamesMap[s.team_id] = s.team_name;
+    });
+
     // 2) Raggruppa per girone
     const byGroup = {};
     standings.forEach(s => {
@@ -139,6 +145,8 @@ async function generateFinalsIfReady(tournamentId) {
     console.log(`🏗️ Creating ${teams.length / 2} finals matches (Round ${roundId})`);
 
     for (let i = 0; i < teams.length / 2; i++) {
+      const teamA = teams[i];
+      const teamB = teams[teams.length - 1 - i];
       const matchId = `${tournamentId}_FINAL_R${roundId}_M${matchIndex}`;
       const finalRef = db.collection('finals').doc(matchId);
 
@@ -146,15 +154,17 @@ async function generateFinalsIfReady(tournamentId) {
         match_id: matchId,
         tournament_id: tournamentId,
         round_id: roundId,
-        team_a: teams[i],
-        team_b: teams[teams.length - 1 - i],
+        team_a: teamA,
+        team_b: teamB,
+        team_a_name: teamNamesMap[teamA] || teamA,
+        team_b_name: teamNamesMap[teamB] || teamB,
         score_a: null,
         score_b: null,
         winner_team_id: null,
         played: false
       });
 
-      console.log(`   ✓ Match ${matchId}: ${teams[i]} vs ${teams[teams.length - 1 - i]}`);
+      console.log(`   ✓ Match ${matchId}: ${teamNamesMap[teamA]} vs ${teamNamesMap[teamB]}`);
 
       matchIndex++;
     }
@@ -168,6 +178,8 @@ async function generateFinalsIfReady(tournamentId) {
     throw error;
   }
 }
+
+
 
 // ===============================
 // HELPER: Genera prossimo round Finals
@@ -192,6 +204,13 @@ async function tryGenerateNextFinalRound(tournamentId) {
     finals.sort((a, b) => Number(a.round_id || 0) - Number(b.round_id || 0));
 
     console.log(`📋 Found ${finals.length} finals matches`);
+
+    // Crea mappa team_id -> team_name da tutti i match esistenti
+    const teamNamesMap = {};
+    finals.forEach(f => {
+      if (f.team_a && f.team_a_name) teamNamesMap[f.team_a] = f.team_a_name;
+      if (f.team_b && f.team_b_name) teamNamesMap[f.team_b] = f.team_b_name;
+    });
 
     // 2) Trova ultimo round
     const rounds = finals.map(f => f.round_id).filter(r => Number.isFinite(r));
@@ -250,6 +269,8 @@ async function tryGenerateNextFinalRound(tournamentId) {
         break;
       }
 
+      const teamA = winners[i];
+      const teamB = winners[i + 1];
       const matchId = `${tournamentId}_FINAL_R${nextRound}_M${matchIndex}`;
       const finalRef = db.collection('finals').doc(matchId);
 
@@ -257,15 +278,17 @@ async function tryGenerateNextFinalRound(tournamentId) {
         match_id: matchId,
         tournament_id: tournamentId,
         round_id: nextRound,
-        team_a: winners[i],
-        team_b: winners[i + 1],
+        team_a: teamA,
+        team_b: teamB,
+        team_a_name: teamNamesMap[teamA] || teamA,
+        team_b_name: teamNamesMap[teamB] || teamB,
         score_a: null,
         score_b: null,
         winner_team_id: null,
         played: false
       });
 
-      console.log(`   ✓ Match ${matchId}: ${winners[i]} vs ${winners[i + 1]}`);
+      console.log(`   ✓ Match ${matchId}: ${teamNamesMap[teamA] || teamA} vs ${teamNamesMap[teamB] || teamB}`);
 
       matchIndex++;
     }
@@ -279,6 +302,8 @@ async function tryGenerateNextFinalRound(tournamentId) {
     throw error;
   }
 }
+
+
 
 module.exports = {
   generateFinalsIfReady,
