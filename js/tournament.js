@@ -254,15 +254,15 @@ function renderSpecificCourtRule(tournament) {
   // REGOLA 6: Arbitraggio
   rules.push(buildRefereeRule(tournament, ruleNumber));
   ruleNumber++;
-  
-  // REGOLA 7: Riferimento al regolamento generale
-  rules.push(buildGeneralReferenceRule());
-  
-  // REGOLA 8: Food (opzionale, sempre ultima se presente)
+
+  // REGOLA 7: Food (opzionale, sempre ultima se presente)
   const foodRule = buildFoodRule(tournament);
   if (foodRule) {
     rules.push(foodRule);
   }
+  
+  // REGOLA 8: Riferimento al regolamento generale
+  rules.push(buildGeneralReferenceRule());
   
   // ✅ RENDER FINALE CON STRUTTURA A BLOCCHI
   container.innerHTML = `
@@ -324,23 +324,24 @@ function buildCourtRule(tournament, ruleNumber) {
   const days = String(tournament.available_days || "").trim().toLowerCase();
   const hours = String(tournament.available_hours || "").trim().toLowerCase();
   const timeRange = String(tournament.time_range || "").trim().toLowerCase();
+  const location = String(tournament.location || "");
+  const date = String(tournament.date || "");
 
   let ruleText = "";
 
   // Frase introduttiva basata su time_range
   let timeRangeIntro = "";
   if (timeRange === "short") {
-    timeRangeIntro = `<p>Questo torneo si svolge in una <strong>singola giornata</strong>.</p>`;
+    timeRangeIntro = `<p>Tutte le partite di questo torneo si svolgeranno in un <strong>singolo giorno</strong>, a <strong>${date}</strong>, a <strong>${location}</strong>.</p>`;
   } else if (timeRange === "long") {
-    timeRangeIntro = `<p>Questo torneo si svolge <strong>su più settimane</strong>, con partite distribuite nel tempo.</p>`;
+    timeRangeIntro = `<p>Questo torneo si svolge <strong>su più settimane</strong>. Generalmente, ogni squadra giocherà una partita a settimana fino al termine del torneo.</p>`;
   }
 
   if (fixedCourt) {
     ruleText = `
       ${timeRangeIntro}
       <p>
-        Campi, giorni e orari delle partite vengono <strong>stabiliti dall'organizzazione</strong>, 
-        che provvederà a pubblicare il calendario completo prima dell'inizio del torneo.
+        Campo, giorno e orari definitivi delle partite saranno comunicati dall’organizzazione prima dell’inizio del torneo.
       </p>
     `;
   } else {
@@ -349,7 +350,7 @@ function buildCourtRule(tournament, ruleNumber) {
     ruleText = `
       ${timeRangeIntro}
       <p>
-        ${availabilityPhrase}In fase di iscrizione, le squadre potranno esprimere le proprie preferenze
+        ${availabilityPhrase}<br>In fase di iscrizione, le squadre potranno esprimere le proprie preferenze
         relative a zona, giorni e orari di gioco.
       </p>
       <p>
@@ -384,14 +385,14 @@ function buildAvailabilityPhrase(days, hours) {
   }
 
   if (daysPhrase && !hoursPhrase) {
-    return `In questo torneo, le partite potranno essere disputate <strong>${daysPhrase}</strong>. `;
+    return `Le partite potranno essere disputate <strong>${daysPhrase}</strong>. `;
   }
 
   if (!daysPhrase && hoursPhrase) {
-    return `In questo torneo, le partite potranno essere disputate <strong>${hoursPhrase}</strong>. `;
+    return `Le partite potranno essere disputate <strong>${hoursPhrase}</strong>. `;
   }
 
-  return `In questo torneo, le partite potranno essere disputate <strong>${daysPhrase}</strong>, <strong>${hoursPhrase}</strong>. `;
+  return `Le partite potranno essere disputate <strong>${daysPhrase}</strong>, <strong>${hoursPhrase}</strong>. `;
 }
 
 // ===============================
