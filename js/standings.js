@@ -58,8 +58,9 @@ function loadStandingsPage(tournamentId) {
 
       TOURNAMENT_STATUS = t?.status || null;
 
-      // Se il torneo non è ancora iniziato (status = open o full)
-      if (TOURNAMENT_STATUS === "open" || TOURNAMENT_STATUS === "full") {
+      // Se il torneo è ancora in fase di iscrizioni (open)
+      // NOTA: "full" ora ha match e standings, quindi può essere visualizzato
+      if (TOURNAMENT_STATUS === "open") {
         showTournamentNotStarted(t);
         return;
       }
@@ -89,6 +90,8 @@ function loadStandingsPage(tournamentId) {
       console.error("Errore caricamento tornei:", err);
     });
 }
+
+
 
 
 // ===============================

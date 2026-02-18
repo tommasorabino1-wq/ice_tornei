@@ -134,6 +134,12 @@ async function generateMatchesIfReady(tournamentId) {
 
     // 4) Shuffle teams
     const teamIds = teamsSnapshot.docs.map(doc => doc.data().team_id);
+    const teamNamesMap = {};
+    teamsSnapshot.docs.forEach(doc => {
+      const data = doc.data();
+      teamNamesMap[data.team_id] = data.team_name;
+    });
+
     console.log(`📝 Team IDs before shuffle: ${teamIds.join(', ')}`);
 
     for (let i = teamIds.length - 1; i > 0; i--) {
@@ -146,13 +152,19 @@ async function generateMatchesIfReady(tournamentId) {
     const numGroups = teamsMax / teamsPerGroup;
     console.log(`📊 Number of groups: ${numGroups}`);
 
-    // 5) Genera match per ogni gruppo
+    // 5) Genera match per ogni gruppo + traccia assegnazione gruppi
     const batch = db.batch();
     let globalMatchCounter = 1;
+    const teamGroupAssignment = {}; // team_id -> group_id
 
     for (let g = 0; g < numGroups; g++) {
       const groupId = `G${g + 1}`;
       const groupTeams = teamIds.slice(g * teamsPerGroup, (g + 1) * teamsPerGroup);
+
+      // Traccia assegnazione gruppo
+      groupTeams.forEach(teamId => {
+        teamGroupAssignment[teamId] = groupId;
+      });
 
       console.log(`🏟️ Generating matches for ${groupId}: ${groupTeams.join(', ')}`);
 
@@ -185,10 +197,43 @@ async function generateMatchesIfReady(tournamentId) {
       });
     }
 
-    // 6) Commit batch
-    console.log(`💾 Committing ${globalMatchCounter - 1} matches...`);
+    // 6) Genera standings iniziali (tutti a 0)
+    console.log(`📊 Generating initial standings...`);
+
+    teamIds.forEach(teamId => {
+      const groupId = teamGroupAssignment[teamId];
+      const teamName = teamNamesMap[teamId] || teamId;
+      const standingId = `standings_${teamId}`;
+      const standingRef = db.collection('standings').doc(standingId);
+
+      batch.set(standingRef, {
+        standing_id: standingId,
+        team_id: teamId,
+        tournament_id: tournamentId,
+        group_id: groupId,
+        team_name: teamName,
+        matches_played: 0,
+        points: 0,
+        goal_diff: 0,
+        goals_for: 0,
+        goals_against: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        h2h_points: 0,
+        h2h_goal_diff: 0,
+        h2h_goals_for: 0,
+        rank_level: 1,
+        rank_group: 'INIT'
+      });
+
+      console.log(`   ✓ Standing ${standingId}: ${teamName} (${groupId})`);
+    });
+
+    // 7) Commit batch
+    console.log(`💾 Committing ${globalMatchCounter - 1} matches + ${teamIds.length} standings...`);
     await batch.commit();
-    console.log(`✅ [SUCCESS] Generated ${globalMatchCounter - 1} matches for ${tournamentId}`);
+    console.log(`✅ [SUCCESS] Generated ${globalMatchCounter - 1} matches and ${teamIds.length} standings for ${tournamentId}`);
 
   } catch (error) {
     console.error('❌ [ERROR] generateMatchesIfReady failed:', error);
@@ -196,5 +241,7 @@ async function generateMatchesIfReady(tournamentId) {
     throw error;
   }
 }
+
+
 
 module.exports = { generateMatchesIfReady };
