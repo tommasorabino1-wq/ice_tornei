@@ -834,6 +834,24 @@ body {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* =========================
    PARTE 3 - TOURNAMENT PAGE / REGOLAMENTO PAGE (tournament.html)
 ========================= */
@@ -1185,6 +1203,8 @@ body {
 }
 
 
+
+
 /* =========================
    TOURNAMENT TEAMS LIST - BASE
 ========================= */
@@ -1225,8 +1245,8 @@ body {
 }
 
 .teams-chips-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -1262,15 +1282,13 @@ body {
   background-color: rgba(56, 189, 248, 0.18);
   color: var(--brand);
   border: 1px solid rgba(56, 189, 248, 0.25);
+  flex-shrink: 0;
 }
 
 .team-chip-name {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-main);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .teams-empty,
@@ -1288,6 +1306,8 @@ body {
   border-color: rgba(239, 68, 68, 0.35);
   background-color: rgba(239, 68, 68, 0.06);
 }
+
+
 
 
 /* =========================
