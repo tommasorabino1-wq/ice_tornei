@@ -226,6 +226,7 @@ function renderSpecificCourtRule(tournament) {
   
   // ✅ COSTRUISCI LE REGOLE SPECIFICHE
   const rules = [];
+  let ruleNumber = 1;  // ✅ DICHIARAZIONE MANCANTE!
   
   // REGOLA 1: Quota di iscrizione e costo campi
   rules.push(buildPriceRule(tournament, ruleNumber));
