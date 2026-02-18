@@ -227,23 +227,41 @@ function renderSpecificCourtRule(tournament) {
   // ✅ COSTRUISCI LE REGOLE SPECIFICHE
   const rules = [];
   
-  // REGOLA 1: Campi, giorni, orari
-  rules.push(buildCourtRule(tournament));
+  // REGOLA 1: Quota di iscrizione e costo campi
+  rules.push(buildPriceRule(tournament, ruleNumber));
+  ruleNumber++;
   
-  // REGOLA 2: Formato torneo
-  rules.push(buildFormatRule(tournament));
+  // REGOLA 2: Campi, giorni, orari (include time_range)
+  rules.push(buildCourtRule(tournament, ruleNumber));
+  ruleNumber++;
   
-  // REGOLA 3: Criteri di classifica (solo se ci sono gironi)
-  const rankingRule = buildRankingRule(tournament);
+  // REGOLA 3: Formato torneo
+  rules.push(buildFormatRule(tournament, ruleNumber));
+  ruleNumber++;
+  
+  // REGOLA 4: Criteri di classifica (solo se ci sono gironi)
+  const rankingRule = buildRankingRule(tournament, ruleNumber);
   if (rankingRule) {
     rules.push(rankingRule);
+    ruleNumber++;
   }
   
-  // ✅ REGOLA 4: Arbitraggio
-  rules.push(buildRefereeRule(tournament));
+  // REGOLA 5: Partecipanti, livello e premi (gender, expertise, award)
+  rules.push(buildParticipantsRule(tournament, ruleNumber));
+  ruleNumber++;
   
-  // REGOLA 5: Riferimento al regolamento generale
+  // REGOLA 6: Arbitraggio
+  rules.push(buildRefereeRule(tournament, ruleNumber));
+  ruleNumber++;
+  
+  // REGOLA 7: Riferimento al regolamento generale
   rules.push(buildGeneralReferenceRule());
+  
+  // REGOLA 8: Food (opzionale, sempre ultima se presente)
+  const foodRule = buildFoodRule(tournament);
+  if (foodRule) {
+    rules.push(foodRule);
+  }
   
   // ✅ RENDER FINALE CON STRUTTURA A BLOCCHI
   container.innerHTML = `
@@ -253,20 +271,74 @@ function renderSpecificCourtRule(tournament) {
   `;
 }
 
+
 // ===============================
-// 10. BUILD COURT RULE (REGOLA 1)
+// 9b. BUILD PRICE RULE (REGOLA 1 - NUOVA)
 // ===============================
-function buildCourtRule(tournament) {
+function buildPriceRule(tournament, ruleNumber) {
+  const price = tournament.price || "N/A";
+  const courtPrice = String(tournament.court_price || "").toLowerCase();
+  
+  let courtPriceText = "";
+  
+  if (courtPrice === "compreso") {
+    courtPriceText = `
+      <p>
+        La quota include la <strong>prenotazione dei campi</strong> per tutte le partite del torneo. 
+        Le squadre non dovranno sostenere alcun costo aggiuntivo per l'utilizzo delle strutture sportive.
+      </p>
+    `;
+  } else {
+    // courtPrice === "non_compreso" o altro
+    courtPriceText = `
+      <p>
+        La quota <strong>non include</strong> il costo dei campi. Per ogni partita, le squadre dovranno 
+        <strong>dividere equamente</strong> il costo del campo presso la struttura sportiva prenotata.
+      </p>
+    `;
+  }
+  
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Quota di iscrizione</strong></p>
+        <p>
+          La quota di iscrizione per questo torneo è di <strong>€${price} a squadra</strong>.
+        </p>
+        ${courtPriceText}
+      </div>
+    </div>
+  `;
+}
+
+
+
+
+// ===============================
+// 10. BUILD COURT RULE (REGOLA 2 - AGGIORNATA CON TIME_RANGE)
+// ===============================
+function buildCourtRule(tournament, ruleNumber) {
   const fixedCourt = tournament.fixed_court === true || String(tournament.fixed_court).toUpperCase() === "TRUE";
   const days = String(tournament.available_days || "").trim().toLowerCase();
   const hours = String(tournament.available_hours || "").trim().toLowerCase();
+  const timeRange = String(tournament.time_range || "").trim().toLowerCase();
 
   let ruleText = "";
 
+  // Frase introduttiva basata su time_range
+  let timeRangeIntro = "";
+  if (timeRange === "short") {
+    timeRangeIntro = `<p>Questo torneo si svolge in una <strong>singola giornata</strong>.</p>`;
+  } else if (timeRange === "long") {
+    timeRangeIntro = `<p>Questo torneo si svolge <strong>su più settimane</strong>, con partite distribuite nel tempo.</p>`;
+  }
+
   if (fixedCourt) {
     ruleText = `
+      ${timeRangeIntro}
       <p>
-        In questo torneo, campi, giorni e orari delle partite vengono <strong>stabiliti dall'organizzazione</strong>, 
+        Campi, giorni e orari delle partite vengono <strong>stabiliti dall'organizzazione</strong>, 
         che provvederà a pubblicare il calendario completo prima dell'inizio del torneo.
       </p>
     `;
@@ -274,20 +346,21 @@ function buildCourtRule(tournament) {
     const availabilityPhrase = buildAvailabilityPhrase(days, hours);
 
     ruleText = `
+      ${timeRangeIntro}
       <p>
         ${availabilityPhrase}In fase di iscrizione, le squadre potranno esprimere le proprie preferenze
-        relative a campi, giorni e orari di gioco
+        relative a zona, giorni e orari di gioco.
       </p>
       <p>
         L'organizzazione provvederà alla prenotazione dei campi per le partite casalinghe di ciascuna squadra, 
-        tenendo conto delle preferenze indicate. 
+        tenendo conto delle preferenze indicate.
       </p>
     `;
   }
 
   return `
     <div class="specific-regulation-card">
-      <div class="specific-regulation-icon">1</div>
+      <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
         <p><strong>Campi, giorni e orari</strong></p>
         ${ruleText}
@@ -295,6 +368,8 @@ function buildCourtRule(tournament) {
     </div>
   `;
 }
+
+
 
 // ===============================
 // 11. BUILD AVAILABILITY PHRASE
@@ -353,9 +428,9 @@ function mapHoursToPhrase(hours) {
 }
 
 // ===============================
-// 14. BUILD FORMAT RULE (REGOLA 2)
+// 14. BUILD FORMAT RULE (REGOLA 3 - AGGIORNATA CON ruleNumber)
 // ===============================
-function buildFormatRule(tournament) {
+function buildFormatRule(tournament, ruleNumber) {
   const teamsPerGroup = Number(tournament.teams_per_group) || 0;
   const teamsInFinal = Number(tournament.teams_in_final) || 0;
   const teamsMax = Number(tournament.teams_max) || 0;
@@ -409,7 +484,7 @@ function buildFormatRule(tournament) {
 
   return `
     <div class="specific-regulation-card">
-      <div class="specific-regulation-icon">2</div>
+      <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
         <p><strong>Formato del torneo</strong></p>
         ${formatText}
@@ -417,6 +492,8 @@ function buildFormatRule(tournament) {
     </div>
   `;
 }
+
+
 
 // ===============================
 // 15. BUILD QUALIFICATION PHRASE
@@ -451,9 +528,9 @@ function buildQualificationPhrase(numGroups, teamsInFinal) {
 }
 
 // ===============================
-// 16. BUILD RANKING RULE (REGOLA 3)
+// 16. BUILD RANKING RULE (REGOLA 4 - AGGIORNATA CON ruleNumber)
 // ===============================
-function buildRankingRule(tournament) {
+function buildRankingRule(tournament, ruleNumber) {
   const teamsPerGroup = Number(tournament.teams_per_group) || 0;
   const teamsInFinal = Number(tournament.teams_in_final) || 0;
   const teamsMax = Number(tournament.teams_max) || 0;
@@ -476,7 +553,7 @@ function buildRankingRule(tournament) {
 
   return `
     <div class="specific-regulation-card">
-      <div class="specific-regulation-icon">3</div>
+      <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
         <p><strong>Criteri di classifica</strong></p>
         ${intraGroupText}
@@ -485,6 +562,9 @@ function buildRankingRule(tournament) {
     </div>
   `;
 }
+
+
+
 
 // ===============================
 // 17. BUILD CROSS GROUP COMPARISON TEXT
@@ -523,14 +603,84 @@ function buildCrossGroupComparisonText(numGroups, teamsInFinal) {
 }
 
 
+
 // ===============================
-// 18. BUILD REFEREE RULE (REGOLA 4)
+// 17b. BUILD PARTICIPANTS RULE (NUOVA - gender, expertise, award)
 // ===============================
-function buildRefereeRule(tournament) {
+function buildParticipantsRule(tournament, ruleNumber) {
+  const gender = String(tournament.gender || "open").toLowerCase();
+  const expertise = String(tournament.expertise || "open").toLowerCase();
+  const award = tournament.award === true || String(tournament.award).toUpperCase() === "TRUE";
+  
+  // GENDER TEXT
+  let genderText = "";
+  switch (gender) {
+    case "only_male":
+      genderText = `Possono partecipare esclusivamente <strong>squadre composte da soli uomini</strong>.`;
+      break;
+    case "only_female":
+      genderText = `Possono partecipare esclusivamente <strong>squadre composte da sole donne</strong>.`;
+      break;
+    case "mixed_strict":
+      genderText = `Ogni squadra deve essere composta da <strong>almeno un uomo e almeno una donna</strong>.`;
+      break;
+    case "mixed_female_allowed":
+      genderText = `Ogni squadra deve includere <strong>almeno un uomo e una donna</strong>, oppure essere composta da <strong>sole donne</strong>.`;
+      break;
+    case "open":
+    default:
+      genderText = `Possono partecipare squadre di <strong>qualsiasi composizione</strong> (uomini, donne o miste).`;
+      break;
+  }
+  
+  // EXPERTISE + AWARD TEXT
+  let expertiseAwardText = "";
+  if (expertise === "expert") {
+    expertiseAwardText = `
+      <p>
+        Questo torneo è rivolto a <strong>giocatori esperti</strong> con un livello di gioco medio-alto.
+      </p>
+      <p>
+        In considerazione del livello competitivo, sono previsti <strong>premi in denaro o beni materiali</strong> 
+        per le squadre vincitrici.
+      </p>
+    `;
+  } else {
+    // expertise === "open" (amatoriale)
+    expertiseAwardText = `
+      <p>
+        Questo torneo è <strong>aperto a tutti</strong>, indipendentemente dal livello di esperienza. 
+        È pensato per chi vuole divertirsi e mettersi in gioco in un contesto amatoriale.
+      </p>
+      <p>
+        Trattandosi di un torneo amatoriale, non sono previsti premi in denaro: le squadre vincitrici 
+        riceveranno <strong>riconoscimenti simbolici</strong> (coppe, medaglie o attestati).
+      </p>
+    `;
+  }
+  
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Partecipanti e premi</strong></p>
+        <p>${genderText}</p>
+        ${expertiseAwardText}
+      </div>
+    </div>
+  `;
+}
+
+
+
+
+// ===============================
+// 18. BUILD REFEREE RULE (AGGIORNATA CON ruleNumber)
+// ===============================
+function buildRefereeRule(tournament, ruleNumber) {
   const hasReferee = tournament.referee === true || String(tournament.referee).toUpperCase() === "TRUE";
   
   let ruleText = "";
-  let ruleNumber = "4";
   
   if (hasReferee) {
     ruleText = `
@@ -570,6 +720,8 @@ function buildRefereeRule(tournament) {
 }
 
 
+
+
 // ===============================
 // 19. BUILD GENERAL REFERENCE RULE (REGOLA 4)
 // ===============================
@@ -583,6 +735,46 @@ function buildGeneralReferenceRule() {
           Per tutte le altre norme relative a fair play, ritardi, rinvii e spostamenti delle partite, 
           si rimanda al <strong>regolamento generale dei tornei ICE</strong> riportato in fondo a questa pagina.
         </p>
+      </div>
+    </div>
+  `;
+}
+
+
+// ===============================
+// 19b. BUILD FOOD RULE (NUOVA - opzionale, sempre ultima)
+// ===============================
+function buildFoodRule(tournament) {
+  const food = String(tournament.food || "").toLowerCase();
+  
+  // Se food è "none" o vuoto, non mostriamo la regola
+  if (!food || food === "none") {
+    return "";
+  }
+  
+  let foodText = "";
+  
+  if (food === "all") {
+    foodText = `
+      <p>
+        La quota di iscrizione include <strong>pranzo e/o cena</strong> per tutti i partecipanti. 
+        I dettagli su orari e location verranno comunicati prima dell'inizio del torneo.
+      </p>
+    `;
+  } else if (food === "partial") {
+    foodText = `
+      <p>
+        Durante il torneo saranno offerti <strong>snack e bevande</strong> a tutti i partecipanti.
+      </p>
+    `;
+  }
+  
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">🍽️</div>
+      <div class="specific-regulation-content">
+        <p><strong>Ristoro</strong></p>
+        ${foodText}
       </div>
     </div>
   `;
