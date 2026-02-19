@@ -803,7 +803,7 @@ function populateExtraFields(tournament) {
   
   const zoneTitleSpan = document.createElement("span");
   zoneTitleSpan.className = "form-field-title";
-  zoneTitleSpan.textContent = "Zona preferita";
+  zoneTitleSpan.innerHTML = 'Zona preferita <span class="required-asterisk">*</span>';
   zoneField.appendChild(zoneTitleSpan);
 
   const zoneHelperSpan = document.createElement("span");
@@ -849,10 +849,10 @@ function buildDaysField(availableDays) {
     ? "Giorno preferito" 
     : `Giorni preferiti (seleziona almeno ${minDays})`;
 
-  // Creo lo span per il titolo (non un label, per evitare conflitti CSS)
+  // Creo lo span per il titolo con asterisco
   const titleSpan = document.createElement("span");
   titleSpan.className = "form-field-title";
-  titleSpan.textContent = labelText;
+  titleSpan.innerHTML = `${labelText} <span class="required-asterisk">*</span>`;
   wrapper.appendChild(titleSpan);
 
   // Helper text
@@ -889,6 +889,8 @@ function buildDaysField(availableDays) {
   return wrapper;
 }
 
+
+
 // ===============================
 // 22. BUILD HOURS FIELD
 // ===============================
@@ -897,10 +899,10 @@ function buildHoursField(availableHours) {
   
   const slots = parseHoursSlots(availableHours);
 
-  // Titolo
+  // Titolo con asterisco
   const titleSpan = document.createElement("span");
   titleSpan.className = "form-field-title";
-  titleSpan.textContent = "Orario preferito";
+  titleSpan.innerHTML = 'Orario preferito <span class="required-asterisk">*</span>';
   wrapper.appendChild(titleSpan);
 
   // Helper
@@ -931,6 +933,8 @@ function buildHoursField(availableHours) {
   wrapper.appendChild(select);
   return wrapper;
 }
+
+
 
 
 
@@ -1053,12 +1057,22 @@ function applyTournamentState(tournament) {
   }
 }
 
+
+
+
 // ===============================
 // 26. SUBMIT ISCRIZIONE (FIREBASE)
 // ===============================
 function handleFormSubmit(tournament) {
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+
+    // VALIDAZIONE CHECKBOX REGOLAMENTO
+    const acceptRegulation = form.querySelector('input[name="accept_regulation"]');
+    if (!acceptRegulation.checked) {
+      showToast("Devi accettare il regolamento per iscriverti ⚠️");
+      return;
+    }
 
     // VALIDAZIONE GIORNI (SE PRESENTI)
     const checkboxGroup = form.querySelector(".checkbox-group");
@@ -1073,7 +1087,7 @@ function handleFormSubmit(tournament) {
     }
 
     const submitBtn = form.querySelector('button[type="submit"]');
-    const inputs = form.querySelectorAll("input, select");
+    const inputs = form.querySelectorAll("input, select, textarea");
 
     // Costruisci payload JSON
     const payload = {
@@ -1097,6 +1111,12 @@ function handleFormSubmit(tournament) {
     const hoursSelect = form.querySelector('[name="preferred_hours"]');
     if (hoursSelect) {
       payload.preferred_hours = hoursSelect.value;
+    }
+
+    // Campo note aggiuntive
+    const notesTextarea = form.querySelector('[name="additional_notes"]');
+    if (notesTextarea && notesTextarea.value.trim()) {
+      payload.additional_notes = notesTextarea.value.trim();
     }
 
     // STATO LOADING
@@ -1159,6 +1179,8 @@ function handleFormSubmit(tournament) {
 
   }, { once: true });
 }
+
+
 
 // ===============================
 // 27. LOAD + RENDER TEAMS LIST

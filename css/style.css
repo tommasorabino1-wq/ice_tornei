@@ -1204,6 +1204,126 @@ body {
 
 
 
+/* =========================
+   FORM - ASTERISCO CAMPI OBBLIGATORI
+========================= */
+.required-asterisk {
+  color: #ef4444;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+/* =========================
+   FORM - NOTA CAMPI OBBLIGATORI
+========================= */
+.form-required-note {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 20px;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+.form-required-note .required-asterisk {
+  margin-left: 0;
+  margin-right: 4px;
+}
+
+/* =========================
+   FORM - CAMPO NOTE AGGIUNTIVE (TEXTAREA)
+========================= */
+#registration-form textarea {
+  margin-top: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-size: 18px;
+  font-weight: 400;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  transition: 
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+#registration-form textarea:hover {
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+#registration-form textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+#registration-form textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* Campo opzionale - stile leggermente diverso */
+#registration-form .field-optional {
+  opacity: 0.9;
+}
+
+/* =========================
+   FORM - CHECKBOX ACCETTAZIONE REGOLAMENTO
+========================= */
+.regulation-acceptance {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: rgba(56, 189, 248, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: var(--radius);
+}
+
+.checkbox-acceptance {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.checkbox-acceptance input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: var(--brand);
+  flex-shrink: 0;
+}
+
+.checkbox-acceptance .checkbox-label {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-main);
+}
+
+.checkbox-acceptance .checkbox-label strong {
+  color: var(--brand);
+}
+
+/* Hover state */
+.regulation-acceptance:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+  background-color: rgba(56, 189, 248, 0.08);
+}
+
+/* Checked state */
+.regulation-acceptance:has(input:checked) {
+  border-color: rgba(56, 189, 248, 0.45);
+  background-color: rgba(56, 189, 248, 0.1);
+}
+
+
+
+
+
+
 
 /* =========================
    TOURNAMENT TEAMS LIST - BASE

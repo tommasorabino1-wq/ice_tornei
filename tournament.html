@@ -211,22 +211,44 @@
         <form id="registration-form">
           <!-- CAMPI BASE -->
           <label>
-            Nome squadra
+            <span class="form-field-title">Nome squadra <span class="required-asterisk">*</span></span>
             <input type="text" name="team_name" required>
           </label>
 
           <label>
-            Email
+            <span class="form-field-title">Email <span class="required-asterisk">*</span></span>
             <input type="email" name="email" required>
           </label>
 
           <label>
-            Telefono
+            <span class="form-field-title">Telefono <span class="required-asterisk">*</span></span>
             <input type="tel" name="phone" required>
           </label>
 
           <!-- CAMPI AGGIUNTIVI (popolati da JS) -->
           <div id="extra-fields-container"></div>
+
+          <!-- CAMPO NOTE AGGIUNTIVE (sempre visibile, opzionale) -->
+          <label class="field-optional">
+            <span class="form-field-title">Note aggiuntive</span>
+            <span class="field-helper">Hai richieste particolari o informazioni da comunicarci? Scrivile qui (facoltativo)</span>
+            <textarea name="additional_notes" rows="3" placeholder="Es. Preferenze specifiche, richieste, informazioni utili..."></textarea>
+          </label>
+
+          <!-- CHECKBOX ACCETTAZIONE REGOLAMENTO -->
+          <div class="form-field-wrapper regulation-acceptance">
+            <label class="checkbox-acceptance">
+              <input type="checkbox" name="accept_regulation" required>
+              <span class="checkbox-label">
+                Confermo di aver letto e accettato il <strong>Regolamento Generale dei Tornei ICE</strong> e il <strong>Regolamento Specifico di questo torneo</strong>. <span class="required-asterisk">*</span>
+              </span>
+            </label>
+          </div>
+
+          <!-- NOTA CAMPI OBBLIGATORI -->
+          <p class="form-required-note">
+            <span class="required-asterisk">*</span> Campi obbligatori
+          </p>
 
           <button type="submit" class="btn primary">
             Invia iscrizione
