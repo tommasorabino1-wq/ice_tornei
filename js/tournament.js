@@ -602,9 +602,11 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
       `;
       break;
     case "open":
-    default:
-      // Non mostriamo nulla se è aperto a tutte le età
-      ageText = "";
+      ageText = `
+        <p>
+          Il torneo è aperto a giocatori di <strong>qualsiasi età</strong>.
+        </p>
+      `;
       break;
   }
   
