@@ -381,47 +381,22 @@ function buildCourtDaysHoursInfoText(t) {
 function renderSpecificCourtRule(tournament) {
   const container = document.getElementById("specific-court-rule");
   
-  // ✅ COSTRUISCI LE REGOLE SPECIFICHE
   const rules = [];
-  let ruleNumber = 1;  // ✅ DICHIARAZIONE MANCANTE!
+  let ruleNumber = 1;
   
-  // REGOLA 1: Quota di iscrizione e costo campi
-  rules.push(buildPriceRule(tournament, ruleNumber));
+  // REGOLA 1: Quota di iscrizione, costo campi e arbitro
+  rules.push(buildPriceCourtRefereeRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 2: Campi, giorni, orari (include time_range)
-  rules.push(buildCourtRule(tournament, ruleNumber));
+  // REGOLA 2: Partecipanti (gender, age, expertise, team_size)
+  rules.push(buildParticipantsRequirementsRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 3: Formato torneo
-  rules.push(buildFormatRule(tournament, ruleNumber));
-  ruleNumber++;
+  // TODO: Aggiungere altre regole qui
   
-  // REGOLA 4: Criteri di classifica (solo se ci sono gironi)
-  const rankingRule = buildRankingRule(tournament, ruleNumber);
-  if (rankingRule) {
-    rules.push(rankingRule);
-    ruleNumber++;
-  }
-  
-  // REGOLA 5: Partecipanti, livello e premi (gender, expertise, award)
-  rules.push(buildParticipantsRule(tournament, ruleNumber));
-  ruleNumber++;
-  
-  // REGOLA 6: Arbitraggio
-  rules.push(buildRefereeRule(tournament, ruleNumber));
-  ruleNumber++;
-
-  // REGOLA 7: Food (opzionale, sempre ultima se presente)
-  const foodRule = buildFoodRule(tournament);
-  if (foodRule) {
-    rules.push(foodRule);
-  }
-  
-  // REGOLA 8: Riferimento al regolamento generale
+  // REGOLA FINALE: Riferimento al regolamento generale
   rules.push(buildGeneralReferenceRule());
   
-  // ✅ RENDER FINALE CON STRUTTURA A BLOCCHI
   container.innerHTML = `
     <div class="specific-regulation-cards">
       ${rules.join('')}
@@ -430,28 +405,258 @@ function renderSpecificCourtRule(tournament) {
 }
 
 
+
 // ===============================
-// 9b. BUILD PRICE RULE (REGOLA 1 - NUOVA)
+// 9b. BUILD PRICE/COURT/REFEREE RULE (REGOLA 1)
 // ===============================
-function buildPriceRule(tournament, ruleNumber) {
+function buildPriceCourtRefereeRule(tournament, ruleNumber) {
   const price = tournament.price || "N/A";
-  const courtPrice = String(tournament.court_price || "").toLowerCase();
+  const courtPrice = String(tournament.court_price || "non_compreso").toLowerCase();
+  const refereePrice = String(tournament.referee_price || "NA").toLowerCase();
   
-  let courtPriceText = "";
+  // === INTRO: Quota base ===
+  let introText = `
+    <p>
+      La quota di iscrizione per questo torneo è di <strong>€${price} a squadra</strong>.
+    </p>
+  `;
   
-  if (courtPrice === "compreso") {
-    courtPriceText = `
+  // === COURT PRICE ===
+  let courtText = "";
+  
+  switch (courtPrice) {
+    case "compreso_gironi_finals":
+      courtText = `
+        <p>
+          La quota include la <strong>prenotazione dei campi</strong> per tutte le partite del torneo 
+          (sia fase a gironi che fasi finali). Le squadre non dovranno sostenere alcun costo aggiuntivo 
+          per l'utilizzo delle strutture sportive.
+        </p>
+      `;
+      break;
+      
+    case "compreso_gironi":
+      courtText = `
+        <p>
+          La quota include la <strong>prenotazione dei campi per le partite della fase a gironi</strong>. 
+          Per le eventuali partite delle fasi finali, le squadre partecipanti dovranno 
+          <strong>dividere equamente</strong> il costo del campo.
+        </p>
+      `;
+      break;
+      
+    case "compreso_finals":
+      courtText = `
+        <p>
+          La quota include la <strong>prenotazione dei campi per le partite delle fasi finali</strong>. 
+          Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> 
+          il costo del campo presso la struttura sportiva prenotata.
+        </p>
+      `;
+      break;
+      
+    case "non_compreso":
+    default:
+      courtText = `
+        <p>
+          La quota <strong>non include</strong> il costo dei campi. Per ogni partita, le squadre dovranno 
+          <strong>dividere equamente</strong> il costo del campo presso la struttura sportiva prenotata.
+        </p>
+      `;
+      break;
+  }
+  
+  // === REFEREE PRICE ===
+  let refereeText = "";
+  
+  // Se NA, non c'è arbitro, quindi non menzioniamo nulla (gestito altrove)
+  if (refereePrice !== "na") {
+    switch (refereePrice) {
+      case "compreso_gironi_finals":
+        refereeText = `
+          <p>
+            La quota include il <strong>costo dell'arbitro</strong> per tutte le partite del torneo 
+            (sia fase a gironi che fasi finali).
+          </p>
+        `;
+        break;
+        
+      case "compreso_gironi":
+        refereeText = `
+          <p>
+            La quota include il <strong>costo dell'arbitro per le partite della fase a gironi</strong>. 
+            Per le eventuali partite delle fasi finali, le squadre partecipanti dovranno 
+            <strong>dividere equamente</strong> il compenso arbitrale.
+          </p>
+        `;
+        break;
+        
+      case "compreso_finals":
+        refereeText = `
+          <p>
+            La quota include il <strong>costo dell'arbitro per le partite delle fasi finali</strong>. 
+            Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> 
+            il compenso arbitrale.
+          </p>
+        `;
+        break;
+        
+      case "non_compreso":
+      default:
+        refereeText = `
+          <p>
+            La quota <strong>non include</strong> il compenso arbitrale. Per ogni partita, le squadre dovranno 
+            <strong>dividere equamente</strong> il costo dell'arbitro.
+          </p>
+        `;
+        break;
+    }
+  }
+  
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Quota di iscrizione</strong></p>
+        ${introText}
+        ${courtText}
+        ${refereeText}
+      </div>
+    </div>
+  `;
+}
+
+
+
+// ===============================
+// 9c. BUILD PARTICIPANTS REQUIREMENTS RULE (REGOLA 2)
+// ===============================
+function buildParticipantsRequirementsRule(tournament, ruleNumber) {
+  const gender = String(tournament.gender || "open").toLowerCase();
+  const age = String(tournament.age || "open").toLowerCase();
+  const expertise = String(tournament.expertise || "open").toLowerCase();
+  const teamSizeMin = Number(tournament.team_size_min) || 0;
+  const teamSizeMax = Number(tournament.team_size_max) || 0;
+  
+  // === GENDER TEXT ===
+  let genderText = "";
+  switch (gender) {
+    case "only_male":
+      genderText = `
+        <p>
+          Possono partecipare esclusivamente <strong>squadre composte da soli uomini</strong>.
+        </p>
+      `;
+      break;
+    case "only_female":
+      genderText = `
+        <p>
+          Possono partecipare esclusivamente <strong>squadre composte da sole donne</strong>.
+        </p>
+      `;
+      break;
+    case "mixed_strict":
+      genderText = `
+        <p>
+          Ogni squadra deve essere <strong>obbligatoriamente mista</strong>, composta da 
+          <strong>almeno un uomo e almeno una donna</strong>.
+        </p>
+      `;
+      break;
+    case "mixed_female_allowed":
+      genderText = `
+        <p>
+          Ogni squadra deve essere <strong>mista</strong> (almeno un uomo e una donna) 
+          oppure composta da <strong>sole donne</strong>. Non sono ammesse squadre composte da soli uomini.
+        </p>
+      `;
+      break;
+    case "open":
+    default:
+      genderText = `
+        <p>
+          Possono partecipare squadre di <strong>qualsiasi composizione</strong>: 
+          maschili, femminili o miste.
+        </p>
+      `;
+      break;
+  }
+  
+  // === AGE TEXT ===
+  let ageText = "";
+  switch (age) {
+    case "under_18":
+      ageText = `
+        <p>
+          Il torneo è riservato a giocatori <strong>Under 18</strong>. 
+          Tutti i componenti della squadra devono avere meno di 18 anni alla data di inizio del torneo.
+        </p>
+      `;
+      break;
+    case "over_35":
+      ageText = `
+        <p>
+          Il torneo è riservato a giocatori <strong>Over 35</strong>. 
+          Tutti i componenti della squadra devono avere almeno 35 anni alla data di inizio del torneo.
+        </p>
+      `;
+      break;
+    case "open":
+    default:
+      // Non mostriamo nulla se è aperto a tutte le età
+      ageText = "";
+      break;
+  }
+  
+  // === EXPERTISE TEXT ===
+  let expertiseText = "";
+  switch (expertise) {
+    case "expert":
+      expertiseText = `
+        <p>
+          Questo torneo è rivolto a <strong>giocatori esperti</strong> con un livello di gioco medio-alto. 
+          Si consiglia la partecipazione solo a chi ha esperienza agonistica o un buon livello tecnico.
+        </p>
+      `;
+      break;
+    case "open":
+    default:
+      expertiseText = `
+        <p>
+          Questo torneo è <strong>aperto a tutti</strong>, indipendentemente dal livello di esperienza. 
+          È pensato per chi vuole divertirsi e mettersi in gioco in un contesto amatoriale.
+        </p>
+      `;
+      break;
+  }
+  
+  // === TEAM SIZE TEXT ===
+  let teamSizeText = "";
+  if (teamSizeMin > 0 && teamSizeMax > 0) {
+    if (teamSizeMin === teamSizeMax) {
+      teamSizeText = `
+        <p>
+          Ogni squadra deve essere composta da esattamente <strong>${teamSizeMin} giocatori</strong>.
+        </p>
+      `;
+    } else {
+      teamSizeText = `
+        <p>
+          Ogni squadra deve essere composta da un <strong>minimo di ${teamSizeMin}</strong> 
+          e un <strong>massimo di ${teamSizeMax} giocatori</strong>.
+        </p>
+      `;
+    }
+  } else if (teamSizeMin > 0) {
+    teamSizeText = `
       <p>
-        La quota include la <strong>prenotazione dei campi</strong> per tutte le partite del torneo. 
-        Le squadre non dovranno sostenere alcun costo aggiuntivo per l'utilizzo delle strutture sportive.
+        Ogni squadra deve essere composta da almeno <strong>${teamSizeMin} giocatori</strong>.
       </p>
     `;
-  } else {
-    // courtPrice === "non_compreso" o altro
-    courtPriceText = `
+  } else if (teamSizeMax > 0) {
+    teamSizeText = `
       <p>
-        La quota <strong>non include</strong> il costo dei campi. Per ogni partita, le squadre dovranno 
-        <strong>dividere equamente</strong> il costo del campo presso la struttura sportiva prenotata.
+        Ogni squadra può essere composta da un massimo di <strong>${teamSizeMax} giocatori</strong>.
       </p>
     `;
   }
@@ -460,15 +665,18 @@ function buildPriceRule(tournament, ruleNumber) {
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
-        <p><strong>Quota di iscrizione</strong></p>
-        <p>
-          La quota di iscrizione per questo torneo è di <strong>€${price} a squadra</strong>.
-        </p>
-        ${courtPriceText}
+        <p><strong>Chi può partecipare</strong></p>
+        ${genderText}
+        ${ageText}
+        ${expertiseText}
+        ${teamSizeText}
       </div>
     </div>
   `;
 }
+
+
+
 
 
 
@@ -762,73 +970,6 @@ function buildCrossGroupComparisonText(numGroups, teamsInFinal) {
 }
 
 
-
-// ===============================
-// 17b. BUILD PARTICIPANTS RULE (NUOVA - gender, expertise, award)
-// ===============================
-function buildParticipantsRule(tournament, ruleNumber) {
-  const gender = String(tournament.gender || "open").toLowerCase();
-  const expertise = String(tournament.expertise || "open").toLowerCase();
-  const award = tournament.award === true || String(tournament.award).toUpperCase() === "TRUE";
-  
-  // GENDER TEXT
-  let genderText = "";
-  switch (gender) {
-    case "only_male":
-      genderText = `Possono partecipare esclusivamente <strong>squadre composte da soli uomini</strong>.`;
-      break;
-    case "only_female":
-      genderText = `Possono partecipare esclusivamente <strong>squadre composte da sole donne</strong>.`;
-      break;
-    case "mixed_strict":
-      genderText = `Ogni squadra deve essere composta da <strong>almeno un uomo e almeno una donna</strong>.`;
-      break;
-    case "mixed_female_allowed":
-      genderText = `Ogni squadra deve includere <strong>almeno un uomo e una donna</strong>, oppure essere composta da <strong>sole donne</strong>.`;
-      break;
-    case "open":
-    default:
-      genderText = `Possono partecipare squadre di <strong>qualsiasi composizione</strong> (uomini, donne o miste).`;
-      break;
-  }
-  
-  // EXPERTISE + AWARD TEXT
-  let expertiseAwardText = "";
-  if (expertise === "expert") {
-    expertiseAwardText = `
-      <p>
-        Questo torneo è rivolto a <strong>giocatori esperti</strong> con un livello di gioco medio-alto.
-      </p>
-      <p>
-        In considerazione del livello competitivo, sono previsti <strong>premi in denaro o beni materiali</strong> 
-        per le squadre vincitrici.
-      </p>
-    `;
-  } else {
-    // expertise === "open" (amatoriale)
-    expertiseAwardText = `
-      <p>
-        Questo torneo è <strong>aperto a tutti</strong>, indipendentemente dal livello di esperienza. 
-        È pensato per chi vuole divertirsi e mettersi in gioco in un contesto amatoriale.
-      </p>
-      <p>
-        Trattandosi di un torneo amatoriale, non sono previsti premi in denaro: le squadre vincitrici 
-        riceveranno <strong>riconoscimenti simbolici</strong> (coppe, medaglie o attestati).
-      </p>
-    `;
-  }
-  
-  return `
-    <div class="specific-regulation-card">
-      <div class="specific-regulation-icon">${ruleNumber}</div>
-      <div class="specific-regulation-content">
-        <p><strong>Partecipanti e premi</strong></p>
-        <p>${genderText}</p>
-        ${expertiseAwardText}
-      </div>
-    </div>
-  `;
-}
 
 
 

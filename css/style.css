@@ -897,7 +897,7 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font-size: 24px;
+  font-size: 20px;
   color: var(--text-secondary);
   line-height: 1.8;
 }
@@ -906,7 +906,7 @@ body {
   flex-shrink: 0;
   width: 24px;
   text-align: center;
-  font-size: 24px;
+  font-size: 20px;
 }
 
 .tournament-info-rows .info-row span:last-child {
