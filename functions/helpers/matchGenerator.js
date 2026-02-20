@@ -76,9 +76,7 @@ function assignHomeAwayGreedy(roundPairs) {
 // HELPER: Calcola configurazione gironi ottimale
 // ===============================
 function calculateGroupConfig(totalTeams, preferredTeamsPerGroup) {
-  // Se è specificato teams_per_group nel torneo, usa quello
   if (preferredTeamsPerGroup && preferredTeamsPerGroup > 0) {
-    // Verifica che sia compatibile
     if (totalTeams % preferredTeamsPerGroup === 0 && preferredTeamsPerGroup % 2 === 0) {
       return {
         teamsPerGroup: preferredTeamsPerGroup,
@@ -87,8 +85,6 @@ function calculateGroupConfig(totalTeams, preferredTeamsPerGroup) {
     }
   }
 
-  // Altrimenti, calcola automaticamente
-  // Priorità: gironi da 4, poi da 6, poi da 8, ecc.
   const possibleSizes = [4, 6, 8, 10, 12];
   
   for (const size of possibleSizes) {
@@ -100,7 +96,6 @@ function calculateGroupConfig(totalTeams, preferredTeamsPerGroup) {
     }
   }
 
-  // Fallback: un unico girone (se pari)
   if (totalTeams % 2 === 0 && totalTeams >= 2) {
     return {
       teamsPerGroup: totalTeams,
@@ -108,7 +103,6 @@ function calculateGroupConfig(totalTeams, preferredTeamsPerGroup) {
     };
   }
 
-  // Errore: numero dispari di squadre
   throw new Error(`Cannot create groups with ${totalTeams} teams (odd number)`);
 }
 
@@ -140,12 +134,12 @@ async function generateMatchesIfReady(tournamentId) {
       return;
     }
 
-    // 3) Recupera TUTTI i team iscritti
-    const teamsSnapshot = await db.collection('teams')
+    // 3) ✅ Recupera teams da SUBSCRIPTIONS (non più da collection "teams")
+    const subscriptionsSnapshot = await db.collection('subscriptions')
       .where('tournament_id', '==', tournamentId)
       .get();
 
-    const totalTeams = teamsSnapshot.size;
+    const totalTeams = subscriptionsSnapshot.size;
     console.log(`👥 Teams registered: ${totalTeams}`);
 
     if (totalTeams < 2) {
@@ -165,16 +159,19 @@ async function generateMatchesIfReady(tournamentId) {
     const { teamsPerGroup, numGroups } = groupConfig;
     console.log(`📊 Group config: ${numGroups} groups × ${teamsPerGroup} teams each`);
 
-    // 5) Shuffle teams + crea mappa nomi
-    const teamIds = teamsSnapshot.docs.map(doc => doc.data().team_id);
+    // 5) ✅ Estrai team_id e team_name da subscriptions
+    const teamIds = [];
     const teamNamesMap = {};
-    teamsSnapshot.docs.forEach(doc => {
+    
+    subscriptionsSnapshot.docs.forEach(doc => {
       const data = doc.data();
+      teamIds.push(data.team_id);
       teamNamesMap[data.team_id] = data.team_name;
     });
 
     console.log(`📝 Team IDs before shuffle: ${teamIds.join(', ')}`);
 
+    // Shuffle
     for (let i = teamIds.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [teamIds[i], teamIds[j]] = [teamIds[j], teamIds[i]];
@@ -185,13 +182,12 @@ async function generateMatchesIfReady(tournamentId) {
     // 6) Genera match per ogni gruppo + traccia assegnazione gruppi
     const batch = db.batch();
     let globalMatchCounter = 1;
-    const teamGroupAssignment = {}; // team_id -> group_id
+    const teamGroupAssignment = {};
 
     for (let g = 0; g < numGroups; g++) {
       const groupId = `G${g + 1}`;
       const groupTeams = teamIds.slice(g * teamsPerGroup, (g + 1) * teamsPerGroup);
 
-      // Traccia assegnazione gruppo
       groupTeams.forEach(teamId => {
         teamGroupAssignment[teamId] = groupId;
       });
@@ -262,7 +258,7 @@ async function generateMatchesIfReady(tournamentId) {
       console.log(`   ✓ Standing ${standingId}: ${teamName} (${groupId})`);
     });
 
-    // 8) Aggiorna teams_current e teams_per_group nel torneo (per riferimento)
+    // 8) Aggiorna teams_current e teams_per_group nel torneo
     const tournamentRef = db.collection('tournaments').doc(tournamentId);
     batch.update(tournamentRef, {
       teams_current: totalTeams,
@@ -280,6 +276,5 @@ async function generateMatchesIfReady(tournamentId) {
     throw error;
   }
 }
-
 
 module.exports = { generateMatchesIfReady };

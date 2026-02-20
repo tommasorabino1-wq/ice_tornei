@@ -28,8 +28,11 @@ function handleOptions(req, res) {
   return false;
 }
 
+
+
+
 // ===============================
-// GET TOURNAMENTS (FIXED)
+// GET TOURNAMENTS
 // ===============================
 exports.getTournaments = functions.https.onRequest(async (req, res) => {
   setCORS(res);
@@ -47,15 +50,13 @@ exports.getTournaments = functions.https.onRequest(async (req, res) => {
     for (const doc of snapshot.docs) {
       const data = doc.data();
       
-      // ✅ FIX: Usa doc.id se tournament_id non esiste
       const tournamentId = data.tournament_id || doc.id;
       
-      // Conta teams_current
+      // ✅ Conta teams_current da subscriptions (non più da collection separata)
       const subsSnapshot = await db.collection('subscriptions')
         .where('tournament_id', '==', tournamentId)
         .get();
       
-      // ✅ Aggiungi tournament_id ai dati se manca
       data.tournament_id = tournamentId;
       data.teams_current = subsSnapshot.size;
       
@@ -182,7 +183,7 @@ exports.getFinals = functions.https.onRequest(async (req, res) => {
 });
 
 // ===============================
-// GET TEAMS
+// GET TEAMS (from subscriptions)
 // ===============================
 exports.getTeams = functions.https.onRequest(async (req, res) => {
   setCORS(res);
@@ -195,14 +196,18 @@ exports.getTeams = functions.https.onRequest(async (req, res) => {
       return res.status(200).json([]);
     }
 
-    const snapshot = await db.collection('teams')
+    // ✅ Ora legge da subscriptions invece che da teams
+    const snapshot = await db.collection('subscriptions')
       .where('tournament_id', '==', tournamentId)
       .get();
 
-    const teams = snapshot.docs.map(doc => ({
-      team_id: doc.data().team_id,
-      team_name: doc.data().team_name
-    }));
+    const teams = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        team_id: data.team_id,
+        team_name: data.team_name
+      };
+    });
 
     res.status(200).json(teams);
   } catch (error) {
@@ -210,6 +215,8 @@ exports.getTeams = functions.https.onRequest(async (req, res) => {
     res.status(500).json([]);
   }
 });
+
+
 
 // ===============================
 // GET BRACKET (struttura finals)
@@ -544,17 +551,33 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     
     const fixedCourt = tournament.fixed_court !== false; // default true
 
-    // 3) Blocco email duplicata
-    const duplicateCheck = await db.collection('subscriptions')
+    // 3) Genera team_id normalizzato
+    const normalizedTeamName = team_name.trim().toLowerCase();
+    const teamId = `${tournament_id}_${normalizedTeamName}`;
+
+    // 4) Blocco team duplicato (stesso team_name normalizzato)
+    const duplicateTeamCheck = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
-      .where('email', '==', email)
+      .where('team_id', '==', teamId)
+      .limit(1)
       .get();
 
-    if (!duplicateCheck.empty) {
-      return res.status(409).send('DUPLICATE');
+    if (!duplicateTeamCheck.empty) {
+      return res.status(409).send('DUPLICATE_TEAM');
     }
 
-    // 4) Conta subscriptions esistenti per generare ID incrementale
+    // 5) Blocco email duplicata
+    const duplicateEmailCheck = await db.collection('subscriptions')
+      .where('tournament_id', '==', tournament_id)
+      .where('email', '==', email)
+      .limit(1)
+      .get();
+
+    if (!duplicateEmailCheck.empty) {
+      return res.status(409).send('DUPLICATE_EMAIL');
+    }
+
+    // 6) Conta subscriptions esistenti per generare ID incrementale
     const existingSubsSnapshot = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .get();
@@ -562,14 +585,15 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     const subsCount = existingSubsSnapshot.size + 1;
     const subscriptionId = `${tournament_id}_sub${subsCount}`;
 
-    // 5) Crea subscription con ID deterministico
+    // 7) Crea subscription con team_id incluso
     const subscriptionData = {
       subscription_id: subscriptionId,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      team_id: teamId,                    // ← NUOVO: ID normalizzato per riferimenti
       tournament_id,
-      team_name,
+      team_name,                          // Nome originale (con maiuscole)
       email,
-      phone: phone || ''
+      phone: phone || '',
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
     };
 
     // Campi extra se fixed_court = false
@@ -586,18 +610,7 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
 
     await db.collection('subscriptions').doc(subscriptionId).set(subscriptionData);
 
-    // 6) Crea/aggiorna team
-    const normalizedTeam = team_name.trim().toLowerCase();
-    const teamId = `${tournament_id}_${normalizedTeam}`;
-
-    await db.collection('teams').doc(teamId).set({
-      team_id: teamId,
-      tournament_id,
-      team_name
-    });
-
-    // ✅ RIMOSSO: generateMatchesIfReady, generateStandingsBackend, updateTournamentStatus
-    // Ora la generazione match/standings avviene tramite trigger quando cambi status da "open" a "full"
+    // ✅ RIMOSSO: Creazione documento in collection "teams" (non più necessaria)
 
     res.status(200).send('SUBSCRIPTION_SAVED');
 
@@ -606,6 +619,8 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     res.status(500).send('ERROR');
   }
 });
+
+
 
 
 

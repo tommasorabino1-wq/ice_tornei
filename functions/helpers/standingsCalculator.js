@@ -21,15 +21,12 @@ function buildH2HStats(teamIds, matches) {
     const sa = Number(m.score_a);
     const sb = Number(m.score_b);
 
-    // goals
     h2h[a].h2h_goals_for += sa;
     h2h[b].h2h_goals_for += sb;
 
-    // diff
     h2h[a].h2h_goal_diff += (sa - sb);
     h2h[b].h2h_goal_diff += (sb - sa);
 
-    // points
     if (sa > sb) {
       h2h[a].h2h_points += 3;
     } else if (sa < sb) {
@@ -61,7 +58,6 @@ function sameTuple(a, b) {
 // HELPER: Ranking con H2H
 // ===============================
 function rankGroupTeams(teamsStats, groupMatches) {
-  // 1) Raggruppa per punti
   const buckets = {};
   teamsStats.forEach(t => {
     const p = t.points;
@@ -76,7 +72,6 @@ function rankGroupTeams(teamsStats, groupMatches) {
     const bucket = buckets[p];
 
     if (bucket.length === 1) {
-      // Nessun tie: h2h = 0 per completezza
       const t = bucket[0];
       t.h2h_points = 0;
       t.h2h_goal_diff = 0;
@@ -85,7 +80,6 @@ function rankGroupTeams(teamsStats, groupMatches) {
       return;
     }
 
-    // 2) Mini-classifica H2H tra team con stessi punti
     const ids = bucket.map(x => x.team_id);
     const h2hMap = buildH2HStats(ids, groupMatches);
 
@@ -96,7 +90,6 @@ function rankGroupTeams(teamsStats, groupMatches) {
       t.h2h_goals_for = h.h2h_goals_for;
     });
 
-    // 3) Ordina il bucket con H2H
     bucket.sort((a, b) =>
       b.h2h_points - a.h2h_points ||
       b.h2h_goal_diff - a.h2h_goal_diff ||
@@ -109,7 +102,6 @@ function rankGroupTeams(teamsStats, groupMatches) {
     finalOrdered.push(...bucket);
   });
 
-  // 4) Assegna rank_level con ex-aequo (1,2,2,4)
   let rank = 1;
   let i = 0;
   while (i < finalOrdered.length) {
@@ -156,17 +148,25 @@ async function generateStandingsBackend(tournamentId) {
       if (m.team_b) teamGroupMap[m.team_b] = m.group_id;
     });
 
-    // 3) Recupera teams
-    const teamsSnapshot = await db.collection('teams')
+    // 3) ✅ Recupera teams da SUBSCRIPTIONS (non più da collection "teams")
+    const subscriptionsSnapshot = await db.collection('subscriptions')
       .where('tournament_id', '==', tournamentId)
       .get();
 
-    if (teamsSnapshot.empty) {
-      console.log('⚠️ No teams found for', tournamentId);
+    if (subscriptionsSnapshot.empty) {
+      console.log('⚠️ No subscriptions found for', tournamentId);
       return;
     }
 
-    const teams = teamsSnapshot.docs.map(doc => doc.data());
+    // Crea lista teams da subscriptions
+    const teams = subscriptionsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        team_id: data.team_id,
+        team_name: data.team_name
+      };
+    });
+
     console.log(`👥 Found ${teams.length} teams`);
 
     // 4) Calcola statistiche per gruppo
@@ -233,7 +233,6 @@ async function generateStandingsBackend(tournamentId) {
     // 5) Ranking per girone + scrittura batch
     const batch = db.batch();
 
-    // Prima cancella standings esistenti
     const existingStandings = await db.collection('standings')
       .where('tournament_id', '==', tournamentId)
       .get();
@@ -244,7 +243,6 @@ async function generateStandingsBackend(tournamentId) {
       batch.delete(doc.ref);
     });
 
-    // Poi crea nuove standings con ID deterministico
     let standingsCount = 0;
 
     Object.keys(byGroup).forEach(groupId => {
@@ -254,14 +252,12 @@ async function generateStandingsBackend(tournamentId) {
       console.log(`🏟️ Processing ${groupId}: ${groupTeams.length} teams, anyPlayed=${anyPlayed}`);
 
       if (!anyPlayed) {
-        // Nessun match giocato: tutti rank 1
         groupTeams.forEach(t => {
-          // ✅ ID DETERMINISTICO: standings_tournamentId_teamId
           const standingId = `standings_${t.team_id}`;
           const standingRef = db.collection('standings').doc(standingId);
 
           batch.set(standingRef, {
-            standing_id: standingId, // ✅ Aggiungi anche nei dati
+            standing_id: standingId,
             ...t,
             rank_level: 1,
             rank_group: 'INIT'
@@ -273,7 +269,6 @@ async function generateStandingsBackend(tournamentId) {
         return;
       }
 
-      // Ranking con H2H
       const groupMatches = matches.filter(m => m.group_id === groupId);
       const ordered = rankGroupTeams(groupTeams, groupMatches);
 
@@ -287,12 +282,11 @@ async function generateStandingsBackend(tournamentId) {
           t.goals_for
         ].join('|');
 
-        // ✅ ID DETERMINISTICO: standings_tournamentId_teamId
         const standingId = `standings_${t.team_id}`;
         const standingRef = db.collection('standings').doc(standingId);
 
         batch.set(standingRef, {
-          standing_id: standingId, // ✅ Aggiungi anche nei dati
+          standing_id: standingId,
           ...t,
           rank_group: rankGroupKey
         });
@@ -314,3 +308,4 @@ async function generateStandingsBackend(tournamentId) {
 }
 
 module.exports = { generateStandingsBackend };
+

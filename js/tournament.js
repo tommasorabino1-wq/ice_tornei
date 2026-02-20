@@ -1143,12 +1143,32 @@ function handleFormSubmit(tournament) {
           return;
         }
 
+        if (response === "REGISTRATIONS_CLOSED") {
+          showToast("Le iscrizioni sono chiuse ⚠️");
+          restoreForm();
+          return;
+        }
+
         if (response === "INVALID_DATA") {
           showToast("Dati mancanti o non validi ⚠️");
           restoreForm();
           return;
         }
 
+        // ✅ NUOVO: Gestione errori duplicati separati
+        if (response === "DUPLICATE_TEAM") {
+          showToast("Una squadra con questo nome è già iscritta ⚠️");
+          restoreForm();
+          return;
+        }
+
+        if (response === "DUPLICATE_EMAIL") {
+          showToast("Questa email è già stata utilizzata ⚠️");
+          restoreForm();
+          return;
+        }
+
+        // ✅ Mantieni retrocompatibilità con vecchio codice DUPLICATE
         if (response === "DUPLICATE") {
           showToast("Questa email è già iscritta ⚠️");
           restoreForm();
@@ -1179,8 +1199,6 @@ function handleFormSubmit(tournament) {
 
   }, { once: true });
 }
-
-
 
 // ===============================
 // 27. LOAD + RENDER TEAMS LIST
