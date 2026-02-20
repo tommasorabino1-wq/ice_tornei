@@ -376,7 +376,7 @@ function buildCourtDaysHoursInfoText(t) {
 
 
 // ===============================
-// 9. RENDER SPECIFIC COURT RULE
+// 9. RENDER SPECIFIC TOURNAMENT RULE
 // ===============================
 function renderSpecificCourtRule(tournament) {
   const container = document.getElementById("specific-court-rule");
@@ -392,6 +392,18 @@ function renderSpecificCourtRule(tournament) {
   rules.push(buildParticipantsRequirementsRule(tournament, ruleNumber));
   ruleNumber++;
   
+  // REGOLA 3: Premi e riconoscimenti (award, mvp_award, upsell)
+  rules.push(buildAwardsRule(tournament, ruleNumber));
+  ruleNumber++;
+  
+  // REGOLA 4: Formato e durata (format_type, time_range)
+  rules.push(buildFormatTimeRangeRule(tournament, ruleNumber));
+  ruleNumber++;
+  
+  // REGOLA 5: Campi, giorni e orari (fixed_court_days_hours, available_days, available_hours)
+  rules.push(buildCourtDaysHoursRule(tournament, ruleNumber));
+  ruleNumber++;
+  
   // TODO: Aggiungere altre regole qui
   
   // REGOLA FINALE: Riferimento al regolamento generale
@@ -403,6 +415,7 @@ function renderSpecificCourtRule(tournament) {
     </div>
   `;
 }
+
 
 
 
@@ -679,222 +692,455 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
 
 
 
-
-
-
-
 // ===============================
-// 10. BUILD COURT RULE (REGOLA 2 - AGGIORNATA CON TIME_RANGE)
+// 9d. BUILD AWARDS RULE (REGOLA 3)
 // ===============================
-function buildCourtRule(tournament, ruleNumber) {
-  const fixedCourt = tournament.fixed_court === true || String(tournament.fixed_court).toUpperCase() === "TRUE";
-  const days = String(tournament.available_days || "").trim().toLowerCase();
-  const hours = String(tournament.available_hours || "").trim().toLowerCase();
-  const timeRange = String(tournament.time_range || "").trim().toLowerCase();
-  const location = String(tournament.location || "");
-  const date = String(tournament.date || "");
-
-  let ruleText = "";
-
-  // Frase introduttiva basata su time_range
-  let timeRangeIntro = "";
-  if (timeRange === "short") {
-    timeRangeIntro = `<p>Tutte le partite di questo torneo si svolgeranno in un <strong>singolo giorno</strong>, a <strong>${date}</strong>, a <strong>${location}</strong>.</p>`;
-  } else if (timeRange === "long") {
-    timeRangeIntro = `<p>Questo torneo si svolge <strong>su più settimane</strong>. Generalmente, ogni squadra giocherà una partita a settimana fino al termine del torneo.</p>`;
-  }
-
-  if (fixedCourt) {
-    ruleText = `
-      ${timeRangeIntro}
-      <p>
-        Campo, giorno e orari definitivi delle partite saranno comunicati dall’organizzazione prima dell’inizio del torneo.
-      </p>
-    `;
-  } else {
-    const availabilityPhrase = buildAvailabilityPhrase(days, hours);
-
-    ruleText = `
-      ${timeRangeIntro}
-      <p>
-        ${availabilityPhrase}<br>In fase di iscrizione, le squadre potranno esprimere le proprie preferenze
-        relative a zona, giorni e orari di gioco.
-      </p>
-      <p>
-        L'organizzazione provvederà alla prenotazione dei campi per le partite casalinghe di ciascuna squadra, 
-        tenendo conto delle preferenze indicate.
-      </p>
-    `;
-  }
-
-  return `
-    <div class="specific-regulation-card">
-      <div class="specific-regulation-icon">${ruleNumber}</div>
-      <div class="specific-regulation-content">
-        <p><strong>Campi, giorni e orari</strong></p>
-        ${ruleText}
-      </div>
-    </div>
-  `;
-}
-
-
-
-// ===============================
-// 11. BUILD AVAILABILITY PHRASE
-// ===============================
-function buildAvailabilityPhrase(days, hours) {
-  const daysPhrase = mapDaysToPhrase(days);
-  const hoursPhrase = mapHoursToPhrase(hours);
-
-  if (!daysPhrase && !hoursPhrase) {
-    return "";
-  }
-
-  if (daysPhrase && !hoursPhrase) {
-    return `Le partite potranno essere disputate <strong>${daysPhrase}</strong>. `;
-  }
-
-  if (!daysPhrase && hoursPhrase) {
-    return `Le partite potranno essere disputate <strong>${hoursPhrase}</strong>. `;
-  }
-
-  return `Le partite potranno essere disputate <strong>${daysPhrase}</strong>, <strong>${hoursPhrase}</strong>. `;
-}
-
-// ===============================
-// 12. MAP DAYS TO PHRASE
-// ===============================
-function mapDaysToPhrase(days) {
-  if (!days || days === "na") {
-    return null;
-  }
-
-  const mapping = {
-    "lun-dom": "in qualsiasi giorno della settimana",
-    "lun-ven": "dal lunedì al venerdì",
-    "sab-dom": "il sabato e la domenica"
-  };
-
-  return mapping[days] || null;
-}
-
-// ===============================
-// 13. MAP HOURS TO PHRASE
-// ===============================
-function mapHoursToPhrase(hours) {
-  if (!hours || hours === "na") {
-    return null;
-  }
-
-  const mapping = {
-    "10-22": "nella fascia oraria compresa tra le 10:00 e le 22:00",
-    "10-19": "nella fascia oraria compresa tra le 10:00 e le 19:00",
-    "19-22": "nella fascia serale, tra le 19:00 e le 22:00"
-  };
-
-  return mapping[hours] || null;
-}
-
-// ===============================
-// 14. BUILD FORMAT RULE (REGOLA 3 - AGGIORNATA CON ruleNumber)
-// ===============================
-function buildFormatRule(tournament, ruleNumber) {
-  const teamsPerGroup = Number(tournament.teams_per_group) || 0;
-  const teamsInFinal = Number(tournament.teams_in_final) || 0;
-  const teamsMax = Number(tournament.teams_max) || 0;
-
-  let formatText = "";
-
-  if (teamsPerGroup > 0 && teamsInFinal > 0) {
-    const numGroups = Math.ceil(teamsMax / teamsPerGroup);
-    const qualificationPhrase = buildQualificationPhrase(numGroups, teamsInFinal);
-    
-    formatText = `
-      <p>
-        Il torneo prevede una <strong>fase a gironi</strong> seguita da una <strong>fase finale</strong>, a cui accederanno <strong>${teamsInFinal} squadre</strong>.
-      </p>
-      <p>
-        Le <strong>${teamsMax} squadre</strong> iscritte saranno suddivise in <strong>${numGroups} ${numGroups === 1 ? 'girone' : 'gironi'}</strong> 
-        da <strong>${teamsPerGroup} squadre</strong> ciascuno.
-      </p>
-      <p>
-        ${qualificationPhrase}
-      </p>
-    `;
-  } else if (teamsPerGroup === 0 && teamsInFinal > 0) {
-    formatText = `
-      <p>
-        Il torneo si svolgerà con <strong>fase finale diretta</strong> tra le <strong>${teamsMax} squadre</strong> iscritte.
-      </p>
-    `;
-  } else if (teamsPerGroup > 0 && teamsInFinal === 0) {
-    const numGroups = Math.ceil(teamsMax / teamsPerGroup);
-    
-    formatText = `
-      <p>
-        Il torneo prevede una <strong>fase a gironi</strong>.
-      </p>
-      <p>
-        Le <strong>${teamsMax} squadre</strong> iscritte saranno suddivise in <strong>${numGroups} ${numGroups === 1 ? 'girone' : 'gironi'}</strong> 
-        da <strong>${teamsPerGroup} squadre</strong> ciascuno.
-      </p>
-    `;
-  } else {
-    formatText = `
-      <p>
-        Il torneo prevede <strong>${teamsMax} squadre</strong> partecipanti.
-      </p>
-      <p>
-        Il formato dettagliato sarà comunicato prima dell'inizio del torneo.
-      </p>
-    `;
-  }
-
-  return `
-    <div class="specific-regulation-card">
-      <div class="specific-regulation-icon">${ruleNumber}</div>
-      <div class="specific-regulation-content">
-        <p><strong>Formato del torneo</strong></p>
-        ${formatText}
-      </div>
-    </div>
-  `;
-}
-
-
-
-// ===============================
-// 15. BUILD QUALIFICATION PHRASE
-// ===============================
-function buildQualificationPhrase(numGroups, teamsInFinal) {
-  const firstPlaceQualifiers = numGroups;
-  const secondPlaceQualifiers = teamsInFinal - firstPlaceQualifiers;
-
-  if (secondPlaceQualifiers <= 0) {
-    if (numGroups === 1) {
-      return `Solo la <strong>prima classificata</strong> del girone accederà alla fase finale.`;
+function buildAwardsRule(tournament, ruleNumber) {
+  const expertise = String(tournament.expertise || "open").toLowerCase();
+  const hasAward = tournament.award === true || String(tournament.award).toUpperCase() === "TRUE";
+  const awardPerc = String(tournament.award_amount_perc || "NA");
+  const mvpAward = String(tournament.mvp_award || "none").toLowerCase();
+  const upsell = String(tournament.upsell || "none").toLowerCase();
+  
+  // === MAIN AWARD TEXT ===
+  let mainAwardText = "";
+  
+  if (hasAward && expertise === "expert") {
+    if (awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc))) {
+      mainAwardText = `
+        <p>
+          Essendo un torneo pensato per <strong>giocatori esperti</strong>, è previsto un 
+          <strong>montepremi</strong> corrispondente al <strong>${awardPerc}% delle quote totali</strong> 
+          raccolte dalle iscrizioni. Il montepremi sarà suddiviso tra le prime 3 squadre classificate.
+        </p>
+      `;
+    } else {
+      mainAwardText = `
+        <p>
+          Essendo un torneo pensato per <strong>giocatori esperti</strong>, è previsto un 
+          <strong>montepremi</strong> per le squadre vincitrici. 
+          L'importo e la suddivisione saranno comunicati prima dell'inizio del torneo.
+        </p>
+      `;
     }
-    return `Solo le <strong>prime classificate</strong> di ciascun girone accederanno alla fase finale.`;
-  }
-
-  if (secondPlaceQualifiers === numGroups) {
-    if (numGroups === 1) {
-      return `La <strong>prima</strong> e la <strong>seconda classificata</strong> del girone accederanno alla fase finale.`;
-    }
-    return `Le <strong>prime</strong> e le <strong>seconde classificate</strong> di ciascun girone accederanno alla fase finale.`;
-  }
-
-  if (numGroups === 1) {
-    return `La <strong>prima classificata</strong> del girone e la <strong>migliore seconda</strong> accederanno alla fase finale.`;
+  } else {
+    mainAwardText = `
+      <p>
+        Essendo un torneo pensato per <strong>giocatori amatoriali</strong>, sono previsti 
+        esclusivamente <strong>premi simbolici</strong> per le squadre vincitrici: 
+        coppe, medaglie, gadget e altri riconoscimenti.
+      </p>
+    `;
   }
   
-  const secondeText = secondPlaceQualifiers === 1 
-    ? `la <strong>migliore seconda classificata</strong>` 
-    : `le <strong>${secondPlaceQualifiers} migliori seconde classificate</strong>`;
-
-  return `Le <strong>prime classificate</strong> di ciascun girone e ${secondeText} accederanno alla fase finale.`;
+  // === MVP AWARD TEXT ===
+  let mvpAwardText = "";
+  
+  if (mvpAward !== "none") {
+    const mvpPrizes = [];
+    
+    if (mvpAward.includes("mvp")) {
+      mvpPrizes.push("<strong>Miglior Giocatore (MVP)</strong>");
+    }
+    if (mvpAward.includes("scorer")) {
+      mvpPrizes.push("<strong>Capocannoniere</strong>");
+    }
+    if (mvpAward.includes("goalkeeper")) {
+      mvpPrizes.push("<strong>Miglior Portiere</strong>");
+    }
+    if (mvpAward.includes("fairplay")) {
+      mvpPrizes.push("<strong>Premio Fair Play</strong>");
+    }
+    
+    if (mvpPrizes.length > 0) {
+      const prizesList = mvpPrizes.length === 1 
+        ? mvpPrizes[0] 
+        : mvpPrizes.slice(0, -1).join(", ") + " e " + mvpPrizes[mvpPrizes.length - 1];
+      
+      mvpAwardText = `
+        <p>
+          Saranno inoltre assegnati <strong>premi individuali</strong> per: ${prizesList}.
+        </p>
+      `;
+    }
+  }
+  
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Premi e riconoscimenti</strong></p>
+        ${mainAwardText}
+        ${mvpAwardText}
+      </div>
+    </div>
+  `;
 }
+
+
+
+
+// ===============================
+// 9e. BUILD FORMAT & TIME RANGE RULE (REGOLA 4)
+// ===============================
+function buildFormatTimeRangeRule(tournament, ruleNumber) {
+  const formatType = String(tournament.format_type || "").toLowerCase();
+  const timeRange = String(tournament.time_range || "").toLowerCase();
+  const hasFinals = formatType.includes("finals");
+  
+  // === FORMAT TYPE TEXT ===
+  let formatText = "";
+  
+  switch (formatType) {
+    case "round_robin":
+      formatText = `
+        <p>
+          Il torneo prevede un <strong>girone unico all’italiana con partite di sola andata</strong>, in cui ogni squadra affronterà una sola volta tutte le altre partecipanti.
+        </p>
+
+        <p>
+          Non essendo prevista una fase finale, la squadra che chiuderà il girone al primo posto sarà proclamata vincitrice del torneo.
+        </p>
+
+        <p>
+          Il numero definitivo di squadre partecipanti sarà comunicato alla chiusura delle iscrizioni, garantendo comunque il numero minimo di partite previsto.
+        </p>        
+      `;
+      break;
+      
+    case "double_round_robin":
+      formatText = `
+        <p>
+          Il torneo prevede un <strong>girone unico all’italiana con partite di andata e ritorno</strong>, in cui ogni squadra affronterà due volte tutte le altre partecipanti.
+        </p>
+
+        <p>
+          Non essendo prevista una fase finale, la squadra che chiuderà il girone al primo posto sarà proclamata vincitrice del torneo.
+        </p>
+
+        <p>
+          Il numero definitivo di squadre partecipanti sarà comunicato alla chiusura delle iscrizioni, garantendo comunque il numero minimo di partite previsto.
+        </p>  
+      `;
+      break;
+      
+    case "round_robin_finals":
+      formatText = `
+        <p>
+          Il torneo prevederà una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.
+        </p>
+
+        <p>
+          Sono previsti gironi all’italiana con sola andata, in cui ogni squadra affronterà una sola volta le altre del proprio gruppo.  
+          La fase finale prevedrà invece scontri diretti in gara unica, con passaggio del turno per la squadra vincente.
+        </p>
+
+        <p>
+          Il numero delle squadre partecipanti, delle squadre per girone e delle qualificate alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.
+        </p>        
+      `;
+      break;
+      
+    case "round_robin_finals":
+      formatText = `
+        <p>
+          Il torneo prevederà una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.
+        </p>
+
+        <p>
+          Sono previsti gironi all’italiana con andata e ritorno, in cui ogni squadra affronterà due volte le altre del proprio gruppo.  
+          La fase finale prevedrà invece scontri diretti in gara unica, con passaggio del turno per la squadra vincente.
+        </p>
+
+        <p>
+          Il numero delle squadre partecipanti, delle squadre per girone e delle qualificate alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.
+        </p>        
+      `;
+      break;
+      
+    default:
+      formatText = `
+        <p>
+          Il formato dettagliato del torneo sarà comunicato prima dell'inizio delle partite.
+        </p>
+      `;
+      break;
+  }
+  
+  // === TIME RANGE TEXT (COMBINATO CON FORMAT) ===
+  let timeRangeText = "";
+  
+  switch (timeRange) {
+    case "short":
+      timeRangeText = `
+        <p>
+          Si tratta di un <strong>torneo giornaliero</strong>: tutte le partite si svolgeranno nell’arco di una singola giornata.
+        </p>
+      `;
+      break;
+      
+    case "mid":
+      if (hasFinals) {
+        timeRangeText = `
+          <p>
+            La prima fase si svolgerà <strong>su più settimane</strong>, con generalmente una partita a settimana per squadra. 
+            La fase finale sarà invece concentrata in un <strong>unico giorno conclusivo</strong>.
+          </p>
+        `;
+      } else {
+        timeRangeText = `
+          <p>
+            Le partite si svolgeranno <strong>su più settimane</strong>, con generalmente una partita a settimana per squadra fino al termine del torneo.
+          </p>
+        `;
+      }
+      break;
+      
+    case "long":
+      if (hasFinals) {
+        timeRangeText = `
+          <p>
+            L’intero torneo si svilupperà <strong>su più settimane</strong>. 
+            Sia la prima fase sia la fase finale saranno distribuite nel tempo, con generalmente una partita a settimana per squadra.
+          </p>
+        `;
+      } else {
+        timeRangeText = `
+          <p>
+            Il torneo si svolgerà <strong>su più settimane</strong>, con generalmente una partita a settimana per squadra fino alla conclusione.
+          </p>
+        `;
+      }
+      break;
+      
+    default:
+      timeRangeText = `
+        <p>
+          La durata e la distribuzione delle partite saranno comunicate prima dell'inizio del torneo.
+        </p>
+      `;
+      break;
+  }
+  
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Formato e durata del torneo</strong></p>
+        ${formatText}
+        ${timeRangeText}
+      </div>
+    </div>
+  `;
+}
+
+
+
+// ===============================
+// 9f. BUILD COURT/DAYS/HOURS RULE (REGOLA 5)
+// ===============================
+function buildCourtDaysHoursRule(tournament, ruleNumber) {
+  const fixed = String(tournament.fixed_court_days_hours || "false").toLowerCase();
+  const days = String(tournament.available_days || "").toLowerCase();
+  const hours = String(tournament.available_hours || "").toLowerCase();
+  
+  // Determina cosa è fisso e cosa è variabile
+  const courtFixed = fixed.includes("court");
+  const daysFixed = fixed.includes("days");
+  const hoursFixed = fixed.includes("hours");
+  
+  // Mapping giorni e orari per testo leggibile
+  const daysMap = {
+    "lun-dom": "qualsiasi giorno della settimana",
+    "lun-ven": "dal lunedì al venerdì",
+    "sab-dom": "nel weekend (sabato e domenica)"
+  };
+  
+  const hoursMap = {
+    "10-22": "tra le 10:00 e le 22:00",
+    "10-19": "tra le 10:00 e le 19:00 (fascia diurna)",
+    "19-22": "tra le 19:00 e le 22:00 (fascia serale)"
+  };
+  
+  const daysText = daysMap[days] || "";
+  const hoursText = hoursMap[hours] || "";
+  
+  let ruleContent = "";
+  
+  // === CASO 1: Tutto fisso (court_days_hours) ===
+  if (courtFixed && daysFixed && hoursFixed) {
+    ruleContent = `
+      <p>
+        <strong>Campi, giorni e orari</strong> delle partite saranno <strong>stabiliti dall'organizzazione</strong> 
+        e comunicati prima dell'inizio del torneo.
+      </p>
+      <p>
+        Le partite si svolgeranno <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+      </p>
+    `;
+  }
+  
+  // === CASO 2: Tutto variabile (false) ===
+  else if (!courtFixed && !daysFixed && !hoursFixed) {
+    ruleContent = `
+      <p>
+        <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
+        dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre in fase di iscrizione.
+      </p>
+      <p>
+        Le partite potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>. 
+        In fase di iscrizione sarà possibile indicare la <strong>zona preferita</strong>, 
+        i <strong>giorni</strong> e le <strong>fasce orarie</strong> di disponibilità.
+      </p>
+      <p>
+        Le preferenze indicate verranno considerate dall'organizzazione per la prenotazione dei campi 
+        delle <strong>partite in casa</strong> di ciascuna squadra.
+      </p>
+    `;
+  }
+  
+  // === CASO 3: Solo campi fissi (only_court) ===
+  else if (courtFixed && !daysFixed && !hoursFixed) {
+    ruleContent = `
+      <p>
+        I <strong>campi</strong> dove si svolgeranno le partite saranno <strong>stabiliti dall'organizzazione</strong> 
+        e comunicati prima dell'inizio del torneo.
+      </p>
+      <p>
+        <strong>Giorni e orari</strong> delle partite saranno invece concordati tra le squadre, 
+        nel rispetto delle disponibilità indicate in fase di iscrizione.
+      </p>
+      <p>
+        Le partite potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>. 
+        In fase di iscrizione sarà possibile indicare i <strong>giorni</strong> e le <strong>fasce orarie</strong> preferiti.
+      </p>
+    `;
+  }
+  
+  // === CASO 4: Solo giorni fissi (only_days) ===
+  else if (!courtFixed && daysFixed && !hoursFixed) {
+    ruleContent = `
+      <p>
+        I <strong>giorni</strong> in cui si svolgeranno le partite saranno <strong>stabiliti dall'organizzazione</strong>: 
+        le partite si disputeranno <strong>${daysText}</strong>.
+      </p>
+      <p>
+        <strong>Campi e orari</strong> saranno invece prenotati di volta in volta dall'organizzazione, 
+        tenendo conto delle preferenze espresse dalle squadre.
+      </p>
+      <p>
+        In fase di iscrizione sarà possibile indicare la <strong>zona preferita</strong> 
+        e le <strong>fasce orarie</strong> di disponibilità (${hoursText}).
+      </p>
+    `;
+  }
+  
+  // === CASO 5: Solo orari fissi (only_hours) ===
+  else if (!courtFixed && !daysFixed && hoursFixed) {
+    ruleContent = `
+      <p>
+        Le partite si svolgeranno nella <strong>fascia oraria</strong> stabilita dall'organizzazione: 
+        <strong>${hoursText}</strong>.
+      </p>
+      <p>
+        <strong>Campi e giorni</strong> saranno invece prenotati di volta in volta dall'organizzazione, 
+        tenendo conto delle preferenze espresse dalle squadre.
+      </p>
+      <p>
+        In fase di iscrizione sarà possibile indicare la <strong>zona preferita</strong> 
+        e i <strong>giorni</strong> di disponibilità (${daysText}).
+      </p>
+    `;
+  }
+  
+  // === CASO 6: Campi e giorni fissi (court_days) ===
+  else if (courtFixed && daysFixed && !hoursFixed) {
+    ruleContent = `
+      <p>
+        <strong>Campi e giorni</strong> delle partite saranno <strong>stabiliti dall'organizzazione</strong>. 
+        Le partite si svolgeranno <strong>${daysText}</strong>, presso strutture comunicate prima dell'inizio del torneo.
+      </p>
+      <p>
+        Gli <strong>orari</strong> delle singole partite potranno essere concordati tra le squadre, 
+        nella fascia oraria disponibile: <strong>${hoursText}</strong>.
+      </p>
+    `;
+  }
+  
+  // === CASO 7: Campi e orari fissi (court_hours) ===
+  else if (courtFixed && !daysFixed && hoursFixed) {
+    ruleContent = `
+      <p>
+        <strong>Campi e orari</strong> delle partite saranno <strong>stabiliti dall'organizzazione</strong>. 
+        Le partite si svolgeranno <strong>${hoursText}</strong>, presso strutture comunicate prima dell'inizio del torneo.
+      </p>
+      <p>
+        I <strong>giorni</strong> delle singole partite potranno essere concordati tra le squadre, 
+        nel rispetto della disponibilità: <strong>${daysText}</strong>.
+      </p>
+    `;
+  }
+  
+  // === CASO 8: Giorni e orari fissi (days_hours) ===
+  else if (!courtFixed && daysFixed && hoursFixed) {
+    ruleContent = `
+      <p>
+        <strong>Giorni e orari</strong> delle partite saranno <strong>stabiliti dall'organizzazione</strong>: 
+        le partite si svolgeranno <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+      </p>
+      <p>
+        I <strong>campi</strong> saranno invece prenotati di volta in volta dall'organizzazione, 
+        tenendo conto della zona preferita indicata dalle squadre in fase di iscrizione.
+      </p>
+      <p>
+        Le preferenze sulla zona verranno considerate per la prenotazione dei campi 
+        delle <strong>partite in casa</strong> di ciascuna squadra.
+      </p>
+    `;
+  }
+  
+  // === FALLBACK ===
+  else {
+    ruleContent = `
+      <p>
+        Le modalità di assegnazione di campi, giorni e orari saranno comunicate prima dell'inizio del torneo.
+      </p>
+    `;
+  }
+  
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Campi, giorni e orari delle partite</strong></p>
+        ${ruleContent}
+      </div>
+    </div>
+  `;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ===============================
 // 16. BUILD RANKING RULE (REGOLA 4 - AGGIORNATA CON ruleNumber)
