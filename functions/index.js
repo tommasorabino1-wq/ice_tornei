@@ -300,6 +300,52 @@ const { updateTournamentStatus } = require('./helpers/tournamentStatus');
 
 
 
+
+
+
+// ===============================
+// IMPORT per Firestore Triggers v2
+// ===============================
+const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
+
+// ===============================
+// FIRESTORE TRIGGER: GENERATE MATCHES ON STATUS CHANGE TO "FULL"
+// ===============================
+exports.onTournamentStatusChange = onDocumentUpdated(
+  "tournaments/{tournamentId}",
+  async (event) => {
+    const tournamentId = event.params.tournamentId;
+    
+    const beforeData = event.data.before.data();
+    const afterData = event.data.after.data();
+    
+    const oldStatus = beforeData?.status;
+    const newStatus = afterData?.status;
+    
+    console.log(`🔄 Tournament ${tournamentId} status change: ${oldStatus} → ${newStatus}`);
+    
+    // Trigger generazione match solo se:
+    // - Lo status è cambiato da "open" a "full"
+    if (oldStatus === 'open' && newStatus === 'full') {
+      console.log(`🚀 Triggering match generation for ${tournamentId}`);
+      
+      try {
+        const { generateMatchesIfReady } = require('./helpers/matchGenerator');
+        await generateMatchesIfReady(tournamentId);
+        console.log(`✅ Match generation completed for ${tournamentId}`);
+      } catch (error) {
+        console.error(`❌ Match generation failed for ${tournamentId}:`, error);
+        // Non rilanciamo l'errore per evitare retry infiniti
+      }
+    }
+    
+    return null;
+  }
+);
+
+
+
+
 // ===============================
 // POST: SUBMIT SUBSCRIPTION
 // ===============================

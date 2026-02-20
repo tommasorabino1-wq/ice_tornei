@@ -18,9 +18,18 @@ async function updateTournamentStatus(tournamentId) {
     }
 
     const tournament = tournamentDoc.data();
-    const teamsMax = Number(tournament.teams_max);
+    const currentStatus = tournament.status;
 
-    let newStatus = 'open';
+    // ⚠️ NON modificare se lo status è "open" o "full" (gestiti manualmente)
+    // Questa funzione gestisce solo le transizioni automatiche:
+    // full → live → final_phase → finished
+
+    if (currentStatus === 'open') {
+      console.log('ℹ️ Status is "open" - no automatic update (manual trigger required)');
+      return;
+    }
+
+    let newStatus = currentStatus; // Mantieni lo status corrente come default
 
     // 2) Conta finals
     const finalsSnapshot = await db.collection('finals')
@@ -40,7 +49,7 @@ async function updateTournamentStatus(tournamentId) {
       }
     }
 
-    // 4) FINAL_PHASE → gironi finiti
+    // 4) Controlla matches
     const matchesSnapshot = await db.collection('matches')
       .where('tournament_id', '==', tournamentId)
       .get();
@@ -50,27 +59,27 @@ async function updateTournamentStatus(tournamentId) {
       const allMatchesPlayed = matches.every(m => m.played === true);
       const someMatchesPlayed = matches.some(m => m.played === true);
 
-      if (allMatchesPlayed) {
+      // FINAL_PHASE → tutti i gironi finiti (e finals esistono)
+      if (allMatchesPlayed && !finalsSnapshot.empty) {
         newStatus = 'final_phase';
-      } else if (someMatchesPlayed) {
+      }
+      // LIVE → almeno un match giocato
+      else if (someMatchesPlayed) {
         newStatus = 'live';
       }
-    }
-
-    // 5) FULL → squadre complete
-    if (newStatus === 'open') {
-      const teamsSnapshot = await db.collection('teams')
-        .where('tournament_id', '==', tournamentId)
-        .get();
-
-      if (teamsSnapshot.size === teamsMax) {
+      // Se ci sono match ma nessuno giocato, mantieni "full"
+      else if (currentStatus === 'full') {
         newStatus = 'full';
       }
     }
 
-    // 6) Aggiorna status
-    await tournamentRef.update({ status: newStatus });
-    console.log(`✅ Status updated to: ${newStatus}`);
+    // 5) Aggiorna status solo se cambiato
+    if (newStatus !== currentStatus) {
+      await tournamentRef.update({ status: newStatus });
+      console.log(`✅ Status updated to: ${newStatus}`);
+    } else {
+      console.log(`ℹ️ Status unchanged: ${currentStatus}`);
+    }
 
   } catch (error) {
     console.error('updateTournamentStatus error:', error);
@@ -79,6 +88,3 @@ async function updateTournamentStatus(tournamentId) {
 }
 
 module.exports = { updateTournamentStatus };
-
-
-

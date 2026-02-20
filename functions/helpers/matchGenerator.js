@@ -73,12 +73,51 @@ function assignHomeAwayGreedy(roundPairs) {
 }
 
 // ===============================
-// MAIN: Genera match se pronto
+// HELPER: Calcola configurazione gironi ottimale
 // ===============================
+function calculateGroupConfig(totalTeams, preferredTeamsPerGroup) {
+  // Se è specificato teams_per_group nel torneo, usa quello
+  if (preferredTeamsPerGroup && preferredTeamsPerGroup > 0) {
+    // Verifica che sia compatibile
+    if (totalTeams % preferredTeamsPerGroup === 0 && preferredTeamsPerGroup % 2 === 0) {
+      return {
+        teamsPerGroup: preferredTeamsPerGroup,
+        numGroups: totalTeams / preferredTeamsPerGroup
+      };
+    }
+  }
 
+  // Altrimenti, calcola automaticamente
+  // Priorità: gironi da 4, poi da 6, poi da 8, ecc.
+  const possibleSizes = [4, 6, 8, 10, 12];
+  
+  for (const size of possibleSizes) {
+    if (totalTeams % size === 0 && totalTeams >= size) {
+      return {
+        teamsPerGroup: size,
+        numGroups: totalTeams / size
+      };
+    }
+  }
+
+  // Fallback: un unico girone (se pari)
+  if (totalTeams % 2 === 0 && totalTeams >= 2) {
+    return {
+      teamsPerGroup: totalTeams,
+      numGroups: 1
+    };
+  }
+
+  // Errore: numero dispari di squadre
+  throw new Error(`Cannot create groups with ${totalTeams} teams (odd number)`);
+}
+
+// ===============================
+// MAIN: Genera match (trigger manuale via status change)
+// ===============================
 async function generateMatchesIfReady(tournamentId) {
   try {
-    console.log(`⚽ [START] Checking if matches can be generated for ${tournamentId}`);
+    console.log(`⚽ [START] Generating matches for ${tournamentId}`);
 
     // 1) Leggi torneo
     const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
@@ -88,39 +127,9 @@ async function generateMatchesIfReady(tournamentId) {
     }
 
     const tournament = tournamentDoc.data();
-    const teamsMax = Number(tournament.teams_max);
-    const teamsPerGroup = Number(tournament.teams_per_group);
+    const preferredTeamsPerGroup = Number(tournament.teams_per_group) || 0;
 
-    console.log(`📋 Tournament config: teamsMax=${teamsMax}, teamsPerGroup=${teamsPerGroup}`);
-
-    if (!teamsMax || !teamsPerGroup) {
-      console.log('⚠️ Invalid teams_max or teams_per_group');
-      return;
-    }
-
-    if (teamsMax % teamsPerGroup !== 0) {
-      console.error(`❌ teams_max (${teamsMax}) not divisible by teams_per_group (${teamsPerGroup})`);
-      throw new Error('teams_max not divisible by teams_per_group');
-    }
-
-    if (teamsPerGroup % 2 !== 0) {
-      console.error(`❌ teams_per_group (${teamsPerGroup}) is odd`);
-      throw new Error('teams_per_group must be even');
-    }
-
-    // 2) Conta teams iscritti
-    const teamsSnapshot = await db.collection('teams')
-      .where('tournament_id', '==', tournamentId)
-      .get();
-
-    console.log(`👥 Teams registered: ${teamsSnapshot.size}/${teamsMax}`);
-
-    if (teamsSnapshot.size !== teamsMax) {
-      console.log(`⏳ Waiting for more teams: ${teamsSnapshot.size}/${teamsMax}`);
-      return;
-    }
-
-    // 3) Verifica se match già esistono
+    // 2) Verifica se match già esistono
     const matchesSnapshot = await db.collection('matches')
       .where('tournament_id', '==', tournamentId)
       .limit(1)
@@ -131,9 +140,32 @@ async function generateMatchesIfReady(tournamentId) {
       return;
     }
 
-    console.log('🚀 All conditions met, generating matches...');
+    // 3) Recupera TUTTI i team iscritti
+    const teamsSnapshot = await db.collection('teams')
+      .where('tournament_id', '==', tournamentId)
+      .get();
 
-    // 4) Shuffle teams + crea mappa nomi
+    const totalTeams = teamsSnapshot.size;
+    console.log(`👥 Teams registered: ${totalTeams}`);
+
+    if (totalTeams < 2) {
+      console.log('⚠️ Not enough teams to generate matches (minimum 2)');
+      return;
+    }
+
+    // 4) Calcola configurazione gironi
+    let groupConfig;
+    try {
+      groupConfig = calculateGroupConfig(totalTeams, preferredTeamsPerGroup);
+    } catch (err) {
+      console.error(`❌ ${err.message}`);
+      throw err;
+    }
+
+    const { teamsPerGroup, numGroups } = groupConfig;
+    console.log(`📊 Group config: ${numGroups} groups × ${teamsPerGroup} teams each`);
+
+    // 5) Shuffle teams + crea mappa nomi
     const teamIds = teamsSnapshot.docs.map(doc => doc.data().team_id);
     const teamNamesMap = {};
     teamsSnapshot.docs.forEach(doc => {
@@ -150,10 +182,7 @@ async function generateMatchesIfReady(tournamentId) {
 
     console.log(`🔀 Team IDs after shuffle: ${teamIds.join(', ')}`);
 
-    const numGroups = teamsMax / teamsPerGroup;
-    console.log(`📊 Number of groups: ${numGroups}`);
-
-    // 5) Genera match per ogni gruppo + traccia assegnazione gruppi
+    // 6) Genera match per ogni gruppo + traccia assegnazione gruppi
     const batch = db.batch();
     let globalMatchCounter = 1;
     const teamGroupAssignment = {}; // team_id -> group_id
@@ -200,7 +229,7 @@ async function generateMatchesIfReady(tournamentId) {
       });
     }
 
-    // 6) Genera standings iniziali (tutti a 0)
+    // 7) Genera standings iniziali (tutti a 0)
     console.log(`📊 Generating initial standings...`);
 
     teamIds.forEach(teamId => {
@@ -233,7 +262,14 @@ async function generateMatchesIfReady(tournamentId) {
       console.log(`   ✓ Standing ${standingId}: ${teamName} (${groupId})`);
     });
 
-    // 7) Commit batch
+    // 8) Aggiorna teams_current e teams_per_group nel torneo (per riferimento)
+    const tournamentRef = db.collection('tournaments').doc(tournamentId);
+    batch.update(tournamentRef, {
+      teams_current: totalTeams,
+      teams_per_group: teamsPerGroup
+    });
+
+    // 9) Commit batch
     console.log(`💾 Committing ${globalMatchCounter - 1} matches + ${teamIds.length} standings...`);
     await batch.commit();
     console.log(`✅ [SUCCESS] Generated ${globalMatchCounter - 1} matches and ${teamIds.length} standings for ${tournamentId}`);
