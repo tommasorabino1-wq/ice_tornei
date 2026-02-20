@@ -522,7 +522,7 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
   }
 
   try {
-    const { tournament_id, team_name, email, phone, preferred_zone, preferred_days, preferred_hours } = req.body;
+    const { tournament_id, team_name, email, phone, preferred_zone, preferred_days, preferred_hours, additional_notes } = req.body;
 
     // Validazione base
     if (!tournament_id || !team_name || !email) {
@@ -536,9 +536,15 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     }
 
     const tournament = tournamentDoc.data();
+    
+    // 2) Blocco iscrizioni se torneo non è "open"
+    if (tournament.status !== 'open') {
+      return res.status(403).send('REGISTRATIONS_CLOSED');
+    }
+    
     const fixedCourt = tournament.fixed_court !== false; // default true
 
-    // 2) Blocco email duplicata
+    // 3) Blocco email duplicata
     const duplicateCheck = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .where('email', '==', email)
@@ -548,7 +554,7 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
       return res.status(409).send('DUPLICATE');
     }
 
-    // ✅ 3) Conta subscriptions esistenti per generare ID incrementale
+    // 4) Conta subscriptions esistenti per generare ID incrementale
     const existingSubsSnapshot = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .get();
@@ -556,9 +562,9 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     const subsCount = existingSubsSnapshot.size + 1;
     const subscriptionId = `${tournament_id}_sub${subsCount}`;
 
-    // 4) Crea subscription con ID deterministico
+    // 5) Crea subscription con ID deterministico
     const subscriptionData = {
-      subscription_id: subscriptionId, // ✅ Aggiungi anche nei dati
+      subscription_id: subscriptionId,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       tournament_id,
       team_name,
@@ -572,11 +578,15 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
       subscriptionData.preferred_days = preferred_days || '';
       subscriptionData.preferred_hours = preferred_hours || '';
     }
+    
+    // Campo note aggiuntive (sempre opzionale)
+    if (additional_notes && additional_notes.trim()) {
+      subscriptionData.additional_notes = additional_notes.trim();
+    }
 
-    // ✅ Usa .doc(subscriptionId).set() invece di .add()
     await db.collection('subscriptions').doc(subscriptionId).set(subscriptionData);
 
-    // 5) Crea/aggiorna team
+    // 6) Crea/aggiorna team
     const normalizedTeam = team_name.trim().toLowerCase();
     const teamId = `${tournament_id}_${normalizedTeam}`;
 
@@ -586,10 +596,8 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
       team_name
     });
 
-    // 6) Genera match se pronto
-    await generateMatchesIfReady(tournament_id);
-    await generateStandingsBackend(tournament_id);
-    await updateTournamentStatus(tournament_id);
+    // ✅ RIMOSSO: generateMatchesIfReady, generateStandingsBackend, updateTournamentStatus
+    // Ora la generazione match/standings avviene tramite trigger quando cambi status da "open" a "full"
 
     res.status(200).send('SUBSCRIPTION_SAVED');
 
@@ -598,7 +606,6 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     res.status(500).send('ERROR');
   }
 });
-
 
 
 
