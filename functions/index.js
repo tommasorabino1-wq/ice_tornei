@@ -345,6 +345,170 @@ exports.onTournamentStatusChange = onDocumentUpdated(
 
 
 
+// ===============================
+// FIRESTORE TRIGGER: ON MATCH RESULT UPDATED (GIRONI)
+// ===============================
+exports.onMatchResultUpdated = onDocumentUpdated(
+  "matches/{matchId}",
+  async (event) => {
+    const matchId = event.params.matchId;
+    
+    const beforeData = event.data.before.data();
+    const afterData = event.data.after.data();
+    
+    const tournamentId = afterData?.tournament_id;
+    
+    if (!tournamentId) {
+      console.log(`⚠️ Match ${matchId} has no tournament_id`);
+      return null;
+    }
+    
+    // Controlla se il risultato è cambiato
+    const beforePlayed = beforeData?.played === true;
+    const afterPlayed = afterData?.played === true;
+    const scoreChanged = 
+      beforeData?.score_a !== afterData?.score_a || 
+      beforeData?.score_b !== afterData?.score_b;
+    
+    // Trigger solo se:
+    // - Il match è stato segnato come "played" (nuovo risultato)
+    // - Oppure il punteggio è cambiato (modifica risultato)
+    if (!afterPlayed && !scoreChanged) {
+      console.log(`ℹ️ Match ${matchId} - no relevant changes`);
+      return null;
+    }
+    
+    console.log(`🔄 Match ${matchId} result updated: ${afterData.score_a} - ${afterData.score_b}`);
+    
+    try {
+      // 1) Ricalcola standings
+      const { generateStandingsBackend } = require('./helpers/standingsCalculator');
+      await generateStandingsBackend(tournamentId);
+      console.log(`✅ Standings recalculated for ${tournamentId}`);
+      
+      // 2) Aggiorna status torneo
+      const { updateTournamentStatus } = require('./helpers/tournamentStatus');
+      await updateTournamentStatus(tournamentId);
+      
+      // 3) Verifica se tutti i match dei gironi sono giocati
+      const allMatchesSnapshot = await db.collection('matches')
+        .where('tournament_id', '==', tournamentId)
+        .get();
+      
+      const allMatches = allMatchesSnapshot.docs.map(doc => doc.data());
+      const allPlayed = allMatches.every(m => m.played === true);
+      
+      if (allPlayed) {
+        console.log(`🏆 All group matches played for ${tournamentId} - checking finals generation`);
+        
+        // Cancella vecchie finals prima di rigenerare
+        const existingFinals = await db.collection('finals')
+          .where('tournament_id', '==', tournamentId)
+          .get();
+        
+        if (!existingFinals.empty) {
+          const batch = db.batch();
+          existingFinals.docs.forEach(doc => batch.delete(doc.ref));
+          await batch.commit();
+          console.log(`🗑️ Deleted ${existingFinals.size} existing finals`);
+        }
+        
+        // Genera nuove finals
+        try {
+          const { generateFinalsIfReady } = require('./helpers/finalsGenerator');
+          await generateFinalsIfReady(tournamentId);
+          console.log(`✅ Finals generated for ${tournamentId}`);
+        } catch (err) {
+          if (['E4', 'E6', 'E_HEADER'].includes(err.message)) {
+            console.log(`⚠️ Finals generation skipped: ${err.message}`);
+          } else {
+            throw err;
+          }
+        }
+      } else {
+        // Se non tutti i match sono giocati, cancella eventuali finals esistenti
+        const existingFinals = await db.collection('finals')
+          .where('tournament_id', '==', tournamentId)
+          .get();
+        
+        if (!existingFinals.empty) {
+          const batch = db.batch();
+          existingFinals.docs.forEach(doc => batch.delete(doc.ref));
+          await batch.commit();
+          console.log(`🗑️ Finals invalidated - not all group matches played`);
+        }
+      }
+      
+    } catch (error) {
+      console.error(`❌ Error processing match ${matchId}:`, error);
+    }
+    
+    return null;
+  }
+);
+
+
+// ===============================
+// FIRESTORE TRIGGER: ON FINAL RESULT UPDATED
+// ===============================
+exports.onFinalResultUpdated = onDocumentUpdated(
+  "finals/{matchId}",
+  async (event) => {
+    const matchId = event.params.matchId;
+    
+    const beforeData = event.data.before.data();
+    const afterData = event.data.after.data();
+    
+    const tournamentId = afterData?.tournament_id;
+    
+    if (!tournamentId) {
+      console.log(`⚠️ Final ${matchId} has no tournament_id`);
+      return null;
+    }
+    
+    // Controlla se il risultato è cambiato
+    const beforePlayed = beforeData?.played === true;
+    const afterPlayed = afterData?.played === true;
+    const scoreChanged = 
+      beforeData?.score_a !== afterData?.score_a || 
+      beforeData?.score_b !== afterData?.score_b ||
+      beforeData?.winner_team_id !== afterData?.winner_team_id;
+    
+    // Trigger solo se il match è played e qualcosa è cambiato
+    if (!afterPlayed || !scoreChanged) {
+      console.log(`ℹ️ Final ${matchId} - no relevant changes`);
+      return null;
+    }
+    
+    console.log(`🔄 Final ${matchId} result updated: ${afterData.score_a} - ${afterData.score_b} (winner: ${afterData.winner_team_id})`);
+    
+    // Validazione: se pareggio, deve esserci winner_team_id
+    if (afterData.score_a === afterData.score_b && !afterData.winner_team_id) {
+      console.log(`⚠️ Final ${matchId} is a tie but no winner_team_id specified`);
+      return null;
+    }
+    
+    try {
+      // 1) Genera prossimo round finals (se necessario)
+      const { tryGenerateNextFinalRound } = require('./helpers/finalsGenerator');
+      await tryGenerateNextFinalRound(tournamentId);
+      
+      // 2) Aggiorna status torneo
+      const { updateTournamentStatus } = require('./helpers/tournamentStatus');
+      await updateTournamentStatus(tournamentId);
+      
+      console.log(`✅ Final processing completed for ${tournamentId}`);
+      
+    } catch (error) {
+      console.error(`❌ Error processing final ${matchId}:`, error);
+    }
+    
+    return null;
+  }
+);
+
+
+
 
 // ===============================
 // POST: SUBMIT SUBSCRIPTION
@@ -436,183 +600,7 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
 });
 
 
-// ===============================
-// POST: SUBMIT RESULT
-// ===============================
-exports.submitResult = functions.https.onRequest(async (req, res) => {
-  setCORS(res);
-  if (handleOptions(req, res)) return;
 
-  if (req.method !== 'POST') {
-    return res.status(405).send('METHOD_NOT_ALLOWED');
-  }
-
-  try {
-    const { tournament_id, match_id, score_a, score_b, phase, winner_team_id } = req.body;
-
-    const isFinal = String(phase).toLowerCase() === 'final';
-    const scoreA = Number(score_a);
-    const scoreB = Number(score_b);
-
-    // Validazione
-    if (!tournament_id || !match_id || isNaN(scoreA) || isNaN(scoreB)) {
-      return res.status(400).send('INVALID_DATA');
-    }
-
-    if (scoreA < 0 || scoreB < 0) {
-      return res.status(400).send('INVALID_SCORE');
-    }
-
-    // BLOCCO: torneo finished
-    if (isFinal) {
-      const tournamentDoc = await db.collection('tournaments').doc(tournament_id).get();
-      if (tournamentDoc.exists && tournamentDoc.data().status === 'finished') {
-        return res.status(403).send('TOURNAMENT_FINISHED_LOCKED');
-      }
-    }
-
-    // Selezione collezione
-    const collection = isFinal ? 'finals' : 'matches';
-    const matchRef = db.collection(collection).doc(match_id);
-    const matchDoc = await matchRef.get();
-
-    if (!matchDoc.exists) {
-      return res.status(404).send('MATCH_NOT_FOUND');
-    }
-
-    const matchData = matchDoc.data();
-
-    // ✅ BLOCCO: round successivo esiste (solo finals) - VERSIONE SENZA INDICE COMPOSITO
-    if (isFinal) {
-      const currentRound = matchData.round_id;
-      
-      // FETCH ALL finals e controlla in memoria (evita indice composito)
-      const allFinalsSnapshot = await db.collection('finals')
-        .where('tournament_id', '==', tournament_id)
-        .get();
-      
-      const allFinals = allFinalsSnapshot.docs.map(doc => doc.data());
-      
-      // Controlla se esiste un round successivo
-      const hasNextRound = allFinals.some(f => Number(f.round_id) > Number(currentRound));
-      
-      if (hasNextRound) {
-        return res.status(403).send('FINAL_ROUND_LOCKED');
-      }
-    }
-
-    // INVALIDAZIONE FINALS (se modifica risultato gironi)
-    if (!isFinal && matchData.played) {
-      const prevScoreA = matchData.score_a;
-      const prevScoreB = matchData.score_b;
-
-      if (prevScoreA !== scoreA || prevScoreB !== scoreB) {
-        // Cancella finals
-        const finalsToDelete = await db.collection('finals')
-          .where('tournament_id', '==', tournament_id)
-          .get();
-
-        const batch = db.batch();
-        finalsToDelete.docs.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
-      }
-    }
-
-    // SCRITTURA RISULTATO
-    const updateData = {
-      score_a: scoreA,
-      score_b: scoreB,
-      played: true
-    };
-
-    if (isFinal) {
-      const teamA = matchData.team_a;
-      const teamB = matchData.team_b;
-
-      let winner = '';
-
-      if (scoreA !== scoreB) {
-        winner = scoreA > scoreB ? teamA : teamB;
-      } else {
-        // Pareggio → serve spareggio
-        if (!winner_team_id) {
-          return res.status(400).send('FINAL_WINNER_REQUIRED');
-        }
-
-        if (winner_team_id !== teamA && winner_team_id !== teamB) {
-          return res.status(400).send('INVALID_WINNER');
-        }
-
-        winner = winner_team_id;
-      }
-
-      updateData.winner_team_id = winner;
-    }
-
-    await matchRef.update(updateData);
-
-    // LOGICA POST-SCRITTURA
-    if (!isFinal) {
-      // Gironi
-      await generateStandingsBackend(tournament_id);
-      await updateTournamentStatus(tournament_id);
-
-      // Verifica se tutti i match sono giocati
-      const allMatchesSnapshot = await db.collection('matches')
-        .where('tournament_id', '==', tournament_id)
-        .get();
-
-      const allMatches = allMatchesSnapshot.docs.map(doc => doc.data());
-      const allPlayed = allMatches.every(m => m.played === true);
-
-      if (!allPlayed) {
-        // Cancella finals se esistono
-        const finalsToDelete = await db.collection('finals')
-          .where('tournament_id', '==', tournament_id)
-          .get();
-
-        if (!finalsToDelete.empty) {
-          const batch = db.batch();
-          finalsToDelete.docs.forEach(doc => batch.delete(doc.ref));
-          await batch.commit();
-        }
-      } else {
-        // Genera finals
-        try {
-          // Cancella vecchie finals prima
-          const finalsToDelete = await db.collection('finals')
-            .where('tournament_id', '==', tournament_id)
-            .get();
-
-          if (!finalsToDelete.empty) {
-            const batch = db.batch();
-            finalsToDelete.docs.forEach(doc => batch.delete(doc.ref));
-            await batch.commit();
-          }
-
-          await generateFinalsIfReady(tournament_id);
-        } catch (err) {
-          if (['E4', 'E6', 'E_HEADER'].includes(err.message)) {
-            // Errori attesi: ambiguità classifiche
-            console.log('Finals generation skipped:', err.message);
-          } else {
-            throw err;
-          }
-        }
-      }
-    } else {
-      // Finals
-      await tryGenerateNextFinalRound(tournament_id);
-      await updateTournamentStatus(tournament_id);
-    }
-
-    res.status(200).send('RESULT_SAVED');
-
-  } catch (error) {
-    console.error('submitResult error:', error);
-    res.status(500).send('ERROR');
-  }
-});
 
 
 

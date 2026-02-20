@@ -1,5 +1,5 @@
 // ===============================
-// STANDINGS JS
+// STANDINGS JS (READ-ONLY VERSION)
 // ===============================
 
 // ===============================
@@ -10,8 +10,7 @@ const API_URLS = {
   getMatches: "https://getmatches-dzvezz2yhq-uc.a.run.app",
   getStandings: "https://getstandings-dzvezz2yhq-uc.a.run.app",
   getFinals: "https://getfinals-dzvezz2yhq-uc.a.run.app",
-  getBracket: "https://getbracket-dzvezz2yhq-uc.a.run.app",
-  submitResult: "https://submitresult-dzvezz2yhq-uc.a.run.app"
+  getBracket: "https://getbracket-dzvezz2yhq-uc.a.run.app"
 };
 
 let TOURNAMENT_STATUS = null;
@@ -51,21 +50,17 @@ function loadStandingsPage(tournamentId) {
       const t = tournaments.find(t => t.tournament_id === tournamentId);
       
       if (!t) {
-        // Torneo non trovato
         showTournamentNotFound();
         return;
       }
 
       TOURNAMENT_STATUS = t?.status || null;
 
-      // Se il torneo è ancora in fase di iscrizioni (open)
-      // NOTA: "full" ora ha match e standings, quindi può essere visualizzato
       if (TOURNAMENT_STATUS === "open") {
         showTournamentNotStarted(t);
         return;
       }
 
-      // Popola titolo e sottotitolo
       renderStandingsHeader(t);
 
       const layout = document.querySelector(".standings-layout");
@@ -78,7 +73,7 @@ function loadStandingsPage(tournamentId) {
 
       if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished") {
         loadFinalsBracket(tournamentId).then(bracket => {
-          if (bracket) renderFinalsBracket(bracket, tournamentId);
+          if (bracket) renderFinalsBracket(bracket);
           applyLayoutByStatus();
         });
       } else {
@@ -90,8 +85,6 @@ function loadStandingsPage(tournamentId) {
       console.error("Errore caricamento tornei:", err);
     });
 }
-
-
 
 
 // ===============================
@@ -111,7 +104,6 @@ function renderStandingsHeader(tournament) {
 }
 
 
-
 function hideSkeletons() {
   document
     .querySelectorAll(".standings-skeleton")
@@ -125,7 +117,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const tournamentId = getTournamentIdFromUrl();
 
   if (tournamentId) {
-    // Mostra standings specifiche
     standingsSelectSection.classList.add("hidden");
     standingsSpecificSection.classList.remove("hidden");
 
@@ -135,7 +126,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loadStandingsPage(tournamentId);
   } else {
-    // Mostra selezione torneo
     standingsSelectSection.classList.remove("hidden");
     standingsSpecificSection.classList.add("hidden");
 
@@ -153,7 +143,7 @@ function getTournamentIdFromUrl() {
 }
 
 // ===============================
-// LOAD TOURNAMENT SELECT (NUOVO)
+// LOAD TOURNAMENT SELECT
 // ===============================
 function loadTournamentSelect() {
   fetch(API_URLS.getTournaments)
@@ -168,7 +158,6 @@ function loadTournamentSelect() {
         throw new Error("Formato dati non valido");
       }
 
-      // Reset select
       standingsTournamentSelect.innerHTML = `<option value="">Seleziona un torneo</option>`;
 
       tournaments.forEach(t => {
@@ -178,7 +167,6 @@ function loadTournamentSelect() {
         standingsTournamentSelect.appendChild(option);
       });
 
-      // Redirect su selezione
       standingsTournamentSelect.onchange = function () {
         if (!this.value) return;
         window.location.href = `standings.html?tournament_id=${this.value}`;
@@ -191,17 +179,14 @@ function loadTournamentSelect() {
 }
 
 
-
 // ===============================
 // TOURNAMENT NOT STARTED
 // ===============================
 function showTournamentNotStarted(tournament) {
-  // Nascondi skeleton e sezioni specifiche
   hideSkeletons();
   
   const specificSection = document.getElementById("standings-specific-section");
   
-  // Svuota il contenuto esistente e mostra il placeholder
   specificSection.innerHTML = `
     <div class="standings-not-started">
       <div class="standings-not-started-icon">🏁</div>
@@ -265,11 +250,6 @@ function showTournamentNotFound() {
 }
 
 
-
-
-
-
-
 // ===============================
 // LOAD MATCHES
 // ===============================
@@ -312,6 +292,9 @@ function loadMatches(tournamentId) {
     });
 }
 
+// ===============================
+// RENDER MATCHES BY ROUND (READ-ONLY)
+// ===============================
 function renderMatchesByRound(roundId) {
   const container = document.getElementById("matches-list");
   container.innerHTML = "";
@@ -326,24 +309,17 @@ function renderMatchesByRound(roundId) {
     return;
   }
 
-  // ✅ SOLO torneo "finished" blocca i match dei gironi
-  const tournamentLocked = TOURNAMENT_STATUS === "finished";
-
   matches.forEach(match => {
     const isPlayed =
       match.played === true ||
       String(match.played).toUpperCase() === "TRUE";
 
-    const locked = tournamentLocked;
-
-    // ✅ Usa team_a_name e team_b_name se disponibili, altrimenti fallback a formatTeam
     const teamAName = match.team_a_name || formatTeam(match.team_a);
     const teamBName = match.team_b_name || formatTeam(match.team_b);
 
     const card = document.createElement("div");
     card.className = "match-card";
     if (isPlayed) card.classList.add("played");
-    if (locked) card.classList.add("locked");
 
     card.innerHTML = `
       <div class="match-meta">
@@ -353,39 +329,16 @@ function renderMatchesByRound(roundId) {
 
       <div class="match-teams">
         <span class="team">${escapeHTML(teamAName)}</span>
-
-        <input type="number"
-          class="score-input"
-          ${locked ? "disabled" : ""}
-          value="${isPlayed ? match.score_a ?? "" : ""}">
-
+        <span class="score">${isPlayed ? match.score_a ?? "-" : "-"}</span>
         <span class="dash">-</span>
-
-        <input type="number"
-          class="score-input"
-          ${locked ? "disabled" : ""}
-          value="${isPlayed ? match.score_b ?? "" : ""}">
-
+        <span class="score">${isPlayed ? match.score_b ?? "-" : "-"}</span>
         <span class="team">${escapeHTML(teamBName)}</span>
       </div>
 
-      <button class="btn secondary submit-result" ${locked ? "disabled" : ""}>
-        ${
-          tournamentLocked
-            ? "Torneo concluso"
-            : isPlayed
-              ? "Modifica risultato"
-              : "Invia risultato"
-        }
-      </button>
+      <div class="match-status">
+        ${isPlayed ? '<span class="status-played">✓ Giocata</span>' : '<span class="status-pending">In programma</span>'}
+      </div>
     `;
-
-    if (!locked) {
-      card.querySelector(".submit-result")
-        .addEventListener("click", () =>
-          submitResult(card, match.match_id, getTournamentIdFromUrl())
-        );
-    }
 
     container.appendChild(card);
   });
@@ -428,102 +381,6 @@ function loadStandings(tournamentId) {
     });
 }
 
-// ===============================
-// SUBMIT RESULT (GROUP MATCHES)
-// ===============================
-function submitResult(card, matchId, tournamentId, phase = "group") {
-  if (TOURNAMENT_STATUS === "finished") {
-    showToast("Torneo concluso 🔒");
-    return;
-  }
-
-  const inputs = card.querySelectorAll(".score-input");
-  const btn = card.querySelector(".submit-result");
-
-  const scoreA = inputs[0].value;
-  const scoreB = inputs[1].value;
-
-  if (scoreA === "" || scoreB === "") {
-    showToast("Inserisci entrambi i punteggi ⚠️");
-    return;
-  }
-
-  const payload = {
-    tournament_id: tournamentId,
-    match_id: matchId,
-    score_a: Number(scoreA),
-    score_b: Number(scoreB),
-    phase: phase
-  };
-
-  // STATO LOADING
-  btn.innerHTML = `
-    <span class="spinner"></span>
-    Salvataggio...
-  `;
-  btn.classList.add("disabled");
-  btn.disabled = true;
-  inputs.forEach(input => input.disabled = true);
-
-  fetch(API_URLS.submitResult, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  })
-    .then(res => res.text())
-    .then(response => {
-      if (response === "RESULT_SAVED") {
-        card.classList.add("played");
-
-        btn.classList.remove("primary");
-        btn.classList.add("secondary");
-        btn.textContent = "Modifica risultato";
-
-        showToast("Risultato salvato ✔️");
-
-        inputs.forEach(input => input.disabled = false);
-        btn.disabled = false;
-        btn.classList.remove("disabled");
-
-        loadStandings(tournamentId);
-
-        fetch(API_URLS.getTournaments)
-          .then(r => r.json())
-          .then(tournaments => {
-            const t = tournaments.find(x => x.tournament_id === tournamentId);
-            TOURNAMENT_STATUS = t?.status || TOURNAMENT_STATUS;
-
-            if (TOURNAMENT_STATUS === "final_phase") {
-              loadMatches(tournamentId);
-            }
-          })
-          .catch(() => {});
-
-        return;
-      }
-
-      showToast("Errore nel salvataggio ❌");
-      restoreUI();
-    })
-    .catch(err => {
-      console.error("Errore submit:", err);
-      showToast("Errore di rete ❌");
-      restoreUI();
-    });
-
-  function restoreUI() {
-    btn.textContent = card.classList.contains("played")
-      ? "Modifica risultato"
-      : "Invia risultato";
-
-    btn.disabled = false;
-    btn.classList.remove("disabled");
-
-    inputs.forEach(input => input.disabled = false);
-  }
-}
 
 // ===============================
 // HELPERS
@@ -692,11 +549,11 @@ function onFinalsRoundChange(value) {
   if (!tournamentId) return;
 
   loadFinalsBracket(tournamentId).then(bracket => {
-    if (bracket) renderFinalsBracket(bracket, tournamentId);
+    if (bracket) renderFinalsBracket(bracket);
   });
 }
 
-function renderFinalsMatchesByRound(roundId, bracket, tournamentId) {
+function renderFinalsMatchesByRound(roundId, bracket) {
   const container = document.getElementById("finals-bracket-content");
   if (!container) return;
 
@@ -715,7 +572,7 @@ function renderFinalsMatchesByRound(roundId, bracket, tournamentId) {
   roundBox.innerHTML = `<h3>${escapeHTML(roundLabel)}</h3>`;
 
   matchesInRound.forEach(match => {
-    const card = renderFinalsMatchCard(match, tournamentId, roundLabel);
+    const card = renderFinalsMatchCard(match, roundLabel);
     roundBox.appendChild(card);
   });
 
@@ -768,7 +625,7 @@ function getRoundLabel(matchCount) {
   }
 }
 
-function renderFinalsBracket(bracket, tournamentId) {
+function renderFinalsBracket(bracket) {
   const container = document.getElementById("finals-bracket-content");
   const visualContainer = document.getElementById("finals-bracket-visual");
 
@@ -794,7 +651,7 @@ function renderFinalsBracket(bracket, tournamentId) {
   }
 
   renderFinalsRoundFilter(rounds, bracket);
-  renderFinalsMatchesByRound(FINALS_SELECTED_ROUND_ID, bracket, tournamentId);
+  renderFinalsMatchesByRound(FINALS_SELECTED_ROUND_ID, bracket);
 
   if (visualContainer) {
     renderBracketVisual(bracket, visualContainer);
@@ -850,7 +707,6 @@ function renderLinearBracket(bracket, rounds, container) {
 }
 
 
-
 function renderSymmetricBracket(bracket, rounds, container) {
   const bracketEl = document.createElement("div");
   bracketEl.className = "bracket-container bracket-symmetric";
@@ -872,7 +728,6 @@ function renderSymmetricBracket(bracket, rounds, container) {
     if (isFinal) {
       const finalMatch = matches[0];
       
-      // ✅ Usa team_a_name/team_b_name per trovare il nome del vincitore
       let championName = "";
       if (finalMatch.winner_team_id) {
         if (finalMatch.winner_team_id === finalMatch.team_a) {
@@ -937,8 +792,6 @@ function renderSymmetricBracket(bracket, rounds, container) {
 }
 
 
-
-
 function createBracketMatch(match) {
   const matchEl = document.createElement("div");
   matchEl.className = "bracket-match";
@@ -947,7 +800,6 @@ function createBracketMatch(match) {
   const scoreA = match.score_a;
   const scoreB = match.score_b;
 
-  // ✅ Usa team_a_name e team_b_name se disponibili
   const teamAName = match.team_a_name || formatTeam(match.team_a);
   const teamBName = match.team_b_name || formatTeam(match.team_b);
 
@@ -1017,8 +869,10 @@ function createBracketMatch(match) {
 }
 
 
-
-function renderFinalsMatchCard(match, tournamentId, roundLabel = "Fase Finale") {
+// ===============================
+// RENDER FINALS MATCH CARD (READ-ONLY)
+// ===============================
+function renderFinalsMatchCard(match, roundLabel = "Fase Finale") {
   const card = document.createElement("div");
   card.className = "match-card finals";
 
@@ -1026,35 +880,25 @@ function renderFinalsMatchCard(match, tournamentId, roundLabel = "Fase Finale") 
     match.played === true ||
     String(match.played).toUpperCase() === "TRUE";
 
-  const tournamentLocked = TOURNAMENT_STATUS === "finished";
-
   if (isPlayed) card.classList.add("played");
-  if (tournamentLocked) card.classList.add("locked");
 
-  // ✅ Usa team_a_name e team_b_name se disponibili
   const teamAName = match.team_a_name || formatTeam(match.team_a);
   const teamBName = match.team_b_name || formatTeam(match.team_b);
-
-  let btnText = "Invia risultato";
-  let btnClass = "btn primary submit-result";
-
-  if (tournamentLocked) {
-    btnText = "Torneo concluso";
-    btnClass = "btn secondary submit-result";
-  } else if (isPlayed) {
-    btnText = "Modifica risultato";
-    btnClass = "btn secondary submit-result";
-  }
 
   const scoreA = match.score_a;
   const scoreB = match.score_b;
 
-  const isTieWithWinner =
-    isPlayed &&
-    scoreA !== "" &&
-    scoreB !== "" &&
-    String(scoreA) === String(scoreB) &&
-    match.winner_team_id;
+  // Determina vincitore per evidenziarlo
+  let winnerClass = { a: "", b: "" };
+  if (isPlayed && match.winner_team_id) {
+    if (match.winner_team_id === match.team_a) {
+      winnerClass.a = "winner";
+      winnerClass.b = "loser";
+    } else if (match.winner_team_id === match.team_b) {
+      winnerClass.a = "loser";
+      winnerClass.b = "winner";
+    }
+  }
 
   card.innerHTML = `
     <div class="match-meta">
@@ -1063,184 +907,17 @@ function renderFinalsMatchCard(match, tournamentId, roundLabel = "Fase Finale") 
     </div>
 
     <div class="match-teams">
-      <span class="team">${escapeHTML(teamAName)}</span>
-
-      <input type="number"
-        class="score-input"
-        ${tournamentLocked ? "disabled" : ""}
-        value="${isPlayed ? (match.score_a ?? "") : ""}">
-
+      <span class="team ${winnerClass.a}">${escapeHTML(teamAName)}</span>
+      <span class="score">${isPlayed ? (scoreA ?? "-") : "-"}</span>
       <span class="dash">-</span>
-
-      <input type="number"
-        class="score-input"
-        ${tournamentLocked ? "disabled" : ""}
-        value="${isPlayed ? (match.score_b ?? "") : ""}">
-
-      <span class="team">${escapeHTML(teamBName)}</span>
+      <span class="score">${isPlayed ? (scoreB ?? "-") : "-"}</span>
+      <span class="team ${winnerClass.b}">${escapeHTML(teamBName)}</span>
     </div>
 
-    <div class="winner-select ${isTieWithWinner ? "" : "hidden"}">
-      <label>Vincitore spareggio</label>
-      <select ${tournamentLocked ? "disabled" : ""}>
-        <option value="">Seleziona</option>
-        <option value="${match.team_a}" ${match.winner_team_id === match.team_a ? "selected" : ""}>${escapeHTML(teamAName)}</option>
-        <option value="${match.team_b}" ${match.winner_team_id === match.team_b ? "selected" : ""}>${escapeHTML(teamBName)}</option>
-      </select>
+    <div class="match-status">
+      ${isPlayed ? '<span class="status-played">✓ Giocata</span>' : '<span class="status-pending">In programma</span>'}
     </div>
-
-    <button class="${btnClass}" ${tournamentLocked ? "disabled" : ""}>
-      ${btnText}
-    </button>
   `;
-
-  if (tournamentLocked) return card;
-
-  const inputs = card.querySelectorAll(".score-input");
-  const selectBox = card.querySelector(".winner-select");
-  const select = selectBox.querySelector("select");
-
-  inputs.forEach(i =>
-    i.addEventListener("input", () => {
-      if (inputs[0].value !== "" && inputs[0].value === inputs[1].value) {
-        selectBox.classList.remove("hidden");
-      } else {
-        selectBox.classList.add("hidden");
-        select.value = "";
-      }
-    })
-  );
-
-  card.querySelector(".submit-result")
-    .addEventListener("click", () =>
-      submitFinalResult(card, match, tournamentId, select.value)
-    );
 
   return card;
-}
-
-
-
-
-function submitFinalResult(card, match, tournamentId, winnerTeamId) {
-  if (TOURNAMENT_STATUS === "finished") {
-    showToast("Torneo concluso 🔒");
-    return;
-  }
-
-  const inputs = card.querySelectorAll(".score-input");
-  const btn = card.querySelector(".submit-result");
-  const scoreA = inputs[0].value;
-  const scoreB = inputs[1].value;
-
-  if (scoreA === "" || scoreB === "") {
-    showToast("Inserisci entrambi i punteggi ⚠️");
-    return;
-  }
-
-  if (scoreA === scoreB && !winnerTeamId) {
-    showToast("Seleziona il vincitore dello spareggio ⚠️");
-    return;
-  }
-
-  const payload = {
-    tournament_id: tournamentId,
-    match_id: match.match_id,
-    score_a: Number(scoreA),
-    score_b: Number(scoreB),
-    phase: "final"
-  };
-
-  if (winnerTeamId) {
-    payload.winner_team_id = winnerTeamId;
-  }
-
-  // STATO LOADING
-  btn.innerHTML = `
-    <span class="spinner"></span>
-    Salvataggio...
-  `;
-  btn.classList.add("disabled");
-  btn.disabled = true;
-  inputs.forEach(input => input.disabled = true);
-
-  fetch(API_URLS.submitResult, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  })
-    .then(res => res.text())
-    .then(resp => {
-      if (resp === "RESULT_SAVED") {
-        card.classList.add("played");
-
-        btn.className = "btn secondary submit-result";
-        btn.textContent = "Modifica risultato";
-        btn.disabled = false;
-        btn.classList.remove("disabled");
-
-        inputs.forEach(input => input.disabled = false);
-
-        showToast("Risultato finale salvato ✔️");
-
-        fetch(API_URLS.getTournaments)
-          .then(r => r.json())
-          .then(tournaments => {
-            const t = tournaments.find(x => x.tournament_id === tournamentId);
-            const oldStatus = TOURNAMENT_STATUS;
-            TOURNAMENT_STATUS = t?.status || TOURNAMENT_STATUS;
-
-            loadFinalsBracket(tournamentId)
-              .then(bracket => {
-                if (bracket) {
-                  renderFinalsBracket(bracket, tournamentId);
-                }
-              });
-
-            if (TOURNAMENT_STATUS === "finished" && oldStatus !== "finished") {
-              applyLayoutByStatus();
-            }
-          })
-          .catch(() => {
-            loadFinalsBracket(tournamentId)
-              .then(bracket => {
-                if (bracket) {
-                  renderFinalsBracket(bracket, tournamentId);
-                }
-              });
-          });
-
-      } else if (resp === "FINAL_ROUND_LOCKED") {
-        showToast("Round bloccato: esiste già un round successivo 🔒");
-        restoreUI();
-      } else if (resp === "TOURNAMENT_FINISHED_LOCKED") {
-        showToast("Torneo concluso 🔒");
-        restoreUI();
-      } else {
-        showToast("Errore nel salvataggio ❌");
-        restoreUI();
-      }
-    })
-    .catch(err => {
-      console.error("Errore submit final:", err);
-      showToast("Errore di rete ❌");
-      restoreUI();
-    });
-
-  function restoreUI() {
-    btn.className = card.classList.contains("played")
-      ? "btn secondary submit-result"
-      : "btn primary submit-result";
-
-    btn.textContent = card.classList.contains("played")
-      ? "Modifica risultato"
-      : "Invia risultato";
-
-    btn.disabled = false;
-    btn.classList.remove("disabled");
-
-    inputs.forEach(input => input.disabled = false);
-  }
 }
