@@ -136,6 +136,8 @@ function renderGenericRegulation(tournaments) {
   };
 }
 
+
+
 // ===============================
 // 7. RENDER TORNEO SPECIFICO
 // ===============================
@@ -148,21 +150,11 @@ function renderTournament(tournament) {
   document.getElementById("tournament-subtitle").textContent =
     `${tournament.location} · ${tournament.date} · ${tournament.sport}`;
 
-  // Info
-  document.getElementById("info-sport").textContent = tournament.sport;
-  document.getElementById("info-location").textContent = tournament.location;
-  document.getElementById("info-date").textContent = tournament.date;
-  document.getElementById("info-price").textContent = tournament.price;
-
-  // ✅ Court info message
-  const courtInfo = buildCourtInfoMessage(tournament);
-  document.getElementById("info-court").textContent = courtInfo;
+  // ✅ Info torneo (nuova versione con righe)
+  renderTournamentInfoRows(tournament);
 
   // ✅ Regola specifica campi
   renderSpecificCourtRule(tournament);
-
-  // Teams counter
-  teamsInfo.textContent = `${tournament.teams_current} / ${tournament.teams_max}`;
 
   // Apply state & form behavior
   applyTournamentState(tournament);
@@ -174,49 +166,214 @@ function renderTournament(tournament) {
 
   // Load + render teams list block
   loadAndRenderTeamsList(tournament);
-
-  // ✅ Il regolamento generale è già nell'HTML, non serve mostrarlo separatamente
 }
 
 
 // ===============================
-// 8. BUILD COURT INFO MESSAGE
+// 7b. RENDER TOURNAMENT INFO ROWS
 // ===============================
-function buildCourtInfoMessage(tournament) {
-  const fixedCourt = tournament.fixed_court === true || String(tournament.fixed_court).toUpperCase() === "TRUE";
-  const days = String(tournament.available_days || "").trim().toLowerCase();
-  const hours = String(tournament.available_hours || "").trim().toLowerCase();
+function renderTournamentInfoRows(tournament) {
+  const container = document.getElementById("tournament-info-rows");
+  if (!container) return;
 
-  if (fixedCourt) {
-    return "Campi, giorni e orari prefissati";
-  }
+  // ROW 1: Sport + Location + Date
+  const row1 = `${tournament.sport} · ${tournament.location} · ${tournament.date}`;
 
-  const daysLabel = {
-    "lun-dom": "tutti i giorni",
-    "lun-ven": "lun-ven",
-    "sab-dom": "weekend"
-  }[days];
+  // ROW 2: Gender + Age + Expertise
+  const row2 = buildParticipantsInfoText(tournament);
 
-  const hoursLabel = {
-    "10-22": "10-22",
-    "10-19": "10-19",
-    "19-22": "19-22"
-  }[hours];
+  // ROW 3: Price + Court + Referee
+  const row3 = buildPriceInfoText(tournament);
 
-  if (daysLabel && hoursLabel) {
-    return `Campi a scelta · ${daysLabel} · ${hoursLabel}`;
-  }
+  // ROW 4: Award
+  const row4 = buildAwardInfoText(tournament);
 
-  if (daysLabel) {
-    return `Campi a scelta · ${daysLabel}`;
-  }
+  // ROW 5: Format + Guaranteed Matches
+  const row5 = buildFormatInfoText(tournament);
 
-  if (hoursLabel) {
-    return `Campi a scelta · ${hoursLabel}`;
-  }
+  // ROW 6: Time Range
+  const row6 = buildTimeRangeInfoText(tournament);
 
-  return "Campi a scelta";
+  // ROW 7: Court/Days/Hours
+  const row7 = buildCourtDaysHoursInfoText(tournament);
+
+  // ROW 8: Teams
+  const row8 = `${tournament.teams_current || 0} squadre iscritte`;
+
+  container.innerHTML = `
+    <div class="info-row"><span class="info-row-icon">🏐</span><span>${escapeHTML(row1)}</span></div>
+    <div class="info-row"><span class="info-row-icon">👥</span><span>${row2}</span></div>
+    <div class="info-row"><span class="info-row-icon">💰</span><span>${row3}</span></div>
+    <div class="info-row"><span class="info-row-icon">🏆</span><span>${row4}</span></div>
+    <div class="info-row"><span class="info-row-icon">📋</span><span>${row5}</span></div>
+    <div class="info-row"><span class="info-row-icon">📅</span><span>${row6}</span></div>
+    <div class="info-row"><span class="info-row-icon">⏰</span><span>${row7}</span></div>
+    <div class="info-row"><span class="info-row-icon">✅</span><span>${row8}</span></div>
+  `;
 }
+
+// ===============================
+// 7c. BUILD PARTICIPANTS INFO TEXT
+// ===============================
+function buildParticipantsInfoText(t) {
+  const parts = [];
+
+  const genderMap = {
+    only_male: "Solo ragazzi",
+    only_female: "Solo ragazze",
+    mixed_strict: "Misto obbligatorio",
+    mixed_female_allowed: "Misto o femminile",
+    open: "Aperto a tutti"
+  };
+  parts.push(genderMap[t.gender] || "Aperto a tutti");
+
+  const ageMap = {
+    under_18: "Under 18",
+    over_35: "Over 35",
+    open: "Tutte le età"
+  };
+  parts.push(ageMap[t.age] || "Tutte le età");
+
+  const expertiseMap = {
+    open: "Livello amatoriale",
+    expert: "Livello agonistico"
+  };
+  parts.push(expertiseMap[t.expertise] || "Livello amatoriale");
+
+  return parts.join(" · ");
+}
+
+// ===============================
+// 7d. BUILD PRICE INFO TEXT
+// ===============================
+function buildPriceInfoText(t) {
+  const price = t.price || 0;
+  
+  const courtIncluded = t.court_price && t.court_price !== "non_compreso";
+  
+  const hasReferee = t.referee === true || String(t.referee).toUpperCase() === "TRUE";
+  const refereeIncluded = hasReferee && t.referee_price && t.referee_price !== "non_compreso" && t.referee_price !== "NA";
+  const refereeNA = !hasReferee || t.referee_price === "NA";
+
+  let inclusionText = "";
+
+  if (courtIncluded && refereeIncluded) {
+    inclusionText = "campi e arbitro inclusi";
+  } else if (courtIncluded && refereeNA) {
+    inclusionText = "campi inclusi";
+  } else if (courtIncluded && !refereeIncluded) {
+    inclusionText = "campi inclusi, arbitro non incluso";
+  } else if (!courtIncluded && refereeIncluded) {
+    inclusionText = "campi non inclusi, arbitro incluso";
+  } else if (!courtIncluded && refereeNA) {
+    inclusionText = "campi non inclusi";
+  } else {
+    inclusionText = "campi e arbitro non inclusi";
+  }
+
+  return `€${price} a squadra · ${inclusionText}`;
+}
+
+// ===============================
+// 7e. BUILD AWARD INFO TEXT
+// ===============================
+function buildAwardInfoText(t) {
+  const hasAward = t.award === true || String(t.award).toUpperCase() === "TRUE";
+  
+  if (!hasAward) {
+    return "Premio simbolico (coppe, medaglie)";
+  }
+
+  const perc = t.award_amount_perc;
+  
+  if (perc && perc !== "NA" && !isNaN(Number(perc))) {
+    return `Montepremi garantito · ${perc}% delle quote`;
+  }
+
+  return "Montepremi garantito";
+}
+
+// ===============================
+// 7f. BUILD FORMAT INFO TEXT
+// ===============================
+function buildFormatInfoText(t) {
+  const formatMap = {
+    round_robin: "Girone unico solo andata",
+    double_round_robin: "Girone unico andata e ritorno",
+    round_robin_finals: "Gironi + fasi finali",
+    double_round_robin_finals: "Gironi (A/R) + fasi finali"
+  };
+
+  const formatText = formatMap[t.format_type] || "Formato da definire";
+  const guaranteed = t.guaranteed_match || 0;
+
+  if (guaranteed > 0) {
+    return `${formatText} · ${guaranteed} partite garantite`;
+  }
+
+  return formatText;
+}
+
+// ===============================
+// 7g. BUILD TIME RANGE INFO TEXT
+// ===============================
+function buildTimeRangeInfoText(t) {
+  const timeMap = {
+    short: "Torneo giornaliero",
+    mid: "Gironi su più settimane · Finali in un giorno",
+    long: "Gironi e finali su più settimane"
+  };
+
+  return timeMap[t.time_range] || "Durata da definire";
+}
+
+// ===============================
+// 7h. BUILD COURT/DAYS/HOURS INFO TEXT
+// ===============================
+function buildCourtDaysHoursInfoText(t) {
+  const fixed = String(t.fixed_court_days_hours || "").toLowerCase();
+  const days = String(t.available_days || "").toLowerCase();
+  const hours = String(t.available_hours || "").toLowerCase();
+
+  const fixedMap = {
+    false: "Campi, giorni e orari a scelta",
+    only_court: "Campi fissi · Giorni e orari a scelta",
+    only_days: "Campi a scelta · Giorni fissi · Orari a scelta",
+    only_hours: "Campi a scelta · Giorni a scelta · Orari fissi",
+    court_days: "Campi e giorni fissi · Orari a scelta",
+    court_hours: "Campi e orari fissi · Giorni a scelta",
+    days_hours: "Campi a scelta · Giorni e orari fissi",
+    court_days_hours: "Campi, giorni e orari fissi"
+  };
+
+  const daysMap = {
+    "lun-dom": "Tutti i giorni",
+    "lun-ven": "Lun-Ven",
+    "sab-dom": "Weekend"
+  };
+
+  const hoursMap = {
+    "10-22": "10:00-22:00",
+    "10-19": "10:00-19:00",
+    "19-22": "19:00-22:00"
+  };
+
+  const fixedText = fixedMap[fixed] || "Campi, giorni e orari a scelta";
+  const daysText = daysMap[days] || "";
+  const hoursText = hoursMap[hours] || "";
+
+  const parts = [fixedText];
+  
+  if (daysText) parts.push(daysText);
+  if (hoursText) parts.push(hoursText);
+
+  return parts.join(" · ");
+}
+
+
+
+
+
 
 // ===============================
 // 9. RENDER SPECIFIC COURT RULE

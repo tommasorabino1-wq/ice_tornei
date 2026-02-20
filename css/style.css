@@ -886,25 +886,31 @@ body {
 /* =========================
    TOURNAMENT META (INFO) - BASE
 ========================= */
-.tournament-meta {
+.tournament-info-rows {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 15px;
+  width: 100%;
 }
 
-.meta-item {
+.tournament-info-rows .info-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--text-main);
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 24px;
+  color: var(--text-secondary);
+  line-height: 1.8;
 }
 
-.meta-icon {
-  width: 20px;
+.tournament-info-rows .info-row-icon {
+  flex-shrink: 0;
+  width: 24px;
   text-align: center;
-  opacity: 0.85;
+  font-size: 24px;
+}
+
+.tournament-info-rows .info-row span:last-child {
+  flex: 1;
 }
 
 
