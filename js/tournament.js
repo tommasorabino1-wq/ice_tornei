@@ -949,21 +949,32 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   const daysFixed = fixed.includes("days");
   const hoursFixed = fixed.includes("hours");
   
-  // Mapping giorni e orari per testo leggibile
+  // Mapping giorni per testo leggibile
   const daysMap = {
+    // Range
     "lun-dom": "qualsiasi giorno della settimana",
     "lun-ven": "dal lunedì al venerdì",
-    "sab-dom": "nel weekend (sabato e domenica)"
+    "sab-dom": "nel weekend (sabato e domenica)",
+    // Giorni singoli
+    "lun": "il lunedì",
+    "mar": "il martedì",
+    "mer": "il mercoledì",
+    "gio": "il giovedì",
+    "giov": "il giovedì",
+    "ven": "il venerdì",
+    "sab": "il sabato",
+    "dom": "la domenica"
   };
   
+  // Mapping orari per testo leggibile
   const hoursMap = {
     "10-22": "tra le 10:00 e le 22:00",
     "10-19": "tra le 10:00 e le 19:00 (fascia diurna)",
     "19-22": "tra le 19:00 e le 22:00 (fascia serale)"
   };
   
-  const daysText = daysMap[days] || "";
-  const hoursText = hoursMap[hours] || "";
+  const daysText = daysMap[days] || days || "";
+  const hoursText = hoursMap[hours] || hours || "";
   
   let ruleContent = "";
   
@@ -1138,8 +1149,9 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
 
 
 
-
-
+// ===============================
+// OLD SPECIFIC TOURNAMENTS RULES (solo per avere esempi per le nuove).
+// ===============================
 
 
 // ===============================
@@ -1327,6 +1339,33 @@ function buildFoodRule(tournament) {
     </div>
   `;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1536,6 +1575,19 @@ function parseHoursSlots(range) {
   return slots;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ===============================
 // 25. STATO TORNEO (UI)
 // ===============================
@@ -1602,6 +1654,18 @@ function applyTournamentState(tournament) {
     return;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1746,6 +1810,18 @@ function handleFormSubmit(tournament) {
   }, { once: true });
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 // ===============================
 // 27. LOAD + RENDER TEAMS LIST
 // ===============================
@@ -1845,6 +1921,18 @@ function escapeHTML(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ===============================
 // 29. TOAST NOTIFICATION
