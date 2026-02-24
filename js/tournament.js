@@ -475,6 +475,13 @@ function renderSpecificCourtRule(tournament) {
     ruleNumber++;
   }
   
+  // REGOLA 11: Servizi e facilities (mostrata solo se c'è almeno un servizio)
+  const facilitiesRule = buildFacilitiesRule(tournament, ruleNumber);
+  if (facilitiesRule) {
+    rules.push(facilitiesRule);
+    ruleNumber++;
+  }
+  
   // REGOLA FINALE
   rules.push(buildGeneralReferenceRule());
   
@@ -2046,6 +2053,129 @@ function buildInsuranceRule(tournament, ruleNumber) {
           Il mancato invio della documentazione richiesta potrà comportare 
           l'<strong>esclusione dal torneo</strong>.
         </p>
+      </div>
+    </div>
+  `;
+}
+
+
+
+// ===============================
+// 9l. BUILD FACILITIES RULE (REGOLA 11)
+// ===============================
+function buildFacilitiesRule(tournament, ruleNumber) {
+  const food = String(tournament.food || "none").toLowerCase();
+  const palla = String(tournament.palla || "false").toLowerCase();
+  const racket = String(tournament.racket || "NA").toLowerCase();
+  const upsell = String(tournament.upsell || "none").toLowerCase();
+  const sport = String(tournament.sport || "").toLowerCase();
+  
+  // Determina se è uno sport con racchette
+  const isRacketSport = sport.includes("padel") || sport.includes("tennis");
+  
+  // Determina terminologia palla
+  const isGameBasedSport = sport.includes("padel") || sport.includes("volley") || sport.includes("beach") || sport.includes("tennis");
+  const ballTerminology = isRacketSport ? "palline" : "palloni";
+  
+  let ruleContent = "";
+  
+  // =====================================================
+  // FOOD
+  // =====================================================
+  if (food === "all") {
+    ruleContent += `
+      <p>
+        L'organizzazione offrirà un <strong>pasto completo</strong> a tutti i partecipanti. 
+        I dettagli su orari e location verranno comunicati prima dell'inizio del torneo.
+      </p>
+    `;
+  } else if (food === "partial") {
+    ruleContent += `
+      <p>
+        Durante il torneo saranno offerti <strong>snack e bevande</strong> a tutti i partecipanti.
+      </p>
+    `;
+  }
+  
+  // =====================================================
+  // PALLA
+  // =====================================================
+  const hasPalla = palla === "true";
+  if (hasPalla) {
+    ruleContent += `
+      <p>
+        L'organizzazione fornirà i <strong>${ballTerminology}</strong> per tutte le partite del torneo.
+      </p>
+    `;
+  }
+  
+  // =====================================================
+  // RACKET (solo per sport con racchette)
+  // =====================================================
+  if (isRacketSport && racket !== "na" && racket !== "0") {
+    const racketNumber = Number(racket) || 0;
+    if (racketNumber > 0) {
+      if (racketNumber === 1) {
+        ruleContent += `
+          <p>
+            L'organizzazione metterà a disposizione <strong>1 racchetta</strong> per i partecipanti che ne avessero bisogno.
+          </p>
+        `;
+      } else {
+        ruleContent += `
+          <p>
+            L'organizzazione metterà a disposizione <strong>${racketNumber} racchette</strong> per i partecipanti che ne avessero bisogno.
+          </p>
+        `;
+      }
+    }
+  }
+  
+  // =====================================================
+  // UPSELL
+  // =====================================================
+  if (upsell === "kit") {
+    ruleContent += `
+      <p>
+        Sarà possibile acquistare un <strong>kit sportivo "Tornei ICE"</strong> (magliette o altro materiale tecnico) 
+        a <strong>prezzo di costo</strong>. I dettagli per l'acquisto verranno comunicati agli iscritti.
+      </p>
+    `;
+  } else if (upsell === "photo") {
+    ruleContent += `
+      <p>
+        Durante il torneo saranno presenti <strong>fotografi professionali</strong> che realizzeranno foto e video delle partite. 
+        Il materiale sarà disponibile <strong>gratuitamente</strong> per tutti i partecipanti che condivideranno 
+        i contenuti sui propri canali social taggando Tornei ICE.
+      </p>
+    `;
+  } else if (upsell === "kit_photo") {
+    ruleContent += `
+      <p>
+        Sarà possibile acquistare un <strong>kit sportivo "Tornei ICE"</strong> (magliette o altro materiale tecnico) 
+        a <strong>prezzo di costo</strong>. I dettagli per l'acquisto verranno comunicati agli iscritti.
+      </p>
+      <p>
+        Durante il torneo saranno presenti <strong>fotografi professionali</strong> che realizzeranno foto e video delle partite. 
+        Il materiale sarà disponibile <strong>gratuitamente</strong> per tutti i partecipanti che condivideranno 
+        i contenuti sui propri canali social taggando Tornei ICE.
+      </p>
+    `;
+  }
+  
+  // =====================================================
+  // SE NON C'È NESSUN SERVIZIO, NON MOSTRARE LA REGOLA
+  // =====================================================
+  if (!ruleContent) {
+    return null;
+  }
+  
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Servizi e facilities</strong></p>
+        ${ruleContent}
       </div>
     </div>
   `;
