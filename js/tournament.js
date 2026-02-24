@@ -2007,6 +2007,25 @@ function buildRefereeRule(tournament, ruleNumber) {
 
 
 
+// ===============================
+// 9Final. BUILD GENERAL REFERENCE RULE (ULTIMA REGOLA)
+// ===============================
+function buildGeneralReferenceRule() {
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">📄</div>
+      <div class="specific-regulation-content">
+        <p><strong>Altre disposizioni</strong></p>
+        <p>
+          Per tutte le altre norme relative a fair play, ritardi, rinvii e spostamenti delle partite, 
+          si rimanda al <strong>regolamento generale dei tornei ICE</strong> riportato in fondo a questa pagina.
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+
 
 
 
@@ -2033,37 +2052,6 @@ function buildRefereeRule(tournament, ruleNumber) {
 // ===============================
 // OLD SPECIFIC TOURNAMENTS RULES (solo per avere esempi per le nuove).
 // ===============================
-
-
-
-
-
-
-// ===============================
-// 18. BUILD REFEREE RULE (AGGIORNATA CON ruleNumber)
-// ===============================
-
-
-
-
-
-// ===============================
-// 19. BUILD GENERAL REFERENCE RULE (REGOLA 4)
-// ===============================
-function buildGeneralReferenceRule() {
-  return `
-    <div class="specific-regulation-card">
-      <div class="specific-regulation-icon">📄</div>
-      <div class="specific-regulation-content">
-        <p><strong>Altre disposizioni</strong></p>
-        <p>
-          Per tutte le altre norme relative a fair play, ritardi, rinvii e spostamenti delle partite, 
-          si rimanda al <strong>regolamento generale dei tornei ICE</strong> riportato in fondo a questa pagina.
-        </p>
-      </div>
-    </div>
-  `;
-}
 
 
 // ===============================
