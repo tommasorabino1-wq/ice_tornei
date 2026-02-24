@@ -2041,17 +2041,8 @@ function buildInsuranceRule(tournament, ruleNumber) {
         <p>
           La copertura assicurativa sarà valida esclusivamente per gli atleti 
           in possesso di <strong>certificato medico (agonistico o non agonistico) 
-          in corso di validità</strong> alla data di svolgimento delle partite.
+          in corso di validità</strong>.
           In assenza di certificato valido, eventuali infortuni non saranno coperti.
-        </p>
-
-        <p>
-          Circa due settimane prima dell'inizio del torneo, le squadre riceveranno 
-          una comunicazione via email con la richiesta di trasmettere il certificato 
-          medico di tutti i partecipanti oppure, in mancanza di questo, di compilare 
-          e firmare un <strong>modulo di manleva e scarico di responsabilità</strong>.
-          Il mancato invio della documentazione richiesta potrà comportare 
-          l'<strong>esclusione dal torneo</strong>.
         </p>
       </div>
     </div>
@@ -2075,7 +2066,7 @@ function buildFacilitiesRule(tournament, ruleNumber) {
   
   // Determina terminologia palla
   const isGameBasedSport = sport.includes("padel") || sport.includes("volley") || sport.includes("beach") || sport.includes("tennis");
-  const ballTerminology = isRacketSport ? "palline" : "palloni";
+  const ballTerminology = isRacketSport ? "un numero di palline sufficienti" : "un numero di palloni sufficienti";
   
   let ruleContent = "";
   
@@ -2085,14 +2076,13 @@ function buildFacilitiesRule(tournament, ruleNumber) {
   if (food === "all") {
     ruleContent += `
       <p>
-        L'organizzazione offrirà un <strong>pasto completo</strong> a tutti i partecipanti. 
-        I dettagli su orari e location verranno comunicati prima dell'inizio del torneo.
+        Durante il torneo, l'organizzazione offrirà a tutti i partecipanti un <strong>pasto completo</strong>.
       </p>
     `;
   } else if (food === "partial") {
     ruleContent += `
       <p>
-        Durante il torneo saranno offerti <strong>snack e bevande</strong> a tutti i partecipanti.
+        Durante il torneo, l'organizzazione offrirà a tutti i partecipanti <strong>snack e bevande</strong>.
       </p>
     `;
   }
@@ -2104,7 +2094,7 @@ function buildFacilitiesRule(tournament, ruleNumber) {
   if (hasPalla) {
     ruleContent += `
       <p>
-        L'organizzazione fornirà i <strong>${ballTerminology}</strong> per tutte le partite del torneo.
+        L'organizzazione fornirà <strong>${ballTerminology}</strong> per il corretto svolgimento delle partite del torneo.
       </p>
     `;
   }
@@ -2152,7 +2142,7 @@ function buildFacilitiesRule(tournament, ruleNumber) {
   } else if (upsell === "kit_photo") {
     ruleContent += `
       <p>
-        Sarà possibile acquistare un <strong>kit sportivo "Tornei ICE"</strong> (magliette o altro materiale tecnico) 
+        Durante il torneo, sarà possibile acquistare un <strong>kit sportivo "Tornei ICE"</strong> 
         a <strong>prezzo di costo</strong>. I dettagli per l'acquisto verranno comunicati agli iscritti.
       </p>
       <p>
@@ -2174,7 +2164,7 @@ function buildFacilitiesRule(tournament, ruleNumber) {
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
-        <p><strong>Servizi e facilities</strong></p>
+        <p><strong>Servizi Aggiuntivi</strong></p>
         ${ruleContent}
       </div>
     </div>
