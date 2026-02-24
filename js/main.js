@@ -257,7 +257,7 @@ function buildAwardInfoText(t) {
   if (perc && perc !== "NA" && !isNaN(Number(perc)) && price > 0 && teamsMax > 0) {
     const percValue = Number(perc) / 100;
     const totalPrize = Math.round(teamsMax * price * percValue);
-    return `€${totalPrize} (con ${teamsMax} squadre iscritte)`;
+    return `€${totalPrize}`;
   }
 
   return "Montepremi garantito";

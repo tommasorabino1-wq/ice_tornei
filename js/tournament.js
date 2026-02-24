@@ -294,7 +294,7 @@ function buildAwardInfoText(t) {
   const hasAward = t.award === true || String(t.award).toUpperCase() === "TRUE";
   
   if (!hasAward) {
-    return "Solo premi simbolici (coppe, medaglie)";
+    return "Solo premi simbolici";
   }
 
   const perc = t.award_amount_perc;
@@ -304,7 +304,7 @@ function buildAwardInfoText(t) {
   if (perc && perc !== "NA" && !isNaN(Number(perc)) && price > 0 && teamsMax > 0) {
     const percValue = Number(perc) / 100;
     const totalPrize = Math.round(teamsMax * price * percValue);
-    return `€${totalPrize} (con ${teamsMax} squadre iscritte)`;
+    return `€${totalPrize}`;
   }
 
   return "Montepremi garantito";
@@ -1233,12 +1233,10 @@ function buildAwardsRule(tournament, ruleNumber) {
 
 
 // ===============================
-// 9e. BUILD FORMAT & TIME RANGE RULE (REGOLA 4)
+// 9e. BUILD FORMAT RULE (REGOLA 4)
 // ===============================
 function buildFormatTimeRangeRule(tournament, ruleNumber) {
   const formatType = String(tournament.format_type || "").toLowerCase();
-  const timeRange = String(tournament.time_range || "").toLowerCase();
-  const hasFinals = formatType.includes("finals");
   
   // === FORMAT TYPE TEXT ===
   let formatText = "";
@@ -1319,72 +1317,20 @@ function buildFormatTimeRangeRule(tournament, ruleNumber) {
       break;
   }
   
-  // === TIME RANGE TEXT (COMBINATO CON FORMAT) ===
-  let timeRangeText = "";
-  
-  switch (timeRange) {
-    case "short":
-      timeRangeText = `
-        <p>
-          Si tratta di un <strong>torneo giornaliero</strong>: tutte le partite si svolgeranno nell’arco di una singola giornata.
-        </p>
-      `;
-      break;
-      
-    case "mid":
-      if (hasFinals) {
-        timeRangeText = `
-          <p>
-            La prima fase si svolgerà <strong>su più settimane</strong>, con generalmente una partita a settimana per squadra. 
-            La fase finale sarà invece concentrata in un <strong>unico giorno conclusivo</strong>.
-          </p>
-        `;
-      } else {
-        timeRangeText = `
-          <p>
-            Le partite si svolgeranno <strong>su più settimane</strong>, con generalmente una partita a settimana per squadra fino al termine del torneo.
-          </p>
-        `;
-      }
-      break;
-      
-    case "long":
-      if (hasFinals) {
-        timeRangeText = `
-          <p>
-            L’intero torneo si svilupperà <strong>su più settimane</strong>. 
-            Sia la prima fase sia la fase finale saranno distribuite nel tempo, con generalmente una partita a settimana per squadra.
-          </p>
-        `;
-      } else {
-        timeRangeText = `
-          <p>
-            Il torneo si svolgerà <strong>su più settimane</strong>, con generalmente una partita a settimana per squadra fino alla conclusione.
-          </p>
-        `;
-      }
-      break;
-      
-    default:
-      timeRangeText = `
-        <p>
-          La durata e la distribuzione delle partite saranno comunicate prima dell'inizio del torneo.
-        </p>
-      `;
-      break;
-  }
-  
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
-        <p><strong>Formato e durata del torneo</strong></p>
+        <p><strong>Formato del torneo</strong></p>
         ${formatText}
-        ${timeRangeText}
       </div>
     </div>
   `;
 }
+
+
+
+
 
 
 
