@@ -436,39 +436,46 @@ function renderSpecificCourtRule(tournament) {
   rules.push(buildPriceCourtRefereeRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 2: Partecipanti (gender, age, expertise, team_size)
+  // REGOLA 2: Partecipanti
   rules.push(buildParticipantsRequirementsRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 3: Premi e riconoscimenti (award, mvp_award)
+  // REGOLA 3: Premi
   rules.push(buildAwardsRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 4: Formato e durata (format_type, time_range)
+  // REGOLA 4: Formato
   rules.push(buildFormatTimeRangeRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 5: Campi, giorni e orari (fixed_court_days_hours, available_days, available_hours)
+  // REGOLA 5: Campi, giorni e orari
   rules.push(buildCourtDaysHoursRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 6: Formato partite (match_format, guaranteed_match)
+  // REGOLA 6: Formato partite
   rules.push(buildMatchFormatRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 7: Classifica (point_system, tie_standing)
+  // REGOLA 7: Classifica
   rules.push(buildStandingsRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 8: Gestione pareggi in partita (tie_match_gironi, tie_match_finals)
+  // REGOLA 8: Gestione pareggi
   rules.push(buildMatchTiebreakersRule(tournament, ruleNumber));
   ruleNumber++;
-
-  // REGOLA 9: Arbitro (referee)
+  
+  // REGOLA 9: Arbitro
   rules.push(buildRefereeRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA FINALE: Riferimento al regolamento generale
+  // REGOLA 10: Assicurazione sanitaria (mostrata solo se attiva)
+  const insuranceRule = buildInsuranceRule(tournament, ruleNumber);
+  if (insuranceRule) {
+    rules.push(insuranceRule);
+    ruleNumber++;
+  }
+  
+  // REGOLA FINALE
   rules.push(buildGeneralReferenceRule());
   
   container.innerHTML = `
@@ -2001,6 +2008,48 @@ function buildRefereeRule(tournament, ruleNumber) {
 
 
 
+
+// ===============================
+// 9k. BUILD INSURANCE RULE
+// ===============================
+function buildInsuranceRule(tournament, ruleNumber) {
+  const insuranceIncluded =
+    tournament.insurance_included === true ||
+    String(tournament.insurance_included).toUpperCase() === "TRUE";
+
+  if (!insuranceIncluded) return "";
+
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Copertura assicurativa e certificato medico</strong></p>
+
+        <p>
+          Per il presente torneo, l'organizzazione provvederà ad attivare 
+          una <strong>copertura assicurativa contro gli infortuni</strong> 
+          a favore dei partecipanti.
+        </p>
+
+        <p>
+          La copertura assicurativa sarà valida esclusivamente per gli atleti 
+          in possesso di <strong>certificato medico (agonistico o non agonistico) 
+          in corso di validità</strong> alla data di svolgimento delle partite.
+          In assenza di certificato valido, eventuali infortuni non saranno coperti.
+        </p>
+
+        <p>
+          Circa due settimane prima dell'inizio del torneo, le squadre riceveranno 
+          una comunicazione via email con la richiesta di trasmettere il certificato 
+          medico di tutti i partecipanti oppure, in mancanza di questo, di compilare 
+          e firmare un <strong>modulo di manleva e scarico di responsabilità</strong>.
+          Il mancato invio della documentazione richiesta potrà comportare 
+          l'<strong>esclusione dal torneo</strong>.
+        </p>
+      </div>
+    </div>
+  `;
+}
 
 
 
