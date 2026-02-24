@@ -138,8 +138,19 @@ function renderGenericRegulation(tournaments) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 // ===============================
-// 7. RENDER TORNEO SPECIFICO
+// 7. INFO-BOX TORNEO
 // ===============================
 function renderTournament(tournament) {
   genericSection.classList.add("hidden");
@@ -198,17 +209,19 @@ function renderTournamentInfoRows(tournament) {
   const row7 = buildCourtDaysHoursInfoText(tournament);
 
   // ROW 8: Teams
-  const row8 = `${tournament.teams_current || 0} squadre iscritte`;
+  const teamsCurrent = tournament.teams_current || 0;
+  const teamsMax = tournament.teams_max || 0;
+  const row8 = `${teamsCurrent} / ${teamsMax} squadre iscritte`;
 
   container.innerHTML = `
-    <div class="info-row"><span class="info-row-icon">🏐</span><span>${escapeHTML(row1)}</span></div>
-    <div class="info-row"><span class="info-row-icon">👥</span><span>${row2}</span></div>
-    <div class="info-row"><span class="info-row-icon">💰</span><span>${row3}</span></div>
-    <div class="info-row"><span class="info-row-icon">🏆</span><span>${row4}</span></div>
-    <div class="info-row"><span class="info-row-icon">📋</span><span>${row5}</span></div>
-    <div class="info-row"><span class="info-row-icon">📅</span><span>${row6}</span></div>
-    <div class="info-row"><span class="info-row-icon">⏰</span><span>${row7}</span></div>
-    <div class="info-row"><span class="info-row-icon">✅</span><span>${row8}</span></div>
+    <div class="info-row"><span class="info-row-icon">🏐</span><span><strong>Sport, Luogo, Data:</strong> ${escapeHTML(row1)}</span></div>
+    <div class="info-row"><span class="info-row-icon">👥</span><span><strong>Partecipanti:</strong> ${row2}</span></div>
+    <div class="info-row"><span class="info-row-icon">💰</span><span><strong>Iscrizione:</strong> ${row3}</span></div>
+    <div class="info-row"><span class="info-row-icon">🏆</span><span><strong>Montepremi:</strong> ${row4}</span></div>
+    <div class="info-row"><span class="info-row-icon">📋</span><span><strong>Formato:</strong> ${row5}</span></div>
+    <div class="info-row"><span class="info-row-icon">📅</span><span><strong>Durata:</strong> ${row6}</span></div>
+    <div class="info-row"><span class="info-row-icon">⏰</span><span><strong>Partite:</strong> ${row7}</span></div>
+    <div class="info-row"><span class="info-row-icon">✅</span><span><strong>Iscritti:</strong> ${row8}</span></div>
   `;
 }
 
@@ -251,9 +264,9 @@ function buildPriceInfoText(t) {
   
   const courtIncluded = t.court_price && t.court_price !== "non_compreso";
   
-  const hasReferee = t.referee === true || String(t.referee).toUpperCase() === "TRUE";
-  const refereeIncluded = hasReferee && t.referee_price && t.referee_price !== "non_compreso" && t.referee_price !== "NA";
-  const refereeNA = !hasReferee || t.referee_price === "NA";
+  const refereePrice = String(t.referee_price || "NA").toLowerCase();
+  const refereeIncluded = refereePrice !== "na" && refereePrice !== "non_compreso";
+  const refereeNA = refereePrice === "na";
 
   let inclusionText = "";
 
@@ -281,13 +294,17 @@ function buildAwardInfoText(t) {
   const hasAward = t.award === true || String(t.award).toUpperCase() === "TRUE";
   
   if (!hasAward) {
-    return "Premio simbolico (coppe, medaglie)";
+    return "Solo premi simbolici (coppe, medaglie)";
   }
 
   const perc = t.award_amount_perc;
+  const price = Number(t.price) || 0;
+  const teamsMax = Number(t.teams_max) || 0;
   
-  if (perc && perc !== "NA" && !isNaN(Number(perc))) {
-    return `Montepremi garantito · ${perc}% delle quote`;
+  if (perc && perc !== "NA" && !isNaN(Number(perc)) && price > 0 && teamsMax > 0) {
+    const percValue = Number(perc) / 100;
+    const totalPrize = Math.round(teamsMax * price * percValue);
+    return `€${totalPrize} (con ${teamsMax} squadre iscritte)`;
   }
 
   return "Montepremi garantito";
@@ -331,27 +348,45 @@ function buildTimeRangeInfoText(t) {
 // 7h. BUILD COURT/DAYS/HOURS INFO TEXT
 // ===============================
 function buildCourtDaysHoursInfoText(t) {
-  const fixed = String(t.fixed_court_days_hours || "").toLowerCase();
+  const fixed = String(t.fixed_court_days_hours || "false").toLowerCase();
   const days = String(t.available_days || "").toLowerCase();
   const hours = String(t.available_hours || "").toLowerCase();
 
+  // Mapping per cosa è fisso/variabile
   const fixedMap = {
-    false: "Campi, giorni e orari a scelta",
-    only_court: "Campi fissi · Giorni e orari a scelta",
-    only_days: "Campi a scelta · Giorni fissi · Orari a scelta",
-    only_hours: "Campi a scelta · Giorni a scelta · Orari fissi",
-    court_days: "Campi e giorni fissi · Orari a scelta",
-    court_hours: "Campi e orari fissi · Giorni a scelta",
-    days_hours: "Campi a scelta · Giorni e orari fissi",
-    court_days_hours: "Campi, giorni e orari fissi"
+    "false": "Campi, giorni e orari a scelta",
+    "court_all": "Campi fissi · Giorni e orari a scelta",
+    "court_finals": "Campi fissi (solo finali) · Gironi a scelta",
+    "days_all": "Giorni fissi · Campi e orari a scelta",
+    "days_finals": "Giorni fissi (solo finali) · Gironi a scelta",
+    "hours_all": "Orari fissi · Campi e giorni a scelta",
+    "hours_finals": "Orari fissi (solo finali) · Gironi a scelta",
+    "court_days_all": "Campi e giorni fissi · Orari a scelta",
+    "court_days_finals": "Campi e giorni fissi (solo finali)",
+    "court_hours_all": "Campi e orari fissi · Giorni a scelta",
+    "court_hours_finals": "Campi e orari fissi (solo finali)",
+    "days_hours_all": "Giorni e orari fissi · Campi a scelta",
+    "days_hours_finals": "Giorni e orari fissi (solo finali)",
+    "court_days_hours_all": "Campi, giorni e orari fissi",
+    "court_days_hours_finals": "Tutto fisso (solo finali) · Gironi a scelta"
   };
 
+  // Mapping giorni
   const daysMap = {
     "lun-dom": "Tutti i giorni",
     "lun-ven": "Lun-Ven",
-    "sab-dom": "Weekend"
+    "sab-dom": "Weekend",
+    "lun": "Lunedì",
+    "mar": "Martedì",
+    "mer": "Mercoledì",
+    "gio": "Giovedì",
+    "giov": "Giovedì",
+    "ven": "Venerdì",
+    "sab": "Sabato",
+    "dom": "Domenica"
   };
 
+  // Mapping orari
   const hoursMap = {
     "10-22": "10:00-22:00",
     "10-19": "10:00-19:00",
@@ -369,6 +404,19 @@ function buildCourtDaysHoursInfoText(t) {
 
   return parts.join(" · ");
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -943,19 +991,29 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   const fixed = String(tournament.fixed_court_days_hours || "false").toLowerCase();
   const days = String(tournament.available_days || "").toLowerCase();
   const hours = String(tournament.available_hours || "").toLowerCase();
+  const location = String(tournament.location || "");
+  const date = String(tournament.date || "");
+  const formatType = String(tournament.format_type || "").toLowerCase();
+  const hasFinals = formatType.includes("finals");
   
-  // Determina cosa è fisso e cosa è variabile
-  const courtFixed = fixed.includes("court");
-  const daysFixed = fixed.includes("days");
-  const hoursFixed = fixed.includes("hours");
+  // Determina cosa è fisso e per quale fase
+  const courtFixedAll = fixed.includes("court_all") || fixed === "court_days_hours_all" || fixed === "court_days_all" || fixed === "court_hours_all";
+  const courtFixedFinals = fixed.includes("court_finals") || fixed === "court_days_hours_finals" || fixed === "court_days_finals" || fixed === "court_hours_finals";
+  const courtFixed = courtFixedAll || courtFixedFinals;
+  
+  const daysFixedAll = fixed.includes("days_all") || fixed === "court_days_hours_all" || fixed === "court_days_all" || fixed === "days_hours_all";
+  const daysFixedFinals = fixed.includes("days_finals") || fixed === "court_days_hours_finals" || fixed === "court_days_finals" || fixed === "days_hours_finals";
+  const daysFixed = daysFixedAll || daysFixedFinals;
+  
+  const hoursFixedAll = fixed.includes("hours_all") || fixed === "court_days_hours_all" || fixed === "court_hours_all" || fixed === "days_hours_all";
+  const hoursFixedFinals = fixed.includes("hours_finals") || fixed === "court_days_hours_finals" || fixed === "court_hours_finals" || fixed === "days_hours_finals";
+  const hoursFixed = hoursFixedAll || hoursFixedFinals;
   
   // Mapping giorni per testo leggibile
   const daysMap = {
-    // Range
     "lun-dom": "qualsiasi giorno della settimana",
     "lun-ven": "dal lunedì al venerdì",
     "sab-dom": "nel weekend (sabato e domenica)",
-    // Giorni singoli
     "lun": "il lunedì",
     "mar": "il martedì",
     "mer": "il mercoledì",
@@ -976,24 +1034,21 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   const daysText = daysMap[days] || days || "";
   const hoursText = hoursMap[hours] || hours || "";
   
-  let ruleContent = "";
+  // Intro comune: location e date
+  const locationDateText = `
+    <p>
+      Tutte le partite del torneo si svolgeranno a <strong>${location}</strong>, 
+      a partire dal <strong>${date}</strong>.
+    </p>
+  `;
   
-  // === CASO 1: Tutto fisso (court_days_hours) ===
-  if (courtFixed && daysFixed && hoursFixed) {
-    ruleContent = `
-      <p>
-        <strong>Campi, giorni e orari</strong> delle partite saranno <strong>stabiliti dall'organizzazione</strong> 
-        e comunicati prima dell'inizio del torneo.
-      </p>
-      <p>
-        Le partite si svolgeranno <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-      </p>
-    `;
-  }
+  let ruleContent = locationDateText;
   
-  // === CASO 2: Tutto variabile (false) ===
-  else if (!courtFixed && !daysFixed && !hoursFixed) {
-    ruleContent = `
+  // =====================================================
+  // CASO: TUTTO VARIABILE (false)
+  // =====================================================
+  if (fixed === "false" || fixed === "") {
+    ruleContent += `
       <p>
         <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
         dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre in fase di iscrizione.
@@ -1010,16 +1065,64 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     `;
   }
   
-  // === CASO 3: Solo campi fissi (only_court) ===
-  else if (courtFixed && !daysFixed && !hoursFixed) {
-    ruleContent = `
+  // =====================================================
+  // CASO: TUTTO FISSO PER TUTTO IL TORNEO (court_days_hours_all)
+  // =====================================================
+  else if (fixed === "court_days_hours_all") {
+    ruleContent += `
       <p>
-        I <strong>campi</strong> dove si svolgeranno le partite saranno <strong>stabiliti dall'organizzazione</strong> 
-        e comunicati prima dell'inizio del torneo.
+        <strong>Campi, giorni e orari</strong> di tutte le partite del torneo saranno 
+        <strong>stabiliti dall'organizzazione</strong> e comunicati prima dell'inizio del torneo.
       </p>
       <p>
-        <strong>Giorni e orari</strong> delle partite saranno invece concordati tra le squadre, 
-        nel rispetto delle disponibilità indicate in fase di iscrizione.
+        Le partite si svolgeranno <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+      </p>
+    `;
+  }
+  
+  // =====================================================
+  // CASO: TUTTO FISSO SOLO PER LE FINALI (court_days_hours_finals)
+  // =====================================================
+  else if (fixed === "court_days_hours_finals") {
+    if (hasFinals) {
+      ruleContent += `
+        <p>
+          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
+          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
+          espresse dalle squadre in fase di iscrizione.
+        </p>
+        <p>
+          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>. 
+          In fase di iscrizione sarà possibile indicare la <strong>zona preferita</strong>, 
+          i <strong>giorni</strong> e le <strong>fasce orarie</strong> di disponibilità.
+        </p>
+        <p>
+          <strong>Fase finale:</strong> campi, giorni e orari delle partite ad eliminazione diretta saranno 
+          <strong>stabiliti dall'organizzazione</strong> e comunicati al termine della fase a gironi.
+        </p>
+      `;
+    } else {
+      ruleContent += `
+        <p>
+          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
+          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
+        </p>
+      `;
+    }
+  }
+  
+  // =====================================================
+  // CASO: SOLO CAMPI FISSI PER TUTTO IL TORNEO (court_all)
+  // =====================================================
+  else if (fixed === "court_all") {
+    ruleContent += `
+      <p>
+        I <strong>campi</strong> dove si svolgeranno tutte le partite del torneo saranno 
+        <strong>stabiliti dall'organizzazione</strong> e comunicati prima dell'inizio del torneo.
+      </p>
+      <p>
+        <strong>Giorni e orari</strong> delle partite saranno invece definiti di volta in volta, 
+        tenendo conto delle preferenze espresse dalle squadre in fase di iscrizione.
       </p>
       <p>
         Le partite potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>. 
@@ -1028,12 +1131,45 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     `;
   }
   
-  // === CASO 4: Solo giorni fissi (only_days) ===
-  else if (!courtFixed && daysFixed && !hoursFixed) {
-    ruleContent = `
+  // =====================================================
+  // CASO: SOLO CAMPI FISSI PER LE FINALI (court_finals)
+  // =====================================================
+  else if (fixed === "court_finals") {
+    if (hasFinals) {
+      ruleContent += `
+        <p>
+          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
+          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
+          espresse dalle squadre in fase di iscrizione.
+        </p>
+        <p>
+          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>. 
+          In fase di iscrizione sarà possibile indicare la <strong>zona preferita</strong>, 
+          i <strong>giorni</strong> e le <strong>fasce orarie</strong> di disponibilità.
+        </p>
+        <p>
+          <strong>Fase finale:</strong> i <strong>campi</strong> delle partite ad eliminazione diretta saranno 
+          <strong>stabiliti dall'organizzazione</strong>. Giorni e orari saranno comunicati al termine della fase a gironi.
+        </p>
+      `;
+    } else {
+      ruleContent += `
+        <p>
+          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
+          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
+        </p>
+      `;
+    }
+  }
+  
+  // =====================================================
+  // CASO: SOLO GIORNI FISSI PER TUTTO IL TORNEO (days_all)
+  // =====================================================
+  else if (fixed === "days_all") {
+    ruleContent += `
       <p>
-        I <strong>giorni</strong> in cui si svolgeranno le partite saranno <strong>stabiliti dall'organizzazione</strong>: 
-        le partite si disputeranno <strong>${daysText}</strong>.
+        I <strong>giorni</strong> in cui si svolgeranno tutte le partite del torneo saranno 
+        <strong>stabiliti dall'organizzazione</strong>: le partite si disputeranno <strong>${daysText}</strong>.
       </p>
       <p>
         <strong>Campi e orari</strong> saranno invece prenotati di volta in volta dall'organizzazione, 
@@ -1046,11 +1182,42 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     `;
   }
   
-  // === CASO 5: Solo orari fissi (only_hours) ===
-  else if (!courtFixed && !daysFixed && hoursFixed) {
-    ruleContent = `
+  // =====================================================
+  // CASO: SOLO GIORNI FISSI PER LE FINALI (days_finals)
+  // =====================================================
+  else if (fixed === "days_finals") {
+    if (hasFinals) {
+      ruleContent += `
+        <p>
+          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
+          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
+          espresse dalle squadre in fase di iscrizione.
+        </p>
+        <p>
+          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+        </p>
+        <p>
+          <strong>Fase finale:</strong> i <strong>giorni</strong> delle partite ad eliminazione diretta saranno 
+          <strong>stabiliti dall'organizzazione</strong>. Campi e orari saranno comunicati al termine della fase a gironi.
+        </p>
+      `;
+    } else {
+      ruleContent += `
+        <p>
+          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
+          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
+        </p>
+      `;
+    }
+  }
+  
+  // =====================================================
+  // CASO: SOLO ORARI FISSI PER TUTTO IL TORNEO (hours_all)
+  // =====================================================
+  else if (fixed === "hours_all") {
+    ruleContent += `
       <p>
-        Le partite si svolgeranno nella <strong>fascia oraria</strong> stabilita dall'organizzazione: 
+        Tutte le partite del torneo si svolgeranno nella <strong>fascia oraria</strong> stabilita dall'organizzazione: 
         <strong>${hoursText}</strong>.
       </p>
       <p>
@@ -1064,11 +1231,42 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     `;
   }
   
-  // === CASO 6: Campi e giorni fissi (court_days) ===
-  else if (courtFixed && daysFixed && !hoursFixed) {
-    ruleContent = `
+  // =====================================================
+  // CASO: SOLO ORARI FISSI PER LE FINALI (hours_finals)
+  // =====================================================
+  else if (fixed === "hours_finals") {
+    if (hasFinals) {
+      ruleContent += `
+        <p>
+          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
+          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
+          espresse dalle squadre in fase di iscrizione.
+        </p>
+        <p>
+          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+        </p>
+        <p>
+          <strong>Fase finale:</strong> gli <strong>orari</strong> delle partite ad eliminazione diretta saranno 
+          <strong>stabiliti dall'organizzazione</strong>. Campi e giorni saranno comunicati al termine della fase a gironi.
+        </p>
+      `;
+    } else {
+      ruleContent += `
+        <p>
+          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
+          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
+        </p>
+      `;
+    }
+  }
+  
+  // =====================================================
+  // CASO: CAMPI E GIORNI FISSI PER TUTTO IL TORNEO (court_days_all)
+  // =====================================================
+  else if (fixed === "court_days_all") {
+    ruleContent += `
       <p>
-        <strong>Campi e giorni</strong> delle partite saranno <strong>stabiliti dall'organizzazione</strong>. 
+        <strong>Campi e giorni</strong> di tutte le partite del torneo saranno <strong>stabiliti dall'organizzazione</strong>. 
         Le partite si svolgeranno <strong>${daysText}</strong>, presso strutture comunicate prima dell'inizio del torneo.
       </p>
       <p>
@@ -1078,11 +1276,43 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     `;
   }
   
-  // === CASO 7: Campi e orari fissi (court_hours) ===
-  else if (courtFixed && !daysFixed && hoursFixed) {
-    ruleContent = `
+  // =====================================================
+  // CASO: CAMPI E GIORNI FISSI SOLO PER LE FINALI (court_days_finals)
+  // =====================================================
+  else if (fixed === "court_days_finals") {
+    if (hasFinals) {
+      ruleContent += `
+        <p>
+          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
+          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
+          espresse dalle squadre in fase di iscrizione.
+        </p>
+        <p>
+          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+        </p>
+        <p>
+          <strong>Fase finale:</strong> <strong>campi e giorni</strong> delle partite ad eliminazione diretta saranno 
+          <strong>stabiliti dall'organizzazione</strong>. Gli orari saranno comunicati al termine della fase a gironi, 
+          nella fascia oraria disponibile (${hoursText}).
+        </p>
+      `;
+    } else {
+      ruleContent += `
+        <p>
+          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
+          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
+        </p>
+      `;
+    }
+  }
+  
+  // =====================================================
+  // CASO: CAMPI E ORARI FISSI PER TUTTO IL TORNEO (court_hours_all)
+  // =====================================================
+  else if (fixed === "court_hours_all") {
+    ruleContent += `
       <p>
-        <strong>Campi e orari</strong> delle partite saranno <strong>stabiliti dall'organizzazione</strong>. 
+        <strong>Campi e orari</strong> di tutte le partite del torneo saranno <strong>stabiliti dall'organizzazione</strong>. 
         Le partite si svolgeranno <strong>${hoursText}</strong>, presso strutture comunicate prima dell'inizio del torneo.
       </p>
       <p>
@@ -1092,11 +1322,43 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     `;
   }
   
-  // === CASO 8: Giorni e orari fissi (days_hours) ===
-  else if (!courtFixed && daysFixed && hoursFixed) {
-    ruleContent = `
+  // =====================================================
+  // CASO: CAMPI E ORARI FISSI SOLO PER LE FINALI (court_hours_finals)
+  // =====================================================
+  else if (fixed === "court_hours_finals") {
+    if (hasFinals) {
+      ruleContent += `
+        <p>
+          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
+          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
+          espresse dalle squadre in fase di iscrizione.
+        </p>
+        <p>
+          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+        </p>
+        <p>
+          <strong>Fase finale:</strong> <strong>campi e orari</strong> delle partite ad eliminazione diretta saranno 
+          <strong>stabiliti dall'organizzazione</strong>. I giorni saranno comunicati al termine della fase a gironi 
+          (${daysText}).
+        </p>
+      `;
+    } else {
+      ruleContent += `
+        <p>
+          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
+          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
+        </p>
+      `;
+    }
+  }
+  
+  // =====================================================
+  // CASO: GIORNI E ORARI FISSI PER TUTTO IL TORNEO (days_hours_all)
+  // =====================================================
+  else if (fixed === "days_hours_all") {
+    ruleContent += `
       <p>
-        <strong>Giorni e orari</strong> delle partite saranno <strong>stabiliti dall'organizzazione</strong>: 
+        <strong>Giorni e orari</strong> di tutte le partite del torneo saranno <strong>stabiliti dall'organizzazione</strong>: 
         le partite si svolgeranno <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
       </p>
       <p>
@@ -1110,11 +1372,46 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     `;
   }
   
-  // === FALLBACK ===
+  // =====================================================
+  // CASO: GIORNI E ORARI FISSI SOLO PER LE FINALI (days_hours_finals)
+  // =====================================================
+  else if (fixed === "days_hours_finals") {
+    if (hasFinals) {
+      ruleContent += `
+        <p>
+          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
+          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
+          espresse dalle squadre in fase di iscrizione.
+        </p>
+        <p>
+          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+        </p>
+        <p>
+          <strong>Fase finale:</strong> <strong>giorni e orari</strong> delle partite ad eliminazione diretta saranno 
+          <strong>stabiliti dall'organizzazione</strong>. I campi saranno prenotati tenendo conto delle preferenze 
+          espresse dalle squadre qualificate.
+        </p>
+      `;
+    } else {
+      ruleContent += `
+        <p>
+          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
+          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
+        </p>
+      `;
+    }
+  }
+  
+  // =====================================================
+  // FALLBACK
+  // =====================================================
   else {
-    ruleContent = `
+    ruleContent += `
       <p>
         Le modalità di assegnazione di campi, giorni e orari saranno comunicate prima dell'inizio del torneo.
+      </p>
+      <p>
+        Le partite potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
       </p>
     `;
   }
@@ -1129,6 +1426,9 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     </div>
   `;
 }
+
+
+
 
 
 

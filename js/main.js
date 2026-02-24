@@ -105,33 +105,22 @@ function renderTournaments(tournaments) {
       card.classList.add("finished");
     }
 
-    // STATUS BADGE
     const statusLabel = buildStatusLabel(t.status);
     const iscrizioniAperte = t.status === "open";
 
-    // ROW 1: Name + Sport + Date + Location
+    // === STESSA LOGICA DELLA PAGINA TORNEO ===
+
     const row1 = `${t.sport} · ${t.location} · ${t.date}`;
+    const row2 = buildParticipantsInfoText(t);
+    const row3 = buildPriceInfoText(t);
+    const row4 = buildAwardInfoText(t);
+    const row5 = buildFormatInfoText(t);
+    const row6 = buildTimeRangeInfoText(t);
+    const row7 = buildCourtDaysHoursInfoText(t);
 
-    // ROW 2: Gender + Age + Expertise
-    const row2 = buildParticipantsInfo(t);
-
-    // ROW 3: Price + Court + Referee
-    const row3 = buildPriceInfo(t);
-
-    // ROW 4: Award
-    const row4 = buildAwardInfo(t);
-
-    // ROW 5: Format + Guaranteed Matches
-    const row5 = buildFormatInfo(t);
-
-    // ROW 6: Time Range
-    const row6 = buildTimeRangeInfo(t);
-
-    // ROW 7: Court/Days/Hours
-    const row7 = buildCourtDaysHoursInfo(t);
-
-    // ROW 8: Teams
-    const row8 = `${t.teams_current || 0} squadre iscritte`;
+    const teamsCurrent = t.teams_current || 0;
+    const teamsMax = t.teams_max || 0;
+    const row8 = `${teamsCurrent} / ${teamsMax} squadre iscritte`;
 
     card.innerHTML = `
       <div class="card-header">
@@ -141,14 +130,14 @@ function renderTournaments(tournaments) {
 
       <div class="card-body">
         <div class="card-info-rows">
-          <div class="card-info-row"><span class="row-icon">🏐</span><span>${escapeHTML(row1)}</span></div>
-          <div class="card-info-row"><span class="row-icon">👥</span><span>${row2}</span></div>
-          <div class="card-info-row"><span class="row-icon">💰</span><span>${row3}</span></div>
-          <div class="card-info-row"><span class="row-icon">🏆</span><span>${row4}</span></div>
-          <div class="card-info-row"><span class="row-icon">📋</span><span>${row5}</span></div>
-          <div class="card-info-row"><span class="row-icon">📅</span><span>${row6}</span></div>
-          <div class="card-info-row"><span class="row-icon">⏰</span><span>${row7}</span></div>
-          <div class="card-info-row"><span class="row-icon">✅</span><span>${row8}</span></div>
+          <div class="card-info-row"><span class="row-icon">🏐</span><span><strong>Sport, Luogo, Data:</strong> ${escapeHTML(row1)}</span></div>
+          <div class="card-info-row"><span class="row-icon">👥</span><span><strong>Partecipanti:</strong> ${row2}</span></div>
+          <div class="card-info-row"><span class="row-icon">💰</span><span><strong>Iscrizione:</strong> ${row3}</span></div>
+          <div class="card-info-row"><span class="row-icon">🏆</span><span><strong>Montepremi:</strong> ${row4}</span></div>
+          <div class="card-info-row"><span class="row-icon">📋</span><span><strong>Formato:</strong> ${row5}</span></div>
+          <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Durata:</strong> ${row6}</span></div>
+          <div class="card-info-row"><span class="row-icon">⏰</span><span><strong>Partite:</strong> ${row7}</span></div>
+          <div class="card-info-row"><span class="row-icon">✅</span><span><strong>Iscritti:</strong> ${row8}</span></div>
         </div>
       </div>
 
@@ -166,6 +155,9 @@ function renderTournaments(tournaments) {
     container.appendChild(card);
   });
 }
+
+
+
 
 // ===============================
 // BUILD STATUS LABEL
@@ -185,20 +177,18 @@ function buildStatusLabel(status) {
 // ===============================
 // BUILD PARTICIPANTS INFO (gender, age, expertise)
 // ===============================
-function buildParticipantsInfo(t) {
+function buildParticipantsInfoText(t) {
   const parts = [];
 
-  // GENDER
   const genderMap = {
-    only_male: "Maschile",
-    only_female: "Femminile",
+    only_male: "Solo ragazzi",
+    only_female: "Solo ragazze",
     mixed_strict: "Misto obbligatorio",
     mixed_female_allowed: "Misto o femminile",
-    open: "Maschile, Femminile, Misto"
+    open: "Aperto a tutti"
   };
-  parts.push(genderMap[t.gender] || "Misto, Maschile, Femminile");
+  parts.push(genderMap[t.gender] || "Aperto a tutti");
 
-  // AGE
   const ageMap = {
     under_18: "Under 18",
     over_35: "Over 35",
@@ -206,7 +196,6 @@ function buildParticipantsInfo(t) {
   };
   parts.push(ageMap[t.age] || "Tutte le età");
 
-  // EXPERTISE
   const expertiseMap = {
     open: "Livello amatoriale",
     expert: "Livello agonistico"
@@ -216,19 +205,19 @@ function buildParticipantsInfo(t) {
   return parts.join(" · ");
 }
 
+
+
 // ===============================
 // BUILD PRICE INFO (price, court_price, referee_price)
 // ===============================
-function buildPriceInfo(t) {
+function buildPriceInfoText(t) {
   const price = t.price || 0;
   
-  // Court price logic
   const courtIncluded = t.court_price && t.court_price !== "non_compreso";
   
-  // Referee price logic (NA = no arbitro, quindi non menzionare)
-  const hasReferee = t.referee === true || String(t.referee).toUpperCase() === "TRUE";
-  const refereeIncluded = hasReferee && t.referee_price && t.referee_price !== "non_compreso" && t.referee_price !== "NA";
-  const refereeNA = !hasReferee || t.referee_price === "NA";
+  const refereePrice = String(t.referee_price || "NA").toLowerCase();
+  const refereeIncluded = refereePrice !== "na" && refereePrice !== "non_compreso";
+  const refereeNA = refereePrice === "na";
 
   let inclusionText = "";
 
@@ -249,29 +238,38 @@ function buildPriceInfo(t) {
   return `€${price} a squadra · ${inclusionText}`;
 }
 
+
+
 // ===============================
 // BUILD AWARD INFO (award, award_amount_perc)
 // ===============================
-function buildAwardInfo(t) {
+function buildAwardInfoText(t) {
   const hasAward = t.award === true || String(t.award).toUpperCase() === "TRUE";
   
   if (!hasAward) {
-    return "Premio simbolico (coppe, medaglie)";
+    return "Solo premi simbolici (coppe, medaglie)";
   }
 
   const perc = t.award_amount_perc;
+  const price = Number(t.price) || 0;
+  const teamsMax = Number(t.teams_max) || 0;
   
-  if (perc && perc !== "NA" && !isNaN(Number(perc))) {
-    return `Montepremi garantito · ${perc}% delle quote`;
+  if (perc && perc !== "NA" && !isNaN(Number(perc)) && price > 0 && teamsMax > 0) {
+    const percValue = Number(perc) / 100;
+    const totalPrize = Math.round(teamsMax * price * percValue);
+    return `€${totalPrize} (con ${teamsMax} squadre iscritte)`;
   }
 
   return "Montepremi garantito";
 }
 
+
+
+
 // ===============================
 // BUILD FORMAT INFO (format_type, guaranteed_match)
 // ===============================
-function buildFormatInfo(t) {
+function buildFormatInfoText(t) {
   const formatMap = {
     round_robin: "Girone unico solo andata",
     double_round_robin: "Girone unico andata e ritorno",
@@ -289,10 +287,11 @@ function buildFormatInfo(t) {
   return formatText;
 }
 
+
 // ===============================
 // BUILD TIME RANGE INFO
 // ===============================
-function buildTimeRangeInfo(t) {
+function buildTimeRangeInfoText(t) {
   const timeMap = {
     short: "Torneo giornaliero",
     mid: "Gironi su più settimane · Finali in un giorno",
@@ -302,30 +301,45 @@ function buildTimeRangeInfo(t) {
   return timeMap[t.time_range] || "Durata da definire";
 }
 
+
 // ===============================
 // BUILD COURT/DAYS/HOURS INFO
 // ===============================
-function buildCourtDaysHoursInfo(t) {
-  const fixed = String(t.fixed_court_days_hours || "").toLowerCase();
+function buildCourtDaysHoursInfoText(t) {
+  const fixed = String(t.fixed_court_days_hours || "false").toLowerCase();
   const days = String(t.available_days || "").toLowerCase();
   const hours = String(t.available_hours || "").toLowerCase();
 
-  // Mappings
   const fixedMap = {
-    false: "Campi, giorni e orari a scelta",
-    only_court: "Campi fissi · Giorni e orari a scelta",
-    only_days: "Campi a scelta · Giorni fissi · Orari a scelta",
-    only_hours: "Campi a scelta · Giorni a scelta · Orari fissi",
-    court_days: "Campi e giorni fissi · Orari a scelta",
-    court_hours: "Campi e orari fissi · Giorni a scelta",
-    days_hours: "Campi a scelta · Giorni e orari fissi",
-    court_days_hours: "Campi, giorni e orari fissi"
+    "false": "Campi, giorni e orari a scelta",
+    "court_all": "Campi fissi · Giorni e orari a scelta",
+    "court_finals": "Campi fissi (solo finali) · Gironi a scelta",
+    "days_all": "Giorni fissi · Campi e orari a scelta",
+    "days_finals": "Giorni fissi (solo finali) · Gironi a scelta",
+    "hours_all": "Orari fissi · Campi e giorni a scelta",
+    "hours_finals": "Orari fissi (solo finali) · Gironi a scelta",
+    "court_days_all": "Campi e giorni fissi · Orari a scelta",
+    "court_days_finals": "Campi e giorni fissi (solo finali)",
+    "court_hours_all": "Campi e orari fissi · Giorni a scelta",
+    "court_hours_finals": "Campi e orari fissi (solo finali)",
+    "days_hours_all": "Giorni e orari fissi · Campi a scelta",
+    "days_hours_finals": "Giorni e orari fissi (solo finali)",
+    "court_days_hours_all": "Campi, giorni e orari fissi",
+    "court_days_hours_finals": "Tutto fisso (solo finali) · Gironi a scelta"
   };
 
   const daysMap = {
     "lun-dom": "Tutti i giorni",
     "lun-ven": "Lun-Ven",
-    "sab-dom": "Weekend"
+    "sab-dom": "Weekend",
+    "lun": "Lunedì",
+    "mar": "Martedì",
+    "mer": "Mercoledì",
+    "gio": "Giovedì",
+    "giov": "Giovedì",
+    "ven": "Venerdì",
+    "sab": "Sabato",
+    "dom": "Domenica"
   };
 
   const hoursMap = {
@@ -345,6 +359,7 @@ function buildCourtDaysHoursInfo(t) {
 
   return parts.join(" · ");
 }
+
 
 // ===============================
 // ESCAPE HTML
