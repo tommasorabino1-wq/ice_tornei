@@ -482,22 +482,29 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
     </p>
   `;
   
-  // === COURT PRICE ===
-  let courtText = "";
+  // Creiamo una chiave combinata per gestire tutti i casi
+  const comboKey = `${courtPrice}__${refereePrice}`;
   
-  switch (courtPrice) {
-    case "compreso_gironi_finals":
-      courtText = `
+  let inclusionText = "";
+  
+  switch (comboKey) {
+    
+    // =====================================================
+    // ARBITRO NA (non presente nel torneo)
+    // =====================================================
+    
+    case "compreso_gironi_finals__na":
+      inclusionText = `
         <p>
-          La quota include la <strong>prenotazione dei campi</strong> per tutte le partite del torneo 
-          (sia fase a gironi che fasi finali). Le squadre non dovranno sostenere alcun costo aggiuntivo 
-          per l'utilizzo delle strutture sportive.
+          La quota include la <strong>prenotazione dei campi</strong> per tutte le partite del torneo, 
+          sia durante la fase a gironi che durante le fasi finali. 
+          Le squadre non dovranno sostenere alcun costo aggiuntivo per l'utilizzo delle strutture sportive.
         </p>
       `;
       break;
       
-    case "compreso_gironi":
-      courtText = `
+    case "compreso_gironi__na":
+      inclusionText = `
         <p>
           La quota include la <strong>prenotazione dei campi per le partite della fase a gironi</strong>. 
           Per le eventuali partite delle fasi finali, le squadre partecipanti dovranno 
@@ -506,8 +513,8 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
       `;
       break;
       
-    case "compreso_finals":
-      courtText = `
+    case "compreso_finals__na":
+      inclusionText = `
         <p>
           La quota include la <strong>prenotazione dei campi per le partite delle fasi finali</strong>. 
           Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> 
@@ -516,62 +523,257 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
       `;
       break;
       
-    case "non_compreso":
-    default:
-      courtText = `
+    case "non_compreso__na":
+      inclusionText = `
         <p>
-          La quota <strong>non include</strong> il costo dei campi. Per ogni partita, le squadre dovranno 
-          <strong>dividere equamente</strong> il costo del campo presso la struttura sportiva prenotata.
+          La quota <strong>non include</strong> il costo dei campi. 
+          Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> 
+          il costo del campo presso la struttura sportiva prenotata.
         </p>
       `;
       break;
-  }
-  
-  // === REFEREE PRICE ===
-  let refereeText = "";
-  
-  // Se NA, non c'è arbitro, quindi non menzioniamo nulla (gestito altrove)
-  if (refereePrice !== "na") {
-    switch (refereePrice) {
-      case "compreso_gironi_finals":
-        refereeText = `
-          <p>
-            La quota include il <strong>costo dell'arbitro</strong> per tutte le partite del torneo 
-            (sia fase a gironi che fasi finali).
-          </p>
-        `;
-        break;
-        
-      case "compreso_gironi":
-        refereeText = `
-          <p>
-            La quota include il <strong>costo dell'arbitro per le partite della fase a gironi</strong>. 
-            Per le eventuali partite delle fasi finali, le squadre partecipanti dovranno 
-            <strong>dividere equamente</strong> il compenso arbitrale.
-          </p>
-        `;
-        break;
-        
-      case "compreso_finals":
-        refereeText = `
-          <p>
-            La quota include il <strong>costo dell'arbitro per le partite delle fasi finali</strong>. 
-            Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> 
-            il compenso arbitrale.
-          </p>
-        `;
-        break;
-        
-      case "non_compreso":
-      default:
-        refereeText = `
-          <p>
-            La quota <strong>non include</strong> il compenso arbitrale. Per ogni partita, le squadre dovranno 
-            <strong>dividere equamente</strong> il costo dell'arbitro.
-          </p>
-        `;
-        break;
-    }
+    
+    // =====================================================
+    // CAMPI E ARBITRO ENTRAMBI INCLUSI OVUNQUE
+    // =====================================================
+    
+    case "compreso_gironi_finals__compreso_gironi_finals":
+      inclusionText = `
+        <p>
+          La quota include sia la <strong>prenotazione dei campi</strong> che il <strong>costo dell'arbitro</strong> 
+          per tutte le partite del torneo, sia durante la fase a gironi che durante le fasi finali.
+        </p>
+        <p>
+          Le squadre non dovranno sostenere alcun costo aggiuntivo.
+        </p>
+      `;
+      break;
+    
+    // =====================================================
+    // CAMPI E ARBITRO ENTRAMBI NON INCLUSI
+    // =====================================================
+    
+    case "non_compreso__non_compreso":
+      inclusionText = `
+        <p>
+          La quota <strong>non include</strong> né il costo dei campi né il compenso arbitrale.
+        </p>
+        <p>
+          Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> 
+          sia il costo del campo che il compenso dell'arbitro.
+        </p>
+      `;
+      break;
+    
+    // =====================================================
+    // CAMPI INCLUSI OVUNQUE + ARBITRO PARZIALE/NON INCLUSO
+    // =====================================================
+    
+    case "compreso_gironi_finals__compreso_gironi":
+      inclusionText = `
+        <p>
+          La quota include la <strong>prenotazione dei campi</strong> per tutte le partite del torneo 
+          (sia fase a gironi che fasi finali).
+        </p>
+        <p>
+          Il <strong>costo dell'arbitro</strong> è incluso solo per le partite della <strong>fase a gironi</strong>. 
+          Per le partite delle fasi finali, le squadre dovranno <strong>dividere equamente</strong> il compenso arbitrale.
+        </p>
+      `;
+      break;
+      
+    case "compreso_gironi_finals__compreso_finals":
+      inclusionText = `
+        <p>
+          La quota include la <strong>prenotazione dei campi</strong> per tutte le partite del torneo 
+          (sia fase a gironi che fasi finali).
+        </p>
+        <p>
+          Il <strong>costo dell'arbitro</strong> è incluso solo per le partite delle <strong>fasi finali</strong>. 
+          Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> il compenso arbitrale.
+        </p>
+      `;
+      break;
+      
+    case "compreso_gironi_finals__non_compreso":
+      inclusionText = `
+        <p>
+          La quota include la <strong>prenotazione dei campi</strong> per tutte le partite del torneo 
+          (sia fase a gironi che fasi finali).
+        </p>
+        <p>
+          La quota <strong>non include</strong> il compenso arbitrale. 
+          Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> il costo dell'arbitro.
+        </p>
+      `;
+      break;
+    
+    // =====================================================
+    // CAMPI INCLUSI SOLO GIRONI + VARIE COMBINAZIONI ARBITRO
+    // =====================================================
+    
+    case "compreso_gironi__compreso_gironi_finals":
+      inclusionText = `
+        <p>
+          La quota include la <strong>prenotazione dei campi</strong> solo per le partite della <strong>fase a gironi</strong>. 
+          Per le partite delle fasi finali, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.
+        </p>
+        <p>
+          Il <strong>costo dell'arbitro</strong> è invece incluso per tutte le partite del torneo 
+          (sia fase a gironi che fasi finali).
+        </p>
+      `;
+      break;
+      
+    case "compreso_gironi__compreso_gironi":
+      inclusionText = `
+        <p>
+          La quota include sia la <strong>prenotazione dei campi</strong> che il <strong>costo dell'arbitro</strong> 
+          per le partite della <strong>fase a gironi</strong>.
+        </p>
+        <p>
+          Per le partite delle fasi finali, le squadre dovranno <strong>dividere equamente</strong> 
+          sia il costo del campo che il compenso arbitrale.
+        </p>
+      `;
+      break;
+      
+    case "compreso_gironi__compreso_finals":
+      inclusionText = `
+        <p>
+          La quota include la <strong>prenotazione dei campi</strong> per le partite della <strong>fase a gironi</strong>, 
+          e il <strong>costo dell'arbitro</strong> per le partite delle <strong>fasi finali</strong>.
+        </p>
+        <p>
+          Per le partite dei gironi, le squadre dovranno dividere il compenso arbitrale. 
+          Per le partite delle finali, dovranno dividere il costo del campo.
+        </p>
+      `;
+      break;
+      
+    case "compreso_gironi__non_compreso":
+      inclusionText = `
+        <p>
+          La quota include la <strong>prenotazione dei campi</strong> solo per le partite della <strong>fase a gironi</strong>. 
+          Per le partite delle fasi finali, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.
+        </p>
+        <p>
+          La quota <strong>non include</strong> il compenso arbitrale. 
+          Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> il costo dell'arbitro.
+        </p>
+      `;
+      break;
+    
+    // =====================================================
+    // CAMPI INCLUSI SOLO FINALI + VARIE COMBINAZIONI ARBITRO
+    // =====================================================
+    
+    case "compreso_finals__compreso_gironi_finals":
+      inclusionText = `
+        <p>
+          La quota include la <strong>prenotazione dei campi</strong> solo per le partite delle <strong>fasi finali</strong>. 
+          Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.
+        </p>
+        <p>
+          Il <strong>costo dell'arbitro</strong> è invece incluso per tutte le partite del torneo 
+          (sia fase a gironi che fasi finali).
+        </p>
+      `;
+      break;
+      
+    case "compreso_finals__compreso_gironi":
+      inclusionText = `
+        <p>
+          La quota include la <strong>prenotazione dei campi</strong> per le partite delle <strong>fasi finali</strong>, 
+          e il <strong>costo dell'arbitro</strong> per le partite della <strong>fase a gironi</strong>.
+        </p>
+        <p>
+          Per le partite dei gironi, le squadre dovranno dividere il costo del campo. 
+          Per le partite delle finali, dovranno dividere il compenso arbitrale.
+        </p>
+      `;
+      break;
+      
+    case "compreso_finals__compreso_finals":
+      inclusionText = `
+        <p>
+          La quota include sia la <strong>prenotazione dei campi</strong> che il <strong>costo dell'arbitro</strong> 
+          per le partite delle <strong>fasi finali</strong>.
+        </p>
+        <p>
+          Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> 
+          sia il costo del campo che il compenso arbitrale.
+        </p>
+      `;
+      break;
+      
+    case "compreso_finals__non_compreso":
+      inclusionText = `
+        <p>
+          La quota include la <strong>prenotazione dei campi</strong> solo per le partite delle <strong>fasi finali</strong>. 
+          Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.
+        </p>
+        <p>
+          La quota <strong>non include</strong> il compenso arbitrale. 
+          Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> il costo dell'arbitro.
+        </p>
+      `;
+      break;
+    
+    // =====================================================
+    // CAMPI NON INCLUSI + VARIE COMBINAZIONI ARBITRO
+    // =====================================================
+    
+    case "non_compreso__compreso_gironi_finals":
+      inclusionText = `
+        <p>
+          La quota <strong>non include</strong> il costo dei campi. 
+          Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.
+        </p>
+        <p>
+          La quota include invece il <strong>costo dell'arbitro</strong> per tutte le partite del torneo 
+          (sia fase a gironi che fasi finali).
+        </p>
+      `;
+      break;
+      
+    case "non_compreso__compreso_gironi":
+      inclusionText = `
+        <p>
+          La quota <strong>non include</strong> il costo dei campi. 
+          Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.
+        </p>
+        <p>
+          Il <strong>costo dell'arbitro</strong> è incluso solo per le partite della <strong>fase a gironi</strong>. 
+          Per le partite delle fasi finali, le squadre dovranno <strong>dividere equamente</strong> anche il compenso arbitrale.
+        </p>
+      `;
+      break;
+      
+    case "non_compreso__compreso_finals":
+      inclusionText = `
+        <p>
+          La quota <strong>non include</strong> il costo dei campi. 
+          Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.
+        </p>
+        <p>
+          Il <strong>costo dell'arbitro</strong> è incluso solo per le partite delle <strong>fasi finali</strong>. 
+          Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> anche il compenso arbitrale.
+        </p>
+      `;
+      break;
+    
+    // =====================================================
+    // FALLBACK
+    // =====================================================
+    
+    default:
+      inclusionText = `
+        <p>
+          I dettagli su cosa è incluso nella quota (campi, arbitro) saranno comunicati prima dell'inizio del torneo.
+        </p>
+      `;
+      break;
   }
   
   return `
@@ -580,13 +782,11 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
       <div class="specific-regulation-content">
         <p><strong>Quota di iscrizione</strong></p>
         ${introText}
-        ${courtText}
-        ${refereeText}
+        ${inclusionText}
       </div>
     </div>
   `;
 }
-
 
 
 // ===============================
@@ -596,85 +796,221 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
   const gender = String(tournament.gender || "open").toLowerCase();
   const age = String(tournament.age || "open").toLowerCase();
   const expertise = String(tournament.expertise || "open").toLowerCase();
+  const maxCategory = String(tournament.max_category || "NA").toLowerCase();
   const teamSizeMin = Number(tournament.team_size_min) || 0;
   const teamSizeMax = Number(tournament.team_size_max) || 0;
   
-  // === GENDER TEXT ===
-  let genderText = "";
-  switch (gender) {
-    case "only_male":
-      genderText = `
-        <p>
-          Possono partecipare esclusivamente <strong>squadre composte da soli uomini</strong>.
-        </p>
-      `;
-      break;
-    case "only_female":
-      genderText = `
-        <p>
-          Possono partecipare esclusivamente <strong>squadre composte da sole donne</strong>.
-        </p>
-      `;
-      break;
-    case "mixed_strict":
-      genderText = `
-        <p>
-          Ogni squadra deve essere <strong>obbligatoriamente mista</strong>, composta da 
-          <strong>almeno un uomo e almeno una donna</strong>.
-        </p>
-      `;
-      break;
-    case "mixed_female_allowed":
-      genderText = `
-        <p>
-          Ogni squadra deve essere <strong>mista</strong> (almeno un uomo e una donna) 
-          oppure composta da <strong>sole donne</strong>. Non sono ammesse squadre composte da soli uomini.
-        </p>
-      `;
-      break;
-    case "open":
-    default:
-      genderText = `
-        <p>
-          Possono partecipare squadre di <strong>qualsiasi composizione</strong>: 
-          maschili, femminili o miste.
-        </p>
-      `;
-      break;
-  }
+  // Creiamo una chiave combinata per gender + age
+  const genderAgeKey = `${gender}__${age}`;
   
-  // === AGE TEXT ===
-  let ageText = "";
-  switch (age) {
-    case "under_18":
-      ageText = `
+  let genderAgeText = "";
+  
+  switch (genderAgeKey) {
+    
+    // =====================================================
+    // OPEN (qualsiasi composizione)
+    // =====================================================
+    
+    case "open__open":
+      genderAgeText = `
         <p>
-          Il torneo è riservato a giocatori <strong>Under 18</strong>. 
+          Possono partecipare squadre di <strong>qualsiasi composizione</strong> (maschili, femminili o miste) 
+          e giocatori di <strong>qualsiasi età</strong>.
+        </p>
+      `;
+      break;
+      
+    case "open__under_18":
+      genderAgeText = `
+        <p>
+          Possono partecipare squadre di <strong>qualsiasi composizione</strong> (maschili, femminili o miste), 
+          ma il torneo è riservato a giocatori <strong>Under 18</strong>. 
           Tutti i componenti della squadra devono avere meno di 18 anni alla data di inizio del torneo.
         </p>
       `;
       break;
-    case "over_35":
-      ageText = `
+      
+    case "open__over_35":
+      genderAgeText = `
         <p>
-          Il torneo è riservato a giocatori <strong>Over 35</strong>. 
+          Possono partecipare squadre di <strong>qualsiasi composizione</strong> (maschili, femminili o miste), 
+          ma il torneo è riservato a giocatori <strong>Over 35</strong>. 
           Tutti i componenti della squadra devono avere almeno 35 anni alla data di inizio del torneo.
         </p>
       `;
       break;
-    case "open":
-      ageText = `
+    
+    // =====================================================
+    // ONLY MALE (solo uomini)
+    // =====================================================
+    
+    case "only_male__open":
+      genderAgeText = `
         <p>
-          Il torneo è aperto a giocatori di <strong>qualsiasi età</strong>.
+          Possono partecipare esclusivamente <strong>squadre composte da soli uomini</strong>, 
+          di <strong>qualsiasi età</strong>.
+        </p>
+      `;
+      break;
+      
+    case "only_male__under_18":
+      genderAgeText = `
+        <p>
+          Possono partecipare esclusivamente <strong>squadre composte da soli uomini Under 18</strong>. 
+          Tutti i componenti della squadra devono essere di sesso maschile e avere meno di 18 anni 
+          alla data di inizio del torneo.
+        </p>
+      `;
+      break;
+      
+    case "only_male__over_35":
+      genderAgeText = `
+        <p>
+          Possono partecipare esclusivamente <strong>squadre composte da soli uomini Over 35</strong>. 
+          Tutti i componenti della squadra devono essere di sesso maschile e avere almeno 35 anni 
+          alla data di inizio del torneo.
+        </p>
+      `;
+      break;
+    
+    // =====================================================
+    // ONLY FEMALE (solo donne)
+    // =====================================================
+    
+    case "only_female__open":
+      genderAgeText = `
+        <p>
+          Possono partecipare esclusivamente <strong>squadre composte da sole donne</strong>, 
+          di <strong>qualsiasi età</strong>.
+        </p>
+      `;
+      break;
+      
+    case "only_female__under_18":
+      genderAgeText = `
+        <p>
+          Possono partecipare esclusivamente <strong>squadre composte da sole donne Under 18</strong>. 
+          Tutte le componenti della squadra devono essere di sesso femminile e avere meno di 18 anni 
+          alla data di inizio del torneo.
+        </p>
+      `;
+      break;
+      
+    case "only_female__over_35":
+      genderAgeText = `
+        <p>
+          Possono partecipare esclusivamente <strong>squadre composte da sole donne Over 35</strong>. 
+          Tutte le componenti della squadra devono essere di sesso femminile e avere almeno 35 anni 
+          alla data di inizio del torneo.
+        </p>
+      `;
+      break;
+    
+    // =====================================================
+    // MIXED STRICT (misto obbligatorio)
+    // =====================================================
+    
+    case "mixed_strict__open":
+      genderAgeText = `
+        <p>
+          Ogni squadra deve essere <strong>obbligatoriamente mista</strong>, composta da 
+          <strong>almeno un uomo e almeno una donna</strong>. 
+          Non ci sono limiti di età per i partecipanti.
+        </p>
+      `;
+      break;
+      
+    case "mixed_strict__under_18":
+      genderAgeText = `
+        <p>
+          Ogni squadra deve essere <strong>obbligatoriamente mista</strong>, composta da 
+          <strong>almeno un uomo e almeno una donna</strong>. 
+          Il torneo è riservato a giocatori <strong>Under 18</strong>: tutti i componenti della squadra 
+          devono avere meno di 18 anni alla data di inizio del torneo.
+        </p>
+      `;
+      break;
+      
+    case "mixed_strict__over_35":
+      genderAgeText = `
+        <p>
+          Ogni squadra deve essere <strong>obbligatoriamente mista</strong>, composta da 
+          <strong>almeno un uomo e almeno una donna</strong>. 
+          Il torneo è riservato a giocatori <strong>Over 35</strong>: tutti i componenti della squadra 
+          devono avere almeno 35 anni alla data di inizio del torneo.
+        </p>
+      `;
+      break;
+    
+    // =====================================================
+    // MIXED FEMALE ALLOWED (misto o femminile)
+    // =====================================================
+    
+    case "mixed_female_allowed__open":
+      genderAgeText = `
+        <p>
+          Ogni squadra deve essere <strong>mista</strong> (almeno un uomo e una donna) 
+          oppure composta da <strong>sole donne</strong>. 
+          Non sono ammesse squadre composte da soli uomini. 
+          Non ci sono limiti di età per i partecipanti.
+        </p>
+      `;
+      break;
+      
+    case "mixed_female_allowed__under_18":
+      genderAgeText = `
+        <p>
+          Ogni squadra deve essere <strong>mista</strong> (almeno un uomo e una donna) 
+          oppure composta da <strong>sole donne</strong>. 
+          Non sono ammesse squadre composte da soli uomini.
+        </p>
+        <p>
+          Il torneo è riservato a giocatori <strong>Under 18</strong>: tutti i componenti della squadra 
+          devono avere meno di 18 anni alla data di inizio del torneo.
+        </p>
+      `;
+      break;
+      
+    case "mixed_female_allowed__over_35":
+      genderAgeText = `
+        <p>
+          Ogni squadra deve essere <strong>mista</strong> (almeno un uomo e una donna) 
+          oppure composta da <strong>sole donne</strong>. 
+          Non sono ammesse squadre composte da soli uomini.
+        </p>
+        <p>
+          Il torneo è riservato a giocatori <strong>Over 35</strong>: tutti i componenti della squadra 
+          devono avere almeno 35 anni alla data di inizio del torneo.
+        </p>
+      `;
+      break;
+    
+    // =====================================================
+    // FALLBACK
+    // =====================================================
+    
+    default:
+      genderAgeText = `
+        <p>
+          I requisiti di partecipazione relativi a composizione delle squadre e limiti di età 
+          saranno comunicati prima dell'inizio del torneo.
         </p>
       `;
       break;
   }
   
-  // === EXPERTISE TEXT ===
+  // === EXPERTISE + MAX CATEGORY TEXT (combinato) ===
+  const expertiseCategoryKey = `${expertise}__${maxCategory}`;
+  
   let expertiseText = "";
-  switch (expertise) {
-    case "expert":
+  
+  switch (expertiseCategoryKey) {
+    
+    // =====================================================
+    // EXPERT (giocatori esperti)
+    // =====================================================
+    
+    case "expert__na":
       expertiseText = `
         <p>
           Questo torneo è rivolto a <strong>giocatori esperti</strong> con un livello di gioco medio-alto. 
@@ -682,18 +1018,75 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
         </p>
       `;
       break;
-    case "open":
+      
+    case "expert__prima_categoria":
+      expertiseText = `
+        <p>
+          Questo torneo è rivolto a <strong>giocatori esperti</strong> con un livello di gioco medio-alto. 
+          Si consiglia la partecipazione solo a chi ha esperienza agonistica o un buon livello tecnico. <br>
+          Tuttavia, al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in <strong>Prima Categoria</strong> o categorie inferiori. 
+        </p>
+      `;
+      break;
+      
+    case "expert__eccellenza":
+      expertiseText = `
+        <p>
+          Questo torneo è rivolto a <strong>giocatori esperti</strong> con un livello di gioco medio-alto. 
+          Si consiglia la partecipazione solo a chi ha esperienza agonistica o un buon livello tecnico. <br>
+          Tuttavia, al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in <strong>Eccellenza</strong> o categorie inferiori. 
+        </p>
+      `;
+      break;
+    
+    // =====================================================
+    // OPEN (amatoriale)
+    // =====================================================
+    
+    case "open__na":
+      expertiseText = `
+        <p>
+          Questo torneo è <strong>aperto a giocatori e squadre di qualsiasi livello</strong>, ed è pensato per chi vuole 
+          divertirsi e mettersi in gioco in un contesto amatoriale.
+        </p>
+      `;
+      break;
+      
+    case "open__prima_categoria":
+      expertiseText = `
+        <p>
+          Questo torneo è <strong>aperto a giocatori e squadre di qualsiasi livello</strong>, ed è pensato per chi vuole 
+          divertirsi e mettersi in gioco in un contesto amatoriale. <br>
+          Al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in <strong>Prima Categoria</strong> o categorie inferiori.
+        </p>
+      `;
+      break;
+      
+    case "open__eccellenza":
+      expertiseText = `
+        <p>
+          Questo torneo è <strong>aperto a giocatori e squadre di qualsiasi livello</strong>, ed è pensato per chi vuole 
+          divertirsi e mettersi in gioco in un contesto amatoriale. <br>
+          Al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in <strong>Eccellenza</strong> o categorie inferiori.
+        </p>
+      `;
+      break;
+    
+    // =====================================================
+    // FALLBACK
+    // =====================================================
+    
     default:
       expertiseText = `
         <p>
-          Questo torneo è <strong>aperto a tutti</strong>, indipendentemente dal livello di esperienza. 
-          È pensato per chi vuole divertirsi e mettersi in gioco in un contesto amatoriale.
+          Questo torneo è <strong>aperto a tutti i livelli</strong>, ed è pensato per chi vuole 
+          divertirsi e mettersi in gioco in un contesto amatoriale.
         </p>
       `;
       break;
   }
   
-  // === TEAM SIZE TEXT ===
+  // === TEAM SIZE TEXT (separato) ===
   let teamSizeText = "";
   if (teamSizeMin > 0 && teamSizeMax > 0) {
     if (teamSizeMin === teamSizeMax) {
@@ -729,8 +1122,7 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
         <p><strong>Chi può partecipare</strong></p>
-        ${genderText}
-        ${ageText}
+        ${genderAgeText}
         ${expertiseText}
         ${teamSizeText}
       </div>
@@ -740,33 +1132,42 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
 
 
 
+
+
+
 // ===============================
 // 9d. BUILD AWARDS RULE (REGOLA 3)
 // ===============================
 function buildAwardsRule(tournament, ruleNumber) {
-  const expertise = String(tournament.expertise || "open").toLowerCase();
   const hasAward = tournament.award === true || String(tournament.award).toUpperCase() === "TRUE";
   const awardPerc = String(tournament.award_amount_perc || "NA");
+  const price = Number(tournament.price) || 0;
+  const teamsMax = Number(tournament.teams_max) || 0;
   const mvpAward = String(tournament.mvp_award || "none").toLowerCase();
-  const upsell = String(tournament.upsell || "none").toLowerCase();
   
   // === MAIN AWARD TEXT ===
   let mainAwardText = "";
   
-  if (hasAward && expertise === "expert") {
-    if (awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc))) {
+  if (hasAward) {
+    if (awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc)) && price > 0 && teamsMax > 0) {
+      const percValue = Number(awardPerc) / 100;
+      const totalPrize = Math.round(teamsMax * price * percValue);
+      
       mainAwardText = `
         <p>
-          Essendo un torneo pensato per <strong>giocatori esperti</strong>, è previsto un 
-          <strong>montepremi</strong> corrispondente al <strong>${awardPerc}% delle quote totali</strong> 
-          raccolte dalle iscrizioni. Il montepremi sarà suddiviso tra le prime 3 squadre classificate.
+          È previsto un <strong>montepremi</strong> pari a <strong>€${totalPrize}</strong>, che sarà
+          suddiviso tra le prime 3 squadre classificate.
+        </p>
+        <p>
+          Questo premio è garantito al raggiungimento di <strong>${teamsMax} squadre</strong> iscritte. 
+          In ogni caso, anche nella rara eventualità in cui non si raggiungesse il numero previsto di squadre, 
+          il premio rimarrà comunque almeno uguale al <strong>${awardPerc}%</strong> delle quote di iscrizione totali.
         </p>
       `;
     } else {
       mainAwardText = `
         <p>
-          Essendo un torneo pensato per <strong>giocatori esperti</strong>, è previsto un 
-          <strong>montepremi</strong> per le squadre vincitrici. 
+          È previsto un <strong>montepremi</strong> per le squadre vincitrici. 
           L'importo e la suddivisione saranno comunicati prima dell'inizio del torneo.
         </p>
       `;
@@ -774,9 +1175,8 @@ function buildAwardsRule(tournament, ruleNumber) {
   } else {
     mainAwardText = `
       <p>
-        Essendo un torneo pensato per <strong>giocatori amatoriali</strong>, sono previsti 
-        esclusivamente <strong>premi simbolici</strong> per le squadre vincitrici: 
-        coppe, medaglie, gadget e altri riconoscimenti.
+        Essendo un torneo aperto a giocatori e squadre di qualsiasi livello, al fine di evitare squilibri, sono 
+        previsti esclusivamente <strong>premi simbolici</strong>, come coppe, medaglie, gadget e altri riconoscimenti, per le squadre vincitrici.
       </p>
     `;
   }
@@ -824,6 +1224,10 @@ function buildAwardsRule(tournament, ruleNumber) {
     </div>
   `;
 }
+
+
+
+
 
 
 
