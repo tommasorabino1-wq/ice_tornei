@@ -468,19 +468,23 @@ function renderSpecificCourtRule(tournament) {
   rules.push(buildRefereeRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 10: Assicurazione sanitaria (mostrata solo se attiva)
+  // REGOLA 10: Assicurazione sanitaria (se attiva)
   const insuranceRule = buildInsuranceRule(tournament, ruleNumber);
   if (insuranceRule) {
     rules.push(insuranceRule);
     ruleNumber++;
   }
   
-  // REGOLA 11: Servizi e facilities (mostrata solo se c'è almeno un servizio)
+  // REGOLA 11: Servizi e facilities (se presenti)
   const facilitiesRule = buildFacilitiesRule(tournament, ruleNumber);
   if (facilitiesRule) {
     rules.push(facilitiesRule);
     ruleNumber++;
   }
+  
+  // REGOLA 12: Comunicazioni ufficiali (sempre mostrata)
+  rules.push(buildCommunicationsRule(ruleNumber));
+  ruleNumber++;
   
   // REGOLA FINALE
   rules.push(buildGeneralReferenceRule());
@@ -827,335 +831,152 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
   const teamSizeMin = Number(tournament.team_size_min) || 0;
   const teamSizeMax = Number(tournament.team_size_max) || 0;
   
-  // Creiamo una chiave combinata per gender + age
-  const genderAgeKey = `${gender}__${age}`;
+  // =====================================================
+  // MAPPING SINGOLI ELEMENTI
+  // =====================================================
+  
+  // Gender mapping
+  const genderMap = {
+    "open": { 
+      composition: "qualsiasi composizione (maschili, femminili o miste)",
+      restriction: null 
+    },
+    "only_male": { 
+      composition: "soli uomini",
+      restriction: "Possono partecipare esclusivamente squadre composte da soli uomini." 
+    },
+    "only_female": { 
+      composition: "sole donne",
+      restriction: "Possono partecipare esclusivamente squadre composte da sole donne." 
+    },
+    "mixed_strict": { 
+      composition: "miste",
+      restriction: "Ogni squadra deve essere obbligatoriamente mista, composta da almeno un uomo e almeno una donna." 
+    },
+    "mixed_female_allowed": { 
+      composition: "miste o femminili",
+      restriction: "Ogni squadra deve essere mista (almeno un uomo e una donna) oppure composta da sole donne. Non sono ammesse squadre composte da soli uomini." 
+    }
+  };
+  
+  // Age mapping
+  const ageMap = {
+    "open": { 
+      text: "qualsiasi età",
+      restriction: null 
+    },
+    "under_18": { 
+      text: "Under 18",
+      restriction: "Tutti i componenti della squadra devono avere meno di 18 anni alla data di inizio del torneo." 
+    },
+    "over_35": { 
+      text: "Over 35",
+      restriction: "Tutti i componenti della squadra devono avere almeno 35 anni alla data di inizio del torneo." 
+    }
+  };
+  
+  // Expertise mapping
+  const expertiseMap = {
+    "open": {
+      intro: "aperto a giocatori e squadre di qualsiasi livello",
+      description: "È pensato per chi vuole divertirsi e mettersi in gioco in un contesto amatoriale."
+    },
+    "expert": {
+      intro: "rivolto a giocatori esperti con un livello di gioco medio-alto",
+      description: "Si consiglia la partecipazione solo a chi ha esperienza agonistica o un buon livello tecnico."
+    }
+  };
+  
+  // Max category mapping
+  const maxCategoryMap = {
+    "na": null,
+    "prima_categoria": "Al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in <strong>Prima Categoria</strong> o categorie inferiori.",
+    "eccellenza": "Al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in <strong>Eccellenza</strong> o categorie inferiori."
+  };
+  
+  // =====================================================
+  // RECUPERA VALORI DAI MAPPING
+  // =====================================================
+  
+  const genderData = genderMap[gender] || genderMap["open"];
+  const ageData = ageMap[age] || ageMap["open"];
+  const expertiseData = expertiseMap[expertise] || expertiseMap["open"];
+  const categoryRestriction = maxCategoryMap[maxCategory] || null;
+  
+  // =====================================================
+  // COSTRUZIONE TESTO GENDER + AGE
+  // =====================================================
   
   let genderAgeText = "";
   
-  switch (genderAgeKey) {
-    
-    // =====================================================
-    // OPEN (qualsiasi composizione)
-    // =====================================================
-    
-    case "open__open":
-      genderAgeText = `
-        <p>
-          Possono partecipare squadre di <strong>qualsiasi composizione</strong> (maschili, femminili o miste) 
-          e giocatori di <strong>qualsiasi età</strong>.
-        </p>
-      `;
-      break;
-      
-    case "open__under_18":
-      genderAgeText = `
-        <p>
-          Possono partecipare squadre di <strong>qualsiasi composizione</strong> (maschili, femminili o miste), 
-          ma il torneo è riservato a giocatori <strong>Under 18</strong>. 
-          Tutti i componenti della squadra devono avere meno di 18 anni alla data di inizio del torneo.
-        </p>
-      `;
-      break;
-      
-    case "open__over_35":
-      genderAgeText = `
-        <p>
-          Possono partecipare squadre di <strong>qualsiasi composizione</strong> (maschili, femminili o miste), 
-          ma il torneo è riservato a giocatori <strong>Over 35</strong>. 
-          Tutti i componenti della squadra devono avere almeno 35 anni alla data di inizio del torneo.
-        </p>
-      `;
-      break;
-    
-    // =====================================================
-    // ONLY MALE (solo uomini)
-    // =====================================================
-    
-    case "only_male__open":
-      genderAgeText = `
-        <p>
-          Possono partecipare esclusivamente <strong>squadre composte da soli uomini</strong>, 
-          di <strong>qualsiasi età</strong>.
-        </p>
-      `;
-      break;
-      
-    case "only_male__under_18":
-      genderAgeText = `
-        <p>
-          Possono partecipare esclusivamente <strong>squadre composte da soli uomini Under 18</strong>. 
-          Tutti i componenti della squadra devono essere di sesso maschile e avere meno di 18 anni 
-          alla data di inizio del torneo.
-        </p>
-      `;
-      break;
-      
-    case "only_male__over_35":
-      genderAgeText = `
-        <p>
-          Possono partecipare esclusivamente <strong>squadre composte da soli uomini Over 35</strong>. 
-          Tutti i componenti della squadra devono essere di sesso maschile e avere almeno 35 anni 
-          alla data di inizio del torneo.
-        </p>
-      `;
-      break;
-    
-    // =====================================================
-    // ONLY FEMALE (solo donne)
-    // =====================================================
-    
-    case "only_female__open":
-      genderAgeText = `
-        <p>
-          Possono partecipare esclusivamente <strong>squadre composte da sole donne</strong>, 
-          di <strong>qualsiasi età</strong>.
-        </p>
-      `;
-      break;
-      
-    case "only_female__under_18":
-      genderAgeText = `
-        <p>
-          Possono partecipare esclusivamente <strong>squadre composte da sole donne Under 18</strong>. 
-          Tutte le componenti della squadra devono essere di sesso femminile e avere meno di 18 anni 
-          alla data di inizio del torneo.
-        </p>
-      `;
-      break;
-      
-    case "only_female__over_35":
-      genderAgeText = `
-        <p>
-          Possono partecipare esclusivamente <strong>squadre composte da sole donne Over 35</strong>. 
-          Tutte le componenti della squadra devono essere di sesso femminile e avere almeno 35 anni 
-          alla data di inizio del torneo.
-        </p>
-      `;
-      break;
-    
-    // =====================================================
-    // MIXED STRICT (misto obbligatorio)
-    // =====================================================
-    
-    case "mixed_strict__open":
-      genderAgeText = `
-        <p>
-          Ogni squadra deve essere <strong>obbligatoriamente mista</strong>, composta da 
-          <strong>almeno un uomo e almeno una donna</strong>. 
-          Non ci sono limiti di età per i partecipanti.
-        </p>
-      `;
-      break;
-      
-    case "mixed_strict__under_18":
-      genderAgeText = `
-        <p>
-          Ogni squadra deve essere <strong>obbligatoriamente mista</strong>, composta da 
-          <strong>almeno un uomo e almeno una donna</strong>. 
-          Il torneo è riservato a giocatori <strong>Under 18</strong>: tutti i componenti della squadra 
-          devono avere meno di 18 anni alla data di inizio del torneo.
-        </p>
-      `;
-      break;
-      
-    case "mixed_strict__over_35":
-      genderAgeText = `
-        <p>
-          Ogni squadra deve essere <strong>obbligatoriamente mista</strong>, composta da 
-          <strong>almeno un uomo e almeno una donna</strong>. 
-          Il torneo è riservato a giocatori <strong>Over 35</strong>: tutti i componenti della squadra 
-          devono avere almeno 35 anni alla data di inizio del torneo.
-        </p>
-      `;
-      break;
-    
-    // =====================================================
-    // MIXED FEMALE ALLOWED (misto o femminile)
-    // =====================================================
-    
-    case "mixed_female_allowed__open":
-      genderAgeText = `
-        <p>
-          Ogni squadra deve essere <strong>mista</strong> (almeno un uomo e una donna) 
-          oppure composta da <strong>sole donne</strong>. 
-          Non sono ammesse squadre composte da soli uomini. 
-          Non ci sono limiti di età per i partecipanti.
-        </p>
-      `;
-      break;
-      
-    case "mixed_female_allowed__under_18":
-      genderAgeText = `
-        <p>
-          Ogni squadra deve essere <strong>mista</strong> (almeno un uomo e una donna) 
-          oppure composta da <strong>sole donne</strong>. 
-          Non sono ammesse squadre composte da soli uomini.
-        </p>
-        <p>
-          Il torneo è riservato a giocatori <strong>Under 18</strong>: tutti i componenti della squadra 
-          devono avere meno di 18 anni alla data di inizio del torneo.
-        </p>
-      `;
-      break;
-      
-    case "mixed_female_allowed__over_35":
-      genderAgeText = `
-        <p>
-          Ogni squadra deve essere <strong>mista</strong> (almeno un uomo e una donna) 
-          oppure composta da <strong>sole donne</strong>. 
-          Non sono ammesse squadre composte da soli uomini.
-        </p>
-        <p>
-          Il torneo è riservato a giocatori <strong>Over 35</strong>: tutti i componenti della squadra 
-          devono avere almeno 35 anni alla data di inizio del torneo.
-        </p>
-      `;
-      break;
-    
-    // =====================================================
-    // FALLBACK
-    // =====================================================
-    
-    default:
-      genderAgeText = `
-        <p>
-          I requisiti di partecipazione relativi a composizione delle squadre e limiti di età 
-          saranno comunicati prima dell'inizio del torneo.
-        </p>
-      `;
-      break;
+  if (gender === "open" && age === "open") {
+    // Caso più semplice: tutto aperto
+    genderAgeText = `Possono partecipare squadre di <strong>${genderData.composition}</strong> e giocatori di <strong>${ageData.text}</strong>.`;
+  } 
+  else if (gender === "open" && age !== "open") {
+    // Composizione aperta, età limitata
+    genderAgeText = `Possono partecipare squadre di <strong>${genderData.composition}</strong>, ma il torneo è riservato a giocatori <strong>${ageData.text}</strong>. ${ageData.restriction}`;
+  }
+  else if (gender !== "open" && age === "open") {
+    // Composizione limitata, età aperta
+    genderAgeText = `${genderData.restriction} Non ci sono limiti di età per i partecipanti.`;
+  }
+  else {
+    // Entrambi limitati
+    genderAgeText = `${genderData.restriction} Il torneo è riservato a giocatori <strong>${ageData.text}</strong>: ${ageData.restriction.toLowerCase()}`;
   }
   
-  // === EXPERTISE + MAX CATEGORY TEXT (combinato) ===
-  const expertiseCategoryKey = `${expertise}__${maxCategory}`;
+  // =====================================================
+  // COSTRUZIONE TESTO EXPERTISE + CATEGORY
+  // =====================================================
   
-  let expertiseText = "";
+  let expertiseText = `Questo torneo è <strong>${expertiseData.intro}</strong>. ${expertiseData.description}`;
   
-  switch (expertiseCategoryKey) {
-    
-    // =====================================================
-    // EXPERT (giocatori esperti)
-    // =====================================================
-    
-    case "expert__na":
-      expertiseText = `
-        <p>
-          Questo torneo è rivolto a <strong>giocatori esperti</strong> con un livello di gioco medio-alto. 
-          Si consiglia la partecipazione solo a chi ha esperienza agonistica o un buon livello tecnico.
-        </p>
-      `;
-      break;
-      
-    case "expert__prima_categoria":
-      expertiseText = `
-        <p>
-          Questo torneo è rivolto a <strong>giocatori esperti</strong> con un livello di gioco medio-alto. 
-          Si consiglia la partecipazione solo a chi ha esperienza agonistica o un buon livello tecnico. <br>
-          Tuttavia, al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in <strong>Prima Categoria</strong> o categorie inferiori. 
-        </p>
-      `;
-      break;
-      
-    case "expert__eccellenza":
-      expertiseText = `
-        <p>
-          Questo torneo è rivolto a <strong>giocatori esperti</strong> con un livello di gioco medio-alto. 
-          Si consiglia la partecipazione solo a chi ha esperienza agonistica o un buon livello tecnico. <br>
-          Tuttavia, al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in <strong>Eccellenza</strong> o categorie inferiori. 
-        </p>
-      `;
-      break;
-    
-    // =====================================================
-    // OPEN (amatoriale)
-    // =====================================================
-    
-    case "open__na":
-      expertiseText = `
-        <p>
-          Questo torneo è <strong>aperto a giocatori e squadre di qualsiasi livello</strong>, ed è pensato per chi vuole 
-          divertirsi e mettersi in gioco in un contesto amatoriale.
-        </p>
-      `;
-      break;
-      
-    case "open__prima_categoria":
-      expertiseText = `
-        <p>
-          Questo torneo è <strong>aperto a giocatori e squadre di qualsiasi livello</strong>, ed è pensato per chi vuole 
-          divertirsi e mettersi in gioco in un contesto amatoriale. <br>
-          Al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in <strong>Prima Categoria</strong> o categorie inferiori.
-        </p>
-      `;
-      break;
-      
-    case "open__eccellenza":
-      expertiseText = `
-        <p>
-          Questo torneo è <strong>aperto a giocatori e squadre di qualsiasi livello</strong>, ed è pensato per chi vuole 
-          divertirsi e mettersi in gioco in un contesto amatoriale. <br>
-          Al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in <strong>Eccellenza</strong> o categorie inferiori.
-        </p>
-      `;
-      break;
-    
-    // =====================================================
-    // FALLBACK
-    // =====================================================
-    
-    default:
-      expertiseText = `
-        <p>
-          Questo torneo è <strong>aperto a tutti i livelli</strong>, ed è pensato per chi vuole 
-          divertirsi e mettersi in gioco in un contesto amatoriale.
-        </p>
-      `;
-      break;
+  if (categoryRestriction) {
+    expertiseText += ` ${categoryRestriction}`;
   }
   
-  // === TEAM SIZE TEXT (separato) ===
+  // =====================================================
+  // COSTRUZIONE TESTO TEAM SIZE
+  // =====================================================
+  
   let teamSizeText = "";
+  
   if (teamSizeMin > 0 && teamSizeMax > 0) {
     if (teamSizeMin === teamSizeMax) {
-      teamSizeText = `
-        <p>
-          Ogni squadra deve essere composta da esattamente <strong>${teamSizeMin} giocatori</strong>.
-        </p>
-      `;
+      teamSizeText = `Ogni squadra deve essere composta da esattamente <strong>${teamSizeMin} giocatori</strong>.`;
     } else {
-      teamSizeText = `
-        <p>
-          Ogni squadra deve essere composta da un <strong>minimo di ${teamSizeMin}</strong> 
-          e un <strong>massimo di ${teamSizeMax} giocatori</strong>.
-        </p>
-      `;
+      teamSizeText = `Ogni squadra deve essere composta da un <strong>minimo di ${teamSizeMin}</strong> e un <strong>massimo di ${teamSizeMax} giocatori</strong>.`;
     }
   } else if (teamSizeMin > 0) {
-    teamSizeText = `
-      <p>
-        Ogni squadra deve essere composta da almeno <strong>${teamSizeMin} giocatori</strong>.
-      </p>
-    `;
+    teamSizeText = `Ogni squadra deve essere composta da almeno <strong>${teamSizeMin} giocatori</strong>.`;
   } else if (teamSizeMax > 0) {
-    teamSizeText = `
-      <p>
-        Ogni squadra può essere composta da un massimo di <strong>${teamSizeMax} giocatori</strong>.
-      </p>
-    `;
+    teamSizeText = `Ogni squadra può essere composta da un massimo di <strong>${teamSizeMax} giocatori</strong>.`;
+  } else {
+    teamSizeText = `Il numero di giocatori per squadra sarà comunicato prima dell'inizio del torneo.`;
   }
+  
+  // =====================================================
+  // OUTPUT FINALE
+  // =====================================================
   
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
         <p><strong>Chi può partecipare</strong></p>
-        ${genderAgeText}
-        ${expertiseText}
-        ${teamSizeText}
+        <ul>
+          <li><strong>Composizione e età:</strong> ${genderAgeText}</li>
+          <li><strong>Livello:</strong> ${expertiseText}</li>
+          <li><strong>Numero giocatori:</strong> ${teamSizeText}</li>
+        </ul>
       </div>
     </div>
   `;
 }
+
+
+
 
 
 
@@ -1172,43 +993,42 @@ function buildAwardsRule(tournament, ruleNumber) {
   const teamsMax = Number(tournament.teams_max) || 0;
   const mvpAward = String(tournament.mvp_award || "none").toLowerCase();
   
-  // === MAIN AWARD TEXT ===
+  // =====================================================
+  // PUNTO 1: MONTEPREMI
+  // =====================================================
+  
   let mainAwardText = "";
   
   if (hasAward) {
     if (awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc)) && price > 0 && teamsMax > 0) {
       const percValue = Number(awardPerc) / 100;
       const totalPrize = Math.round(teamsMax * price * percValue);
-      
-      mainAwardText = `
-        <p>
-          È previsto un <strong>montepremi</strong> pari a <strong>€${totalPrize}</strong>, che sarà
-          suddiviso tra le prime 3 squadre classificate.
-        </p>
-        <p>
-          Questo premio è garantito al raggiungimento di <strong>${teamsMax} squadre</strong> iscritte. 
-          In ogni caso, anche nella rara eventualità in cui non si raggiungesse il numero previsto di squadre, 
-          il premio rimarrà comunque almeno uguale al <strong>${awardPerc}%</strong> delle quote di iscrizione totali.
-        </p>
-      `;
+      mainAwardText = `È previsto un <strong>montepremi</strong> pari a <strong>€${totalPrize}</strong>, che sarà suddiviso tra le prime 3 squadre classificate.`;
     } else {
-      mainAwardText = `
-        <p>
-          È previsto un <strong>montepremi</strong> per le squadre vincitrici. 
-          L'importo e la suddivisione saranno comunicati prima dell'inizio del torneo.
-        </p>
-      `;
+      mainAwardText = `È previsto un <strong>montepremi</strong> per le squadre vincitrici. L'importo e la suddivisione saranno comunicati prima dell'inizio del torneo.`;
     }
   } else {
-    mainAwardText = `
-      <p>
-        Essendo un torneo aperto a giocatori e squadre di qualsiasi livello, al fine di evitare squilibri, sono 
-        previsti esclusivamente <strong>premi simbolici</strong>, come coppe, medaglie, gadget e altri riconoscimenti, per le squadre vincitrici.
-      </p>
-    `;
+    mainAwardText = `Essendo un torneo aperto a giocatori e squadre di qualsiasi livello, al fine di evitare squilibri, sono previsti esclusivamente <strong>premi simbolici</strong> (coppe, medaglie, gadget e altri riconoscimenti) per le squadre vincitrici.`;
   }
   
-  // === MVP AWARD TEXT ===
+  // =====================================================
+  // PUNTO 2: GARANZIA MONTEPREMI
+  // =====================================================
+  
+  let guaranteeText = "";
+  
+  if (hasAward && awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc)) && price > 0 && teamsMax > 0) {
+    guaranteeText = `Il montepremi è garantito al raggiungimento di <strong>${teamsMax} squadre</strong> iscritte. In ogni caso, anche nella rara eventualità in cui non si raggiungesse il numero previsto di squadre, il premio rimarrà comunque almeno uguale al <strong>${awardPerc}%</strong> delle quote di iscrizione totali.`;
+  } else if (hasAward) {
+    guaranteeText = `Le condizioni per l'erogazione del montepremi saranno comunicate prima dell'inizio del torneo.`;
+  } else {
+    guaranteeText = `I premi simbolici saranno consegnati alle squadre vincitrici al termine del torneo.`;
+  }
+  
+  // =====================================================
+  // PUNTO 3: PREMI INDIVIDUALI
+  // =====================================================
+  
   let mvpAwardText = "";
   
   if (mvpAward !== "none") {
@@ -1232,25 +1052,33 @@ function buildAwardsRule(tournament, ruleNumber) {
         ? mvpPrizes[0] 
         : mvpPrizes.slice(0, -1).join(", ") + " e " + mvpPrizes[mvpPrizes.length - 1];
       
-      mvpAwardText = `
-        <p>
-          Saranno inoltre assegnati <strong>premi individuali</strong> per: ${prizesList}.
-        </p>
-      `;
+      mvpAwardText = `Saranno inoltre assegnati <strong>premi individuali</strong> per: ${prizesList}.`;
+    } else {
+      mvpAwardText = `Non sono previsti premi individuali per questo torneo.`;
     }
+  } else {
+    mvpAwardText = `Non sono previsti premi individuali per questo torneo.`;
   }
+  
+  // =====================================================
+  // OUTPUT FINALE
+  // =====================================================
   
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
         <p><strong>Premi e riconoscimenti</strong></p>
-        ${mainAwardText}
-        ${mvpAwardText}
+        <ul>
+          <li><strong>Montepremi:</strong> ${mainAwardText}</li>
+          <li><strong>Garanzia:</strong> ${guaranteeText}</li>
+          <li><strong>Premi individuali:</strong> ${mvpAwardText}</li>
+        </ul>
       </div>
     </div>
   `;
 }
+
 
 
 
@@ -1265,91 +1093,61 @@ function buildAwardsRule(tournament, ruleNumber) {
 function buildFormatTimeRangeRule(tournament, ruleNumber) {
   const formatType = String(tournament.format_type || "").toLowerCase();
   
-  // === FORMAT TYPE TEXT ===
-  let formatText = "";
+  // =====================================================
+  // MAPPING ELEMENTI DEL FORMATO
+  // =====================================================
+  
+  let structureText = "";
+  let phaseDetailsText = "";
+  let teamsInfoText = "";
   
   switch (formatType) {
+    
     case "round_robin":
-      formatText = `
-        <p>
-          Il torneo prevede un <strong>girone unico all’italiana con partite di sola andata</strong>, in cui ogni squadra affronterà una sola volta tutte le altre partecipanti.
-        </p>
-
-        <p>
-          Non essendo prevista una fase finale, la squadra che chiuderà il girone al primo posto sarà proclamata vincitrice del torneo.
-        </p>
-
-        <p>
-          Il numero definitivo di squadre partecipanti sarà comunicato alla chiusura delle iscrizioni, garantendo comunque il numero minimo di partite previsto.
-        </p>        
-      `;
+      structureText = `Il torneo prevede un <strong>girone unico all'italiana con partite di sola andata</strong>, in cui ogni squadra affronterà una sola volta tutte le altre partecipanti.`;
+      phaseDetailsText = `Non essendo prevista una fase finale, la squadra che chiuderà il girone al primo posto sarà proclamata vincitrice del torneo.`;
+      teamsInfoText = `Il numero definitivo di squadre partecipanti sarà comunicato alla chiusura delle iscrizioni, garantendo comunque il numero minimo di partite previsto.`;
       break;
       
     case "double_round_robin":
-      formatText = `
-        <p>
-          Il torneo prevede un <strong>girone unico all’italiana con partite di andata e ritorno</strong>, in cui ogni squadra affronterà due volte tutte le altre partecipanti.
-        </p>
-
-        <p>
-          Non essendo prevista una fase finale, la squadra che chiuderà il girone al primo posto sarà proclamata vincitrice del torneo.
-        </p>
-
-        <p>
-          Il numero definitivo di squadre partecipanti sarà comunicato alla chiusura delle iscrizioni, garantendo comunque il numero minimo di partite previsto.
-        </p>  
-      `;
+      structureText = `Il torneo prevede un <strong>girone unico all'italiana con partite di andata e ritorno</strong>, in cui ogni squadra affronterà due volte tutte le altre partecipanti.`;
+      phaseDetailsText = `Non essendo prevista una fase finale, la squadra che chiuderà il girone al primo posto sarà proclamata vincitrice del torneo.`;
+      teamsInfoText = `Il numero definitivo di squadre partecipanti sarà comunicato alla chiusura delle iscrizioni, garantendo comunque il numero minimo di partite previsto.`;
       break;
       
     case "round_robin_finals":
-      formatText = `
-        <p>
-          Il torneo prevederà una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.
-        </p>
-
-        <p>
-          Sono previsti gironi all’italiana con sola andata, in cui ogni squadra affronterà una sola volta le altre del proprio gruppo.  
-          La fase finale prevedrà invece scontri diretti in gara unica, con passaggio del turno per la squadra vincente.
-        </p>
-
-        <p>
-          Il numero delle squadre partecipanti, delle squadre per girone e delle qualificate alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.
-        </p>        
-      `;
+      structureText = `Il torneo prevede una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.`;
+      phaseDetailsText = `Sono previsti gironi all'italiana con sola andata, in cui ogni squadra affronterà una sola volta le altre del proprio gruppo. La fase finale prevede invece scontri diretti in gara unica, con passaggio del turno per la squadra vincente.`;
+      teamsInfoText = `Il numero delle squadre partecipanti, delle squadre per girone e delle qualificate alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.`;
       break;
       
-    case "round_robin_finals":
-      formatText = `
-        <p>
-          Il torneo prevederà una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.
-        </p>
-
-        <p>
-          Sono previsti gironi all’italiana con andata e ritorno, in cui ogni squadra affronterà due volte le altre del proprio gruppo.  
-          La fase finale prevedrà invece scontri diretti in gara unica, con passaggio del turno per la squadra vincente.
-        </p>
-
-        <p>
-          Il numero delle squadre partecipanti, delle squadre per girone e delle qualificate alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.
-        </p>        
-      `;
+    case "double_round_robin_finals":
+      structureText = `Il torneo prevede una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.`;
+      phaseDetailsText = `Sono previsti gironi all'italiana con andata e ritorno, in cui ogni squadra affronterà due volte le altre del proprio gruppo. La fase finale prevede invece scontri diretti in gara unica, con passaggio del turno per la squadra vincente.`;
+      teamsInfoText = `Il numero delle squadre partecipanti, delle squadre per girone e delle qualificate alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.`;
       break;
       
     default:
-      formatText = `
-        <p>
-          Il formato dettagliato del torneo sarà comunicato prima dell'inizio delle partite.
-        </p>
-      `;
+      structureText = `Il formato dettagliato del torneo sarà comunicato prima dell'inizio delle partite.`;
+      phaseDetailsText = `Le informazioni sulle fasi del torneo saranno disponibili alla chiusura delle iscrizioni.`;
+      teamsInfoText = `Il numero definitivo di squadre partecipanti sarà comunicato alla chiusura delle iscrizioni.`;
       break;
   }
+  
+  // =====================================================
+  // OUTPUT FINALE
+  // =====================================================
   
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
         <p><strong>Formato del torneo</strong></p>
-        ${formatText}
+        <ul>
+          <li><strong>Struttura:</strong> ${structureText}</li>
+          <li><strong>Fasi:</strong> ${phaseDetailsText}</li>
+          <li><strong>Squadre:</strong> ${teamsInfoText}</li>
+        </ul>
       </div>
     </div>
   `;
@@ -1372,7 +1170,10 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   const formatType = String(tournament.format_type || "").toLowerCase();
   const hasFinals = formatType.includes("finals");
   
-  // Mapping giorni
+  // =====================================================
+  // MAPPING GIORNI E ORARI
+  // =====================================================
+  
   const daysMap = {
     "lun-dom": "qualsiasi giorno della settimana",
     "lun-ven": "dal lunedì al venerdì",
@@ -1387,7 +1188,6 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     "dom": "la domenica"
   };
   
-  // Mapping orari
   const hoursMap = {
     "10-22": "tra le 10:00 e le 22:00",
     "10-19": "tra le 10:00 e le 19:00 (fascia diurna)",
@@ -1396,247 +1196,113 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   
   const daysText = daysMap[days] || days || "";
   const hoursText = hoursMap[hours] || hours || "";
-
-  let ruleContent = "";
   
   // =====================================================
-  // CASO 1: TUTTO VARIABILE (false)
+  // FRASI BASE RIUTILIZZABILI
   // =====================================================
-  if (fixed === "false") {
-    ruleContent = `
-      <p>
-        Per tutta la durata del torneo, campi, giorni e orari delle partite verranno decisi dalle 
-        squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
-      </p>
-      <p>
-        In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
-        in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
-        potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-      </p>
-      <p>
-        L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
-        un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
-      </p>
-    `;
-  }
+  
+  // Disponibilità generale
+  const availabilityText = `Le partite potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.`;
+  
+  // Preferenze in fase di iscrizione
+  const preferencesFullText = `In fase di iscrizione, le squadre potranno esprimere le proprie preferenze in merito a zona, giorni e orari in cui desiderano giocare.`;
+  const preferencesDaysHoursText = `In fase di iscrizione, le squadre potranno esprimere le proprie preferenze in merito a giorni e orari in cui desiderano giocare.`;
+  const preferencesZoneText = `In fase di iscrizione, le squadre potranno esprimere le proprie preferenze in merito alla zona in cui desiderano giocare.`;
+  
+  // Prenotazione da parte dell'organizzazione
+  const bookingByOrgText = `L'organizzazione, per le partite in casa di ciascuna squadra, si occuperà di prenotare un campo disponibile tenendo conto delle preferenze espresse.`;
+  
+  // Comunicazione anticipata
+  const advanceCommunicationText = `Le squadre non dovranno preoccuparsi della prenotazione: l'organizzazione provvederà a comunicare in anticipo il calendario completo.`;
   
   // =====================================================
-  // CASO 2: TUTTO FISSO PER TUTTO IL TORNEO (court_days_hours_all)
+  // MAPPING SCENARI
   // =====================================================
-  else if (fixed === "court_days_hours_all") {
-    ruleContent = `
-      <p>
-        Per tutta la durata del torneo, campi, giorni e orari delle partite saranno 
-        stabiliti dall'organizzazione e comunicati prima dell'inizio del torneo.
-      </p>
-      <p>
-        Le partite si svolgeranno a <strong>${location}</strong>, <strong>${daysText}</strong>, 
-        <strong>${hoursText}</strong>.
-      </p>
-      <p>
-        Le squadre non dovranno quindi preoccuparsi della prenotazione dei campi: 
-        l'organizzazione provvederà a comunicare in anticipo il calendario completo delle partite.
-      </p>
-    `;
-  }
   
-  // =====================================================
-  // CASO 3: TUTTO FISSO SOLO PER LE FINALI (court_days_hours_finals)
-  // =====================================================
-  else if (fixed === "court_days_hours_finals") {
-    if (hasFinals) {
-      ruleContent = `
-        <p>
-          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite verranno decisi dalle 
-          squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
-        </p>
-        <p>
-          In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
-          in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
-          potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-        </p>
-        <p>
-          L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
-          un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
-        </p>
-        <p>
-          <strong>Fase finale:</strong> campi, giorni e orari delle partite ad eliminazione diretta saranno 
-          stabiliti dall'organizzazione e comunicati al termine della fase a gironi.
-        </p>
-      `;
-    } else {
-      // Se non ci sono finali, trattiamo come "false"
-      ruleContent = `
-        <p>
-          Per tutta la durata del torneo, campi, giorni e orari delle partite verranno decisi dalle 
-          squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
-        </p>
-        <p>
-          In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
-          in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
-          potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-        </p>
-        <p>
-          L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
-          un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
-        </p>
-      `;
+  const scenarios = {
+    
+    // TUTTO VARIABILE
+    "false": {
+      assignment: `Campi, giorni e orari delle partite verranno decisi dalle squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.`,
+      availability: availabilityText,
+      booking: `${preferencesFullText} ${bookingByOrgText}`
+    },
+    
+    // TUTTO FISSO PER TUTTO IL TORNEO
+    "court_days_hours_all": {
+      assignment: `Campi, giorni e orari di tutte le partite saranno <strong>stabiliti dall'organizzazione</strong> e comunicati prima dell'inizio del torneo.`,
+      availability: availabilityText,
+      booking: advanceCommunicationText
+    },
+    
+    // TUTTO FISSO SOLO PER LE FINALI
+    "court_days_hours_finals": {
+      assignment: hasFinals 
+        ? `<strong>Fase a gironi:</strong> campi, giorni e orari verranno decisi dalle squadre e prenotati di volta in volta dall'organizzazione. <strong>Fase finale:</strong> campi, giorni e orari saranno stabiliti dall'organizzazione e comunicati al termine dei gironi.`
+        : `Campi, giorni e orari delle partite verranno decisi dalle squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.`,
+      availability: availabilityText,
+      booking: hasFinals 
+        ? `${preferencesFullText} ${bookingByOrgText}`
+        : `${preferencesFullText} ${bookingByOrgText}`
+    },
+    
+    // SOLO CAMPI FISSI PER TUTTO IL TORNEO
+    "court_all": {
+      assignment: `I <strong>campi</strong> in cui si svolgeranno le partite saranno stabiliti dall'organizzazione e comunicati prima dell'inizio del torneo. Giorni e orari verranno invece decisi dalle squadre.`,
+      availability: availabilityText,
+      booking: `${preferencesDaysHoursText} ${bookingByOrgText}`
+    },
+    
+    // SOLO CAMPI FISSI PER LE FINALI
+    "court_finals": {
+      assignment: hasFinals 
+        ? `<strong>Fase a gironi:</strong> campi, giorni e orari verranno decisi dalle squadre e prenotati di volta in volta dall'organizzazione. <strong>Fase finale:</strong> i campi saranno stabiliti dall'organizzazione; giorni e orari verranno concordati con le squadre qualificate.`
+        : `Campi, giorni e orari delle partite verranno decisi dalle squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.`,
+      availability: availabilityText,
+      booking: `${preferencesFullText} ${bookingByOrgText}`
+    },
+    
+    // GIORNI E ORARI FISSI PER TUTTO IL TORNEO
+    "days_hours_all": {
+      assignment: `<strong>Giorni e orari</strong> delle partite saranno stabiliti dall'organizzazione e comunicati prima dell'inizio del torneo. I campi verranno invece prenotati di volta in volta.`,
+      availability: availabilityText,
+      booking: `${preferencesZoneText} ${bookingByOrgText}`
+    },
+    
+    // GIORNI E ORARI FISSI SOLO PER LE FINALI
+    "days_hours_finals": {
+      assignment: hasFinals 
+        ? `<strong>Fase a gironi:</strong> campi, giorni e orari verranno decisi dalle squadre e prenotati di volta in volta dall'organizzazione. <strong>Fase finale:</strong> giorni e orari saranno stabiliti dall'organizzazione; i campi verranno prenotati tenendo conto delle preferenze delle squadre qualificate.`
+        : `Campi, giorni e orari delle partite verranno decisi dalle squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.`,
+      availability: availabilityText,
+      booking: `${preferencesFullText} ${bookingByOrgText}`
     }
-  }
+  };
   
   // =====================================================
-  // CASO 4: SOLO CAMPI FISSI PER TUTTO IL TORNEO (court_all)
+  // RECUPERA SCENARIO O FALLBACK
   // =====================================================
-  else if (fixed === "court_all") {
-    ruleContent = `
-      <p>
-        Per tutta la durata del torneo, i campi in cui si svolgeranno le partite saranno 
-        stabiliti dall'organizzazione e comunicati prima dell'inizio del torneo.
-      </p>
-      <p>
-        Le partite si svolgeranno a <strong>${location}</strong>.
-      </p>
-      <p>
-        Giorni e orari delle partite verranno invece decisi dalle squadre partecipanti. 
-        In fase di iscrizione, le squadre potranno esprimere le proprie preferenze, 
-        considerando che le partite potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-      </p>
-      <p>
-        L'organizzazione, per le partite in cui la squadra giocherà in casa, comunicherà 
-        giorni e orari tenendo conto delle preferenze espresse in fase di iscrizione.
-      </p>
-    `;
-  }
+  
+  const scenario = scenarios[fixed] || {
+    assignment: `Le modalità di assegnazione di campi, giorni e orari saranno comunicate prima dell'inizio del torneo.`,
+    availability: availabilityText,
+    booking: `Ulteriori dettagli saranno comunicati agli iscritti.`
+  };
   
   // =====================================================
-  // CASO 5: SOLO CAMPI FISSI PER LE FINALI (court_finals)
+  // OUTPUT FINALE
   // =====================================================
-  else if (fixed === "court_finals") {
-    if (hasFinals) {
-      ruleContent = `
-        <p>
-          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite verranno decisi dalle 
-          squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
-        </p>
-        <p>
-          In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
-          in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
-          potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-        </p>
-        <p>
-          L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
-          un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
-        </p>
-        <p>
-          <strong>Fase finale:</strong> i campi in cui si svolgeranno le partite ad eliminazione diretta saranno 
-          stabiliti dall'organizzazione e comunicati al termine della fase a gironi. 
-          Giorni e orari verranno concordati con le squadre qualificate.
-        </p>
-      `;
-    } else {
-      ruleContent = `
-        <p>
-          Per tutta la durata del torneo, campi, giorni e orari delle partite verranno decisi dalle 
-          squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
-        </p>
-        <p>
-          In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
-          in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
-          potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-        </p>
-        <p>
-          L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
-          un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
-        </p>
-      `;
-    }
-  }
-  
-  // =====================================================
-  // CASO 6: GIORNI E ORARI FISSI PER TUTTO IL TORNEO (days_hours_all)
-  // =====================================================
-  else if (fixed === "days_hours_all") {
-    ruleContent = `
-      <p>
-        Per tutta la durata del torneo, giorni e orari delle partite saranno 
-        stabiliti dall'organizzazione e comunicati prima dell'inizio del torneo.
-      </p>
-      <p>
-        Le partite si svolgeranno <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-      </p>
-      <p>
-        I campi verranno invece prenotati di volta in volta dall'organizzazione. 
-        In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
-        sulla zona in cui desiderano giocare, considerando che le partite 
-        si svolgeranno a <strong>${location}</strong>.
-      </p>
-      <p>
-        L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
-        un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
-      </p>
-    `;
-  }
-  
-  // =====================================================
-  // CASO 7: GIORNI E ORARI FISSI SOLO PER LE FINALI (days_hours_finals)
-  // =====================================================
-  else if (fixed === "days_hours_finals") {
-    if (hasFinals) {
-      ruleContent = `
-        <p>
-          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite verranno decisi dalle 
-          squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
-        </p>
-        <p>
-          In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
-          in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
-          potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-        </p>
-        <p>
-          L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
-          un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
-        </p>
-        <p>
-          <strong>Fase finale:</strong> giorni e orari delle partite ad eliminazione diretta saranno 
-          stabiliti dall'organizzazione e comunicati al termine della fase a gironi. 
-          I campi verranno prenotati tenendo conto delle preferenze delle squadre qualificate.
-        </p>
-      `;
-    } else {
-      ruleContent = `
-        <p>
-          Per tutta la durata del torneo, campi, giorni e orari delle partite verranno decisi dalle 
-          squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
-        </p>
-        <p>
-          In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
-          in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
-          potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-        </p>
-      `;
-    }
-  }
-  
-  // =====================================================
-  // FALLBACK
-  // =====================================================
-  else {
-    ruleContent = `
-      <p>
-        Le modalità di assegnazione di campi, giorni e orari saranno comunicate prima dell'inizio del torneo.
-      </p>
-      <p>
-        Le partite si svolgeranno a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-      </p>
-    `;
-  }
   
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
         <p><strong>Campi, giorni e orari delle partite</strong></p>
-        ${ruleContent}
+        <ul>
+          <li><strong>Assegnazione:</strong> ${scenario.assignment}</li>
+          <li><strong>Disponibilità:</strong> ${scenario.availability}</li>
+          <li><strong>Prenotazione:</strong> ${scenario.booking}</li>
+        </ul>
       </div>
     </div>
   `;
@@ -1658,6 +1324,10 @@ function buildMatchFormatRule(tournament, ruleNumber) {
   const matchFormatFinals = String(tournament.match_format_finals || "NA").toLowerCase();
   const guaranteedMatch = Number(tournament.guaranteed_match) || 0;
   
+  // =====================================================
+  // MAPPING BASE
+  // =====================================================
+  
   // Determina il testo per "vince la squadra..."
   const isGameBasedSport = sport.includes("padel") || sport.includes("volley") || sport.includes("beach");
   const winConditionText = isGameBasedSport 
@@ -1666,94 +1336,65 @@ function buildMatchFormatRule(tournament, ruleNumber) {
   
   // Mapping formato partita (dinamico in base allo sport)
   const matchFormatMap = {
-    "1x30": `un tempo unico da 30 minuti: ${winConditionText}`,
-    "1x60": `un tempo unico da 60 minuti: ${winConditionText}`,
-    "2x25": `due tempi da 25 minuti ciascuno: ${winConditionText}`,
-    "1x50": `un tempo unico da 50 minuti: ${winConditionText}`,
-    "1su1": "vince la squadra che si aggiudica il primo set",
-    "2su3": "vince la squadra che si aggiudica per prima 2 set"
+    "1x30": `un tempo unico da 30 minuti (${winConditionText})`,
+    "1x60": `un tempo unico da 60 minuti (${winConditionText})`,
+    "2x25": `due tempi da 25 minuti ciascuno (${winConditionText})`,
+    "1x50": `un tempo unico da 50 minuti (${winConditionText})`,
+    "1su1": "set singolo (vince chi si aggiudica il set)",
+    "2su3": "due set su tre (vince chi si aggiudica per primo 2 set)"
   };
   
-  const matchFormatGironiText = matchFormatMap[matchFormatGironi] || "";
-  const matchFormatFinalsText = matchFormatMap[matchFormatFinals] || "";
-  
-  let ruleContent = "";
+  const matchFormatGironiText = matchFormatMap[matchFormatGironi] || "da comunicare";
+  const matchFormatFinalsText = matchFormatMap[matchFormatFinals] || "da comunicare";
   
   // =====================================================
-  // PARTITE GARANTITE
+  // COSTRUZIONE TESTI
   // =====================================================
+  
+  // Partite garantite
+  let guaranteedText = "";
   if (guaranteedMatch > 0) {
-    ruleContent += `
-      <p>
-        L'organizzazione garantisce alle squadre iscritte un minimo di <strong>${guaranteedMatch} partite</strong>.
-      </p>
-    `;
+    guaranteedText = `L'organizzazione garantisce a ogni squadra iscritta un minimo di <strong>${guaranteedMatch} partite</strong>, indipendentemente dai risultati ottenuti.`;
+  } else {
+    guaranteedText = `Il numero di partite dipenderà dal formato del torneo e dai risultati ottenuti.`;
   }
   
-  // =====================================================
-  // FORMATO PARTITE - CON FINALI
-  // =====================================================
+  // Formato gironi
+  let gironiFormatText = "";
   if (hasFinals) {
-    // Stesso formato per gironi e finali
-    if (matchFormatGironi === matchFormatFinals) {
-      ruleContent += `
-        <p>
-          Tutte le partite del torneo, sia durante la fase a gironi che durante le fasi finali, 
-          si disputeranno con la seguente formula: <strong>${matchFormatGironiText}</strong>.
-        </p>
-      `;
-    } 
-    // Formati diversi
-    else {
-      if (matchFormatGironiText) {
-        ruleContent += `
-          <p>
-            Le partite della <strong>fase a gironi</strong> si disputeranno con la seguente formula: 
-            <strong>${matchFormatGironiText}</strong>.
-          </p>
-        `;
-      }
-      if (matchFormatFinalsText && matchFormatFinals !== "na") {
-        ruleContent += `
-          <p>
-            Le partite delle <strong>fasi finali</strong> si disputeranno con la seguente formula: 
-            <strong>${matchFormatFinalsText}</strong>.
-          </p>
-        `;
-      }
-    }
+    gironiFormatText = `Le partite della fase a gironi si disputeranno con la seguente formula: <strong>${matchFormatGironiText}</strong>.`;
+  } else {
+    gironiFormatText = `Tutte le partite del torneo si disputeranno con la seguente formula: <strong>${matchFormatGironiText}</strong>.`;
   }
-  // =====================================================
-  // FORMATO PARTITE - SENZA FINALI
-  // =====================================================
-  else {
-    if (matchFormatGironiText) {
-      ruleContent += `
-        <p>
-          Tutte le partite del torneo si disputeranno con la seguente formula: 
-          <strong>${matchFormatGironiText}</strong>.
-        </p>
-      `;
+  
+  // Formato finali
+  let finalsFormatText = "";
+  if (hasFinals) {
+    if (matchFormatGironi === matchFormatFinals) {
+      finalsFormatText = `Le partite delle fasi finali si disputeranno con la <strong>stessa formula</strong> della fase a gironi.`;
+    } else if (matchFormatFinals !== "na" && matchFormatFinalsText) {
+      finalsFormatText = `Le partite delle fasi finali si disputeranno con la seguente formula: <strong>${matchFormatFinalsText}</strong>.`;
+    } else {
+      finalsFormatText = `Il formato delle partite delle fasi finali sarà comunicato al termine della fase a gironi.`;
     }
+  } else {
+    finalsFormatText = `Non essendo prevista una fase finale, tutte le partite seguiranno il formato sopra indicato.`;
   }
   
   // =====================================================
-  // FALLBACK
+  // OUTPUT FINALE
   // =====================================================
-  if (!ruleContent) {
-    ruleContent = `
-      <p>
-        Il formato delle partite sarà comunicato prima dell'inizio del torneo.
-      </p>
-    `;
-  }
   
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
         <p><strong>Formato delle partite</strong></p>
-        ${ruleContent}
+        <ul>
+          <li><strong>Partite garantite:</strong> ${guaranteedText}</li>
+          <li><strong>Formato gironi:</strong> ${gironiFormatText}</li>
+          <li><strong>Formato finali:</strong> ${finalsFormatText}</li>
+        </ul>
       </div>
     </div>
   `;
@@ -1762,7 +1403,8 @@ function buildMatchFormatRule(tournament, ruleNumber) {
 
 
 
-// // ===============================
+
+// ===============================
 // 9h. BUILD STANDINGS RULE (REGOLA 7)
 // ===============================
 function buildStandingsRule(tournament, ruleNumber) {
@@ -1773,96 +1415,81 @@ function buildStandingsRule(tournament, ruleNumber) {
   const pointSystemGironi = String(tournament.point_system_gironi || "3-1-0").toLowerCase();
   const tieStandingGironi = String(tournament.tie_standing_gironi_criteria || "").toLowerCase();
   
-  // Determina terminologia in base allo sport
+  // =====================================================
+  // MAPPING BASE
+  // =====================================================
+  
+  // Terminologia in base allo sport
   const isGameBasedSport = sport.includes("padel") || sport.includes("volley") || sport.includes("beach");
   const goalTerminology = isGameBasedSport ? "game vinti" : "gol fatti";
   const goalDiffTerminology = isGameBasedSport ? "differenza game" : "differenza reti";
   
-  // Mapping sistema punti
+  // Sistema punti
   const pointSystemMap = {
     "3-1-0": "3 punti per la vittoria, 1 punto per il pareggio, 0 punti per la sconfitta",
     "2-1-0": "2 punti per la vittoria, 1 punto per il pareggio, 0 punti per la sconfitta"
   };
   
-  // Mapping criteri parità in classifica
+  // Criteri parità finale
   const tieStandingMap = {
     "moneta": "tramite lancio della moneta",
     "spareggio": "tramite una partita di spareggio"
   };
   
-  const pointSystemText = pointSystemMap[pointSystemGironi] || "";
+  const pointSystemText = pointSystemMap[pointSystemGironi] || "da comunicare";
   const tieStandingText = tieStandingMap[tieStandingGironi] || "";
   
-  let ruleContent = "";
+  // =====================================================
+  // COSTRUZIONE TESTI
+  // =====================================================
   
-  // =====================================================
-  // SISTEMA PUNTI
-  // =====================================================
-  if (pointSystemText) {
-    if (hasFinals) {
-      ruleContent += `
-        <p>
-          Il sistema di punteggio per la classifica della fase a gironi prevede: 
-          <strong>${pointSystemText}</strong>.
-        </p>
-      `;
-    } else {
-      ruleContent += `
-        <p>
-          Il sistema di punteggio per la classifica prevede: 
-          <strong>${pointSystemText}</strong>.
-        </p>
-      `;
-    }
-  }
-  
-  // =====================================================
-  // CRITERI CLASSIFICA (parità punti in classifica)
-  // =====================================================
+  // Sistema punti
+  let pointsText = "";
   if (hasFinals) {
-    ruleContent += `
-      <p>
-        <strong>Classifica gironi:</strong> in caso di parità di punti tra due o più squadre 
-        dello stesso girone, l'ordine in classifica sarà determinato dai seguenti criteri, in ordine di importanza:
-        <strong>scontri diretti</strong>, <strong>${goalDiffTerminology}</strong>, <strong>${goalTerminology}</strong>.
-      </p>
-
-      <p>
-        <strong>Confronto tra squadre di gironi diversi:</strong> qualora fosse necessario confrontare squadre
-        appartenenti a gironi diversi (ad esempio per determinare le migliori seconde), in caso di parità di punti,
-        verranno considerati i seguenti criteri, in ordine di importanza:
-        <strong>${goalDiffTerminology}</strong>, <strong>${goalTerminology}</strong>.
-      </p>
-    `;
+    pointsText = `Il sistema di punteggio per la classifica della fase a gironi prevede: <strong>${pointSystemText}</strong>.`;
   } else {
-    ruleContent += `
-      <p>
-        In caso di parità di punti tra due o più squadre, l'ordine in classifica sarà determinato 
-        dai seguenti criteri, in ordine di importanza:
-        <strong>scontri diretti</strong>, <strong>${goalDiffTerminology}</strong>, <strong>${goalTerminology}</strong>.
-      </p>
-    `;
+    pointsText = `Il sistema di punteggio per la classifica prevede: <strong>${pointSystemText}</strong>.`;
   }
   
-  if (tieStandingText) {
-    ruleContent += `
-      <p>
-        Se, dopo l'applicazione di tutti i criteri, dovesse persistere una situazione di parità, 
-        questa verrà risolta <strong>${tieStandingText}</strong>.
-      </p>
-    `;
+  // Criteri parità stesso girone
+  const sameGroupText = `In caso di parità di punti tra due o più squadre dello stesso girone, l'ordine sarà determinato dai seguenti criteri (in ordine di importanza): <strong>scontri diretti</strong>, <strong>${goalDiffTerminology}</strong>, <strong>${goalTerminology}</strong>.`;
+  
+  // Criteri parità gironi diversi (solo se ci sono finali)
+  let crossGroupText = "";
+  if (hasFinals) {
+    crossGroupText = `Per confrontare squadre di gironi diversi (es. migliori seconde), in caso di parità di punti si useranno: <strong>${goalDiffTerminology}</strong>, <strong>${goalTerminology}</strong>.`;
+  } else {
+    crossGroupText = `Essendo un girone unico, non sarà necessario confrontare squadre di gironi diversi.`;
   }
+  
+  // Parità persistente
+  let persistentTieText = "";
+  if (tieStandingText) {
+    persistentTieText = `Se, dopo l'applicazione di tutti i criteri, dovesse persistere una situazione di parità, questa verrà risolta <strong>${tieStandingText}</strong>.`;
+  } else {
+    persistentTieText = `In caso di parità persistente dopo l'applicazione di tutti i criteri, la modalità di risoluzione sarà comunicata dall'organizzazione.`;
+  }
+  
+  // =====================================================
+  // OUTPUT FINALE
+  // =====================================================
   
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
         <p><strong>Classifica</strong></p>
-        ${ruleContent}
+        <ul>
+          <li><strong>Sistema punti:</strong> ${pointsText}</li>
+          <li><strong>Parità stesso girone:</strong> ${sameGroupText}</li>
+          <li><strong>Parità gironi diversi:</strong> ${crossGroupText}</li>
+          <li><strong>Parità persistente:</strong> ${persistentTieText}</li>
+        </ul>
       </div>
     </div>
   `;
 }
+
 
 
 // ===============================
@@ -1875,95 +1502,74 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   const tieMatchGironi = String(tournament.tie_match_gironi_criteria || "").toLowerCase();
   const tieMatchFinals = String(tournament.tie_match_finals_criteria || "").toLowerCase();
   
-  // Mapping criteri pareggio in partita (gironi)
-  const tieMatchGironiMap = {
+  // =====================================================
+  // MAPPING BASE
+  // =====================================================
+  
+  const tieMatchMap = {
     "tie_accettato": "il pareggio è un risultato valido e verrà assegnato 1 punto a ciascuna squadra",
     "moneta": "in caso di parità al termine del tempo regolamentare, il vincitore sarà deciso tramite lancio della moneta",
-    "rigori": "in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato dopo i calci di rigore",
-    "tiebreak": "in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato con un tiebreak a 7 punti finale",
-    "spareggio": "in caso di parità al termine del tempo regolamentare, si procederà con una partita supplementare di spareggio"
+    "rigori": "in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato ai calci di rigore",
+    "tiebreak": "in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato con un tiebreak a 7 punti",
+    "spareggio": "in caso di parità al termine del tempo regolamentare, si procederà con un tempo supplementare di spareggio"
   };
   
-  // Mapping criteri pareggio in partita (finali)
-  const tieMatchFinalsMap = {
-    "moneta": "in caso di parità al termine del tempo regolamentare, il vincitore sarà deciso tramite lancio della moneta",
-    "rigori": "in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato dopo i calci di rigore",
-    "tiebreak": "in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato con un tiebreak a 7 punti finale",
-    "spareggio": "in caso di parità al termine del tempo regolamentare, si procederà con una partita supplementare di spareggio"
-  };
-  
-  const tieMatchGironiText = tieMatchGironiMap[tieMatchGironi] || "";
-  const tieMatchFinalsText = tieMatchFinalsMap[tieMatchFinals] || "";
-  
-  let ruleContent = "";
+  const tieMatchGironiText = tieMatchMap[tieMatchGironi] || "da comunicare";
+  const tieMatchFinalsText = tieMatchMap[tieMatchFinals] || "da comunicare";
   
   // =====================================================
-  // CRITERI PAREGGIO IN PARTITA - CON FINALI
+  // COSTRUZIONE TESTI
   // =====================================================
+  
+  // Pareggio in fase gironi
+  let gironiTieText = "";
   if (hasFinals) {
-    // Stesso criterio per gironi e finali
-    if (tieMatchGironi === tieMatchFinals) {
-      if (tieMatchGironiText) {
-        ruleContent += `
-          <p>
-            Per tutte le partite del torneo, sia durante la fase a gironi che durante le fasi finali: 
-            ${tieMatchGironiText}.
-          </p>
-        `;
-      }
-    }
-    // Criteri diversi
-    else {
-      if (tieMatchGironiText) {
-        ruleContent += `
-          <p>
-            <strong>Fase a gironi:</strong> ${tieMatchGironiText}.
-          </p>
-        `;
-      }
-      if (tieMatchFinalsText) {
-        ruleContent += `
-          <p>
-            <strong>Fasi finali:</strong> ${tieMatchFinalsText}.
-          </p>
-        `;
-      }
-    }
+    gironiTieText = `Durante la fase a gironi: ${tieMatchGironiText}.`;
+  } else {
+    gironiTieText = `Per tutte le partite del torneo: ${tieMatchGironiText}.`;
   }
-  // =====================================================
-  // CRITERI PAREGGIO IN PARTITA - SENZA FINALI
-  // =====================================================
-  else {
-    if (tieMatchGironiText) {
-      ruleContent += `
-        <p>
-          Per tutte le partite del torneo: ${tieMatchGironiText}.
-        </p>
-      `;
+  
+  // Pareggio in fase finale
+  let finalsTieText = "";
+  if (hasFinals) {
+    if (tieMatchGironi === tieMatchFinals) {
+      finalsTieText = `Durante le fasi finali si applicherà la <strong>stessa regola</strong> della fase a gironi.`;
+    } else {
+      finalsTieText = `Durante le fasi finali: ${tieMatchFinalsText}.`;
     }
+  } else {
+    finalsTieText = `Non essendo prevista una fase finale, la regola sopra indicata si applica a tutte le partite.`;
+  }
+  
+  // Nota importante
+  let noteText = "";
+  if (tieMatchGironi === "tie_accettato" && hasFinals && tieMatchFinals !== "tie_accettato") {
+    noteText = `<strong>Nota:</strong> mentre nella fase a gironi il pareggio è ammesso, nelle fasi finali sarà sempre necessario determinare un vincitore.`;
+  } else if (tieMatchGironi !== "tie_accettato") {
+    noteText = `<strong>Nota:</strong> ogni partita dovrà avere un vincitore; non sono ammessi pareggi.`;
+  } else {
+    noteText = `<strong>Nota:</strong> il pareggio è ammesso e contribuisce alla classifica con 1 punto per squadra.`;
   }
   
   // =====================================================
-  // FALLBACK
+  // OUTPUT FINALE
   // =====================================================
-  if (!ruleContent) {
-    ruleContent = `
-      <p>
-        I criteri per la gestione dei pareggi saranno comunicati prima dell'inizio del torneo.
-      </p>
-    `;
-  }
   
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
-        <p><strong>Gestione dei pareggi</strong></p>
-        ${ruleContent}
+        <p><strong>Gestione dei pareggi in partita</strong></p>
+        <ul>
+          <li><strong>Fase gironi:</strong> ${gironiTieText}</li>
+          <li><strong>Fase finale:</strong> ${finalsTieText}</li>
+          <li>${noteText}</li>
+        </ul>
       </div>
     </div>
   `;
 }
+
 
 
 
@@ -2061,126 +1667,164 @@ function buildFacilitiesRule(tournament, ruleNumber) {
   const upsell = String(tournament.upsell || "none").toLowerCase();
   const sport = String(tournament.sport || "").toLowerCase();
   
-  // Determina se è uno sport con racchette
+  // =====================================================
+  // MAPPING BASE
+  // =====================================================
+  
+  // Terminologia in base allo sport
   const isRacketSport = sport.includes("padel") || sport.includes("tennis");
+  const ballTerminology = isRacketSport ? "palline" : "palloni";
   
-  // Determina terminologia palla
-  const isGameBasedSport = sport.includes("padel") || sport.includes("volley") || sport.includes("beach") || sport.includes("tennis");
-  const ballTerminology = isRacketSport ? "un numero di palline sufficienti" : "un numero di palloni sufficienti";
+  // Food mapping
+  const foodMap = {
+    "all": "L'organizzazione offrirà un <strong>pasto completo</strong> a tutti i partecipanti.",
+    "partial": "L'organizzazione offrirà <strong>snack e bevande</strong> a tutti i partecipanti.",
+    "none": null
+  };
   
-  let ruleContent = "";
+  // Upsell mapping
+  const upsellMap = {
+    "kit": {
+      kit: "Sarà possibile acquistare un <strong>kit sportivo \"Tornei ICE\"</strong> (magliette o altro materiale tecnico) a <strong>prezzo di costo</strong>.",
+      photo: null
+    },
+    "photo": {
+      kit: null,
+      photo: "Saranno presenti <strong>fotografi professionali</strong> per foto e video delle partite, disponibili <strong>gratuitamente</strong> per chi condividerà i contenuti sui social taggando Tornei ICE."
+    },
+    "kit_photo": {
+      kit: "Sarà possibile acquistare un <strong>kit sportivo \"Tornei ICE\"</strong> a <strong>prezzo di costo</strong>.",
+      photo: "Saranno presenti <strong>fotografi professionali</strong> per foto e video delle partite, disponibili <strong>gratuitamente</strong> per chi condividerà i contenuti sui social taggando Tornei ICE."
+    },
+    "none": {
+      kit: null,
+      photo: null
+    }
+  };
   
   // =====================================================
-  // FOOD
+  // COSTRUZIONE TESTI
   // =====================================================
-  if (food === "all") {
-    ruleContent += `
-      <p>
-        Durante il torneo, l'organizzazione offrirà a tutti i partecipanti un <strong>pasto completo</strong>.
-      </p>
-    `;
-  } else if (food === "partial") {
-    ruleContent += `
-      <p>
-        Durante il torneo, l'organizzazione offrirà a tutti i partecipanti <strong>snack e bevande</strong>.
-      </p>
-    `;
-  }
   
-  // =====================================================
-  // PALLA
-  // =====================================================
+  // Food
+  const foodText = foodMap[food] || null;
+  
+  // Palla
   const hasPalla = palla === "true";
-  if (hasPalla) {
-    ruleContent += `
-      <p>
-        L'organizzazione fornirà <strong>${ballTerminology}</strong> per il corretto svolgimento delle partite del torneo.
-      </p>
-    `;
-  }
+  const pallaText = hasPalla 
+    ? `L'organizzazione fornirà i <strong>${ballTerminology}</strong> necessari per tutte le partite del torneo.`
+    : null;
   
-  // =====================================================
-  // RACKET (solo per sport con racchette)
-  // =====================================================
+  // Racket
+  let racketText = null;
   if (isRacketSport && racket !== "na" && racket !== "0") {
     const racketNumber = Number(racket) || 0;
-    if (racketNumber > 0) {
-      if (racketNumber === 1) {
-        ruleContent += `
-          <p>
-            L'organizzazione metterà a disposizione <strong>1 racchetta</strong> per i partecipanti che ne avessero bisogno.
-          </p>
-        `;
-      } else {
-        ruleContent += `
-          <p>
-            L'organizzazione metterà a disposizione <strong>${racketNumber} racchette</strong> per i partecipanti che ne avessero bisogno.
-          </p>
-        `;
-      }
+    if (racketNumber === 1) {
+      racketText = `L'organizzazione metterà a disposizione <strong>1 racchetta</strong> per i partecipanti che ne avessero bisogno.`;
+    } else if (racketNumber > 1) {
+      racketText = `L'organizzazione metterà a disposizione <strong>${racketNumber} racchette</strong> per i partecipanti che ne avessero bisogno.`;
     }
   }
   
+  // Upsell
+  const upsellData = upsellMap[upsell] || upsellMap["none"];
+  const kitText = upsellData.kit;
+  const photoText = upsellData.photo;
+  
   // =====================================================
-  // UPSELL
+  // COSTRUZIONE LISTA
   // =====================================================
-  if (upsell === "kit") {
-    ruleContent += `
-      <p>
-        Sarà possibile acquistare un <strong>kit sportivo "Tornei ICE"</strong> (magliette o altro materiale tecnico) 
-        a <strong>prezzo di costo</strong>. I dettagli per l'acquisto verranno comunicati agli iscritti.
-      </p>
-    `;
-  } else if (upsell === "photo") {
-    ruleContent += `
-      <p>
-        Durante il torneo saranno presenti <strong>fotografi professionali</strong> che realizzeranno foto e video delle partite. 
-        Il materiale sarà disponibile <strong>gratuitamente</strong> per tutti i partecipanti che condivideranno 
-        i contenuti sui propri canali social taggando Tornei ICE.
-      </p>
-    `;
-  } else if (upsell === "kit_photo") {
-    ruleContent += `
-      <p>
-        Durante il torneo, sarà possibile acquistare un <strong>kit sportivo "Tornei ICE"</strong> 
-        a <strong>prezzo di costo</strong>. I dettagli per l'acquisto verranno comunicati agli iscritti.
-      </p>
-      <p>
-        Durante il torneo saranno presenti <strong>fotografi professionali</strong> che realizzeranno foto e video delle partite. 
-        Il materiale sarà disponibile <strong>gratuitamente</strong> per tutti i partecipanti che condivideranno 
-        i contenuti sui propri canali social taggando Tornei ICE.
-      </p>
-    `;
+  
+  const items = [];
+  
+  if (foodText) {
+    items.push(`<li><strong>Ristoro:</strong> ${foodText}</li>`);
+  }
+  
+  if (pallaText) {
+    items.push(`<li><strong>Attrezzatura:</strong> ${pallaText}</li>`);
+  }
+  
+  if (racketText) {
+    items.push(`<li><strong>Racchette:</strong> ${racketText}</li>`);
+  }
+  
+  if (kitText) {
+    items.push(`<li><strong>Kit sportivo:</strong> ${kitText}</li>`);
+  }
+  
+  if (photoText) {
+    items.push(`<li><strong>Foto e video:</strong> ${photoText}</li>`);
   }
   
   // =====================================================
   // SE NON C'È NESSUN SERVIZIO, NON MOSTRARE LA REGOLA
   // =====================================================
-  if (!ruleContent) {
+  
+  if (items.length === 0) {
     return null;
   }
+  
+  // =====================================================
+  // OUTPUT FINALE
+  // =====================================================
   
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
-        <p><strong>Servizi Aggiuntivi</strong></p>
-        ${ruleContent}
+        <p><strong>Servizi aggiuntivi</strong></p>
+        <ul>
+          ${items.join('\n          ')}
+        </ul>
       </div>
     </div>
   `;
 }
 
 
-
-
-
-
-
-
-
-
-
+// ===============================
+// 9m. BUILD COMMUNICATIONS RULE
+// ===============================
+function buildCommunicationsRule(ruleNumber) {
+  
+  // =====================================================
+  // TESTI BASE
+  // =====================================================
+  
+  const introText = `Tutte le comunicazioni ufficiali relative al torneo verranno inviate all'indirizzo email indicato in fase di iscrizione.`;
+  
+  const emailPaymentText = `<strong>Email per il pagamento</strong> della quota di iscrizione, inviata dopo il completamento del form di iscrizione.`;
+  
+  const emailTeamText = `<strong>Email per i componenti della squadra</strong> e per l'invio dei certificati medici (o moduli di scarico responsabilità), inviata circa 3 settimane prima dell'inizio del torneo.`;
+  
+  const emailRulesText = `<strong>Email riepilogativa delle regole</strong> del torneo, inviata nei giorni precedenti all'inizio delle partite.`;
+  
+  const whatsappText = `A iscrizioni chiuse, i partecipanti verranno inseriti in un <strong>gruppo WhatsApp ufficiale</strong> del torneo, gestito dall'organizzazione, per comunicazioni operative e trasmissione dei risultati.`;
+  
+  // =====================================================
+  // OUTPUT FINALE
+  // =====================================================
+  
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Comunicazioni ufficiali</strong></p>
+        <ul>
+          <li><strong>Email:</strong> ${introText}
+            <ul>
+              <li>${emailPaymentText}</li>
+              <li>${emailTeamText}</li>
+              <li>${emailRulesText}</li>
+            </ul>
+          </li>
+          <li><strong>Gruppo WhatsApp:</strong> ${whatsappText}</li>
+        </ul>
+      </div>
+    </div>
+  `;
+}
 
 
 

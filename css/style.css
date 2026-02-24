@@ -1918,7 +1918,45 @@ body {
 
 
 
+/* ===============================
+   LISTE NELLE REGOLE SPECIFICHE
+   =============================== */
 
+/* Lista principale */
+.specific-regulation-content ul {
+  margin: 12px 0;
+  padding-left: 20px;
+}
+
+/* Spazio tra i punti della lista principale */
+.specific-regulation-content ul > li {
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+/* Rimuove margine dall'ultimo elemento */
+.specific-regulation-content ul > li:last-child {
+  margin-bottom: 0;
+}
+
+/* Lista nidificata (nested) */
+.specific-regulation-content ul ul {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding-left: 18px;
+}
+
+/* Stile punti lista nidificata */
+.specific-regulation-content ul ul li {
+  list-style-type: circle;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+/* Rimuove margine dall'ultimo elemento nidificato */
+.specific-regulation-content ul ul li:last-child {
+  margin-bottom: 0;
+}
 
 
 
