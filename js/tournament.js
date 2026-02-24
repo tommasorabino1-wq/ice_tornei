@@ -440,7 +440,7 @@ function renderSpecificCourtRule(tournament) {
   rules.push(buildParticipantsRequirementsRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 3: Premi e riconoscimenti (award, mvp_award, upsell)
+  // REGOLA 3: Premi e riconoscimenti (award, mvp_award)
   rules.push(buildAwardsRule(tournament, ruleNumber));
   ruleNumber++;
   
@@ -452,7 +452,21 @@ function renderSpecificCourtRule(tournament) {
   rules.push(buildCourtDaysHoursRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // TODO: Aggiungere altre regole qui
+  // REGOLA 6: Formato partite (match_format, guaranteed_match)
+  rules.push(buildMatchFormatRule(tournament, ruleNumber));
+  ruleNumber++;
+  
+  // REGOLA 7: Classifica (point_system, tie_standing)
+  rules.push(buildStandingsRule(tournament, ruleNumber));
+  ruleNumber++;
+  
+  // REGOLA 8: Gestione pareggi in partita (tie_match_gironi, tie_match_finals)
+  rules.push(buildMatchTiebreakersRule(tournament, ruleNumber));
+  ruleNumber++;
+
+  // REGOLA 9: Arbitro (referee)
+  rules.push(buildRefereeRule(tournament, ruleNumber));
+  ruleNumber++;
   
   // REGOLA FINALE: Riferimento al regolamento generale
   rules.push(buildGeneralReferenceRule());
@@ -463,7 +477,6 @@ function renderSpecificCourtRule(tournament) {
     </div>
   `;
 }
-
 
 
 
@@ -1342,24 +1355,10 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   const days = String(tournament.available_days || "").toLowerCase();
   const hours = String(tournament.available_hours || "").toLowerCase();
   const location = String(tournament.location || "");
-  const date = String(tournament.date || "");
   const formatType = String(tournament.format_type || "").toLowerCase();
   const hasFinals = formatType.includes("finals");
   
-  // Determina cosa è fisso e per quale fase
-  const courtFixedAll = fixed.includes("court_all") || fixed === "court_days_hours_all" || fixed === "court_days_all" || fixed === "court_hours_all";
-  const courtFixedFinals = fixed.includes("court_finals") || fixed === "court_days_hours_finals" || fixed === "court_days_finals" || fixed === "court_hours_finals";
-  const courtFixed = courtFixedAll || courtFixedFinals;
-  
-  const daysFixedAll = fixed.includes("days_all") || fixed === "court_days_hours_all" || fixed === "court_days_all" || fixed === "days_hours_all";
-  const daysFixedFinals = fixed.includes("days_finals") || fixed === "court_days_hours_finals" || fixed === "court_days_finals" || fixed === "days_hours_finals";
-  const daysFixed = daysFixedAll || daysFixedFinals;
-  
-  const hoursFixedAll = fixed.includes("hours_all") || fixed === "court_days_hours_all" || fixed === "court_hours_all" || fixed === "days_hours_all";
-  const hoursFixedFinals = fixed.includes("hours_finals") || fixed === "court_days_hours_finals" || fixed === "court_hours_finals" || fixed === "days_hours_finals";
-  const hoursFixed = hoursFixedAll || hoursFixedFinals;
-  
-  // Mapping giorni per testo leggibile
+  // Mapping giorni
   const daysMap = {
     "lun-dom": "qualsiasi giorno della settimana",
     "lun-ven": "dal lunedì al venerdì",
@@ -1374,7 +1373,7 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     "dom": "la domenica"
   };
   
-  // Mapping orari per testo leggibile
+  // Mapping orari
   const hoursMap = {
     "10-22": "tra le 10:00 e le 22:00",
     "10-19": "tra le 10:00 e le 19:00 (fascia diurna)",
@@ -1383,370 +1382,222 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   
   const daysText = daysMap[days] || days || "";
   const hoursText = hoursMap[hours] || hours || "";
-  
-  // Intro comune: location e date
-  const locationDateText = `
-    <p>
-      Tutte le partite del torneo si svolgeranno a <strong>${location}</strong>, 
-      a partire dal <strong>${date}</strong>.
-    </p>
-  `;
-  
-  let ruleContent = locationDateText;
+
+  let ruleContent = "";
   
   // =====================================================
-  // CASO: TUTTO VARIABILE (false)
+  // CASO 1: TUTTO VARIABILE (false)
   // =====================================================
-  if (fixed === "false" || fixed === "") {
-    ruleContent += `
+  if (fixed === "false") {
+    ruleContent = `
       <p>
-        <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
-        dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre in fase di iscrizione.
+        Per tutta la durata del torneo, campi, giorni e orari delle partite verranno decisi dalle 
+        squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
       </p>
       <p>
-        Le partite potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>. 
-        In fase di iscrizione sarà possibile indicare la <strong>zona preferita</strong>, 
-        i <strong>giorni</strong> e le <strong>fasce orarie</strong> di disponibilità.
+        In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
+        in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
+        potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
       </p>
       <p>
-        Le preferenze indicate verranno considerate dall'organizzazione per la prenotazione dei campi 
-        delle <strong>partite in casa</strong> di ciascuna squadra.
+        L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
+        un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
       </p>
     `;
   }
   
   // =====================================================
-  // CASO: TUTTO FISSO PER TUTTO IL TORNEO (court_days_hours_all)
+  // CASO 2: TUTTO FISSO PER TUTTO IL TORNEO (court_days_hours_all)
   // =====================================================
   else if (fixed === "court_days_hours_all") {
-    ruleContent += `
+    ruleContent = `
       <p>
-        <strong>Campi, giorni e orari</strong> di tutte le partite del torneo saranno 
-        <strong>stabiliti dall'organizzazione</strong> e comunicati prima dell'inizio del torneo.
+        Per tutta la durata del torneo, campi, giorni e orari delle partite saranno 
+        stabiliti dall'organizzazione e comunicati prima dell'inizio del torneo.
+      </p>
+      <p>
+        Le partite si svolgeranno a <strong>${location}</strong>, <strong>${daysText}</strong>, 
+        <strong>${hoursText}</strong>.
+      </p>
+      <p>
+        Le squadre non dovranno quindi preoccuparsi della prenotazione dei campi: 
+        l'organizzazione provvederà a comunicare in anticipo il calendario completo delle partite.
+      </p>
+    `;
+  }
+  
+  // =====================================================
+  // CASO 3: TUTTO FISSO SOLO PER LE FINALI (court_days_hours_finals)
+  // =====================================================
+  else if (fixed === "court_days_hours_finals") {
+    if (hasFinals) {
+      ruleContent = `
+        <p>
+          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite verranno decisi dalle 
+          squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
+        </p>
+        <p>
+          In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
+          in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
+          potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+        </p>
+        <p>
+          L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
+          un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
+        </p>
+        <p>
+          <strong>Fase finale:</strong> campi, giorni e orari delle partite ad eliminazione diretta saranno 
+          stabiliti dall'organizzazione e comunicati al termine della fase a gironi.
+        </p>
+      `;
+    } else {
+      // Se non ci sono finali, trattiamo come "false"
+      ruleContent = `
+        <p>
+          Per tutta la durata del torneo, campi, giorni e orari delle partite verranno decisi dalle 
+          squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
+        </p>
+        <p>
+          In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
+          in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
+          potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+        </p>
+        <p>
+          L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
+          un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
+        </p>
+      `;
+    }
+  }
+  
+  // =====================================================
+  // CASO 4: SOLO CAMPI FISSI PER TUTTO IL TORNEO (court_all)
+  // =====================================================
+  else if (fixed === "court_all") {
+    ruleContent = `
+      <p>
+        Per tutta la durata del torneo, i campi in cui si svolgeranno le partite saranno 
+        stabiliti dall'organizzazione e comunicati prima dell'inizio del torneo.
+      </p>
+      <p>
+        Le partite si svolgeranno a <strong>${location}</strong>.
+      </p>
+      <p>
+        Giorni e orari delle partite verranno invece decisi dalle squadre partecipanti. 
+        In fase di iscrizione, le squadre potranno esprimere le proprie preferenze, 
+        considerando che le partite potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+      </p>
+      <p>
+        L'organizzazione, per le partite in cui la squadra giocherà in casa, comunicherà 
+        giorni e orari tenendo conto delle preferenze espresse in fase di iscrizione.
+      </p>
+    `;
+  }
+  
+  // =====================================================
+  // CASO 5: SOLO CAMPI FISSI PER LE FINALI (court_finals)
+  // =====================================================
+  else if (fixed === "court_finals") {
+    if (hasFinals) {
+      ruleContent = `
+        <p>
+          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite verranno decisi dalle 
+          squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
+        </p>
+        <p>
+          In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
+          in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
+          potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+        </p>
+        <p>
+          L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
+          un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
+        </p>
+        <p>
+          <strong>Fase finale:</strong> i campi in cui si svolgeranno le partite ad eliminazione diretta saranno 
+          stabiliti dall'organizzazione e comunicati al termine della fase a gironi. 
+          Giorni e orari verranno concordati con le squadre qualificate.
+        </p>
+      `;
+    } else {
+      ruleContent = `
+        <p>
+          Per tutta la durata del torneo, campi, giorni e orari delle partite verranno decisi dalle 
+          squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
+        </p>
+        <p>
+          In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
+          in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
+          potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+        </p>
+        <p>
+          L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
+          un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
+        </p>
+      `;
+    }
+  }
+  
+  // =====================================================
+  // CASO 6: GIORNI E ORARI FISSI PER TUTTO IL TORNEO (days_hours_all)
+  // =====================================================
+  else if (fixed === "days_hours_all") {
+    ruleContent = `
+      <p>
+        Per tutta la durata del torneo, giorni e orari delle partite saranno 
+        stabiliti dall'organizzazione e comunicati prima dell'inizio del torneo.
       </p>
       <p>
         Le partite si svolgeranno <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
       </p>
-    `;
-  }
-  
-  // =====================================================
-  // CASO: TUTTO FISSO SOLO PER LE FINALI (court_days_hours_finals)
-  // =====================================================
-  else if (fixed === "court_days_hours_finals") {
-    if (hasFinals) {
-      ruleContent += `
-        <p>
-          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
-          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
-          espresse dalle squadre in fase di iscrizione.
-        </p>
-        <p>
-          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>. 
-          In fase di iscrizione sarà possibile indicare la <strong>zona preferita</strong>, 
-          i <strong>giorni</strong> e le <strong>fasce orarie</strong> di disponibilità.
-        </p>
-        <p>
-          <strong>Fase finale:</strong> campi, giorni e orari delle partite ad eliminazione diretta saranno 
-          <strong>stabiliti dall'organizzazione</strong> e comunicati al termine della fase a gironi.
-        </p>
-      `;
-    } else {
-      ruleContent += `
-        <p>
-          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
-          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
-        </p>
-      `;
-    }
-  }
-  
-  // =====================================================
-  // CASO: SOLO CAMPI FISSI PER TUTTO IL TORNEO (court_all)
-  // =====================================================
-  else if (fixed === "court_all") {
-    ruleContent += `
       <p>
-        I <strong>campi</strong> dove si svolgeranno tutte le partite del torneo saranno 
-        <strong>stabiliti dall'organizzazione</strong> e comunicati prima dell'inizio del torneo.
+        I campi verranno invece prenotati di volta in volta dall'organizzazione. 
+        In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
+        sulla zona in cui desiderano giocare, considerando che le partite 
+        si svolgeranno a <strong>${location}</strong>.
       </p>
       <p>
-        <strong>Giorni e orari</strong> delle partite saranno invece definiti di volta in volta, 
-        tenendo conto delle preferenze espresse dalle squadre in fase di iscrizione.
-      </p>
-      <p>
-        Le partite potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>. 
-        In fase di iscrizione sarà possibile indicare i <strong>giorni</strong> e le <strong>fasce orarie</strong> preferiti.
+        L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
+        un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
       </p>
     `;
   }
   
   // =====================================================
-  // CASO: SOLO CAMPI FISSI PER LE FINALI (court_finals)
-  // =====================================================
-  else if (fixed === "court_finals") {
-    if (hasFinals) {
-      ruleContent += `
-        <p>
-          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
-          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
-          espresse dalle squadre in fase di iscrizione.
-        </p>
-        <p>
-          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>. 
-          In fase di iscrizione sarà possibile indicare la <strong>zona preferita</strong>, 
-          i <strong>giorni</strong> e le <strong>fasce orarie</strong> di disponibilità.
-        </p>
-        <p>
-          <strong>Fase finale:</strong> i <strong>campi</strong> delle partite ad eliminazione diretta saranno 
-          <strong>stabiliti dall'organizzazione</strong>. Giorni e orari saranno comunicati al termine della fase a gironi.
-        </p>
-      `;
-    } else {
-      ruleContent += `
-        <p>
-          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
-          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
-        </p>
-      `;
-    }
-  }
-  
-  // =====================================================
-  // CASO: SOLO GIORNI FISSI PER TUTTO IL TORNEO (days_all)
-  // =====================================================
-  else if (fixed === "days_all") {
-    ruleContent += `
-      <p>
-        I <strong>giorni</strong> in cui si svolgeranno tutte le partite del torneo saranno 
-        <strong>stabiliti dall'organizzazione</strong>: le partite si disputeranno <strong>${daysText}</strong>.
-      </p>
-      <p>
-        <strong>Campi e orari</strong> saranno invece prenotati di volta in volta dall'organizzazione, 
-        tenendo conto delle preferenze espresse dalle squadre.
-      </p>
-      <p>
-        In fase di iscrizione sarà possibile indicare la <strong>zona preferita</strong> 
-        e le <strong>fasce orarie</strong> di disponibilità (${hoursText}).
-      </p>
-    `;
-  }
-  
-  // =====================================================
-  // CASO: SOLO GIORNI FISSI PER LE FINALI (days_finals)
-  // =====================================================
-  else if (fixed === "days_finals") {
-    if (hasFinals) {
-      ruleContent += `
-        <p>
-          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
-          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
-          espresse dalle squadre in fase di iscrizione.
-        </p>
-        <p>
-          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-        </p>
-        <p>
-          <strong>Fase finale:</strong> i <strong>giorni</strong> delle partite ad eliminazione diretta saranno 
-          <strong>stabiliti dall'organizzazione</strong>. Campi e orari saranno comunicati al termine della fase a gironi.
-        </p>
-      `;
-    } else {
-      ruleContent += `
-        <p>
-          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
-          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
-        </p>
-      `;
-    }
-  }
-  
-  // =====================================================
-  // CASO: SOLO ORARI FISSI PER TUTTO IL TORNEO (hours_all)
-  // =====================================================
-  else if (fixed === "hours_all") {
-    ruleContent += `
-      <p>
-        Tutte le partite del torneo si svolgeranno nella <strong>fascia oraria</strong> stabilita dall'organizzazione: 
-        <strong>${hoursText}</strong>.
-      </p>
-      <p>
-        <strong>Campi e giorni</strong> saranno invece prenotati di volta in volta dall'organizzazione, 
-        tenendo conto delle preferenze espresse dalle squadre.
-      </p>
-      <p>
-        In fase di iscrizione sarà possibile indicare la <strong>zona preferita</strong> 
-        e i <strong>giorni</strong> di disponibilità (${daysText}).
-      </p>
-    `;
-  }
-  
-  // =====================================================
-  // CASO: SOLO ORARI FISSI PER LE FINALI (hours_finals)
-  // =====================================================
-  else if (fixed === "hours_finals") {
-    if (hasFinals) {
-      ruleContent += `
-        <p>
-          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
-          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
-          espresse dalle squadre in fase di iscrizione.
-        </p>
-        <p>
-          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-        </p>
-        <p>
-          <strong>Fase finale:</strong> gli <strong>orari</strong> delle partite ad eliminazione diretta saranno 
-          <strong>stabiliti dall'organizzazione</strong>. Campi e giorni saranno comunicati al termine della fase a gironi.
-        </p>
-      `;
-    } else {
-      ruleContent += `
-        <p>
-          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
-          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
-        </p>
-      `;
-    }
-  }
-  
-  // =====================================================
-  // CASO: CAMPI E GIORNI FISSI PER TUTTO IL TORNEO (court_days_all)
-  // =====================================================
-  else if (fixed === "court_days_all") {
-    ruleContent += `
-      <p>
-        <strong>Campi e giorni</strong> di tutte le partite del torneo saranno <strong>stabiliti dall'organizzazione</strong>. 
-        Le partite si svolgeranno <strong>${daysText}</strong>, presso strutture comunicate prima dell'inizio del torneo.
-      </p>
-      <p>
-        Gli <strong>orari</strong> delle singole partite potranno essere concordati tra le squadre, 
-        nella fascia oraria disponibile: <strong>${hoursText}</strong>.
-      </p>
-    `;
-  }
-  
-  // =====================================================
-  // CASO: CAMPI E GIORNI FISSI SOLO PER LE FINALI (court_days_finals)
-  // =====================================================
-  else if (fixed === "court_days_finals") {
-    if (hasFinals) {
-      ruleContent += `
-        <p>
-          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
-          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
-          espresse dalle squadre in fase di iscrizione.
-        </p>
-        <p>
-          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-        </p>
-        <p>
-          <strong>Fase finale:</strong> <strong>campi e giorni</strong> delle partite ad eliminazione diretta saranno 
-          <strong>stabiliti dall'organizzazione</strong>. Gli orari saranno comunicati al termine della fase a gironi, 
-          nella fascia oraria disponibile (${hoursText}).
-        </p>
-      `;
-    } else {
-      ruleContent += `
-        <p>
-          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
-          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
-        </p>
-      `;
-    }
-  }
-  
-  // =====================================================
-  // CASO: CAMPI E ORARI FISSI PER TUTTO IL TORNEO (court_hours_all)
-  // =====================================================
-  else if (fixed === "court_hours_all") {
-    ruleContent += `
-      <p>
-        <strong>Campi e orari</strong> di tutte le partite del torneo saranno <strong>stabiliti dall'organizzazione</strong>. 
-        Le partite si svolgeranno <strong>${hoursText}</strong>, presso strutture comunicate prima dell'inizio del torneo.
-      </p>
-      <p>
-        I <strong>giorni</strong> delle singole partite potranno essere concordati tra le squadre, 
-        nel rispetto della disponibilità: <strong>${daysText}</strong>.
-      </p>
-    `;
-  }
-  
-  // =====================================================
-  // CASO: CAMPI E ORARI FISSI SOLO PER LE FINALI (court_hours_finals)
-  // =====================================================
-  else if (fixed === "court_hours_finals") {
-    if (hasFinals) {
-      ruleContent += `
-        <p>
-          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
-          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
-          espresse dalle squadre in fase di iscrizione.
-        </p>
-        <p>
-          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-        </p>
-        <p>
-          <strong>Fase finale:</strong> <strong>campi e orari</strong> delle partite ad eliminazione diretta saranno 
-          <strong>stabiliti dall'organizzazione</strong>. I giorni saranno comunicati al termine della fase a gironi 
-          (${daysText}).
-        </p>
-      `;
-    } else {
-      ruleContent += `
-        <p>
-          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
-          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
-        </p>
-      `;
-    }
-  }
-  
-  // =====================================================
-  // CASO: GIORNI E ORARI FISSI PER TUTTO IL TORNEO (days_hours_all)
-  // =====================================================
-  else if (fixed === "days_hours_all") {
-    ruleContent += `
-      <p>
-        <strong>Giorni e orari</strong> di tutte le partite del torneo saranno <strong>stabiliti dall'organizzazione</strong>: 
-        le partite si svolgeranno <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
-      </p>
-      <p>
-        I <strong>campi</strong> saranno invece prenotati di volta in volta dall'organizzazione, 
-        tenendo conto della zona preferita indicata dalle squadre in fase di iscrizione.
-      </p>
-      <p>
-        Le preferenze sulla zona verranno considerate per la prenotazione dei campi 
-        delle <strong>partite in casa</strong> di ciascuna squadra.
-      </p>
-    `;
-  }
-  
-  // =====================================================
-  // CASO: GIORNI E ORARI FISSI SOLO PER LE FINALI (days_hours_finals)
+  // CASO 7: GIORNI E ORARI FISSI SOLO PER LE FINALI (days_hours_finals)
   // =====================================================
   else if (fixed === "days_hours_finals") {
     if (hasFinals) {
-      ruleContent += `
+      ruleContent = `
         <p>
-          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite saranno 
-          <strong>prenotati di volta in volta</strong> dall'organizzazione, tenendo conto delle preferenze 
-          espresse dalle squadre in fase di iscrizione.
+          <strong>Fase a gironi:</strong> campi, giorni e orari delle partite verranno decisi dalle 
+          squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
         </p>
         <p>
-          Le partite dei gironi potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+          In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
+          in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
+          potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
         </p>
         <p>
-          <strong>Fase finale:</strong> <strong>giorni e orari</strong> delle partite ad eliminazione diretta saranno 
-          <strong>stabiliti dall'organizzazione</strong>. I campi saranno prenotati tenendo conto delle preferenze 
-          espresse dalle squadre qualificate.
+          L'organizzazione, per le partite in cui la squadra giocherà in casa, si occuperà quindi di prenotare
+          un campo disponibile tenendo conto delle preferenze espresse in fase di iscrizione.
+        </p>
+        <p>
+          <strong>Fase finale:</strong> giorni e orari delle partite ad eliminazione diretta saranno 
+          stabiliti dall'organizzazione e comunicati al termine della fase a gironi. 
+          I campi verranno prenotati tenendo conto delle preferenze delle squadre qualificate.
         </p>
       `;
     } else {
-      ruleContent += `
+      ruleContent = `
         <p>
-          <strong>Campi, giorni e orari</strong> delle partite saranno <strong>prenotati di volta in volta</strong> 
-          dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre.
+          Per tutta la durata del torneo, campi, giorni e orari delle partite verranno decisi dalle 
+          squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.
+        </p>
+        <p>
+          In fase di iscrizione, le squadre potranno esprimere le proprie preferenze 
+          in merito a campi, giorni e orari in cui desiderano giocare, considerando che le partite
+          potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
         </p>
       `;
     }
@@ -1756,12 +1607,12 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   // FALLBACK
   // =====================================================
   else {
-    ruleContent += `
+    ruleContent = `
       <p>
         Le modalità di assegnazione di campi, giorni e orari saranno comunicate prima dell'inizio del torneo.
       </p>
       <p>
-        Le partite potranno svolgersi <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
+        Le partite si svolgeranno a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.
       </p>
     `;
   }
@@ -1781,60 +1632,320 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // ===============================
-// OLD SPECIFIC TOURNAMENTS RULES (solo per avere esempi per le nuove).
+// 9g. BUILD MATCH FORMAT RULE (REGOLA 6)
 // ===============================
-
-
-// ===============================
-// 16. BUILD RANKING RULE (REGOLA 4 - AGGIORNATA CON ruleNumber)
-// ===============================
-function buildRankingRule(tournament, ruleNumber) {
-  const teamsPerGroup = Number(tournament.teams_per_group) || 0;
-  const teamsInFinal = Number(tournament.teams_in_final) || 0;
-  const teamsMax = Number(tournament.teams_max) || 0;
-
-  if (teamsPerGroup === 0) {
-    return "";
+function buildMatchFormatRule(tournament, ruleNumber) {
+  const formatType = String(tournament.format_type || "").toLowerCase();
+  const hasFinals = formatType.includes("finals");
+  const sport = String(tournament.sport || "").toLowerCase();
+  
+  const matchFormatGironi = String(tournament.match_format_gironi || "").toLowerCase();
+  const matchFormatFinals = String(tournament.match_format_finals || "NA").toLowerCase();
+  const guaranteedMatch = Number(tournament.guaranteed_match) || 0;
+  
+  // Determina il testo per "vince la squadra..."
+  const isGameBasedSport = sport.includes("padel") || sport.includes("volley") || sport.includes("beach");
+  const winConditionText = isGameBasedSport 
+    ? "al termine, vince la squadra con più game vinti" 
+    : "al termine, vince la squadra in vantaggio";
+  
+  // Mapping formato partita (dinamico in base allo sport)
+  const matchFormatMap = {
+    "1x30": `un tempo unico da 30 minuti: ${winConditionText}`,
+    "1x60": `un tempo unico da 60 minuti: ${winConditionText}`,
+    "2x25": `due tempi da 25 minuti ciascuno: ${winConditionText}`,
+    "1x50": `un tempo unico da 50 minuti: ${winConditionText}`,
+    "1su1": "vince la squadra che si aggiudica il primo set",
+    "2su3": "vince la squadra che si aggiudica per prima 2 set"
+  };
+  
+  const matchFormatGironiText = matchFormatMap[matchFormatGironi] || "";
+  const matchFormatFinalsText = matchFormatMap[matchFormatFinals] || "";
+  
+  let ruleContent = "";
+  
+  // =====================================================
+  // PARTITE GARANTITE
+  // =====================================================
+  if (guaranteedMatch > 0) {
+    ruleContent += `
+      <p>
+        L'organizzazione garantisce alle squadre iscritte un minimo di <strong>${guaranteedMatch} partite</strong>.
+      </p>
+    `;
   }
-
-  const numGroups = Math.ceil(teamsMax / teamsPerGroup);
-
-  const intraGroupText = `
-    <p>
-      <strong>Classifica all'interno dello stesso girone:</strong> in caso di parità di punti tra due o più squadre 
-      dello stesso girone, l'ordine in classifica sarà determinato dai seguenti criteri, in ordine di importanza: 
-      scontri diretti, differenza reti, gol fatti.
-    </p>
-  `;
-
-  const crossGroupText = buildCrossGroupComparisonText(numGroups, teamsInFinal);
-
+  
+  // =====================================================
+  // FORMATO PARTITE - CON FINALI
+  // =====================================================
+  if (hasFinals) {
+    // Stesso formato per gironi e finali
+    if (matchFormatGironi === matchFormatFinals) {
+      ruleContent += `
+        <p>
+          Tutte le partite del torneo, sia durante la fase a gironi che durante le fasi finali, 
+          si disputeranno con la seguente formula: <strong>${matchFormatGironiText}</strong>.
+        </p>
+      `;
+    } 
+    // Formati diversi
+    else {
+      if (matchFormatGironiText) {
+        ruleContent += `
+          <p>
+            Le partite della <strong>fase a gironi</strong> si disputeranno con la seguente formula: 
+            <strong>${matchFormatGironiText}</strong>.
+          </p>
+        `;
+      }
+      if (matchFormatFinalsText && matchFormatFinals !== "na") {
+        ruleContent += `
+          <p>
+            Le partite delle <strong>fasi finali</strong> si disputeranno con la seguente formula: 
+            <strong>${matchFormatFinalsText}</strong>.
+          </p>
+        `;
+      }
+    }
+  }
+  // =====================================================
+  // FORMATO PARTITE - SENZA FINALI
+  // =====================================================
+  else {
+    if (matchFormatGironiText) {
+      ruleContent += `
+        <p>
+          Tutte le partite del torneo si disputeranno con la seguente formula: 
+          <strong>${matchFormatGironiText}</strong>.
+        </p>
+      `;
+    }
+  }
+  
+  // =====================================================
+  // FALLBACK
+  // =====================================================
+  if (!ruleContent) {
+    ruleContent = `
+      <p>
+        Il formato delle partite sarà comunicato prima dell'inizio del torneo.
+      </p>
+    `;
+  }
+  
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
-        <p><strong>Criteri di classifica</strong></p>
-        ${intraGroupText}
-        ${crossGroupText}
+        <p><strong>Formato delle partite</strong></p>
+        ${ruleContent}
+      </div>
+    </div>
+  `;
+}
+
+
+
+
+// // ===============================
+// 9h. BUILD STANDINGS RULE (REGOLA 7)
+// ===============================
+function buildStandingsRule(tournament, ruleNumber) {
+  const sport = String(tournament.sport || "").toLowerCase();
+  const formatType = String(tournament.format_type || "").toLowerCase();
+  const hasFinals = formatType.includes("finals");
+  
+  const pointSystemGironi = String(tournament.point_system_gironi || "3-1-0").toLowerCase();
+  const tieStandingGironi = String(tournament.tie_standing_gironi_criteria || "").toLowerCase();
+  
+  // Determina terminologia in base allo sport
+  const isGameBasedSport = sport.includes("padel") || sport.includes("volley") || sport.includes("beach");
+  const goalTerminology = isGameBasedSport ? "game vinti" : "gol fatti";
+  const goalDiffTerminology = isGameBasedSport ? "differenza game" : "differenza reti";
+  
+  // Mapping sistema punti
+  const pointSystemMap = {
+    "3-1-0": "3 punti per la vittoria, 1 punto per il pareggio, 0 punti per la sconfitta",
+    "2-1-0": "2 punti per la vittoria, 1 punto per il pareggio, 0 punti per la sconfitta"
+  };
+  
+  // Mapping criteri parità in classifica
+  const tieStandingMap = {
+    "moneta": "tramite lancio della moneta",
+    "spareggio": "tramite una partita di spareggio"
+  };
+  
+  const pointSystemText = pointSystemMap[pointSystemGironi] || "";
+  const tieStandingText = tieStandingMap[tieStandingGironi] || "";
+  
+  let ruleContent = "";
+  
+  // =====================================================
+  // SISTEMA PUNTI
+  // =====================================================
+  if (pointSystemText) {
+    if (hasFinals) {
+      ruleContent += `
+        <p>
+          Il sistema di punteggio per la classifica della fase a gironi prevede: 
+          <strong>${pointSystemText}</strong>.
+        </p>
+      `;
+    } else {
+      ruleContent += `
+        <p>
+          Il sistema di punteggio per la classifica prevede: 
+          <strong>${pointSystemText}</strong>.
+        </p>
+      `;
+    }
+  }
+  
+  // =====================================================
+  // CRITERI CLASSIFICA (parità punti in classifica)
+  // =====================================================
+  if (hasFinals) {
+    ruleContent += `
+      <p>
+        <strong>Classifica gironi:</strong> in caso di parità di punti tra due o più squadre 
+        dello stesso girone, l'ordine in classifica sarà determinato dai seguenti criteri, in ordine di importanza:
+        <strong>scontri diretti</strong>, <strong>${goalDiffTerminology}</strong>, <strong>${goalTerminology}</strong>.
+      </p>
+
+      <p>
+        <strong>Confronto tra squadre di gironi diversi:</strong> qualora fosse necessario confrontare squadre
+        appartenenti a gironi diversi (ad esempio per determinare le migliori seconde), in caso di parità di punti,
+        verranno considerati i seguenti criteri, in ordine di importanza:
+        <strong>${goalDiffTerminology}</strong>, <strong>${goalTerminology}</strong>.
+      </p>
+    `;
+  } else {
+    ruleContent += `
+      <p>
+        In caso di parità di punti tra due o più squadre, l'ordine in classifica sarà determinato 
+        dai seguenti criteri, in ordine di importanza:
+        <strong>scontri diretti</strong>, <strong>${goalDiffTerminology}</strong>, <strong>${goalTerminology}</strong>.
+      </p>
+    `;
+  }
+  
+  if (tieStandingText) {
+    ruleContent += `
+      <p>
+        Se, dopo l'applicazione di tutti i criteri, dovesse persistere una situazione di parità, 
+        questa verrà risolta <strong>${tieStandingText}</strong>.
+      </p>
+    `;
+  }
+  
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Classifica</strong></p>
+        ${ruleContent}
+      </div>
+    </div>
+  `;
+}
+
+
+// ===============================
+// 9i. BUILD MATCH TIEBREAKERS RULE (REGOLA 8)
+// ===============================
+function buildMatchTiebreakersRule(tournament, ruleNumber) {
+  const formatType = String(tournament.format_type || "").toLowerCase();
+  const hasFinals = formatType.includes("finals");
+  
+  const tieMatchGironi = String(tournament.tie_match_gironi_criteria || "").toLowerCase();
+  const tieMatchFinals = String(tournament.tie_match_finals_criteria || "").toLowerCase();
+  
+  // Mapping criteri pareggio in partita (gironi)
+  const tieMatchGironiMap = {
+    "tie_accettato": "il pareggio è un risultato valido e verrà assegnato 1 punto a ciascuna squadra",
+    "moneta": "in caso di parità al termine del tempo regolamentare, il vincitore sarà deciso tramite lancio della moneta",
+    "rigori": "in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato dopo i calci di rigore",
+    "tiebreak": "in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato con un tiebreak a 7 punti finale",
+    "spareggio": "in caso di parità al termine del tempo regolamentare, si procederà con una partita supplementare di spareggio"
+  };
+  
+  // Mapping criteri pareggio in partita (finali)
+  const tieMatchFinalsMap = {
+    "moneta": "in caso di parità al termine del tempo regolamentare, il vincitore sarà deciso tramite lancio della moneta",
+    "rigori": "in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato dopo i calci di rigore",
+    "tiebreak": "in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato con un tiebreak a 7 punti finale",
+    "spareggio": "in caso di parità al termine del tempo regolamentare, si procederà con una partita supplementare di spareggio"
+  };
+  
+  const tieMatchGironiText = tieMatchGironiMap[tieMatchGironi] || "";
+  const tieMatchFinalsText = tieMatchFinalsMap[tieMatchFinals] || "";
+  
+  let ruleContent = "";
+  
+  // =====================================================
+  // CRITERI PAREGGIO IN PARTITA - CON FINALI
+  // =====================================================
+  if (hasFinals) {
+    // Stesso criterio per gironi e finali
+    if (tieMatchGironi === tieMatchFinals) {
+      if (tieMatchGironiText) {
+        ruleContent += `
+          <p>
+            Per tutte le partite del torneo, sia durante la fase a gironi che durante le fasi finali: 
+            ${tieMatchGironiText}.
+          </p>
+        `;
+      }
+    }
+    // Criteri diversi
+    else {
+      if (tieMatchGironiText) {
+        ruleContent += `
+          <p>
+            <strong>Fase a gironi:</strong> ${tieMatchGironiText}.
+          </p>
+        `;
+      }
+      if (tieMatchFinalsText) {
+        ruleContent += `
+          <p>
+            <strong>Fasi finali:</strong> ${tieMatchFinalsText}.
+          </p>
+        `;
+      }
+    }
+  }
+  // =====================================================
+  // CRITERI PAREGGIO IN PARTITA - SENZA FINALI
+  // =====================================================
+  else {
+    if (tieMatchGironiText) {
+      ruleContent += `
+        <p>
+          Per tutte le partite del torneo: ${tieMatchGironiText}.
+        </p>
+      `;
+    }
+  }
+  
+  // =====================================================
+  // FALLBACK
+  // =====================================================
+  if (!ruleContent) {
+    ruleContent = `
+      <p>
+        I criteri per la gestione dei pareggi saranno comunicati prima dell'inizio del torneo.
+      </p>
+    `;
+  }
+  
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Gestione dei pareggi</strong></p>
+        ${ruleContent}
       </div>
     </div>
   `;
@@ -1844,48 +1955,7 @@ function buildRankingRule(tournament, ruleNumber) {
 
 
 // ===============================
-// 17. BUILD CROSS GROUP COMPARISON TEXT
-// ===============================
-function buildCrossGroupComparisonText(numGroups, teamsInFinal) {
-  const firstPlaceQualifiers = Math.min(numGroups, teamsInFinal);
-  const secondPlaceQualifiers = Math.max(0, teamsInFinal - numGroups);
-
-  const needsBestFirstComparison = teamsInFinal > 0 && teamsInFinal < numGroups;
-  const needsBestSecondComparison = secondPlaceQualifiers > 0 && secondPlaceQualifiers < numGroups;
-
-  if (!needsBestFirstComparison && !needsBestSecondComparison) {
-    return "";
-  }
-
-  let comparisonTarget = "";
-
-  if (needsBestFirstComparison) {
-    const bestFirstCount = teamsInFinal;
-    comparisonTarget = bestFirstCount === 1 
-      ? `la migliore prima classificata` 
-      : `le ${bestFirstCount} migliori prime classificate`;
-  } else if (needsBestSecondComparison) {
-    comparisonTarget = secondPlaceQualifiers === 1 
-      ? `la migliore seconda classificata` 
-      : `le ${secondPlaceQualifiers} migliori seconde classificate`;
-  }
-
-  return `
-    <p>
-      <strong>Confronto tra squadre di gironi diversi:</strong> per determinare ${comparisonTarget}, 
-      in caso di parità di punti verranno considerati esclusivamente, e in questo ordine: 
-      differenza reti e gol fatti.
-    </p>
-  `;
-}
-
-
-
-
-
-
-// ===============================
-// 18. BUILD REFEREE RULE (AGGIORNATA CON ruleNumber)
+// 9j. REFEREE RULE (REGOLA 9)
 // ===============================
 function buildRefereeRule(tournament, ruleNumber) {
   const hasReferee = tournament.referee === true || String(tournament.referee).toUpperCase() === "TRUE";
@@ -1928,6 +1998,51 @@ function buildRefereeRule(tournament, ruleNumber) {
     </div>
   `;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ===============================
+// OLD SPECIFIC TOURNAMENTS RULES (solo per avere esempi per le nuove).
+// ===============================
+
+
+
+
+
+
+// ===============================
+// 18. BUILD REFEREE RULE (AGGIORNATA CON ruleNumber)
+// ===============================
+
 
 
 
