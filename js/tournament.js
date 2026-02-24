@@ -2007,6 +2007,19 @@ function buildRefereeRule(tournament, ruleNumber) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ===============================
 // 9Final. BUILD GENERAL REFERENCE RULE (ULTIMA REGOLA)
 // ===============================
@@ -2049,76 +2062,36 @@ function buildGeneralReferenceRule() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ===============================
-// OLD SPECIFIC TOURNAMENTS RULES (solo per avere esempi per le nuove).
+// FORM DI ISCRIZIONE
 // ===============================
-
-
-// ===============================
-// 19b. BUILD FOOD RULE (NUOVA - opzionale, sempre ultima)
-// ===============================
-function buildFoodRule(tournament) {
-  const food = String(tournament.food || "").toLowerCase();
-  
-  // Se food è "none" o vuoto, non mostriamo la regola
-  if (!food || food === "none") {
-    return "";
-  }
-  
-  let foodText = "";
-  
-  if (food === "all") {
-    foodText = `
-      <p>
-        La quota di iscrizione include <strong>pranzo e/o cena</strong> per tutti i partecipanti. 
-        I dettagli su orari e location verranno comunicati prima dell'inizio del torneo.
-      </p>
-    `;
-  } else if (food === "partial") {
-    foodText = `
-      <p>
-        Durante il torneo saranno offerti <strong>snack e bevande</strong> a tutti i partecipanti.
-      </p>
-    `;
-  }
-  
-  return `
-    <div class="specific-regulation-card">
-      <div class="specific-regulation-icon">🍽️</div>
-      <div class="specific-regulation-content">
-        <p><strong>Ristoro</strong></p>
-        ${foodText}
-      </div>
-    </div>
-  `;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
