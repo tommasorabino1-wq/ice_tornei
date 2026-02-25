@@ -486,9 +486,6 @@ function renderSpecificCourtRule(tournament) {
   rules.push(buildCommunicationsRule(ruleNumber));
   ruleNumber++;
   
-  // REGOLA FINALE
-  rules.push(buildGeneralReferenceRule());
-  
   container.innerHTML = `
     <div class="specific-regulation-cards">
       ${rules.join('')}
@@ -1163,17 +1160,17 @@ function buildFormatTimeRangeRule(tournament, ruleNumber) {
 // 9f. BUILD COURT/DAYS/HOURS RULE (REGOLA 5)
 // ===============================
 function buildCourtDaysHoursRule(tournament, ruleNumber) {
+
   const fixed = String(tournament.fixed_court_days_hours || "false").toLowerCase();
   const days = String(tournament.available_days || "").toLowerCase();
   const hours = String(tournament.available_hours || "").toLowerCase();
   const location = String(tournament.location || "");
   const formatType = String(tournament.format_type || "").toLowerCase();
+  const timeRange = String(tournament.time_range || "").toLowerCase();
+  const startDate = String(tournament.date || "");
+
   const hasFinals = formatType.includes("finals");
-  
-  // =====================================================
-  // MAPPING GIORNI E ORARI
-  // =====================================================
-  
+
   const daysMap = {
     "lun-dom": "qualsiasi giorno della settimana",
     "lun-ven": "dal lunedì al venerdì",
@@ -1187,120 +1184,126 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     "sab": "il sabato",
     "dom": "la domenica"
   };
-  
+
   const hoursMap = {
     "10-22": "tra le 10:00 e le 22:00",
     "10-19": "tra le 10:00 e le 19:00 (fascia diurna)",
     "19-22": "tra le 19:00 e le 22:00 (fascia serale)"
   };
-  
+
   const daysText = daysMap[days] || days || "";
   const hoursText = hoursMap[hours] || hours || "";
-  
+
+  const availabilityText = `a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>`;
+
   // =====================================================
-  // FRASI BASE RIUTILIZZABILI
+  // TIME RANGE (invariato)
   // =====================================================
-  
-  // Disponibilità generale
-  const availabilityText = `Le partite potranno svolgersi a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>.`;
-  
-  // Preferenze in fase di iscrizione
-  const preferencesFullText = `In fase di iscrizione, le squadre potranno esprimere le proprie preferenze in merito a zona, giorni e orari in cui desiderano giocare.`;
-  const preferencesDaysHoursText = `In fase di iscrizione, le squadre potranno esprimere le proprie preferenze in merito a giorni e orari in cui desiderano giocare.`;
-  const preferencesZoneText = `In fase di iscrizione, le squadre potranno esprimere le proprie preferenze in merito alla zona in cui desiderano giocare.`;
-  
-  // Prenotazione da parte dell'organizzazione
-  const bookingByOrgText = `L'organizzazione, per le partite in casa di ciascuna squadra, si occuperà di prenotare un campo disponibile tenendo conto delle preferenze espresse.`;
-  
-  // Comunicazione anticipata
-  const advanceCommunicationText = `Le squadre non dovranno preoccuparsi della prenotazione: l'organizzazione provvederà a comunicare in anticipo il calendario completo.`;
-  
+
+  let timeRangeText = "";
+
+  switch (timeRange) {
+    case "short":
+      timeRangeText = hasFinals
+        ? `Il torneo si svolgerà interamente <strong>in un'unica giornata</strong>, comprensiva di fase a gironi e fase finale.`
+        : `Il torneo si svolgerà interamente <strong>in un'unica giornata</strong>.`;
+      break;
+
+    case "mid":
+      timeRangeText = hasFinals
+        ? `La fase a gironi si disputerà su più settimane (indicativamente <strong>una partita a settimana</strong>), mentre la fase finale si svolgerà <strong>in un'unica giornata conclusiva</strong>.`
+        : `Il torneo si disputerà su più settimane (indicativamente <strong>una partita a settimana</strong>).`;
+      break;
+
+    case "long":
+      timeRangeText = hasFinals
+        ? `Sia la fase a gironi, che la fase finale si disputeranno su più settimane (indicativamente <strong>una partita a settimana</strong>).`
+        : `Il torneo si disputerà su più settimane (indicativamente <strong>una partita a settimana</strong>).`;
+      break;
+
+    default:
+      timeRangeText = `La durata e la distribuzione delle partite saranno comunicate prima dell'inizio del torneo.`;
+  }
+
   // =====================================================
-  // MAPPING SCENARI
+  // SCENARI
   // =====================================================
-  
+
+  const preferencesFullText = `In fase di iscrizione, le squadre potranno esprimere preferenze su zona, giorni e orari.`;
+  const bookingByOrgText = `L'organizzazione si occuperà della prenotazione del campo tenendo conto delle preferenze espresse.`;
+  const advanceCommunicationText = `L'organizzazione comunicherà in anticipo il calendario completo delle partite.`;
+
   const scenarios = {
-    
-    // TUTTO VARIABILE
+
     "false": {
-      assignment: `Campi, giorni e orari delle partite verranno decisi dalle squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.`,
-      availability: availabilityText,
+      combined: `Campi, giorni e orari verranno concordati tra le squadre e prenotati dall'organizzazione di volta in volta. Le partite potranno svolgersi ${availabilityText}.`,
       booking: `${preferencesFullText} ${bookingByOrgText}`
     },
-    
-    // TUTTO FISSO PER TUTTO IL TORNEO
+
     "court_days_hours_all": {
-      assignment: `Campi, giorni e orari di tutte le partite saranno <strong>stabiliti dall'organizzazione</strong> e comunicati prima dell'inizio del torneo.`,
-      availability: availabilityText,
+      combined: `Campi, giorni e orari delle partite saranno <strong>stabiliti dall'organizzazione</strong> e verranno comunicati alle squadre prima dell'inizio del torneo, fermo restando che le partite si svolgeranno ${availabilityText} e che il torneo inizierà indicativamente <strong>intorno al ${startDate}</strong>.`,
       booking: advanceCommunicationText
     },
-    
-    // TUTTO FISSO SOLO PER LE FINALI
+
+    // 🔥 QUI LA MODIFICA RICHIESTA
     "court_days_hours_finals": {
-      assignment: hasFinals 
-        ? `<strong>Fase a gironi:</strong> campi, giorni e orari verranno decisi dalle squadre e prenotati di volta in volta dall'organizzazione. <strong>Fase finale:</strong> campi, giorni e orari saranno stabiliti dall'organizzazione e comunicati al termine dei gironi.`
-        : `Campi, giorni e orari delle partite verranno decisi dalle squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.`,
-      availability: availabilityText,
-      booking: hasFinals 
-        ? `${preferencesFullText} ${bookingByOrgText}`
-        : `${preferencesFullText} ${bookingByOrgText}`
+      combined: hasFinals
+        ? `
+          <ul>
+            <li>
+              <strong>Gironi:</strong> Campi, giorni e orari delle partite verranno concordati tra le squadre e prenotati dall'organizzazione di volta in volta seguendo le preferenze espresse in fase di iscrizione.
+            </li>
+            <li>
+              <strong>Fase finale:</strong> Campi, giorni e orari delle partite saranno stabiliti dall'organizzazione e verranno comunicati alle squadre prima dell'inizio del torneo, fermo restando che le partite si svolgeranno ${availabilityText}.
+            </li>
+          </ul>
+        `
+        : `Campi, giorni e orari verranno concordati tra le squadre. Le partite potranno svolgersi ${availabilityText}.`,
+      booking: `Per le partite della fase a gironi, in fase di iscrizione le squadre potranno esprimere preferenze su zona, giorni e orari delle partite. ${bookingByOrgText}`
     },
-    
-    // SOLO CAMPI FISSI PER TUTTO IL TORNEO
+
     "court_all": {
-      assignment: `I <strong>campi</strong> in cui si svolgeranno le partite saranno stabiliti dall'organizzazione e comunicati prima dell'inizio del torneo. Giorni e orari verranno invece decisi dalle squadre.`,
-      availability: availabilityText,
-      booking: `${preferencesDaysHoursText} ${bookingByOrgText}`
-    },
-    
-    // SOLO CAMPI FISSI PER LE FINALI
-    "court_finals": {
-      assignment: hasFinals 
-        ? `<strong>Fase a gironi:</strong> campi, giorni e orari verranno decisi dalle squadre e prenotati di volta in volta dall'organizzazione. <strong>Fase finale:</strong> i campi saranno stabiliti dall'organizzazione; giorni e orari verranno concordati con le squadre qualificate.`
-        : `Campi, giorni e orari delle partite verranno decisi dalle squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.`,
-      availability: availabilityText,
+      combined: `I campi saranno stabiliti dall'organizzazione; giorni e orari verranno concordati tra le squadre. Le partite potranno svolgersi ${availabilityText}.`,
       booking: `${preferencesFullText} ${bookingByOrgText}`
     },
-    
-    // GIORNI E ORARI FISSI PER TUTTO IL TORNEO
-    "days_hours_all": {
-      assignment: `<strong>Giorni e orari</strong> delle partite saranno stabiliti dall'organizzazione e comunicati prima dell'inizio del torneo. I campi verranno invece prenotati di volta in volta.`,
-      availability: availabilityText,
-      booking: `${preferencesZoneText} ${bookingByOrgText}`
+
+    "court_finals": {
+      combined: hasFinals
+        ? `<strong>Gironi:</strong> gestione flessibile. <strong>Fase finale:</strong> campi stabiliti dall'organizzazione. Le partite potranno svolgersi ${availabilityText}.`
+        : `Campi, giorni e orari verranno concordati tra le squadre. Le partite potranno svolgersi ${availabilityText}.`,
+      booking: `${preferencesFullText} ${bookingByOrgText}`
     },
-    
-    // GIORNI E ORARI FISSI SOLO PER LE FINALI
+
+    "days_hours_all": {
+      combined: `Giorni e orari saranno stabiliti dall'organizzazione; i campi verranno prenotati di volta in volta. Le partite potranno svolgersi ${availabilityText}.`,
+      booking: `${preferencesFullText} ${bookingByOrgText}`
+    },
+
     "days_hours_finals": {
-      assignment: hasFinals 
-        ? `<strong>Fase a gironi:</strong> campi, giorni e orari verranno decisi dalle squadre e prenotati di volta in volta dall'organizzazione. <strong>Fase finale:</strong> giorni e orari saranno stabiliti dall'organizzazione; i campi verranno prenotati tenendo conto delle preferenze delle squadre qualificate.`
-        : `Campi, giorni e orari delle partite verranno decisi dalle squadre partecipanti e prenotati, di volta in volta, dall'organizzazione.`,
-      availability: availabilityText,
+      combined: hasFinals
+        ? `<strong>Gironi:</strong> gestione flessibile. <strong>Fase finale:</strong> giorni e orari stabiliti dall'organizzazione. Le partite potranno svolgersi ${availabilityText}.`
+        : `Campi, giorni e orari verranno concordati tra le squadre. Le partite potranno svolgersi ${availabilityText}.`,
       booking: `${preferencesFullText} ${bookingByOrgText}`
     }
+
   };
-  
-  // =====================================================
-  // RECUPERA SCENARIO O FALLBACK
-  // =====================================================
-  
+
   const scenario = scenarios[fixed] || {
-    assignment: `Le modalità di assegnazione di campi, giorni e orari saranno comunicate prima dell'inizio del torneo.`,
-    availability: availabilityText,
-    booking: `Ulteriori dettagli saranno comunicati agli iscritti.`
+    combined: `Le modalità organizzative saranno comunicate prima dell'inizio del torneo. Le partite potranno svolgersi ${availabilityText}.`,
+    booking: `Ulteriori dettagli verranno forniti agli iscritti.`
   };
-  
-  // =====================================================
-  // OUTPUT FINALE
-  // =====================================================
-  
+
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
-        <p><strong>Campi, giorni e orari delle partite</strong></p>
+        <p><strong>Campi, giorni, orari e calendario</strong></p>
         <ul>
-          <li><strong>Assegnazione:</strong> ${scenario.assignment}</li>
-          <li><strong>Disponibilità:</strong> ${scenario.availability}</li>
+          <li><strong>Durata e calendario:</strong> ${timeRangeText}</li>
+          <li>
+            <strong>Organizzazione e disponibilità:</strong>
+            ${scenario.combined}
+          </li>
           <li><strong>Prenotazione:</strong> ${scenario.booking}</li>
         </ul>
       </div>
@@ -1310,31 +1313,30 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
 
 
 
-
-
 // ===============================
 // 9g. BUILD MATCH FORMAT RULE (REGOLA 6)
 // ===============================
 function buildMatchFormatRule(tournament, ruleNumber) {
+
   const formatType = String(tournament.format_type || "").toLowerCase();
   const hasFinals = formatType.includes("finals");
   const sport = String(tournament.sport || "").toLowerCase();
-  
+
   const matchFormatGironi = String(tournament.match_format_gironi || "").toLowerCase();
-  const matchFormatFinals = String(tournament.match_format_finals || "NA").toLowerCase();
+  const matchFormatFinals = String(tournament.match_format_finals || "na").toLowerCase();
   const guaranteedMatch = Number(tournament.guaranteed_match) || 0;
-  
+
   // =====================================================
   // MAPPING BASE
   // =====================================================
-  
-  // Determina il testo per "vince la squadra..."
+
+  const isFootball = sport.includes("calcio");
   const isGameBasedSport = sport.includes("padel") || sport.includes("volley") || sport.includes("beach");
-  const winConditionText = isGameBasedSport 
-    ? "al termine, vince la squadra con più game vinti" 
+
+  const winConditionText = isGameBasedSport
+    ? "al termine, vince la squadra con più game vinti"
     : "al termine, vince la squadra in vantaggio";
-  
-  // Mapping formato partita (dinamico in base allo sport)
+
   const matchFormatMap = {
     "1x30": `un tempo unico da 30 minuti (${winConditionText})`,
     "1x60": `un tempo unico da 60 minuti (${winConditionText})`,
@@ -1343,36 +1345,36 @@ function buildMatchFormatRule(tournament, ruleNumber) {
     "1su1": "set singolo (vince chi si aggiudica il set)",
     "2su3": "due set su tre (vince chi si aggiudica per primo 2 set)"
   };
-  
+
   const matchFormatGironiText = matchFormatMap[matchFormatGironi] || "da comunicare";
   const matchFormatFinalsText = matchFormatMap[matchFormatFinals] || "da comunicare";
-  
+
   // =====================================================
-  // COSTRUZIONE TESTI
+  // PARTITE GARANTITE
   // =====================================================
-  
-  // Partite garantite
-  let guaranteedText = "";
-  if (guaranteedMatch > 0) {
-    guaranteedText = `L'organizzazione garantisce a ogni squadra iscritta un minimo di <strong>${guaranteedMatch} partite</strong>, indipendentemente dai risultati ottenuti.`;
-  } else {
-    guaranteedText = `Il numero di partite dipenderà dal formato del torneo e dai risultati ottenuti.`;
-  }
-  
-  // Formato gironi
-  let gironiFormatText = "";
-  if (hasFinals) {
-    gironiFormatText = `Le partite della fase a gironi si disputeranno con la seguente formula: <strong>${matchFormatGironiText}</strong>.`;
-  } else {
-    gironiFormatText = `Tutte le partite del torneo si disputeranno con la seguente formula: <strong>${matchFormatGironiText}</strong>.`;
-  }
-  
-  // Formato finali
+
+  let guaranteedText = guaranteedMatch > 0
+    ? `L'organizzazione garantisce a ogni squadra iscritta un minimo di <strong>${guaranteedMatch} partite</strong>, indipendentemente dai risultati ottenuti.`
+    : `Il numero di partite dipenderà dal formato del torneo e dai risultati ottenuti.`;
+
+  // =====================================================
+  // FORMATO GIRONI
+  // =====================================================
+
+  let gironiFormatText = hasFinals
+    ? `Le partite della fase a gironi si disputeranno con la seguente formula: <strong>${matchFormatGironiText}</strong>.`
+    : `Tutte le partite del torneo si disputeranno con la seguente formula: <strong>${matchFormatGironiText}</strong>.`;
+
+  // =====================================================
+  // FORMATO FINALI
+  // =====================================================
+
   let finalsFormatText = "";
+
   if (hasFinals) {
     if (matchFormatGironi === matchFormatFinals) {
       finalsFormatText = `Le partite delle fasi finali si disputeranno con la <strong>stessa formula</strong> della fase a gironi.`;
-    } else if (matchFormatFinals !== "na" && matchFormatFinalsText) {
+    } else if (matchFormatFinals !== "na") {
       finalsFormatText = `Le partite delle fasi finali si disputeranno con la seguente formula: <strong>${matchFormatFinalsText}</strong>.`;
     } else {
       finalsFormatText = `Il formato delle partite delle fasi finali sarà comunicato al termine della fase a gironi.`;
@@ -1380,11 +1382,40 @@ function buildMatchFormatRule(tournament, ruleNumber) {
   } else {
     finalsFormatText = `Non essendo prevista una fase finale, tutte le partite seguiranno il formato sopra indicato.`;
   }
-  
+
   // =====================================================
-  // OUTPUT FINALE
+  // MANCATA PRESENTAZIONE (NUOVO PUNTO SEMPRE PRESENTE)
   // =====================================================
-  
+
+  let forfeitResultText = "";
+
+  if (isFootball) {
+    forfeitResultText = "una sconfitta a tavolino per <strong>3-0</strong>";
+  } else if (isGameBasedSport) {
+
+    const isTimeMatch = matchFormatGironi.includes("x");
+    const isSetMatch = matchFormatGironi.includes("su");
+
+    if (isTimeMatch) {
+      forfeitResultText = "una sconfitta a tavolino per <strong>10 game a 0</strong>";
+    } else if (isSetMatch) {
+      forfeitResultText = "una sconfitta a tavolino per <strong>2 set a 0</strong>";
+    } else {
+      forfeitResultText = "una sconfitta a tavolino secondo il formato previsto dal torneo";
+    }
+
+  } else {
+    forfeitResultText = "una sconfitta a tavolino secondo il regolamento del torneo";
+  }
+
+  const forfeitText = `
+    In assenza di preavviso, la mancata presentazione di una squadra ad una partita comporterà ${forfeitResultText}.
+  `;
+
+  // =====================================================
+  // OUTPUT
+  // =====================================================
+
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
@@ -1394,6 +1425,7 @@ function buildMatchFormatRule(tournament, ruleNumber) {
           <li><strong>Partite garantite:</strong> ${guaranteedText}</li>
           <li><strong>Formato gironi:</strong> ${gironiFormatText}</li>
           <li><strong>Formato finali:</strong> ${finalsFormatText}</li>
+          <li><strong>Mancata presentazione:</strong> ${forfeitText}</li>
         </ul>
       </div>
     </div>
@@ -1827,29 +1859,6 @@ function buildCommunicationsRule(ruleNumber) {
 }
 
 
-
-
-
-
-
-
-// ===============================
-// 9Final. BUILD GENERAL REFERENCE RULE (ULTIMA REGOLA)
-// ===============================
-function buildGeneralReferenceRule() {
-  return `
-    <div class="specific-regulation-card">
-      <div class="specific-regulation-icon">📄</div>
-      <div class="specific-regulation-content">
-        <p><strong>Altre disposizioni</strong></p>
-        <p>
-          Per tutte le altre norme relative a fair play, ritardi, rinvii e spostamenti delle partite, 
-          si rimanda al <strong>regolamento generale dei tornei ICE</strong> riportato in fondo a questa pagina.
-        </p>
-      </div>
-    </div>
-  `;
-}
 
 
 
