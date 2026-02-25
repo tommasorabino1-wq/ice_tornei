@@ -1167,7 +1167,6 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   const location = String(tournament.location || "");
   const formatType = String(tournament.format_type || "").toLowerCase();
   const timeRange = String(tournament.time_range || "").toLowerCase();
-  const startDate = String(tournament.date || "");
 
   const hasFinals = formatType.includes("finals");
 
@@ -1194,104 +1193,103 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   const daysText = daysMap[days] || days || "";
   const hoursText = hoursMap[hours] || hours || "";
 
-  const availabilityText = `a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>`;
+  const officialConstraints = `a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>`;
 
   // =====================================================
-  // TIME RANGE (invariato)
+  // DURATA TORNEO (time_range)
   // =====================================================
 
-  let timeRangeText = "";
+  let durationText = "";
 
   switch (timeRange) {
+
     case "short":
-      timeRangeText = hasFinals
-        ? `Il torneo si svolgerà interamente <strong>in un'unica giornata</strong>, comprensiva di fase a gironi e fase finale.`
+      durationText = hasFinals
+        ? `Il torneo si svolgerà interamente <strong>in un'unica giornata</strong>, con fase a gironi e fase finale nello stesso giorno.`
         : `Il torneo si svolgerà interamente <strong>in un'unica giornata</strong>.`;
       break;
 
     case "mid":
-      timeRangeText = hasFinals
-        ? `La fase a gironi si disputerà su più settimane (indicativamente <strong>una partita a settimana</strong>), mentre la fase finale si svolgerà <strong>in un'unica giornata conclusiva</strong>.`
-        : `Il torneo si disputerà su più settimane (indicativamente <strong>una partita a settimana</strong>).`;
+      durationText = hasFinals
+        ? `La fase a gironi si disputerà <strong>su più settimane</strong> (indicativamente una partita a settimana), mentre la fase finale si svolgerà <strong>in un'unica giornata conclusiva</strong>.`
+        : `Il torneo si disputerà <strong>su più settimane</strong> (indicativamente una partita a settimana).`;
       break;
 
     case "long":
-      timeRangeText = hasFinals
-        ? `Sia la fase a gironi, che la fase finale si disputeranno su più settimane (indicativamente <strong>una partita a settimana</strong>).`
-        : `Il torneo si disputerà su più settimane (indicativamente <strong>una partita a settimana</strong>).`;
+      durationText = hasFinals
+        ? `Sia la fase a gironi che la fase finale si disputeranno <strong>su più settimane</strong> (indicativamente una partita a settimana).`
+        : `Il torneo si disputerà <strong>su più settimane</strong> (indicativamente una partita a settimana).`;
       break;
 
     default:
-      timeRangeText = `La durata e la distribuzione delle partite saranno comunicate prima dell'inizio del torneo.`;
+      durationText = `La durata e la distribuzione delle partite saranno comunicate prima dell'inizio del torneo.`;
   }
 
   // =====================================================
-  // SCENARI
+  // ORGANIZZAZIONE (fixed)
   // =====================================================
 
-  const preferencesFullText = `In fase di iscrizione, le squadre potranno esprimere preferenze su zona, giorni e orari.`;
-  const bookingByOrgText = `L'organizzazione si occuperà della prenotazione del campo tenendo conto delle preferenze espresse.`;
-  const advanceCommunicationText = `L'organizzazione comunicherà in anticipo il calendario completo delle partite.`;
+  let organizationText = "";
+  let bookingText = "";
 
-  const scenarios = {
+  if (fixed === "false") {
 
-    "false": {
-      combined: `Campi, giorni e orari verranno concordati tra le squadre e prenotati dall'organizzazione di volta in volta. Le partite potranno svolgersi ${availabilityText}.`,
-      booking: `${preferencesFullText} ${bookingByOrgText}`
-    },
+    organizationText = hasFinals
+      ? `Per tutta la durata del torneo (sia fase a gironi che fase finale), l'organizzazione prenoterà di volta in volta i campi per le partite seguendo le preferenze (riguardo a zona, giorni e orari) espresse dalle squadre in fase di iscrizione, considerando comunque che le partite si svolgeranno ${officialConstraints}.`
+      : `Per tutte le partite del torneo, campi, giorni e orari saranno prenotati dall'organizzazione di volta in volta seguendo le preferenze espresse dalle squadre in fase di iscrizione, considerando comunque che le partite si svolgeranno ${officialConstraints}.`;
 
-    "court_days_hours_all": {
-      combined: `Campi, giorni e orari delle partite saranno <strong>stabiliti dall'organizzazione</strong> e verranno comunicati alle squadre prima dell'inizio del torneo, fermo restando che le partite si svolgeranno ${availabilityText} e che il torneo inizierà indicativamente <strong>intorno al ${startDate}</strong>.`,
-      booking: advanceCommunicationText
-    },
+    bookingText = `In fase di iscrizione, le squadre potranno quindi indicare le proprie preferenze su zona, giorni e orari delle partite. L'organizzazione si occuperà della prenotazione del campo tenendo conto delle preferenze espresse.`;
+  }
 
-    // 🔥 QUI LA MODIFICA RICHIESTA
-    "court_days_hours_finals": {
-      combined: hasFinals
-        ? `
-          <ul>
-            <li>
-              <strong>Gironi:</strong> Campi, giorni e orari delle partite verranno concordati tra le squadre e prenotati dall'organizzazione di volta in volta seguendo le preferenze espresse in fase di iscrizione.
-            </li>
-            <li>
-              <strong>Fase finale:</strong> Campi, giorni e orari delle partite saranno stabiliti dall'organizzazione e verranno comunicati alle squadre prima dell'inizio del torneo, fermo restando che le partite si svolgeranno ${availabilityText}.
-            </li>
-          </ul>
-        `
-        : `Campi, giorni e orari verranno concordati tra le squadre. Le partite potranno svolgersi ${availabilityText}.`,
-      booking: `Per le partite della fase a gironi, in fase di iscrizione le squadre potranno esprimere preferenze su zona, giorni e orari delle partite. ${bookingByOrgText}`
-    },
+  else if (fixed === "fixed_all") {
 
-    "court_all": {
-      combined: `I campi saranno stabiliti dall'organizzazione; giorni e orari verranno concordati tra le squadre. Le partite potranno svolgersi ${availabilityText}.`,
-      booking: `${preferencesFullText} ${bookingByOrgText}`
-    },
+    organizationText = hasFinals
+      ? `Per tutta la durata del torneo (sia fase a gironi che fase finale), campi, giorni e orari delle partite saranno stabiliti dall'organizzazione e comunicati in anticipo alle squadre, considerando comunque che tutte le partite si svolgeranno ${officialConstraints}.`
+      : `Per tutte le partite del torneo, campi, giorni e orari saranno stabiliti dall'organizzazione e comunicati in anticipo alle squadre, considerando comunque che tutte le partite si svolgeranno ${officialConstraints}.`;
 
-    "court_finals": {
-      combined: hasFinals
-        ? `<strong>Gironi:</strong> gestione flessibile. <strong>Fase finale:</strong> campi stabiliti dall'organizzazione. Le partite potranno svolgersi ${availabilityText}.`
-        : `Campi, giorni e orari verranno concordati tra le squadre. Le partite potranno svolgersi ${availabilityText}.`,
-      booking: `${preferencesFullText} ${bookingByOrgText}`
-    },
+    bookingText = `Il calendario completo delle partite sarà comunicato dall'organizzazione prima dell'inizio del torneo.`;
+  }
 
-    "days_hours_all": {
-      combined: `Giorni e orari saranno stabiliti dall'organizzazione; i campi verranno prenotati di volta in volta. Le partite potranno svolgersi ${availabilityText}.`,
-      booking: `${preferencesFullText} ${bookingByOrgText}`
-    },
+  else if (fixed === "fixed_finals") {
 
-    "days_hours_finals": {
-      combined: hasFinals
-        ? `<strong>Gironi:</strong> gestione flessibile. <strong>Fase finale:</strong> giorni e orari stabiliti dall'organizzazione. Le partite potranno svolgersi ${availabilityText}.`
-        : `Campi, giorni e orari verranno concordati tra le squadre. Le partite potranno svolgersi ${availabilityText}.`,
-      booking: `${preferencesFullText} ${bookingByOrgText}`
+    if (hasFinals) {
+
+      organizationText = `
+        <ul>
+          <li>
+            <strong>Fase a gironi:</strong> I campi per le partite della fase a gironi saranno prenotati dall'organizzazione di volta in volta seguendo le preferenze (riguardo a zona, giorni e orari) espresse dalle squadre in fase di iscrizione.
+          </li>
+          <li>
+            <strong>Fase finale:</strong> Campi, giorni e orari delle partite della fase finale saranno stabiliti dall'organizzazione e comunicati in anticipo alle squadre qualificate.
+          </li>
+        </ul>
+        Considerando comunque che tutte le partite si svolgeranno ${officialConstraints}.
+      `;
+
+      bookingText = `Per la fase a gironi, in fase di iscrizione le squadre potranno indicare le proprie preferenze su zona, giorni e orari delle partite. L'organizzazione si occuperà della prenotazione dei campi tenendo conto delle preferenze espresse.`;
+    } else {
+
+      organizationText = `Per tutte le partite del torneo, i campi per le partite saranno prenotati dall'organizzazione di volta in volta seguendo le preferenze espresse dalle squadre in fase di iscrizione, considerando comunque che le partite si svolgeranno ${officialConstraints}.`;
+
+      bookingText = `In fase di iscrizione, le squadre potranno indicare le proprie preferenze su zona, giorni e orari delle partite. L'organizzazione si occuperà della prenotazione del campo tenendo conto delle preferenze espresse.`;
     }
+  }
 
-  };
+  else {
 
-  const scenario = scenarios[fixed] || {
-    combined: `Le modalità organizzative saranno comunicate prima dell'inizio del torneo. Le partite potranno svolgersi ${availabilityText}.`,
-    booking: `Ulteriori dettagli verranno forniti agli iscritti.`
-  };
+    organizationText = `Le modalità organizzative saranno comunicate prima dell'inizio del torneo. Le partite si svolgeranno ${officialConstraints}.`;
+    bookingText = `Ulteriori dettagli verranno forniti agli iscritti.`;
+  }
+
+  // =====================================================
+  // CLAUSOLA UNIVERSALE (NUOVO BULLET)
+  // =====================================================
+
+  const startDateClause = `La data di inizio del torneo è indicativa. In caso di comprovata necessità, l'organizzazione può posticipare (max 30 giorni) o annullare (con rimborso completo della quota) il torneo.`;
+
+  // =====================================================
+  // OUTPUT
+  // =====================================================
 
   return `
     <div class="specific-regulation-card">
@@ -1299,12 +1297,10 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
       <div class="specific-regulation-content">
         <p><strong>Campi, giorni, orari e calendario</strong></p>
         <ul>
-          <li><strong>Durata e calendario:</strong> ${timeRangeText}</li>
-          <li>
-            <strong>Organizzazione e disponibilità:</strong>
-            ${scenario.combined}
-          </li>
-          <li><strong>Prenotazione:</strong> ${scenario.booking}</li>
+          <li><strong>Durata:</strong> ${durationText}</li>
+          <li><strong>Organizzazione partite:</strong> ${organizationText}</li>
+          <li><strong>Preferenze e prenotazione:</strong> ${bookingText}</li>
+          <li><strong>Avvertenza:</strong> ${startDateClause}</li>
         </ul>
       </div>
     </div>
@@ -1556,9 +1552,9 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   // Pareggio in fase gironi
   let gironiTieText = "";
   if (hasFinals) {
-    gironiTieText = `Durante la fase a gironi: ${tieMatchGironiText}.`;
+    gironiTieText = `${tieMatchGironiText}.`;
   } else {
-    gironiTieText = `Per tutte le partite del torneo: ${tieMatchGironiText}.`;
+    gironiTieText = `${tieMatchGironiText}.`;
   }
   
   // Pareggio in fase finale
@@ -1567,7 +1563,7 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
     if (tieMatchGironi === tieMatchFinals) {
       finalsTieText = `Durante le fasi finali si applicherà la <strong>stessa regola</strong> della fase a gironi.`;
     } else {
-      finalsTieText = `Durante le fasi finali: ${tieMatchFinalsText}.`;
+      finalsTieText = `${tieMatchFinalsText}.`;
     }
   } else {
     finalsTieText = `Non essendo prevista una fase finale, la regola sopra indicata si applica a tutte le partite.`;
@@ -1671,7 +1667,7 @@ function buildInsuranceRule(tournament, ruleNumber) {
         <p><strong>Copertura assicurativa e certificato medico</strong></p>
 
         <p>
-          Per il presente torneo, l'organizzazione provvederà ad attivare 
+          Per questo torneo, l'organizzazione provvederà ad attivare 
           una <strong>copertura assicurativa contro gli infortuni</strong> 
           a favore dei partecipanti.
         </p>
@@ -1717,16 +1713,16 @@ function buildFacilitiesRule(tournament, ruleNumber) {
   // Upsell mapping
   const upsellMap = {
     "kit": {
-      kit: "Sarà possibile acquistare un <strong>kit sportivo \"Tornei ICE\"</strong> (magliette o altro materiale tecnico) a <strong>prezzo di costo</strong>.",
+      kit: "Durante le partite del torneo sarà possibile acquistare un <strong>kit sportivo \"Tornei ICE\"</strong> (magliette o altro materiale tecnico) a <strong>prezzo di costo</strong>.",
       photo: null
     },
     "photo": {
       kit: null,
-      photo: "Saranno presenti <strong>fotografi professionali</strong> per foto e video delle partite, disponibili <strong>gratuitamente</strong> per chi condividerà i contenuti sui social taggando Tornei ICE."
+      photo: "Durante le partite del torneo saranno presenti <strong>fotografi professionali</strong> per foto e video delle partite, disponibili <strong>gratuitamente</strong> per chi condividerà i contenuti sui social taggando Tornei ICE."
     },
     "kit_photo": {
-      kit: "Sarà possibile acquistare un <strong>kit sportivo \"Tornei ICE\"</strong> a <strong>prezzo di costo</strong>.",
-      photo: "Saranno presenti <strong>fotografi professionali</strong> per foto e video delle partite, disponibili <strong>gratuitamente</strong> per chi condividerà i contenuti sui social taggando Tornei ICE."
+      kit: "Durante le partite del torneo sarà possibile acquistare un <strong>kit sportivo \"Tornei ICE\"</strong> a <strong>prezzo di costo</strong>.",
+      photo: "Durante le partite del torneo saranno presenti <strong>fotografi professionali</strong> per foto e video delle partite, disponibili <strong>gratuitamente</strong> per chi condividerà i contenuti sui social taggando Tornei ICE."
     },
     "none": {
       kit: null,
@@ -1915,8 +1911,6 @@ function buildCommunicationsRule(ruleNumber) {
 // FORM DI ISCRIZIONE
 // ===============================
 
-
-
 // ===============================
 // 20. POPOLA CAMPI EXTRA FORM
 // ===============================
@@ -1924,65 +1918,85 @@ function populateExtraFields(tournament) {
   const container = document.getElementById("extra-fields-container");
   container.innerHTML = "";
 
-  const fixedCourt = tournament.fixed_court === true || String(tournament.fixed_court).toUpperCase() === "TRUE";
-
-  if (fixedCourt) return;
-
-  const availableDays = String(tournament.available_days || "").trim();
-  const availableHours = String(tournament.available_hours || "").trim();
-
-  // CAMPO 1: ZONA PREFERITA
-  const zoneField = document.createElement("label");
+  const fixed = String(tournament.fixed_court_days_hours || "false").toLowerCase();
   
-  const zoneTitleSpan = document.createElement("span");
-  zoneTitleSpan.className = "form-field-title";
-  zoneTitleSpan.innerHTML = 'Zona preferita <span class="required-asterisk">*</span>';
-  zoneField.appendChild(zoneTitleSpan);
+  // Se tutto è fisso per tutto il torneo, non mostrare campi preferenze
+  if (fixed === "fixed_all") return;
+  
+  // Se fisso solo per le finali, mostriamo i campi (servono per i gironi)
+  // Se false, mostriamo tutti i campi
 
-  const zoneHelperSpan = document.createElement("span");
-  zoneHelperSpan.className = "field-helper";
-  zoneHelperSpan.textContent = "Indica la zona di Torino e provincia dove preferisci giocare (es. Moncalieri, Zona Lingotto, Zona Crocetta)";
-  zoneField.appendChild(zoneHelperSpan);
+  const availableDays = String(tournament.available_days || "").trim().toLowerCase();
+  const availableHours = String(tournament.available_hours || "").trim().toLowerCase();
 
-  const zoneInput = document.createElement("input");
-  zoneInput.type = "text";
-  zoneInput.name = "preferred_zone";
-  zoneInput.required = true;
-  zoneInput.placeholder = "Es. Moncalieri";
-  zoneField.appendChild(zoneInput);
-
+  // CAMPO 1: ZONA PREFERITA (sempre presente se non fixed_all)
+  const zoneField = buildZoneField(tournament);
   container.appendChild(zoneField);
 
-  // CAMPO 2: GIORNI PREFERITI
-  if (availableDays && availableDays.toUpperCase() !== "NA") {
+  // CAMPO 2: GIORNI PREFERITI (solo se non è un giorno singolo fisso)
+  if (availableDays && !isSingleDay(availableDays)) {
     const daysField = buildDaysField(availableDays);
     container.appendChild(daysField);
   }
 
-  // CAMPO 3: ORARIO PREFERITO
-  if (availableHours && availableHours.toUpperCase() !== "NA") {
+  // CAMPO 3: ORARIO PREFERITO (solo se c'è un range di orari)
+  if (availableHours && availableHours !== "na") {
     const hoursField = buildHoursField(availableHours);
     container.appendChild(hoursField);
   }
 }
 
-
+// ===============================
+// 20b. CHECK IF SINGLE DAY
+// ===============================
+function isSingleDay(days) {
+  const singleDays = ["lun", "mar", "mer", "gio", "giov", "ven", "sab", "dom"];
+  return singleDays.includes(days.toLowerCase());
+}
 
 // ===============================
-// 21. BUILD DAYS FIELD
+// 21. BUILD ZONE FIELD
+// ===============================
+function buildZoneField(tournament) {
+  const location = String(tournament.location || "la tua città");
+  
+  const wrapper = document.createElement("label");
+  
+  const titleSpan = document.createElement("span");
+  titleSpan.className = "form-field-title";
+  titleSpan.innerHTML = 'Zona preferita <span class="required-asterisk">*</span>';
+  wrapper.appendChild(titleSpan);
+
+  const helperSpan = document.createElement("span");
+  helperSpan.className = "field-helper";
+  helperSpan.textContent = `Indica la zona di ${location} e dintorni dove preferisci giocare le partite in casa`;
+  wrapper.appendChild(helperSpan);
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.name = "preferred_zone";
+  input.required = true;
+  input.placeholder = "Es. Zona Lingotto, Moncalieri, ecc.";
+  wrapper.appendChild(input);
+
+  return wrapper;
+}
+
+// ===============================
+// 22. BUILD DAYS FIELD
 // ===============================
 function buildDaysField(availableDays) {
   const wrapper = document.createElement("div");
   wrapper.className = "form-field-wrapper";
   
-  const daysMap = parseDaysRange(availableDays);
-  const minDays = (availableDays.toLowerCase() === "sab-dom") ? 1 : 2;
+  const daysOptions = parseDaysRange(availableDays);
+  const minDays = calculateMinDays(availableDays);
   
   const labelText = (minDays === 1) 
     ? "Giorno preferito" 
     : `Giorni preferiti (seleziona almeno ${minDays})`;
 
-  // Creo lo span per il titolo con asterisco
+  // Titolo con asterisco
   const titleSpan = document.createElement("span");
   titleSpan.className = "form-field-title";
   titleSpan.innerHTML = `${labelText} <span class="required-asterisk">*</span>`;
@@ -1991,7 +2005,7 @@ function buildDaysField(availableDays) {
   // Helper text
   const helperSpan = document.createElement("span");
   helperSpan.className = "field-helper";
-  helperSpan.textContent = `Seleziona ${minDays === 1 ? 'il giorno' : 'i giorni'} in cui preferisci giocare`;
+  helperSpan.textContent = `Seleziona ${minDays === 1 ? 'il giorno' : 'i giorni'} in cui preferisci giocare le partite in casa`;
   wrapper.appendChild(helperSpan);
 
   // Checkbox group
@@ -1999,7 +2013,7 @@ function buildDaysField(availableDays) {
   checkboxGroup.className = "checkbox-group";
   checkboxGroup.dataset.minDays = minDays;
 
-  daysMap.forEach(day => {
+  daysOptions.forEach(day => {
     const item = document.createElement("div");
     item.className = "checkbox-item";
     
@@ -2022,26 +2036,27 @@ function buildDaysField(availableDays) {
   return wrapper;
 }
 
-
-
 // ===============================
-// 22. BUILD HOURS FIELD
+// 23. BUILD HOURS FIELD
 // ===============================
 function buildHoursField(availableHours) {
   const wrapper = document.createElement("label");
   
   const slots = parseHoursSlots(availableHours);
+  
+  // Se c'è solo uno slot, non mostrare il campo
+  if (slots.length <= 1) return document.createDocumentFragment();
 
   // Titolo con asterisco
   const titleSpan = document.createElement("span");
   titleSpan.className = "form-field-title";
-  titleSpan.innerHTML = 'Orario preferito <span class="required-asterisk">*</span>';
+  titleSpan.innerHTML = 'Fascia oraria preferita <span class="required-asterisk">*</span>';
   wrapper.appendChild(titleSpan);
 
   // Helper
   const helperSpan = document.createElement("span");
   helperSpan.className = "field-helper";
-  helperSpan.textContent = "Scegli lo slot orario in cui preferisci giocare";
+  helperSpan.textContent = "Scegli la fascia oraria in cui preferisci giocare le partite in casa";
   wrapper.appendChild(helperSpan);
 
   // Select
@@ -2051,7 +2066,7 @@ function buildHoursField(availableHours) {
 
   const placeholder = document.createElement("option");
   placeholder.value = "";
-  placeholder.textContent = "Seleziona uno slot";
+  placeholder.textContent = "Seleziona una fascia oraria";
   placeholder.disabled = true;
   placeholder.selected = true;
   select.appendChild(placeholder);
@@ -2067,12 +2082,8 @@ function buildHoursField(availableHours) {
   return wrapper;
 }
 
-
-
-
-
 // ===============================
-// 23. PARSE DAYS RANGE
+// 24. PARSE DAYS RANGE
 // ===============================
 function parseDaysRange(range) {
   const allDays = [
@@ -2087,40 +2098,224 @@ function parseDaysRange(range) {
 
   const rangeLower = range.toLowerCase();
 
-  if (rangeLower === "lun-ven") {
-    return allDays.slice(0, 5);
+  // Range predefiniti
+  switch (rangeLower) {
+    case "lun-ven":
+      return allDays.slice(0, 5); // Lunedì - Venerdì
+    case "sab-dom":
+      return allDays.slice(5, 7); // Sabato - Domenica
+    case "lun-dom":
+      return allDays; // Tutti i giorni
+    default:
+      // Giorno singolo - non dovrebbe arrivare qui (filtrato prima)
+      // ma gestiamo comunque
+      return allDays;
   }
-  
-  if (rangeLower === "sab-dom") {
-    return allDays.slice(5, 7);
-  }
-  
-  if (rangeLower === "lun-dom") {
-    return allDays;
-  }
-
-  return allDays;
 }
 
 // ===============================
-// 24. PARSE HOURS SLOTS
+// 24b. CALCULATE MIN DAYS
+// ===============================
+function calculateMinDays(availableDays) {
+  const rangeLower = availableDays.toLowerCase();
+  
+  switch (rangeLower) {
+    case "sab-dom":
+      return 1; // Weekend: basta 1 giorno
+    case "lun-ven":
+      return 2; // Settimana: almeno 2 giorni
+    case "lun-dom":
+      return 2; // Tutti: almeno 2 giorni
+    default:
+      return 1;
+  }
+}
+
+// ===============================
+// 25. PARSE HOURS SLOTS
 // ===============================
 function parseHoursSlots(range) {
   const rangeLower = range.toLowerCase();
-  const [start, end] = rangeLower.split("-").map(Number);
   
-  if (!start || !end || end <= start) return [];
+  // Mapping per i range predefiniti
+  const slotsMap = {
+    "10-22": [
+      { value: "10-13", label: "Mattina (10:00 - 13:00)" },
+      { value: "13-16", label: "Primo pomeriggio (13:00 - 16:00)" },
+      { value: "16-19", label: "Tardo pomeriggio (16:00 - 19:00)" },
+      { value: "19-22", label: "Sera (19:00 - 22:00)" }
+    ],
+    "10-19": [
+      { value: "10-13", label: "Mattina (10:00 - 13:00)" },
+      { value: "13-16", label: "Primo pomeriggio (13:00 - 16:00)" },
+      { value: "16-19", label: "Tardo pomeriggio (16:00 - 19:00)" }
+    ],
+    "19-22": [
+      { value: "19-22", label: "Sera (19:00 - 22:00)" }
+    ]
+  };
 
-  const slots = [];
+  return slotsMap[rangeLower] || [];
+}
+
+
+
+
+
+// ===============================
+// 26. SUBMIT ISCRIZIONE (FIREBASE)
+// ===============================
+function handleFormSubmit(tournament) {
   
-  for (let h = start; h <= end - 2; h++) {
-    slots.push({
-      value: `${h}-${h + 2}`,
-      label: `${String(h).padStart(2, "0")}:00 - ${String(h + 2).padStart(2, "0")}:00`
-    });
-  }
+  // Rimuovi eventuali listener precedenti
+  const newForm = form.cloneNode(true);
+  form.parentNode.replaceChild(newForm, form);
+  form = newForm;
+  
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
 
-  return slots;
+    // =====================================================
+    // VALIDAZIONI
+    // =====================================================
+
+    // Validazione checkbox regolamento
+    const acceptRegulation = form.querySelector('input[name="accept_regulation"]');
+    if (!acceptRegulation || !acceptRegulation.checked) {
+      showToast("Devi accettare il regolamento per iscriverti ⚠️");
+      return;
+    }
+
+    // Validazione giorni (se presenti)
+    const checkboxGroup = form.querySelector(".checkbox-group");
+    if (checkboxGroup) {
+      const minDays = Number(checkboxGroup.dataset.minDays) || 1;
+      const checkedDays = form.querySelectorAll('input[name="preferred_days[]"]:checked');
+      
+      if (checkedDays.length < minDays) {
+        const dayWord = minDays === 1 ? 'giorno' : 'giorni';
+        showToast(`Devi selezionare almeno ${minDays} ${dayWord} ⚠️`);
+        return;
+      }
+    }
+
+    // Validazione orari (se presenti e required)
+    const hoursSelect = form.querySelector('[name="preferred_hours"]');
+    if (hoursSelect && hoursSelect.required && !hoursSelect.value) {
+      showToast("Devi selezionare una fascia oraria ⚠️");
+      return;
+    }
+
+    // =====================================================
+    // COSTRUZIONE PAYLOAD
+    // =====================================================
+
+    const payload = {
+      tournament_id: tournament.tournament_id,
+      team_name: form.querySelector('[name="team_name"]').value.trim(),
+      email: form.querySelector('[name="email"]').value.trim().toLowerCase(),
+      phone: form.querySelector('[name="phone"]').value.trim()
+    };
+
+    // Campo zona (se presente)
+    const zoneInput = form.querySelector('[name="preferred_zone"]');
+    if (zoneInput && zoneInput.value.trim()) {
+      payload.preferred_zone = zoneInput.value.trim();
+    }
+
+    // Campo giorni (se presente)
+    const daysChecked = form.querySelectorAll('[name="preferred_days[]"]:checked');
+    if (daysChecked.length > 0) {
+      payload.preferred_days = Array.from(daysChecked).map(cb => cb.value).join(", ");
+    }
+
+    // Campo orari (se presente)
+    if (hoursSelect && hoursSelect.value) {
+      payload.preferred_hours = hoursSelect.value;
+    }
+
+    // Campo note aggiuntive (se presente)
+    const notesTextarea = form.querySelector('[name="additional_notes"]');
+    if (notesTextarea && notesTextarea.value.trim()) {
+      payload.additional_notes = notesTextarea.value.trim();
+    }
+
+    // =====================================================
+    // STATO LOADING
+    // =====================================================
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const inputs = form.querySelectorAll("input, select, textarea, button");
+
+    submitBtn.innerHTML = `
+      <span class="spinner"></span>
+      Iscrizione in corso...
+    `;
+    submitBtn.classList.add("disabled");
+    submitBtn.disabled = true;
+    inputs.forEach(input => input.disabled = true);
+
+    // =====================================================
+    // INVIO RICHIESTA
+    // =====================================================
+
+    fetch(API_URLS.submitSubscription, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    })
+      .then(res => res.text())
+      .then(response => {
+        
+        // Mapping risposte errore
+        const errorMessages = {
+          "TOURNAMENT_NOT_FOUND": "Torneo non valido ❌",
+          "REGISTRATIONS_CLOSED": "Le iscrizioni sono chiuse ⚠️",
+          "INVALID_DATA": "Dati mancanti o non validi ⚠️",
+          "DUPLICATE_TEAM": "Una squadra con questo nome è già iscritta ⚠️",
+          "DUPLICATE_EMAIL": "Questa email è già stata utilizzata ⚠️",
+          "DUPLICATE": "Questa email è già iscritta ⚠️"
+        };
+
+        // Gestione errori
+        if (errorMessages[response]) {
+          showToast(errorMessages[response]);
+          restoreForm();
+          return;
+        }
+
+        // Successo
+        if (response === "SUBSCRIPTION_SAVED") {
+          showToast("Iscrizione completata 🎉");
+          setTimeout(() => window.location.reload(), 1200);
+          return;
+        }
+
+        // Errore inatteso
+        console.error("Risposta inattesa:", response);
+        showToast("Errore inatteso ❌");
+        restoreForm();
+      })
+      .catch(err => {
+        console.error("Errore submit:", err);
+        showToast("Errore di connessione ❌");
+        restoreForm();
+      });
+
+    // =====================================================
+    // RIPRISTINO FORM
+    // =====================================================
+
+    function restoreForm() {
+      submitBtn.innerHTML = "Invia iscrizione";
+      submitBtn.classList.remove("disabled");
+      submitBtn.disabled = false;
+      inputs.forEach(input => input.disabled = false);
+    }
+
+  });
 }
 
 
@@ -2134,10 +2329,8 @@ function parseHoursSlots(range) {
 
 
 
-
-
 // ===============================
-// 25. STATO TORNEO (UI)
+// 27. STATO TORNEO (UI)
 // ===============================
 function applyTournamentState(tournament) {
   const registrationBlock = document.querySelector(".tournament-registration-block");
@@ -2218,145 +2411,7 @@ function applyTournamentState(tournament) {
 
 
 
-// ===============================
-// 26. SUBMIT ISCRIZIONE (FIREBASE)
-// ===============================
-function handleFormSubmit(tournament) {
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
 
-    // VALIDAZIONE CHECKBOX REGOLAMENTO
-    const acceptRegulation = form.querySelector('input[name="accept_regulation"]');
-    if (!acceptRegulation.checked) {
-      showToast("Devi accettare il regolamento per iscriverti ⚠️");
-      return;
-    }
-
-    // VALIDAZIONE GIORNI (SE PRESENTI)
-    const checkboxGroup = form.querySelector(".checkbox-group");
-    if (checkboxGroup) {
-      const minDays = Number(checkboxGroup.dataset.minDays);
-      const checked = form.querySelectorAll('input[name="preferred_days[]"]:checked');
-      
-      if (checked.length < minDays) {
-        showToast(`Devi selezionare almeno ${minDays} ${minDays === 1 ? 'giorno' : 'giorni'} ⚠️`);
-        return;
-      }
-    }
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const inputs = form.querySelectorAll("input, select, textarea");
-
-    // Costruisci payload JSON
-    const payload = {
-      tournament_id: tournament.tournament_id,
-      team_name: form.querySelector('[name="team_name"]').value,
-      email: form.querySelector('[name="email"]').value,
-      phone: form.querySelector('[name="phone"]').value
-    };
-
-    // Campi extra (se presenti)
-    const zoneInput = form.querySelector('[name="preferred_zone"]');
-    if (zoneInput) {
-      payload.preferred_zone = zoneInput.value;
-    }
-
-    const daysChecked = form.querySelectorAll('[name="preferred_days[]"]:checked');
-    if (daysChecked.length > 0) {
-      payload.preferred_days = Array.from(daysChecked).map(cb => cb.value).join(", ");
-    }
-
-    const hoursSelect = form.querySelector('[name="preferred_hours"]');
-    if (hoursSelect) {
-      payload.preferred_hours = hoursSelect.value;
-    }
-
-    // Campo note aggiuntive
-    const notesTextarea = form.querySelector('[name="additional_notes"]');
-    if (notesTextarea && notesTextarea.value.trim()) {
-      payload.additional_notes = notesTextarea.value.trim();
-    }
-
-    // STATO LOADING
-    submitBtn.innerHTML = `
-      <span class="spinner"></span>
-      Iscrizione in corso...
-    `;
-    submitBtn.classList.add("disabled");
-    submitBtn.disabled = true;
-    inputs.forEach(input => input.disabled = true);
-
-    fetch(API_URLS.submitSubscription, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    })
-      .then(res => res.text())
-      .then(response => {
-        if (response === "TOURNAMENT_NOT_FOUND") {
-          showToast("Torneo non valido ❌");
-          restoreForm();
-          return;
-        }
-
-        if (response === "REGISTRATIONS_CLOSED") {
-          showToast("Le iscrizioni sono chiuse ⚠️");
-          restoreForm();
-          return;
-        }
-
-        if (response === "INVALID_DATA") {
-          showToast("Dati mancanti o non validi ⚠️");
-          restoreForm();
-          return;
-        }
-
-        // ✅ NUOVO: Gestione errori duplicati separati
-        if (response === "DUPLICATE_TEAM") {
-          showToast("Una squadra con questo nome è già iscritta ⚠️");
-          restoreForm();
-          return;
-        }
-
-        if (response === "DUPLICATE_EMAIL") {
-          showToast("Questa email è già stata utilizzata ⚠️");
-          restoreForm();
-          return;
-        }
-
-        // ✅ Mantieni retrocompatibilità con vecchio codice DUPLICATE
-        if (response === "DUPLICATE") {
-          showToast("Questa email è già iscritta ⚠️");
-          restoreForm();
-          return;
-        }
-
-        if (response === "SUBSCRIPTION_SAVED") {
-          showToast("Iscrizione completata 🎉");
-          setTimeout(() => window.location.reload(), 1200);
-          return;
-        }
-
-        showToast("Errore inatteso ❌");
-        restoreForm();
-      })
-      .catch(err => {
-        console.error("Errore submit:", err);
-        showToast("Errore di connessione ❌");
-        restoreForm();
-      });
-
-    function restoreForm() {
-      submitBtn.innerHTML = "Invia iscrizione";
-      submitBtn.classList.remove("disabled");
-      submitBtn.disabled = false;
-      inputs.forEach(input => input.disabled = false);
-    }
-
-  }, { once: true });
-}
 
 
 
@@ -2371,7 +2426,7 @@ function handleFormSubmit(tournament) {
 
 
 // ===============================
-// 27. LOAD + RENDER TEAMS LIST
+// 28. LOAD + RENDER TEAMS LIST
 // ===============================
 function loadAndRenderTeamsList(tournament) {
   if (!teamsListSection || !teamsListContainer || !teamsListCount) return;
@@ -2429,7 +2484,7 @@ function renderTeamsChips(teams) {
 }
 
 // ===============================
-// 28. TEAMS LIST STATES
+// 29. TEAMS LIST STATES
 // ===============================
 function renderTeamsSkeleton(count) {
   const frag = document.createDocumentFragment();
@@ -2483,7 +2538,7 @@ function escapeHTML(str) {
 
 
 // ===============================
-// 29. TOAST NOTIFICATION
+// 30. TOAST NOTIFICATION
 // ===============================
 function showToast(message) {
   const toast = document.createElement("div");
