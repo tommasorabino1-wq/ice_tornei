@@ -113,12 +113,6 @@ function renderGenericRegulation(tournaments) {
   tournamentSection.classList.add("hidden");
   tournamentSkeleton.classList.add("hidden");
 
-  // ✅ NASCONDI regolamento full-width duplicato (non serve nella vista generale)
-  const regulationBlockDuplicate = document.querySelector("#tournament-specific-section + .tournament-general-regulation");
-  if (regulationBlockDuplicate) {
-    regulationBlockDuplicate.classList.add("hidden");
-  }
-
   // Reset select
   tournamentSelect.innerHTML = `<option value="">Seleziona un torneo</option>`;
 
