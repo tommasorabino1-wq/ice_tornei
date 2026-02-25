@@ -205,13 +205,16 @@ function renderTournamentInfoRows(tournament) {
   // ROW 6: Time Range
   const row6 = buildTimeRangeInfoText(tournament);
 
-  // ROW 7: Court/Days/Hours
-  const row7 = buildCourtDaysHoursInfoText(tournament);
+  // ROW 7: Scheduling mode
+  const row7 = buildCourtSchedulingModeText(tournament);
 
-  // ROW 8: Teams
+  // ROW 8: Days & Hours
+  const row8 = buildCourtDaysHoursRangeText(tournament);
+
+  // ROW 9: Teams
   const teamsCurrent = tournament.teams_current || 0;
   const teamsMax = tournament.teams_max || 0;
-  const row8 = `${teamsCurrent} / ${teamsMax} squadre iscritte`;
+  const row9 = `${teamsCurrent} / ${teamsMax} squadre iscritte`;
 
   container.innerHTML = `
     <div class="info-row"><span class="info-row-icon">🏐</span><span><strong>Sport, Luogo, Data:</strong> ${escapeHTML(row1)}</span></div>
@@ -220,8 +223,9 @@ function renderTournamentInfoRows(tournament) {
     <div class="info-row"><span class="info-row-icon">🏆</span><span><strong>Montepremi:</strong> ${row4}</span></div>
     <div class="info-row"><span class="info-row-icon">📋</span><span><strong>Formato:</strong> ${row5}</span></div>
     <div class="info-row"><span class="info-row-icon">📅</span><span><strong>Durata:</strong> ${row6}</span></div>
-    <div class="info-row"><span class="info-row-icon">⏰</span><span><strong>Partite:</strong> ${row7}</span></div>
-    <div class="info-row"><span class="info-row-icon">✅</span><span><strong>Iscritti:</strong> ${row8}</span></div>
+    <div class="info-row"><span class="info-row-icon">🥅</span><span><strong>Gestione campi e orari:</strong> ${row7}</span></div>
+    <div class="info-row"><span class="info-row-icon">🕒</span><span><strong>Giorni e fasce orarie disponibili:</strong> ${row8}</span></div>
+    <div class="info-row"><span class="info-row-icon">✅</span><span><strong>Iscritti:</strong> ${row9}</span></div>
   `;
 }
 
@@ -337,41 +341,36 @@ function buildFormatInfoText(t) {
 function buildTimeRangeInfoText(t) {
   const timeMap = {
     short: "Torneo giornaliero",
-    mid: "Gironi su più settimane · Finali in un giorno",
-    long: "Gironi e finali su più settimane"
+    mid: "Una partita a settimana per gironi · Finali in un giorno",
+    long: "Una partita a settimana per gironi e finali"
   };
 
   return timeMap[t.time_range] || "Durata da definire";
 }
 
 // ===============================
-// 7h. BUILD COURT/DAYS/HOURS INFO TEXT
+// 7h. BUILD COURT SCHEDULING MODE TEXT
 // ===============================
-function buildCourtDaysHoursInfoText(t) {
+function buildCourtSchedulingModeText(t) {
   const fixed = String(t.fixed_court_days_hours || "false").toLowerCase();
+
+  const fixedMap = {
+    "false": "A scelta per tutte le partite",
+    "fixed_finals": "A scelta (Gironi) · Prestabiliti (Finali)",
+    "fixed_all": "Prestabiliti per tutte le partite"
+  };
+
+  return fixedMap[fixed] || "A scelta per tutte le partite";
+}
+
+
+// ===============================
+// 7i. BUILD COURT DAYS & HOURS RANGE TEXT
+// ===============================
+function buildCourtDaysHoursRangeText(t) {
   const days = String(t.available_days || "").toLowerCase();
   const hours = String(t.available_hours || "").toLowerCase();
 
-  // Mapping per cosa è fisso/variabile
-  const fixedMap = {
-    "false": "Campi, giorni e orari a scelta",
-    "court_all": "Campi fissi · Giorni e orari a scelta",
-    "court_finals": "Campi fissi (solo finali) · Gironi a scelta",
-    "days_all": "Giorni fissi · Campi e orari a scelta",
-    "days_finals": "Giorni fissi (solo finali) · Gironi a scelta",
-    "hours_all": "Orari fissi · Campi e giorni a scelta",
-    "hours_finals": "Orari fissi (solo finali) · Gironi a scelta",
-    "court_days_all": "Campi e giorni fissi · Orari a scelta",
-    "court_days_finals": "Campi e giorni fissi (solo finali)",
-    "court_hours_all": "Campi e orari fissi · Giorni a scelta",
-    "court_hours_finals": "Campi e orari fissi (solo finali)",
-    "days_hours_all": "Giorni e orari fissi · Campi a scelta",
-    "days_hours_finals": "Giorni e orari fissi (solo finali)",
-    "court_days_hours_all": "Campi, giorni e orari fissi",
-    "court_days_hours_finals": "Tutto fisso (solo finali) · Gironi a scelta"
-  };
-
-  // Mapping giorni
   const daysMap = {
     "lun-dom": "Tutti i giorni",
     "lun-ven": "Lun-Ven",
@@ -386,26 +385,18 @@ function buildCourtDaysHoursInfoText(t) {
     "dom": "Domenica"
   };
 
-  // Mapping orari
   const hoursMap = {
     "10-22": "10:00-22:00",
     "10-19": "10:00-19:00",
     "19-22": "19:00-22:00"
   };
 
-  const fixedText = fixedMap[fixed] || "Campi, giorni e orari a scelta";
-  const daysText = daysMap[days] || "";
-  const hoursText = hoursMap[hours] || "";
-
-  const parts = [fixedText];
-  
-  if (daysText) parts.push(daysText);
-  if (hoursText) parts.push(hoursText);
+  const parts = [];
+  if (daysMap[days]) parts.push(daysMap[days]);
+  if (hoursMap[hours]) parts.push(hoursMap[hours]);
 
   return parts.join(" · ");
 }
-
-
 
 
 

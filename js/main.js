@@ -97,6 +97,7 @@ function renderTournaments(tournaments) {
   }
 
   tournaments.forEach(t => {
+
     const card = document.createElement("div");
     card.className = "tournament-card";
     card.dataset.id = t.tournament_id;
@@ -108,7 +109,7 @@ function renderTournaments(tournaments) {
     const statusLabel = buildStatusLabel(t.status);
     const iscrizioniAperte = t.status === "open";
 
-    // === STESSA LOGICA DELLA PAGINA TORNEO ===
+    // === STESSA IDENTICA LOGICA DELLA PAGINA TORNEO ===
 
     const row1 = `${t.sport} · ${t.location} · ${t.date}`;
     const row2 = buildParticipantsInfoText(t);
@@ -116,11 +117,12 @@ function renderTournaments(tournaments) {
     const row4 = buildAwardInfoText(t);
     const row5 = buildFormatInfoText(t);
     const row6 = buildTimeRangeInfoText(t);
-    const row7 = buildCourtDaysHoursInfoText(t);
+    const row7 = buildCourtSchedulingModeText(t);
+    const row8 = buildCourtDaysHoursRangeText(t);
 
     const teamsCurrent = t.teams_current || 0;
     const teamsMax = t.teams_max || 0;
-    const row8 = `${teamsCurrent} / ${teamsMax} squadre iscritte`;
+    const row9 = `${teamsCurrent} / ${teamsMax} squadre iscritte`;
 
     card.innerHTML = `
       <div class="card-header">
@@ -136,8 +138,9 @@ function renderTournaments(tournaments) {
           <div class="card-info-row"><span class="row-icon">🏆</span><span><strong>Montepremi:</strong> ${row4}</span></div>
           <div class="card-info-row"><span class="row-icon">📋</span><span><strong>Formato:</strong> ${row5}</span></div>
           <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Durata:</strong> ${row6}</span></div>
-          <div class="card-info-row"><span class="row-icon">⏰</span><span><strong>Partite:</strong> ${row7}</span></div>
-          <div class="card-info-row"><span class="row-icon">✅</span><span><strong>Iscritti:</strong> ${row8}</span></div>
+          <div class="card-info-row"><span class="row-icon">🥅</span><span><strong>Gestione campi e orari:</strong> ${row7}</span></div>
+          <div class="card-info-row"><span class="row-icon">🕒</span><span><strong>Giorni e fasce orarie disponibili:</strong> ${row8}</span></div>
+          <div class="card-info-row"><span class="row-icon">✅</span><span><strong>Iscritti:</strong> ${row9}</span></div>
         </div>
       </div>
 
@@ -241,13 +244,13 @@ function buildPriceInfoText(t) {
 
 
 // ===============================
-// BUILD AWARD INFO (award, award_amount_perc)
+// BUILD AWARD INFO
 // ===============================
 function buildAwardInfoText(t) {
   const hasAward = t.award === true || String(t.award).toUpperCase() === "TRUE";
   
   if (!hasAward) {
-    return "Solo premi simbolici (coppe, medaglie)";
+    return "Solo premi simbolici";
   }
 
   const perc = t.award_amount_perc;
@@ -262,7 +265,6 @@ function buildAwardInfoText(t) {
 
   return "Montepremi garantito";
 }
-
 
 
 
@@ -294,8 +296,8 @@ function buildFormatInfoText(t) {
 function buildTimeRangeInfoText(t) {
   const timeMap = {
     short: "Torneo giornaliero",
-    mid: "Gironi su più settimane · Finali in un giorno",
-    long: "Gironi e finali su più settimane"
+    mid: "Una partita a settimana per gironi · Finali in un giorno",
+    long: "Una partita a settimana per gironi e finali"
   };
 
   return timeMap[t.time_range] || "Durata da definire";
@@ -303,30 +305,27 @@ function buildTimeRangeInfoText(t) {
 
 
 // ===============================
-// BUILD COURT/DAYS/HOURS INFO
+// BUILD COURT SCHEDULING MODE
 // ===============================
-function buildCourtDaysHoursInfoText(t) {
+function buildCourtSchedulingModeText(t) {
   const fixed = String(t.fixed_court_days_hours || "false").toLowerCase();
-  const days = String(t.available_days || "").toLowerCase();
-  const hours = String(t.available_hours || "").toLowerCase();
 
   const fixedMap = {
-    "false": "Campi, giorni e orari a scelta",
-    "court_all": "Campi fissi · Giorni e orari a scelta",
-    "court_finals": "Campi fissi (solo finali) · Gironi a scelta",
-    "days_all": "Giorni fissi · Campi e orari a scelta",
-    "days_finals": "Giorni fissi (solo finali) · Gironi a scelta",
-    "hours_all": "Orari fissi · Campi e giorni a scelta",
-    "hours_finals": "Orari fissi (solo finali) · Gironi a scelta",
-    "court_days_all": "Campi e giorni fissi · Orari a scelta",
-    "court_days_finals": "Campi e giorni fissi (solo finali)",
-    "court_hours_all": "Campi e orari fissi · Giorni a scelta",
-    "court_hours_finals": "Campi e orari fissi (solo finali)",
-    "days_hours_all": "Giorni e orari fissi · Campi a scelta",
-    "days_hours_finals": "Giorni e orari fissi (solo finali)",
-    "court_days_hours_all": "Campi, giorni e orari fissi",
-    "court_days_hours_finals": "Tutto fisso (solo finali) · Gironi a scelta"
+    "false": "A scelta per tutte le partite",
+    "fixed_finals": "A scelta (Gironi) · Prestabiliti (Finali)",
+    "fixed_all": "Prestabiliti per tutte le partite"
   };
+
+  return fixedMap[fixed] || "A scelta per tutte le partite";
+}
+
+
+// ===============================
+// BUILD COURT DAYS & HOURS RANGE
+// ===============================
+function buildCourtDaysHoursRangeText(t) {
+  const days = String(t.available_days || "").toLowerCase();
+  const hours = String(t.available_hours || "").toLowerCase();
 
   const daysMap = {
     "lun-dom": "Tutti i giorni",
@@ -348,17 +347,15 @@ function buildCourtDaysHoursInfoText(t) {
     "19-22": "19:00-22:00"
   };
 
-  const fixedText = fixedMap[fixed] || "Campi, giorni e orari a scelta";
-  const daysText = daysMap[days] || "";
-  const hoursText = hoursMap[hours] || "";
-
-  const parts = [fixedText];
-  
-  if (daysText) parts.push(daysText);
-  if (hoursText) parts.push(hoursText);
+  const parts = [];
+  if (daysMap[days]) parts.push(daysMap[days]);
+  if (hoursMap[hours]) parts.push(hoursMap[hours]);
 
   return parts.join(" · ");
 }
+
+
+
 
 
 // ===============================
