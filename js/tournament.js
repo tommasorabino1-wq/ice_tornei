@@ -20,7 +20,7 @@ const tournamentSkeleton = document.querySelector(".tournament-skeleton");
 // Torneo UI
 const badge = document.getElementById("tournament-status-badge");
 const subscribeMessage = document.getElementById("subscribe-message");
-const form = document.getElementById("registration-form");
+let form = document.getElementById("registration-form");  // ← CAMBIA const → let
 const teamsInfo = document.getElementById("info-teams");
 
 // Teams list UI
@@ -2165,15 +2165,15 @@ function parseHoursSlots(range) {
 // ===============================
 // 26. SUBMIT ISCRIZIONE (FIREBASE)
 // ===============================
+let isSubmitting = false;
+
 function handleFormSubmit(tournament) {
-  
-  // Rimuovi eventuali listener precedenti
-  const newForm = form.cloneNode(true);
-  form.parentNode.replaceChild(newForm, form);
-  form = newForm;
   
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+    
+    // Evita submit multipli
+    if (isSubmitting) return;
 
     // =====================================================
     // VALIDAZIONI
@@ -2244,6 +2244,8 @@ function handleFormSubmit(tournament) {
     // STATO LOADING
     // =====================================================
 
+    isSubmitting = true;
+    
     const submitBtn = form.querySelector('button[type="submit"]');
     const inputs = form.querySelectorAll("input, select, textarea, button");
 
@@ -2309,6 +2311,7 @@ function handleFormSubmit(tournament) {
     // =====================================================
 
     function restoreForm() {
+      isSubmitting = false;
       submitBtn.innerHTML = "Invia iscrizione";
       submitBtn.classList.remove("disabled");
       submitBtn.disabled = false;
@@ -2317,7 +2320,6 @@ function handleFormSubmit(tournament) {
 
   });
 }
-
 
 
 
