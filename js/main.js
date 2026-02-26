@@ -215,31 +215,58 @@ function buildParticipantsInfoText(t) {
 // ===============================
 function buildPriceInfoText(t) {
   const price = t.price || 0;
-  
-  const courtIncluded = t.court_price && t.court_price !== "non_compreso";
-  
-  const refereePrice = String(t.referee_price || "NA").toLowerCase();
-  const refereeIncluded = refereePrice !== "na" && refereePrice !== "non_compreso";
-  const refereeNA = refereePrice === "na";
 
-  let inclusionText = "";
+  const courtPrice = String(t.court_price || "non_compreso").toLowerCase();
+  const refereePrice = String(t.referee_price || "na").toLowerCase();
 
-  if (courtIncluded && refereeIncluded) {
-    inclusionText = "campi e arbitro inclusi";
-  } else if (courtIncluded && refereeNA) {
-    inclusionText = "campi inclusi";
-  } else if (courtIncluded && !refereeIncluded) {
-    inclusionText = "campi inclusi, arbitro non incluso";
-  } else if (!courtIncluded && refereeIncluded) {
-    inclusionText = "campi non inclusi, arbitro incluso";
-  } else if (!courtIncluded && refereeNA) {
-    inclusionText = "campi non inclusi";
-  } else {
-    inclusionText = "campi e arbitro non inclusi";
+  // ===============================
+  // CAMPI
+  // ===============================
+
+  let courtText = "";
+
+  switch (courtPrice) {
+    case "compreso_gironi_finals":
+      courtText = "campi inclusi";
+      break;
+    case "compreso_gironi":
+      courtText = "campi inclusi (solo gironi)";
+      break;
+    case "compreso_finals":
+      courtText = "campi inclusi (solo fase finale)";
+      break;
+    case "non_compreso":
+    default:
+      courtText = "campi non inclusi";
   }
 
-  return `€${price} a squadra · ${inclusionText}`;
+  // ===============================
+  // ARBITRO
+  // ===============================
+
+  let refereeText = "";
+
+  if (refereePrice === "na") {
+    refereeText = ""; // non menzioniamo
+  } else if (refereePrice === "non_compreso") {
+    refereeText = "arbitro non incluso";
+  } else {
+    refereeText = "arbitro incluso";
+  }
+
+  // ===============================
+  // COMPOSIZIONE FINALE
+  // ===============================
+
+  const parts = [courtText];
+
+  if (refereeText) {
+    parts.push(refereeText);
+  }
+
+  return `€${price} a squadra · ${parts.join(", ")}`;
 }
+
 
 
 
@@ -324,32 +351,75 @@ function buildCourtSchedulingModeText(t) {
 // BUILD COURT DAYS & HOURS RANGE
 // ===============================
 function buildCourtDaysHoursRangeText(t) {
-  const days = String(t.available_days || "").toLowerCase();
-  const hours = String(t.available_hours || "").toLowerCase();
 
-  const daysMap = {
-    "lun-dom": "Tutti i giorni",
-    "lun-ven": "Lun-Ven",
-    "sab-dom": "Weekend",
-    "lun": "Lunedì",
-    "mar": "Martedì",
-    "mer": "Mercoledì",
-    "gio": "Giovedì",
-    "giov": "Giovedì",
-    "ven": "Venerdì",
-    "sab": "Sabato",
-    "dom": "Domenica"
-  };
-
-  const hoursMap = {
-    "10-22": "10:00-22:00",
-    "10-19": "10:00-19:00",
-    "19-22": "19:00-22:00"
-  };
+  const daysRaw = String(t.available_days || "").toLowerCase().trim();
+  const hoursRaw = String(t.available_hours || "").toLowerCase().trim();
 
   const parts = [];
-  if (daysMap[days]) parts.push(daysMap[days]);
-  if (hoursMap[hours]) parts.push(hoursMap[hours]);
+
+  // =====================================================
+  // GIORNI
+  // =====================================================
+
+  const dayLabels = {
+    lun: "Lunedì",
+    mar: "Martedì",
+    mer: "Mercoledì",
+    gio: "Giovedì",
+    giov: "Giovedì",
+    ven: "Venerdì",
+    sab: "Sabato",
+    dom: "Domenica"
+  };
+
+  if (daysRaw.includes("-")) {
+
+    // Range (es. lun-ven, sab-dom, ven-dom, lun-dom)
+    const [start, end] = daysRaw.split("-");
+
+    if (daysRaw === "lun-dom") {
+      parts.push("Tutti i giorni");
+    } 
+    else if (daysRaw === "lun-ven") {
+      parts.push("Lun-Ven");
+    } 
+    else if (daysRaw === "sab-dom") {
+      parts.push("Weekend");
+    } 
+    else if (daysRaw === "ven-dom") {
+      parts.push("Ven-Dom");
+    } 
+    else if (dayLabels[start] && dayLabels[end]) {
+      parts.push(`${dayLabels[start]} - ${dayLabels[end]}`);
+    }
+
+  } else if (dayLabels[daysRaw]) {
+
+    // Giorno singolo
+    parts.push(dayLabels[daysRaw]);
+  }
+
+  // =====================================================
+  // ORARI (DINAMICI)
+  // =====================================================
+
+  if (hoursRaw && hoursRaw.includes("-")) {
+
+    const [startHour, endHour] = hoursRaw.split("-");
+
+    const formatHour = (h) => {
+      const hourNumber = Number(h);
+      if (isNaN(hourNumber)) return null;
+      return `${hourNumber.toString().padStart(2, "0")}:00`;
+    };
+
+    const formattedStart = formatHour(startHour);
+    const formattedEnd = formatHour(endHour);
+
+    if (formattedStart && formattedEnd) {
+      parts.push(`${formattedStart}-${formattedEnd}`);
+    }
+  }
 
   return parts.join(" · ");
 }

@@ -259,30 +259,56 @@ function buildParticipantsInfoText(t) {
 // ===============================
 function buildPriceInfoText(t) {
   const price = t.price || 0;
-  
-  const courtIncluded = t.court_price && t.court_price !== "non_compreso";
-  
-  const refereePrice = String(t.referee_price || "NA").toLowerCase();
-  const refereeIncluded = refereePrice !== "na" && refereePrice !== "non_compreso";
-  const refereeNA = refereePrice === "na";
 
-  let inclusionText = "";
+  const courtPrice = String(t.court_price || "non_compreso").toLowerCase();
+  const refereePrice = String(t.referee_price || "na").toLowerCase();
 
-  if (courtIncluded && refereeIncluded) {
-    inclusionText = "campi e arbitro inclusi";
-  } else if (courtIncluded && refereeNA) {
-    inclusionText = "campi inclusi";
-  } else if (courtIncluded && !refereeIncluded) {
-    inclusionText = "campi inclusi, arbitro non incluso";
-  } else if (!courtIncluded && refereeIncluded) {
-    inclusionText = "campi non inclusi, arbitro incluso";
-  } else if (!courtIncluded && refereeNA) {
-    inclusionText = "campi non inclusi";
-  } else {
-    inclusionText = "campi e arbitro non inclusi";
+  // ===============================
+  // CAMPI
+  // ===============================
+
+  let courtText = "";
+
+  switch (courtPrice) {
+    case "compreso_gironi_finals":
+      courtText = "campi inclusi";
+      break;
+    case "compreso_gironi":
+      courtText = "campi inclusi (solo gironi)";
+      break;
+    case "compreso_finals":
+      courtText = "campi inclusi (solo fase finale)";
+      break;
+    case "non_compreso":
+    default:
+      courtText = "campi non inclusi";
   }
 
-  return `€${price} a squadra · ${inclusionText}`;
+  // ===============================
+  // ARBITRO
+  // ===============================
+
+  let refereeText = "";
+
+  if (refereePrice === "na") {
+    refereeText = ""; // non menzioniamo
+  } else if (refereePrice === "non_compreso") {
+    refereeText = "arbitro non incluso";
+  } else {
+    refereeText = "arbitro incluso";
+  }
+
+  // ===============================
+  // COMPOSIZIONE FINALE
+  // ===============================
+
+  const parts = [courtText];
+
+  if (refereeText) {
+    parts.push(refereeText);
+  }
+
+  return `€${price} a squadra · ${parts.join(", ")}`;
 }
 
 // ===============================
@@ -362,36 +388,78 @@ function buildCourtSchedulingModeText(t) {
 // 7i. BUILD COURT DAYS & HOURS RANGE TEXT
 // ===============================
 function buildCourtDaysHoursRangeText(t) {
-  const days = String(t.available_days || "").toLowerCase();
-  const hours = String(t.available_hours || "").toLowerCase();
 
-  const daysMap = {
-    "lun-dom": "Tutti i giorni",
-    "lun-ven": "Lun-Ven",
-    "sab-dom": "Weekend",
-    "lun": "Lunedì",
-    "mar": "Martedì",
-    "mer": "Mercoledì",
-    "gio": "Giovedì",
-    "giov": "Giovedì",
-    "ven": "Venerdì",
-    "sab": "Sabato",
-    "dom": "Domenica"
-  };
-
-  const hoursMap = {
-    "10-22": "10:00-22:00",
-    "10-19": "10:00-19:00",
-    "19-22": "19:00-22:00"
-  };
+  const daysRaw = String(t.available_days || "").toLowerCase().trim();
+  const hoursRaw = String(t.available_hours || "").toLowerCase().trim();
 
   const parts = [];
-  if (daysMap[days]) parts.push(daysMap[days]);
-  if (hoursMap[hours]) parts.push(hoursMap[hours]);
+
+  // =====================================================
+  // GIORNI
+  // =====================================================
+
+  const dayLabels = {
+    lun: "Lunedì",
+    mar: "Martedì",
+    mer: "Mercoledì",
+    gio: "Giovedì",
+    giov: "Giovedì",
+    ven: "Venerdì",
+    sab: "Sabato",
+    dom: "Domenica"
+  };
+
+  if (daysRaw.includes("-")) {
+
+    // Range (es. lun-ven, sab-dom, ven-dom, lun-dom)
+    const [start, end] = daysRaw.split("-");
+
+    if (daysRaw === "lun-dom") {
+      parts.push("Tutti i giorni");
+    } 
+    else if (daysRaw === "lun-ven") {
+      parts.push("Lun-Ven");
+    } 
+    else if (daysRaw === "sab-dom") {
+      parts.push("Weekend");
+    } 
+    else if (daysRaw === "ven-dom") {
+      parts.push("Ven-Dom");
+    } 
+    else if (dayLabels[start] && dayLabels[end]) {
+      parts.push(`${dayLabels[start]} - ${dayLabels[end]}`);
+    }
+
+  } else if (dayLabels[daysRaw]) {
+
+    // Giorno singolo
+    parts.push(dayLabels[daysRaw]);
+  }
+
+  // =====================================================
+  // ORARI (DINAMICI)
+  // =====================================================
+
+  if (hoursRaw && hoursRaw.includes("-")) {
+
+    const [startHour, endHour] = hoursRaw.split("-");
+
+    const formatHour = (h) => {
+      const hourNumber = Number(h);
+      if (isNaN(hourNumber)) return null;
+      return `${hourNumber.toString().padStart(2, "0")}:00`;
+    };
+
+    const formattedStart = formatHour(startHour);
+    const formattedEnd = formatHour(endHour);
+
+    if (formattedStart && formattedEnd) {
+      parts.push(`${formattedStart}-${formattedEnd}`);
+    }
+  }
 
   return parts.join(" · ");
 }
-
 
 
 
@@ -1151,41 +1219,80 @@ function buildFormatTimeRangeRule(tournament, ruleNumber) {
 function buildCourtDaysHoursRule(tournament, ruleNumber) {
 
   const fixed = String(tournament.fixed_court_days_hours || "false").toLowerCase();
-  const days = String(tournament.available_days || "").toLowerCase();
-  const hours = String(tournament.available_hours || "").toLowerCase();
+  const daysRaw = String(tournament.available_days || "").toLowerCase().trim();
+  const hoursRaw = String(tournament.available_hours || "").toLowerCase().trim();
   const location = String(tournament.location || "");
   const formatType = String(tournament.format_type || "").toLowerCase();
   const timeRange = String(tournament.time_range || "").toLowerCase();
 
   const hasFinals = formatType.includes("finals");
 
-  const daysMap = {
-    "lun-dom": "qualsiasi giorno della settimana",
-    "lun-ven": "dal lunedì al venerdì",
-    "sab-dom": "nel weekend (sabato e domenica)",
-    "lun": "il lunedì",
-    "mar": "il martedì",
-    "mer": "il mercoledì",
-    "gio": "il giovedì",
-    "giov": "il giovedì",
-    "ven": "il venerdì",
-    "sab": "il sabato",
-    "dom": "la domenica"
+  // =====================================================
+  // GIORNI DINAMICI
+  // =====================================================
+
+  const dayLabels = {
+    lun: "lunedì",
+    mar: "martedì",
+    mer: "mercoledì",
+    gio: "giovedì",
+    giov: "giovedì",
+    ven: "venerdì",
+    sab: "sabato",
+    dom: "domenica"
   };
 
-  const hoursMap = {
-    "10-22": "tra le 10:00 e le 22:00",
-    "10-19": "tra le 10:00 e le 19:00 (fascia diurna)",
-    "19-22": "tra le 19:00 e le 22:00 (fascia serale)"
-  };
+  let daysText = "";
 
-  const daysText = daysMap[days] || days || "";
-  const hoursText = hoursMap[hours] || hours || "";
+  if (daysRaw === "lun-dom") {
+    daysText = "qualsiasi giorno della settimana";
+  }
+  else if (daysRaw === "lun-ven") {
+    daysText = "dal lunedì al venerdì";
+  }
+  else if (daysRaw === "sab-dom") {
+    daysText = "nel weekend (sabato e domenica)";
+  }
+  else if (daysRaw === "ven-dom") {
+    daysText = "dal venerdì alla domenica";
+  }
+  else if (daysRaw.includes("-")) {
+    const [start, end] = daysRaw.split("-");
+    if (dayLabels[start] && dayLabels[end]) {
+      daysText = `dal ${dayLabels[start]} al ${dayLabels[end]}`;
+    }
+  }
+  else if (dayLabels[daysRaw]) {
+    daysText = `il ${dayLabels[daysRaw]}`;
+  }
+
+  // =====================================================
+  // ORARI DINAMICI
+  // =====================================================
+
+  let hoursText = "";
+
+  if (hoursRaw.includes("-")) {
+    const [start, end] = hoursRaw.split("-");
+
+    const formatHour = (h) => {
+      const n = Number(h);
+      if (isNaN(n)) return null;
+      return `${n.toString().padStart(2, "0")}:00`;
+    };
+
+    const startFormatted = formatHour(start);
+    const endFormatted = formatHour(end);
+
+    if (startFormatted && endFormatted) {
+      hoursText = `tra le ${startFormatted} e le ${endFormatted}`;
+    }
+  }
 
   const officialConstraints = `a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>`;
 
   // =====================================================
-  // DURATA TORNEO (time_range)
+  // DURATA TORNEO
   // =====================================================
 
   let durationText = "";
@@ -1215,7 +1322,7 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   }
 
   // =====================================================
-  // ORGANIZZAZIONE (fixed)
+  // ORGANIZZAZIONE
   // =====================================================
 
   let organizationText = "";
@@ -1223,55 +1330,40 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
 
   if (fixed === "false") {
 
-    organizationText = hasFinals
-      ? `Per tutta la durata del torneo (sia fase a gironi che fase finale), l'organizzazione prenoterà di volta in volta i campi per le partite seguendo le preferenze (riguardo a zona, giorni e orari) espresse dalle squadre in fase di iscrizione, considerando comunque che le partite si svolgeranno ${officialConstraints}.`
-      : `Per tutte le partite del torneo, campi, giorni e orari saranno prenotati dall'organizzazione di volta in volta seguendo le preferenze espresse dalle squadre in fase di iscrizione, considerando comunque che le partite si svolgeranno ${officialConstraints}.`;
+    organizationText = `Le partite saranno prenotate dall'organizzazione di volta in volta seguendo le preferenze espresse dalle squadre in fase di iscrizione, considerando comunque che si svolgeranno ${officialConstraints}.`;
 
-    bookingText = `In fase di iscrizione, le squadre potranno quindi indicare le proprie preferenze su zona, giorni e orari delle partite. L'organizzazione si occuperà della prenotazione del campo tenendo conto delle preferenze espresse.`;
+    bookingText = `In fase di iscrizione, le squadre potranno indicare le proprie preferenze su zona, giorni e orari. L'organizzazione terrà conto delle indicazioni ricevute nella pianificazione delle partite.`;
   }
 
   else if (fixed === "fixed_all") {
 
-    organizationText = hasFinals
-      ? `Per tutta la durata del torneo (sia fase a gironi che fase finale), campi, giorni e orari delle partite saranno stabiliti dall'organizzazione e comunicati in anticipo alle squadre, considerando comunque che tutte le partite si svolgeranno ${officialConstraints}.`
-      : `Per tutte le partite del torneo, campi, giorni e orari saranno stabiliti dall'organizzazione e comunicati in anticipo alle squadre, considerando comunque che tutte le partite si svolgeranno ${officialConstraints}.`;
+    organizationText = `Campi, giorni e orari saranno stabiliti dall'organizzazione e comunicati in anticipo alle squadre, considerando che tutte le partite si svolgeranno ${officialConstraints}.`;
 
-    bookingText = `Il calendario completo delle partite sarà comunicato dall'organizzazione prima dell'inizio del torneo.`;
+    bookingText = `Il calendario completo sarà comunicato prima dell'inizio del torneo.`;
   }
 
-  else if (fixed === "fixed_finals") {
+  else if (fixed === "fixed_finals" && hasFinals) {
 
-    if (hasFinals) {
+    organizationText = `
+      <ul>
+        <li><strong>Fase a gironi:</strong> Le partite saranno organizzate tenendo conto delle preferenze espresse in fase di iscrizione.</li>
+        <li><strong>Fase finale:</strong> Campi, giorni e orari saranno stabiliti dall'organizzazione e comunicati alle squadre qualificate.</li>
+      </ul>
+      Tutte le partite si svolgeranno comunque ${officialConstraints}.
+    `;
 
-      organizationText = `
-        <ul>
-          <li>
-            <strong>Fase a gironi:</strong> I campi per le partite della fase a gironi saranno prenotati dall'organizzazione di volta in volta seguendo le preferenze (riguardo a zona, giorni e orari) espresse dalle squadre in fase di iscrizione.
-          </li>
-          <li>
-            <strong>Fase finale:</strong> Campi, giorni e orari delle partite della fase finale saranno stabiliti dall'organizzazione e comunicati in anticipo alle squadre qualificate.
-          </li>
-        </ul>
-        Considerando comunque che tutte le partite si svolgeranno ${officialConstraints}.
-      `;
-
-      bookingText = `Per la fase a gironi, in fase di iscrizione le squadre potranno indicare le proprie preferenze su zona, giorni e orari delle partite. L'organizzazione si occuperà della prenotazione dei campi tenendo conto delle preferenze espresse.`;
-    } else {
-
-      organizationText = `Per tutte le partite del torneo, i campi per le partite saranno prenotati dall'organizzazione di volta in volta seguendo le preferenze espresse dalle squadre in fase di iscrizione, considerando comunque che le partite si svolgeranno ${officialConstraints}.`;
-
-      bookingText = `In fase di iscrizione, le squadre potranno indicare le proprie preferenze su zona, giorni e orari delle partite. L'organizzazione si occuperà della prenotazione del campo tenendo conto delle preferenze espresse.`;
-    }
+    bookingText = `Per la fase a gironi sarà possibile indicare preferenze in fase di iscrizione.`;
   }
 
   else {
 
     organizationText = `Le modalità organizzative saranno comunicate prima dell'inizio del torneo. Le partite si svolgeranno ${officialConstraints}.`;
+
     bookingText = `Ulteriori dettagli verranno forniti agli iscritti.`;
   }
 
   // =====================================================
-  // CLAUSOLA UNIVERSALE (NUOVO BULLET)
+  // CLAUSOLA UNIVERSALE
   // =====================================================
 
   const startDateClause = `La data di inizio del torneo è indicativa. In caso di comprovata necessità, l'organizzazione può posticipare (max 30 giorni) o annullare (con rimborso completo della quota) il torneo.`;
@@ -1295,7 +1387,6 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     </div>
   `;
 }
-
 
 
 // ===============================
@@ -1678,121 +1769,128 @@ function buildInsuranceRule(tournament, ruleNumber) {
 // 9l. BUILD FACILITIES RULE (REGOLA 11)
 // ===============================
 function buildFacilitiesRule(tournament, ruleNumber) {
+
   const food = String(tournament.food || "none").toLowerCase();
-  const palla = String(tournament.palla || "false").toLowerCase();
-  const racket = String(tournament.racket || "NA").toLowerCase();
   const upsell = String(tournament.upsell || "none").toLowerCase();
+  const palla = String(tournament.palla || "false").toLowerCase();
+  const racket = String(tournament.racket || "na").toLowerCase();
   const sport = String(tournament.sport || "").toLowerCase();
-  
-  // =====================================================
-  // MAPPING BASE
-  // =====================================================
-  
-  // Terminologia in base allo sport
+
   const isRacketSport = sport.includes("padel") || sport.includes("tennis");
-  const ballTerminology = isRacketSport ? "palline" : "palloni";
-  
-  // Food mapping
-  const foodMap = {
-    "all": "L'organizzazione offrirà un pasto completo a tutti i partecipanti.",
-    "partial": "L'organizzazione offrirà snack e bevande a tutti i partecipanti.",
-    "none": null
-  };
-  
-  // Upsell mapping
-  const upsellMap = {
-    "kit": {
-      kit: "Durante le partite del torneo sarà possibile acquistare un kit sportivo \"Tornei ICE\" (magliette o altro materiale tecnico) a prezzo di costo.",
-      photo: null
-    },
-    "photo": {
-      kit: null,
-      photo: "Durante le partite del torneo saranno presenti <strong>fotografi professionali</strong> per foto e video delle partite, disponibili <strong>gratuitamente</strong> per chi condividerà i contenuti sui social taggando Tornei ICE."
-    },
-    "kit_photo": {
-      kit: "Durante le partite del torneo sarà possibile acquistare un kit sportivo \"Tornei ICE\" (magliette o altro materiale tecnico) a prezzo di costo.",
-      photo: "Durante le partite del torneo saranno presenti <strong>fotografi professionali</strong> per foto e video delle partite, disponibili <strong>gratuitamente</strong> per chi condividerà i contenuti sui social taggando Tornei ICE."
-    },
-    "none": {
-      kit: null,
-      photo: null
-    }
-  };
-  
-  // =====================================================
-  // COSTRUZIONE TESTI
-  // =====================================================
-  
-  // Food
-  const foodText = foodMap[food] || null;
-  
-  // Palla
-  const hasPalla = palla === "true";
-  const pallaText = hasPalla 
-    ? `L'organizzazione fornirà i <strong>${ballTerminology}</strong> necessari per tutte le partite del torneo.`
-    : null;
-  
-  // Racket
-  let racketText = null;
-  if (isRacketSport && racket !== "na" && racket !== "0") {
-    const racketNumber = Number(racket) || 0;
-    if (racketNumber === 1) {
-      racketText = `L'organizzazione metterà a disposizione <strong>1 racchetta</strong> per i partecipanti che ne avessero bisogno.`;
-    } else if (racketNumber > 1) {
-      racketText = `L'organizzazione metterà a disposizione <strong>${racketNumber} racchette</strong> per i partecipanti che ne avessero bisogno.`;
-    }
-  }
-  
-  // Upsell
-  const upsellData = upsellMap[upsell] || upsellMap["none"];
-  const kitText = upsellData.kit;
-  const photoText = upsellData.photo;
-  
-  // =====================================================
-  // COSTRUZIONE LISTA
-  // =====================================================
-  
+  const ballTerminology = isRacketSport ? "le palline" : "i palloni";
+
   const items = [];
-  
-  if (foodText) {
-    items.push(`<li><strong>Ristoro:</strong> ${foodText}</li>`);
-  }
-  
-  if (pallaText) {
-    items.push(`<li><strong>Attrezzatura:</strong> ${pallaText}</li>`);
-  }
-  
-  if (racketText) {
-    items.push(`<li><strong>Racchette:</strong> ${racketText}</li>`);
-  }
-  
-  if (kitText) {
-    items.push(`<li><strong>Kit sportivo:</strong> ${kitText}</li>`);
-  }
-  
-  if (photoText) {
-    items.push(`<li><strong>Foto e video:</strong> ${photoText}</li>`);
-  }
-  
+
   // =====================================================
-  // SE NON C'È NESSUN SERVIZIO, NON MOSTRARE LA REGOLA
+  // FOOD
   // =====================================================
-  
+
+  const foodMap = {
+    all_all: "Pranzo/Cena offerto dall'organizzazione durante il torneo.",
+    all_finals: "Pranzo/Cena offerto dall'organizzazione durante la fase finale del torneo.",
+    partial_all: "Snack e bevande offerte dall'organizzazione durante il torneo.",
+    partial_finals: "Snack e bevande offerte dall'organizzazione durante la fase finale del torneo.",
+    none: null
+  };
+
+  if (foodMap[food]) {
+    items.push(`<li><strong>Ristoro:</strong> ${foodMap[food]}</li>`);
+  }
+
+  // =====================================================
+  // PALLA
+  // =====================================================
+
+  const pallaMap = {
+    true_all: `L'organizzazione fornirà <strong>${ballTerminology}</strong> per tutte le partite del torneo.`,
+    true_finals: `L'organizzazione fornirà <strong>${ballTerminology}</strong> per le partite della fase finale.`,
+    false: null
+  };
+
+  if (pallaMap[palla]) {
+    items.push(`<li><strong>Materiale di gioco:</strong> ${pallaMap[palla]}</li>`);
+  }
+
+  // =====================================================
+  // RACKET
+  // =====================================================
+
+  if (isRacketSport) {
+    const racketMap = {
+      true_all: "Saranno messe a disposizione racchette per tutta la durata del torneo, per chi ne avesse necessità.",
+      true_finals: "Saranno messe a disposizione racchette durante le partite della fase finale, per chi ne avesse necessità.",
+      na: null
+    };
+
+    if (racketMap[racket]) {
+      items.push(`<li><strong>Racchette:</strong> ${racketMap[racket]}</li>`);
+    }
+  }
+
+  // =====================================================
+  // UPSELL
+  // =====================================================
+
+  const upsellMap = {
+    kit_all: {
+      kit: "Durante il torneo, sarà possibile acquistare un kit sportivo ufficiale \"Tornei ICE\" a prezzo di costo.",
+      photo: null
+    },
+    kit_finals: {
+      kit: "Durante le partite della fase finale, sarà possibile acquistare un kit sportivo ufficiale \"Tornei ICE\" a prezzo di costo.",
+      photo: null
+    },
+    photo_all: {
+      kit: null,
+      photo: "Durante tutte le partite del torneo, saranno presenti fotografi ufficiali. Foto e video delle partite saranno resi disponibili gratuitamente a tutti i partecipanti."
+    },
+    photo_finals: {
+      kit: null,
+      photo: "Durante le partite della fase finale, saranno presenti fotografi ufficiali. Foto e video delle partite saranno resi disponibili gratuitamente a tutti i partecipanti."
+    },
+    kit_photo_all: {
+      kit: "Durante il torneo, sarà possibile acquistare un kit sportivo ufficiale \"Tornei ICE\" a prezzo di costo.",
+      photo: "Durante tutte le partite del torneo, saranno presenti fotografi ufficiali. Foto e video delle partite saranno resi disponibili gratuitamente a tutti i partecipanti."
+    },
+    kit_photo_finals: {
+      kit: "Durante le partite della fase finale, sarà possibile acquistare un kit sportivo ufficiale \"Tornei ICE\" a prezzo di costo.",
+      photo: "Durante le partite della fase finale, saranno presenti fotografi ufficiali. Foto e video delle partite saranno resi disponibili gratuitamente a tutti i partecipanti."
+    },
+    none: {
+      kit: null,
+      photo: null
+    }
+  };
+
+  const upsellData = upsellMap[upsell] || upsellMap.none;
+
+  if (upsellData.kit) {
+    items.push(`<li><strong>Kit ufficiale:</strong> ${upsellData.kit}</li>`);
+  }
+
+  if (upsellData.photo) {
+    items.push(`<li><strong>Foto e video:</strong> ${upsellData.photo}</li>`);
+  }
+
+  // =====================================================
+  // SE NON CI SONO SERVIZI → NON MOSTRARE REGOLA
+  // =====================================================
+
   if (items.length === 0) {
     return null;
   }
-  
+
   // =====================================================
   // OUTPUT FINALE
   // =====================================================
-  
+
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
-        <p><strong>Servizi aggiuntivi</strong></p>
+        <p><strong>Servizi e iniziative durante il torneo</strong></p>
         <ul>
-          ${items.join('\n          ')}
+          ${items.join('\n')}
         </ul>
       </div>
     </div>
@@ -1935,9 +2033,6 @@ function populateExtraFields(tournament) {
 
   const fixed = String(tournament.fixed_court_days_hours || "false").toLowerCase();
   
-  // Se tutto è fisso per tutto il torneo, non mostrare campi preferenze
-  // MA mostriamo comunque le note aggiuntive
-  
   const availableDays = String(tournament.available_days || "").trim().toLowerCase();
   const availableHours = String(tournament.available_hours || "").trim().toLowerCase();
 
@@ -1956,7 +2051,9 @@ function populateExtraFields(tournament) {
   // CAMPO 3: ORARIO PREFERITO (solo se non fixed_all e c'è un range di orari)
   if (fixed !== "fixed_all" && availableHours && availableHours !== "na") {
     const hoursField = buildHoursField(availableHours);
-    container.appendChild(hoursField);
+    if (hoursField) {
+      container.appendChild(hoursField);
+    }
   }
 
   // CAMPO FINALE: NOTE AGGIUNTIVE (sempre presente, ultimo campo)
@@ -1971,7 +2068,6 @@ function isSingleDay(days) {
   const singleDays = ["lun", "mar", "mer", "gio", "giov", "ven", "sab", "dom"];
   return singleDays.includes(days.toLowerCase());
 }
-
 
 // ===============================
 // 20c. BUILD NOTES FIELD
@@ -1998,9 +2094,6 @@ function buildNotesField() {
 
   return wrapper;
 }
-
-
-
 
 // ===============================
 // 21. BUILD ZONE FIELD
@@ -2030,8 +2123,6 @@ function buildZoneField(tournament) {
   return wrapper;
 }
 
-
-
 // ===============================
 // 22. BUILD DAYS FIELD
 // ===============================
@@ -2046,19 +2137,16 @@ function buildDaysField(availableDays) {
     ? "Giorno preferito" 
     : `Giorni preferiti (seleziona almeno ${minDays})`;
 
-  // Titolo con asterisco
   const titleSpan = document.createElement("span");
   titleSpan.className = "form-field-title";
   titleSpan.innerHTML = `${labelText} <span class="required-asterisk">*</span>`;
   wrapper.appendChild(titleSpan);
 
-  // Helper text con classe corretta
   const helperSpan = document.createElement("span");
   helperSpan.className = "field-helper";
   helperSpan.textContent = `Seleziona ${minDays === 1 ? 'il giorno' : 'i giorni'} in cui preferisci giocare le partite in casa`;
   wrapper.appendChild(helperSpan);
 
-  // Checkbox group
   const checkboxGroup = document.createElement("div");
   checkboxGroup.className = "checkbox-group";
   checkboxGroup.dataset.minDays = minDays;
@@ -2086,32 +2174,29 @@ function buildDaysField(availableDays) {
   return wrapper;
 }
 
-
-
 // ===============================
 // 23. BUILD HOURS FIELD
 // ===============================
 function buildHoursField(availableHours) {
-  const wrapper = document.createElement("label");
-  
   const slots = parseHoursSlots(availableHours);
   
-  // Se c'è solo uno slot, non mostrare il campo
-  if (slots.length <= 1) return document.createDocumentFragment();
+  // Se c'è solo uno slot o nessuno, non mostrare il campo
+  if (slots.length <= 1) return null;
 
-  // Titolo con asterisco
+  const wrapper = document.createElement("label");
+
   const titleSpan = document.createElement("span");
   titleSpan.className = "form-field-title";
   titleSpan.innerHTML = 'Fascia oraria preferita <span class="required-asterisk">*</span>';
   wrapper.appendChild(titleSpan);
 
-  // Helper
+  // Helper dinamico basato sul range
+  const { start, end } = parseHoursRange(availableHours);
   const helperSpan = document.createElement("span");
   helperSpan.className = "field-helper";
-  helperSpan.textContent = "Scegli la fascia oraria in cui preferisci giocare le partite in casa";
+  helperSpan.textContent = `Scegli la fascia oraria preferita (partite disponibili dalle ${start}:00 alle ${end}:00)`;
   wrapper.appendChild(helperSpan);
 
-  // Select
   const select = document.createElement("select");
   select.name = "preferred_hours";
   select.required = true;
@@ -2150,17 +2235,16 @@ function parseDaysRange(range) {
 
   const rangeLower = range.toLowerCase();
 
-  // Range predefiniti
   switch (rangeLower) {
     case "lun-ven":
       return allDays.slice(0, 5); // Lunedì - Venerdì
     case "sab-dom":
       return allDays.slice(5, 7); // Sabato - Domenica
+    case "ven-dom":
+      return allDays.slice(4, 7); // Venerdì - Domenica
     case "lun-dom":
       return allDays; // Tutti i giorni
     default:
-      // Giorno singolo - non dovrebbe arrivare qui (filtrato prima)
-      // ma gestiamo comunque
       return allDays;
   }
 }
@@ -2174,6 +2258,8 @@ function calculateMinDays(availableDays) {
   switch (rangeLower) {
     case "sab-dom":
       return 1; // Weekend: basta 1 giorno
+    case "ven-dom":
+      return 1; // Ven-Dom: basta 1 giorno
     case "lun-ven":
       return 2; // Settimana: almeno 2 giorni
     case "lun-dom":
@@ -2184,38 +2270,93 @@ function calculateMinDays(availableDays) {
 }
 
 // ===============================
-// 25. PARSE HOURS SLOTS
+// 25. PARSE HOURS RANGE
+// ===============================
+function parseHoursRange(range) {
+  const rangeLower = range.toLowerCase().trim();
+  const parts = rangeLower.split("-");
+  
+  if (parts.length !== 2) {
+    return { start: 10, end: 22 }; // Default
+  }
+  
+  const start = parseInt(parts[0], 10);
+  const end = parseInt(parts[1], 10);
+  
+  if (isNaN(start) || isNaN(end)) {
+    return { start: 10, end: 22 }; // Default
+  }
+  
+  return { start, end };
+}
+
+// ===============================
+// 26. PARSE HOURS SLOTS (DINAMICO)
 // ===============================
 function parseHoursSlots(range) {
-  const rangeLower = range.toLowerCase();
+  const { start, end } = parseHoursRange(range);
   
-  // Mapping per i range predefiniti
-  const slotsMap = {
-    "10-22": [
-      { value: "10-13", label: "Mattina (10:00 - 13:00)" },
-      { value: "13-16", label: "Primo pomeriggio (13:00 - 16:00)" },
-      { value: "16-19", label: "Tardo pomeriggio (16:00 - 19:00)" },
-      { value: "19-22", label: "Sera (19:00 - 22:00)" }
-    ],
-    "10-19": [
-      { value: "10-13", label: "Mattina (10:00 - 13:00)" },
-      { value: "13-16", label: "Primo pomeriggio (13:00 - 16:00)" },
-      { value: "16-19", label: "Tardo pomeriggio (16:00 - 19:00)" }
-    ],
-    "19-22": [
-      { value: "19-22", label: "Sera (19:00 - 22:00)" }
-    ]
+  // Se il range è troppo piccolo (meno di 3 ore), nessuno slot
+  if (end - start < 3) {
+    return [];
+  }
+  
+  const slots = [];
+  const slotDuration = 3; // Ogni slot dura 3 ore
+  
+  // Definizione fasce orarie con nomi descrittivi
+  const slotNames = {
+    6: "Prima mattina",
+    7: "Prima mattina",
+    8: "Mattina",
+    9: "Mattina",
+    10: "Mattina",
+    11: "Tarda mattina",
+    12: "Mezzogiorno",
+    13: "Primo pomeriggio",
+    14: "Primo pomeriggio",
+    15: "Pomeriggio",
+    16: "Tardo pomeriggio",
+    17: "Tardo pomeriggio",
+    18: "Pre-serata",
+    19: "Sera",
+    20: "Sera",
+    21: "Sera",
+    22: "Tarda serata"
   };
-
-  return slotsMap[rangeLower] || [];
+  
+  // Genera slot da 3 ore ciascuno
+  let currentStart = start;
+  
+  while (currentStart + slotDuration <= end) {
+    const slotEnd = currentStart + slotDuration;
+    const slotName = slotNames[currentStart] || "Fascia";
+    
+    slots.push({
+      value: `${currentStart}-${slotEnd}`,
+      label: `${slotName} (${String(currentStart).padStart(2, '0')}:00 - ${String(slotEnd).padStart(2, '0')}:00)`
+    });
+    
+    currentStart = slotEnd;
+  }
+  
+  // Se rimane un gap finale (es. da 21 a 22), aggiungilo come slot ridotto
+  // solo se è almeno 2 ore
+  if (currentStart < end && (end - currentStart) >= 2) {
+    const slotName = slotNames[currentStart] || "Fascia";
+    slots.push({
+      value: `${currentStart}-${end}`,
+      label: `${slotName} (${String(currentStart).padStart(2, '0')}:00 - ${String(end).padStart(2, '0')}:00)`
+    });
+  }
+  
+  return slots;
 }
 
 
 
-
-
 // ===============================
-// 26. SUBMIT ISCRIZIONE (FIREBASE)
+// 27. SUBMIT ISCRIZIONE (FIREBASE)
 // ===============================
 let isSubmitting = false;
 
@@ -2384,7 +2525,7 @@ function handleFormSubmit(tournament) {
 
 
 // ===============================
-// 27. STATO TORNEO (UI)
+// 28. STATO TORNEO (UI)
 // ===============================
 function applyTournamentState(tournament) {
   const registrationBlock = document.querySelector(".tournament-registration-block");
@@ -2480,7 +2621,7 @@ function applyTournamentState(tournament) {
 
 
 // ===============================
-// 28. LOAD + RENDER TEAMS LIST
+// 29. LOAD + RENDER TEAMS LIST
 // ===============================
 function loadAndRenderTeamsList(tournament) {
   if (!teamsListSection || !teamsListContainer || !teamsListCount) return;
@@ -2538,7 +2679,7 @@ function renderTeamsChips(teams) {
 }
 
 // ===============================
-// 29. TEAMS LIST STATES
+// 30. TEAMS LIST STATES
 // ===============================
 function renderTeamsSkeleton(count) {
   const frag = document.createDocumentFragment();
@@ -2592,7 +2733,7 @@ function escapeHTML(str) {
 
 
 // ===============================
-// 30. TOAST NOTIFICATION
+// 31. TOAST NOTIFICATION
 // ===============================
 function showToast(message) {
   const toast = document.createElement("div");
