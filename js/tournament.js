@@ -1194,20 +1194,20 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
 
     case "short":
       durationText = hasFinals
-        ? `Il torneo si svolgerà interamente <strong>in un'unica giornata</strong>, con fase a gironi e fase finale nello stesso giorno.`
-        : `Il torneo si svolgerà interamente <strong>in un'unica giornata</strong>.`;
+        ? `Il torneo si svolgerà interamente in un'unica giornata, con fase a gironi e fase finale nello stesso giorno.`
+        : `Il torneo si svolgerà interamente in un'unica giornata.`;
       break;
 
     case "mid":
       durationText = hasFinals
-        ? `La fase a gironi si disputerà <strong>su più settimane</strong> (indicativamente una partita a settimana), mentre la fase finale si svolgerà <strong>in un'unica giornata conclusiva</strong>.`
-        : `Il torneo si disputerà <strong>su più settimane</strong> (indicativamente una partita a settimana).`;
+        ? `La fase a gironi si disputerà su più settimane (indicativamente una partita a settimana), mentre la fase finale si svolgerà in un'unica giornata conclusiva.`
+        : `Il torneo si disputerà su più settimane (indicativamente una partita a settimana).`;
       break;
 
     case "long":
       durationText = hasFinals
-        ? `Sia la fase a gironi che la fase finale si disputeranno <strong>su più settimane</strong> (indicativamente una partita a settimana).`
-        : `Il torneo si disputerà <strong>su più settimane</strong> (indicativamente una partita a settimana).`;
+        ? `Sia la fase a gironi che la fase finale si disputeranno su più settimane (indicativamente una partita a settimana).`
+        : `Il torneo si disputerà su più settimane (indicativamente una partita a settimana).`;
       break;
 
     default:
@@ -1463,9 +1463,9 @@ function buildStandingsRule(tournament, ruleNumber) {
   // Sistema punti
   let pointsText = "";
   if (hasFinals) {
-    pointsText = `Il sistema di punteggio per la classifica della fase a gironi prevede: <strong>${pointSystemText}</strong>.`;
+    pointsText = `Il sistema di punteggio per la classifica della fase a gironi prevede: ${pointSystemText}.`;
   } else {
-    pointsText = `Il sistema di punteggio per la classifica prevede: <strong>${pointSystemText}</strong>.`;
+    pointsText = `Il sistema di punteggio per la classifica prevede: ${pointSystemText}.`;
   }
   
   // Criteri parità stesso girone
@@ -1482,7 +1482,7 @@ function buildStandingsRule(tournament, ruleNumber) {
   // Parità persistente
   let persistentTieText = "";
   if (tieStandingText) {
-    persistentTieText = `Se, dopo l'applicazione di tutti i criteri, dovesse persistere una situazione di parità, questa verrà risolta <strong>${tieStandingText}</strong>.`;
+    persistentTieText = `Se, dopo l'applicazione di tutti i criteri, dovesse persistere una situazione di parità, questa verrà risolta ${tieStandingText}.`;
   } else {
     persistentTieText = `In caso di parità persistente dopo l'applicazione di tutti i criteri, la modalità di risoluzione sarà comunicata dall'organizzazione.`;
   }
@@ -1694,15 +1694,15 @@ function buildFacilitiesRule(tournament, ruleNumber) {
   
   // Food mapping
   const foodMap = {
-    "all": "L'organizzazione offrirà un <strong>pasto completo</strong> a tutti i partecipanti.",
-    "partial": "L'organizzazione offrirà <strong>snack e bevande</strong> a tutti i partecipanti.",
+    "all": "L'organizzazione offrirà un pasto completo a tutti i partecipanti.",
+    "partial": "L'organizzazione offrirà snack e bevande a tutti i partecipanti.",
     "none": null
   };
   
   // Upsell mapping
   const upsellMap = {
     "kit": {
-      kit: "Durante le partite del torneo sarà possibile acquistare un <strong>kit sportivo \"Tornei ICE\"</strong> (magliette o altro materiale tecnico) a <strong>prezzo di costo</strong>.",
+      kit: "Durante le partite del torneo sarà possibile acquistare un kit sportivo \"Tornei ICE\" (magliette o altro materiale tecnico) a prezzo di costo.",
       photo: null
     },
     "photo": {
@@ -1710,7 +1710,7 @@ function buildFacilitiesRule(tournament, ruleNumber) {
       photo: "Durante le partite del torneo saranno presenti <strong>fotografi professionali</strong> per foto e video delle partite, disponibili <strong>gratuitamente</strong> per chi condividerà i contenuti sui social taggando Tornei ICE."
     },
     "kit_photo": {
-      kit: "Durante le partite del torneo sarà possibile acquistare un <strong>kit sportivo \"Tornei ICE\"</strong> a <strong>prezzo di costo</strong>.",
+      kit: "Durante le partite del torneo sarà possibile acquistare un kit sportivo \"Tornei ICE\" (magliette o altro materiale tecnico) a prezzo di costo.",
       photo: "Durante le partite del torneo saranno presenti <strong>fotografi professionali</strong> per foto e video delle partite, disponibili <strong>gratuitamente</strong> per chi condividerà i contenuti sui social taggando Tornei ICE."
     },
     "none": {
@@ -1817,7 +1817,7 @@ function buildCommunicationsRule(ruleNumber) {
   
   const emailRulesText = `<strong>Email riepilogativa delle regole</strong> del torneo, inviata nei giorni precedenti all'inizio delle partite.`;
   
-  const whatsappText = `A iscrizioni chiuse, i partecipanti verranno inseriti in un <strong>gruppo WhatsApp ufficiale</strong> del torneo, gestito dall'organizzazione, per comunicazioni operative e trasmissione dei risultati.`;
+  const whatsappText = `A iscrizioni chiuse, i partecipanti verranno inseriti in un gruppo WhatsApp ufficiale del torneo, gestito dall'organizzazione, per comunicazioni operative e trasmissione dei risultati.`;
   
   // =====================================================
   // OUTPUT FINALE
@@ -1859,7 +1859,7 @@ function buildFairPlayAndFlexibilityRule(ruleNumber) {
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
-        <p><strong>Rimborsi e spostamenti partite</strong></p>
+        <p><strong>Richieste particolari</strong></p>
         <ul>
           <li>${introText}</li>
           <li>${flexibilityText}</li>
@@ -1936,29 +1936,32 @@ function populateExtraFields(tournament) {
   const fixed = String(tournament.fixed_court_days_hours || "false").toLowerCase();
   
   // Se tutto è fisso per tutto il torneo, non mostrare campi preferenze
-  if (fixed === "fixed_all") return;
+  // MA mostriamo comunque le note aggiuntive
   
-  // Se fisso solo per le finali, mostriamo i campi (servono per i gironi)
-  // Se false, mostriamo tutti i campi
-
   const availableDays = String(tournament.available_days || "").trim().toLowerCase();
   const availableHours = String(tournament.available_hours || "").trim().toLowerCase();
 
-  // CAMPO 1: ZONA PREFERITA (sempre presente se non fixed_all)
-  const zoneField = buildZoneField(tournament);
-  container.appendChild(zoneField);
+  // CAMPO 1: ZONA PREFERITA (solo se non fixed_all)
+  if (fixed !== "fixed_all") {
+    const zoneField = buildZoneField(tournament);
+    container.appendChild(zoneField);
+  }
 
-  // CAMPO 2: GIORNI PREFERITI (solo se non è un giorno singolo fisso)
-  if (availableDays && !isSingleDay(availableDays)) {
+  // CAMPO 2: GIORNI PREFERITI (solo se non fixed_all e non è un giorno singolo)
+  if (fixed !== "fixed_all" && availableDays && !isSingleDay(availableDays)) {
     const daysField = buildDaysField(availableDays);
     container.appendChild(daysField);
   }
 
-  // CAMPO 3: ORARIO PREFERITO (solo se c'è un range di orari)
-  if (availableHours && availableHours !== "na") {
+  // CAMPO 3: ORARIO PREFERITO (solo se non fixed_all e c'è un range di orari)
+  if (fixed !== "fixed_all" && availableHours && availableHours !== "na") {
     const hoursField = buildHoursField(availableHours);
     container.appendChild(hoursField);
   }
+
+  // CAMPO FINALE: NOTE AGGIUNTIVE (sempre presente, ultimo campo)
+  const notesField = buildNotesField();
+  container.appendChild(notesField);
 }
 
 // ===============================
@@ -1968,6 +1971,36 @@ function isSingleDay(days) {
   const singleDays = ["lun", "mar", "mer", "gio", "giov", "ven", "sab", "dom"];
   return singleDays.includes(days.toLowerCase());
 }
+
+
+// ===============================
+// 20c. BUILD NOTES FIELD
+// ===============================
+function buildNotesField() {
+  const wrapper = document.createElement("label");
+  wrapper.className = "field-optional";
+  
+  const titleSpan = document.createElement("span");
+  titleSpan.className = "form-field-title";
+  titleSpan.textContent = "Note aggiuntive";
+  wrapper.appendChild(titleSpan);
+
+  const helperSpan = document.createElement("span");
+  helperSpan.className = "field-helper";
+  helperSpan.textContent = "Hai richieste particolari o informazioni da comunicarci? Scrivile qui (facoltativo)";
+  wrapper.appendChild(helperSpan);
+
+  const textarea = document.createElement("textarea");
+  textarea.name = "additional_notes";
+  textarea.rows = 3;
+  textarea.placeholder = "Es. Preferenze specifiche, richieste, informazioni utili...";
+  wrapper.appendChild(textarea);
+
+  return wrapper;
+}
+
+
+
 
 // ===============================
 // 21. BUILD ZONE FIELD
@@ -1997,6 +2030,8 @@ function buildZoneField(tournament) {
   return wrapper;
 }
 
+
+
 // ===============================
 // 22. BUILD DAYS FIELD
 // ===============================
@@ -2017,7 +2052,7 @@ function buildDaysField(availableDays) {
   titleSpan.innerHTML = `${labelText} <span class="required-asterisk">*</span>`;
   wrapper.appendChild(titleSpan);
 
-  // Helper text
+  // Helper text con classe corretta
   const helperSpan = document.createElement("span");
   helperSpan.className = "field-helper";
   helperSpan.textContent = `Seleziona ${minDays === 1 ? 'il giorno' : 'i giorni'} in cui preferisci giocare le partite in casa`;
@@ -2050,6 +2085,8 @@ function buildDaysField(availableDays) {
   wrapper.appendChild(checkboxGroup);
   return wrapper;
 }
+
+
 
 // ===============================
 // 23. BUILD HOURS FIELD

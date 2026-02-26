@@ -1049,15 +1049,19 @@ body {
 }
 
 #extra-fields-container > label,
-#extra-fields-container > div {
+#extra-fields-container > div,
+#extra-fields-container > label.field-optional {
   padding: 20px 0;
   padding-left: 48px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 #extra-fields-container > label::before,
-#extra-fields-container > div::before {
+#extra-fields-container > div::before,
+#extra-fields-container > label.field-optional::before {
   counter-increment: extra-field;
   content: counter(extra-field);
   position: absolute;
@@ -1077,9 +1081,11 @@ body {
 }
 
 #extra-fields-container > label:last-child,
-#extra-fields-container > div:last-child {
+#extra-fields-container > div:last-child,
+#extra-fields-container > label.field-optional:last-child {
   border-bottom: none;
 }
+
 
 
 /* =========================
@@ -1097,6 +1103,74 @@ body {
   display: flex;
   flex-direction: column;
 }
+
+
+/* =========================
+   FORM - CAMPO NOTE AGGIUNTIVE
+   (deve avere la stessa struttura degli altri)
+========================= */
+#registration-form > label.field-optional {
+  display: flex;
+  flex-direction: column;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: 0.02em;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  padding-left: 48px;
+}
+
+
+
+/* =========================
+   FORM - REGULATION ACCEPTANCE
+   (deve avere bordo sopra, non counter)
+========================= */
+#registration-form .regulation-acceptance {
+  margin-top: 24px;
+  padding: 16px;
+  padding-left: 16px; /* Niente indent per checkbox */
+  background-color: rgba(56, 189, 248, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: var(--radius);
+}
+
+#registration-form .regulation-acceptance::before {
+  content: none; /* Niente counter per checkbox regolamento */
+}
+
+/* =========================
+   FORM - EXTRA FIELDS - HELPER CON SPAZIO
+========================= */
+#extra-fields-container .field-helper {
+  font-size: 17px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  margin-bottom: 12px; /* ← AGGIUNTO: spazio prima dell'input */
+  font-style: italic;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+/* =========================
+   FORM - EXTRA FIELDS - INPUT DENTRO LABEL
+========================= */
+#extra-fields-container input[type="text"],
+#extra-fields-container select {
+  margin-top: 0;
+  margin-left: 12px;
+}
+
+/* =========================
+   FORM - LINEA SEPARATRICE TRA CAMPI BASE E EXTRA
+========================= */
+#extra-fields-container {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+
 
 
 /* =========================
@@ -1208,7 +1282,7 @@ body {
    FORM - ASTERISCO CAMPI OBBLIGATORI
 ========================= */
 .required-asterisk {
-  color: #ef4444;
+  color: #00f15d;
   font-weight: 700;
   margin-left: 2px;
 }
