@@ -1962,15 +1962,76 @@ body {
 
 
 /* ===============================
-   TOURNAMENT SELECT PROMPT
+   GENERIC SECTION BOX (CONTAINER)
    =============================== */
 
-.tournament-select-prompt {
+.generic-section-box {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+
+.generic-section-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0 0 24px 0;
+  text-align: center;
+}
+
+/* ===============================
+   WHY ICE SECTION
+   =============================== */
+
+.why-ice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.why-ice-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.why-ice-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.why-ice-icon {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.why-ice-card h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0 0 8px 0;
+}
+
+.why-ice-card p {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ===============================
+   SELECT TOURNAMENT BOX
+   =============================== */
+
+.select-tournament-box {
   text-align: center;
   padding: 48px 24px;
-  background: var(--surface);
-  border-radius: 16px;
-  margin-bottom: 32px;
 }
 
 .select-prompt-icon {
@@ -1978,73 +2039,17 @@ body {
   margin-bottom: 16px;
 }
 
-.tournament-select-prompt h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 12px;
-}
-
-.tournament-select-prompt p {
-  font-size: 1rem;
-  color: var(--text-secondary);
+.select-prompt-text {
+  font-size: 16px;
+  color: var(--text-muted);
   max-width: 500px;
   margin: 0 auto;
   line-height: 1.6;
 }
 
-/* ===============================
-   WHY ICE SECTION
-   =============================== */
 
-.why-ice-section {
-  margin-top: 32px;
-}
 
-.why-ice-section h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 24px;
-  text-align: center;
-}
 
-.why-ice-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-}
-
-.why-ice-card {
-  background: var(--surface);
-  border-radius: 12px;
-  padding: 24px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.why-ice-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-}
-
-.why-ice-icon {
-  font-size: 32px;
-  margin-bottom: 12px;
-}
-
-.why-ice-card h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-}
-
-.why-ice-card p {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin: 0;
-}
 
 
 
