@@ -466,9 +466,13 @@ function renderSpecificCourtRule(tournament) {
     rules.push(facilitiesRule);
     ruleNumber++;
   }
-  
+
   // REGOLA 12: Comunicazioni ufficiali (sempre mostrata)
   rules.push(buildCommunicationsRule(ruleNumber));
+  ruleNumber++;
+  
+  // REGOLA 13: Rimborsi e spostamenti (sempre mostrata)
+  rules.push(buildFairPlayAndFlexibilityRule(ruleNumber));
   ruleNumber++;
   
   container.innerHTML = `
@@ -872,8 +876,8 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
   // Max category mapping
   const maxCategoryMap = {
     "na": null,
-    "prima_categoria": "Al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in <strong>Prima Categoria</strong> o categorie inferiori.",
-    "eccellenza": "Al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in <strong>Eccellenza</strong> o categorie inferiori."
+    "prima_categoria": "Al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in Prima Categoria o categorie inferiori.",
+    "eccellenza": "Al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in Eccellenza o categorie inferiori."
   };
   
   // =====================================================
@@ -893,11 +897,11 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
   
   if (gender === "open" && age === "open") {
     // Caso più semplice: tutto aperto
-    genderAgeText = `Possono partecipare squadre di <strong>${genderData.composition}</strong> e giocatori di <strong>${ageData.text}</strong>.`;
+    genderAgeText = `Possono partecipare squadre di ${genderData.composition} e giocatori di ${ageData.text}.`;
   } 
   else if (gender === "open" && age !== "open") {
     // Composizione aperta, età limitata
-    genderAgeText = `Possono partecipare squadre di <strong>${genderData.composition}</strong>, ma il torneo è riservato a giocatori <strong>${ageData.text}</strong>. ${ageData.restriction}`;
+    genderAgeText = `Possono partecipare squadre di ${genderData.composition}, ma il torneo è riservato a giocatori ${ageData.text}. ${ageData.restriction}`;
   }
   else if (gender !== "open" && age === "open") {
     // Composizione limitata, età aperta
@@ -905,14 +909,14 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
   }
   else {
     // Entrambi limitati
-    genderAgeText = `${genderData.restriction} Il torneo è riservato a giocatori <strong>${ageData.text}</strong>: ${ageData.restriction.toLowerCase()}`;
+    genderAgeText = `${genderData.restriction} Il torneo è riservato a giocatori ${ageData.text}: ${ageData.restriction.toLowerCase()}`;
   }
   
   // =====================================================
   // COSTRUZIONE TESTO EXPERTISE + CATEGORY
   // =====================================================
   
-  let expertiseText = `Questo torneo è <strong>${expertiseData.intro}</strong>. ${expertiseData.description}`;
+  let expertiseText = `Questo torneo è ${expertiseData.intro}. ${expertiseData.description}`;
   
   if (categoryRestriction) {
     expertiseText += ` ${categoryRestriction}`;
@@ -926,14 +930,14 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
   
   if (teamSizeMin > 0 && teamSizeMax > 0) {
     if (teamSizeMin === teamSizeMax) {
-      teamSizeText = `Ogni squadra deve essere composta da esattamente <strong>${teamSizeMin} giocatori</strong>.`;
+      teamSizeText = `Ogni squadra deve essere composta da esattamente ${teamSizeMin} giocatori.`;
     } else {
-      teamSizeText = `Ogni squadra deve essere composta da un <strong>minimo di ${teamSizeMin}</strong> e un <strong>massimo di ${teamSizeMax} giocatori</strong>.`;
+      teamSizeText = `Ogni squadra deve essere composta da un minimo di ${teamSizeMin} e un massimo di ${teamSizeMax} giocatori.`;
     }
   } else if (teamSizeMin > 0) {
-    teamSizeText = `Ogni squadra deve essere composta da almeno <strong>${teamSizeMin} giocatori</strong>.`;
+    teamSizeText = `Ogni squadra deve essere composta da almeno ${teamSizeMin} giocatori.`;
   } else if (teamSizeMax > 0) {
-    teamSizeText = `Ogni squadra può essere composta da un massimo di <strong>${teamSizeMax} giocatori</strong>.`;
+    teamSizeText = `Ogni squadra può essere composta da un massimo di ${teamSizeMax} giocatori.`;
   } else {
     teamSizeText = `Il numero di giocatori per squadra sarà comunicato prima dell'inizio del torneo.`;
   }
@@ -985,12 +989,12 @@ function buildAwardsRule(tournament, ruleNumber) {
     if (awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc)) && price > 0 && teamsMax > 0) {
       const percValue = Number(awardPerc) / 100;
       const totalPrize = Math.round(teamsMax * price * percValue);
-      mainAwardText = `È previsto un <strong>montepremi</strong> pari a <strong>€${totalPrize}</strong>, che sarà suddiviso tra le prime 3 squadre classificate.`;
+      mainAwardText = `È previsto un montepremi pari a <strong>€${totalPrize}</strong>, che sarà suddiviso tra le prime 3 squadre classificate.`;
     } else {
-      mainAwardText = `È previsto un <strong>montepremi</strong> per le squadre vincitrici. L'importo e la suddivisione saranno comunicati prima dell'inizio del torneo.`;
+      mainAwardText = `È previsto un montepremi per le squadre vincitrici. L'importo e la suddivisione saranno comunicati prima dell'inizio del torneo.`;
     }
   } else {
-    mainAwardText = `Essendo un torneo aperto a giocatori e squadre di qualsiasi livello, al fine di evitare squilibri, sono previsti esclusivamente <strong>premi simbolici</strong> (coppe, medaglie, gadget e altri riconoscimenti) per le squadre vincitrici.`;
+    mainAwardText = `Essendo un torneo aperto a giocatori e squadre di qualsiasi livello, al fine di evitare squilibri, sono previsti esclusivamente premi simbolici (coppe, medaglie, gadget e altri riconoscimenti) per le squadre vincitrici.`;
   }
   
   // =====================================================
@@ -1000,7 +1004,7 @@ function buildAwardsRule(tournament, ruleNumber) {
   let guaranteeText = "";
   
   if (hasAward && awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc)) && price > 0 && teamsMax > 0) {
-    guaranteeText = `Il montepremi è garantito al raggiungimento di <strong>${teamsMax} squadre</strong> iscritte. In ogni caso, anche nella rara eventualità in cui non si raggiungesse il numero previsto di squadre, il premio rimarrà comunque almeno uguale al <strong>${awardPerc}%</strong> delle quote di iscrizione totali.`;
+    guaranteeText = `Il montepremi è garantito al raggiungimento di ${teamsMax} squadre iscritte. In ogni caso, anche nella rara eventualità in cui non si raggiungesse il numero previsto di squadre, il premio rimarrà comunque almeno uguale al ${awardPerc}% delle quote di iscrizione totali.`;
   } else if (hasAward) {
     guaranteeText = `Le condizioni per l'erogazione del montepremi saranno comunicate prima dell'inizio del torneo.`;
   } else {
@@ -1017,16 +1021,16 @@ function buildAwardsRule(tournament, ruleNumber) {
     const mvpPrizes = [];
     
     if (mvpAward.includes("mvp")) {
-      mvpPrizes.push("<strong>Miglior Giocatore (MVP)</strong>");
+      mvpPrizes.push("Miglior Giocatore (MVP)");
     }
     if (mvpAward.includes("scorer")) {
-      mvpPrizes.push("<strong>Capocannoniere</strong>");
+      mvpPrizes.push("Capocannoniere");
     }
     if (mvpAward.includes("goalkeeper")) {
-      mvpPrizes.push("<strong>Miglior Portiere</strong>");
+      mvpPrizes.push("Miglior Portiere");
     }
     if (mvpAward.includes("fairplay")) {
-      mvpPrizes.push("<strong>Premio Fair Play</strong>");
+      mvpPrizes.push("Premio Fair Play");
     }
     
     if (mvpPrizes.length > 0) {
@@ -1034,7 +1038,7 @@ function buildAwardsRule(tournament, ruleNumber) {
         ? mvpPrizes[0] 
         : mvpPrizes.slice(0, -1).join(", ") + " e " + mvpPrizes[mvpPrizes.length - 1];
       
-      mvpAwardText = `Saranno inoltre assegnati <strong>premi individuali</strong> per: ${prizesList}.`;
+      mvpAwardText = `Saranno inoltre assegnati premi individuali per: ${prizesList}.`;
     } else {
       mvpAwardText = `Non sono previsti premi individuali per questo torneo.`;
     }
@@ -1839,6 +1843,32 @@ function buildCommunicationsRule(ruleNumber) {
   `;
 }
 
+
+// ===============================
+// 9n. BUILD REFUNDS & MATCH MANAGEMENT RULE
+// ===============================
+function buildFairPlayAndFlexibilityRule(ruleNumber) {
+
+  const introText = `L'organizzazione si impegna a garantire un torneo serio e ben strutturato, chiedendo a tutte le squadre rispetto degli impegni presi, puntualità e correttezza.`;
+
+  const flexibilityText = `Allo stesso tempo, siamo ragazzi come voi. Sappiamo che possono capitare imprevisti, cambi di programma, infortuni, ecc. e vogliamo essere il più possibile flessibili per venire incontro alle esigenze delle squadre.`;
+
+  const finalText = `Saremo quindi disposti a venire incontro alle vostre richieste, se ritenute valide e compatibili con il corretto svolgimento del torneo.`;
+
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Rimborsi e spostamenti partite</strong></p>
+        <ul>
+          <li>${introText}</li>
+          <li>${flexibilityText}</li>
+          <li>${finalText}</li>
+        </ul>
+      </div>
+    </div>
+  `;
+}
 
 
 
