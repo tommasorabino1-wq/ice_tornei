@@ -271,17 +271,17 @@ function buildPriceInfoText(t) {
 
   switch (courtPrice) {
     case "compreso_gironi_finals":
-      courtText = "campi inclusi";
+      courtText = "Campi inclusi";
       break;
     case "compreso_gironi":
-      courtText = "campi inclusi (solo gironi)";
+      courtText = "Campi inclusi solo per la fase a gironi";
       break;
     case "compreso_finals":
-      courtText = "campi inclusi (solo fase finale)";
+      courtText = "Campi inclusi solo per la fase finale";
       break;
     case "non_compreso":
     default:
-      courtText = "campi non inclusi";
+      courtText = "Campi non inclusi";
   }
 
   // ===============================
@@ -318,7 +318,7 @@ function buildAwardInfoText(t) {
   const hasAward = t.award === true || String(t.award).toUpperCase() === "TRUE";
   
   if (!hasAward) {
-    return "Solo premi simbolici";
+    return "Premi simbolici";
   }
 
   const perc = t.award_amount_perc;
@@ -1322,51 +1322,40 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   }
 
   // =====================================================
-  // ORGANIZZAZIONE
+  // ORGANIZZAZIONE (con preferenze integrate)
   // =====================================================
 
   let organizationText = "";
-  let bookingText = "";
 
   if (fixed === "false") {
 
-    organizationText = `Le partite saranno prenotate dall'organizzazione di volta in volta seguendo le preferenze espresse dalle squadre in fase di iscrizione, considerando comunque che si svolgeranno ${officialConstraints}.`;
-
-    bookingText = `In fase di iscrizione, le squadre potranno indicare le proprie preferenze su zona, giorni e orari. L'organizzazione terrà conto delle indicazioni ricevute nella pianificazione delle partite.`;
+    organizationText = hasFinals
+      ? `I campi per le partite del torneo (sia fase a gironi che fase finale) saranno prenotati dall'organizzazione di volta in volta, considerando le preferenze riguardo a zona, giorni e orari espresse dalle squadre in fase di iscrizione. Tutte le partite si svolgeranno comunque ${officialConstraints}.`
+      : `I campi per le partite del torneo saranno prenotati dall'organizzazione di volta in volta, considerando le preferenze riguardo a zona, giorni e orari espresse dalle squadre in fase di iscrizione. Tutte le partite si svolgeranno comunque ${officialConstraints}.`;
   }
 
   else if (fixed === "fixed_all") {
 
-    organizationText = `Campi, giorni e orari saranno stabiliti dall'organizzazione e comunicati in anticipo alle squadre, considerando che tutte le partite si svolgeranno ${officialConstraints}.`;
-
-    bookingText = `Il calendario completo sarà comunicato prima dell'inizio del torneo.`;
+    organizationText = hasFinals
+      ? `I campi, giorni e orari di tutte le partite del torneo (sia fase a gironi che fase finale) saranno prestabiliti dall'organizzazione e comunicati in anticipo alle squadre. Tutte le partite si svolgeranno ${officialConstraints}.`
+      : `I campi, giorni e orari di tutte le partite del torneo saranno prestabiliti dall'organizzazione e comunicati in anticipo alle squadre. Tutte le partite si svolgeranno ${officialConstraints}.`;
   }
 
   else if (fixed === "fixed_finals" && hasFinals) {
 
     organizationText = `
       <ul>
-        <li><strong>Fase a gironi:</strong> Le partite saranno organizzate tenendo conto delle preferenze espresse in fase di iscrizione.</li>
-        <li><strong>Fase finale:</strong> Campi, giorni e orari saranno stabiliti dall'organizzazione e comunicati alle squadre qualificate.</li>
+        <li><strong>Fase a gironi:</strong> I campi per le partite della fase a gironi saranno prenotati dall'organizzazione di volta in volta, considerando le preferenze riguardo a zona, giorni e orari espresse dalle squadre in fase di iscrizione.</li>
+        <li><strong>Fase finale:</strong> I campi, giorni e orari delle partite della fase finale saranno prestabiliti dall'organizzazione e comunicati alle squadre qualificate al termine della fase a gironi.</li>
       </ul>
       Tutte le partite si svolgeranno comunque ${officialConstraints}.
     `;
-
-    bookingText = `Per la fase a gironi sarà possibile indicare preferenze in fase di iscrizione.`;
   }
 
   else {
 
     organizationText = `Le modalità organizzative saranno comunicate prima dell'inizio del torneo. Le partite si svolgeranno ${officialConstraints}.`;
-
-    bookingText = `Ulteriori dettagli verranno forniti agli iscritti.`;
   }
-
-  // =====================================================
-  // CLAUSOLA UNIVERSALE
-  // =====================================================
-
-  const startDateClause = `La data di inizio del torneo è indicativa. In caso di comprovata necessità, l'organizzazione può posticipare (max 30 giorni) o annullare (con rimborso completo della quota) il torneo.`;
 
   // =====================================================
   // OUTPUT
@@ -1379,15 +1368,12 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
         <p><strong>Campi, giorni, orari e calendario</strong></p>
         <ul>
           <li><strong>Durata:</strong> ${durationText}</li>
-          <li><strong>Organizzazione partite:</strong> ${organizationText}</li>
-          <li><strong>Preferenze e prenotazione:</strong> ${bookingText}</li>
-          <li><strong>Avvertenza:</strong> ${startDateClause}</li>
+          <li><strong>Organizzazione partite:</strong> La prenotazione dei campi sarà sempre a carico dell'organizzazione. ${organizationText}</li>
         </ul>
       </div>
     </div>
   `;
 }
-
 
 // ===============================
 // 9g. BUILD MATCH FORMAT RULE (REGOLA 6)

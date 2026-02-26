@@ -337,9 +337,18 @@ function renderMatchesByRound(roundId) {
     const teamAName = match.team_a_name || formatTeam(match.team_a);
     const teamBName = match.team_b_name || formatTeam(match.team_b);
 
+    // Campi logistica
+    const court = match.court || "none";
+    const day = match.day || "none";
+    const hour = match.hour || "none";
+    const hasDetails = court !== "none" || day !== "none" || hour !== "none";
+
     const card = document.createElement("div");
     card.className = "match-card";
     if (isPlayed) card.classList.add("played");
+
+    // Genera ID univoco per il collapse
+    const collapseId = `match-details-${match.match_id}`;
 
     card.innerHTML = `
       <div class="match-meta">
@@ -355,14 +364,67 @@ function renderMatchesByRound(roundId) {
         <span class="team">${escapeHTML(teamBName)}</span>
       </div>
 
-      <div class="match-status">
-        ${isPlayed ? '<span class="status-played">✓ Giocata</span>' : '<span class="status-pending">In programma</span>'}
+      <div class="match-footer">
+        <button class="match-details-toggle" aria-expanded="false" aria-controls="${collapseId}">
+          <span class="toggle-icon">+</span>
+          <span class="toggle-text">Dettagli</span>
+        </button>
+
+        <div class="match-status">
+          ${isPlayed ? '<span class="status-played">✓ Giocata</span>' : '<span class="status-pending">In programma</span>'}
+        </div>
+      </div>
+
+      <div id="${collapseId}" class="match-details-panel" hidden>
+        ${hasDetails ? `
+          <div class="match-details-grid">
+            ${court !== "none" ? `
+              <div class="match-detail-item">
+                <span class="detail-icon">🏟️</span>
+                <span class="detail-label">Campo</span>
+                <span class="detail-value">${escapeHTML(court)}</span>
+              </div>
+            ` : ''}
+            ${day !== "none" ? `
+              <div class="match-detail-item">
+                <span class="detail-icon">📅</span>
+                <span class="detail-label">Giorno</span>
+                <span class="detail-value">${escapeHTML(day)}</span>
+              </div>
+            ` : ''}
+            ${hour !== "none" ? `
+              <div class="match-detail-item">
+                <span class="detail-icon">🕐</span>
+                <span class="detail-label">Orario</span>
+                <span class="detail-value">${escapeHTML(hour)}</span>
+              </div>
+            ` : ''}
+          </div>
+        ` : `
+          <div class="match-details-pending">
+            <span class="pending-icon">⏳</span>
+            <span class="pending-text">Campo, giorno e orario ancora da definire</span>
+          </div>
+        `}
       </div>
     `;
 
+    // Event listener per toggle
+    const toggleBtn = card.querySelector(".match-details-toggle");
+    const panel = card.querySelector(".match-details-panel");
+
+    toggleBtn.addEventListener("click", () => {
+      const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
+      
+      toggleBtn.setAttribute("aria-expanded", !isExpanded);
+      panel.hidden = isExpanded;
+    });
+    
     container.appendChild(card);
   });
 }
+
+
 
 function onRoundChange(value) {
   if (!value) return;

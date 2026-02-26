@@ -2654,21 +2654,34 @@ body {
 
 
 /* =========================
+   MATCH FOOTER (STATUS + TOGGLE)
+========================= */
+.match-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding: 12px 4px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Se partita giocata, status centrato */
+.match-card.played .match-footer {
+  justify-content: center;
+}
+
+/* =========================
    MATCH STATUS (READ-ONLY)
 ========================= */
 .match-status {
   display: flex;
-  justify-content: center;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .match-status .status-played {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #22c55e;
   padding: 6px 14px;
@@ -2681,7 +2694,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   font-style: italic;
   color: var(--text-muted);
@@ -2690,7 +2703,6 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 999px;
 }
-
 
 /* =========================
    MATCH GIOCATO - CARD STYLE
@@ -2704,6 +2716,8 @@ body {
   background-color: rgba(56, 189, 248, 0.06);
   border-color: rgba(56, 189, 248, 0.3);
 }
+
+
 
 
 /* =========================
@@ -3570,6 +3584,161 @@ body {
 ========================= */
 .hidden {
   display: none !important;
+}
+
+
+
+
+
+
+/* ===============================
+   MATCH DETAILS TOGGLE
+   =============================== */
+
+.match-details-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: transparent;
+  color: var(--brand);
+  border: 2px solid var(--brand);
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 
+    background-color 0.2s ease, 
+    color 0.2s ease,
+    transform 0.2s ease, 
+    box-shadow 0.2s ease;
+}
+
+.match-details-toggle:hover {
+  background-color: var(--brand);
+  color: #000;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+}
+
+.match-details-toggle:active {
+  transform: translateY(0);
+}
+
+.match-details-toggle .toggle-text {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.match-details-toggle .toggle-icon {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.match-details-toggle[aria-expanded="true"] .toggle-icon {
+  transform: rotate(45deg);
+}
+
+/* Nascondi bottone se partita giocata */
+.match-card.played .match-details-toggle {
+  display: none;
+}
+
+/* ===============================
+   MATCH DETAILS PANEL
+   =============================== */
+
+.match-details-panel {
+  margin-top: 12px;
+  padding: 16px;
+  background-color: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: var(--radius);
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.match-details-panel[hidden] {
+  display: none;
+}
+
+/* ===============================
+   MATCH DETAILS GRID
+   =============================== */
+
+.match-details-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.match-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: calc(var(--radius) - 2px);
+}
+
+.match-detail-item .detail-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.match-detail-item .detail-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 60px;
+}
+
+.match-detail-item .detail-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+  flex: 1;
+}
+
+/* ===============================
+   MATCH DETAILS PENDING
+   =============================== */
+
+.match-details-pending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  text-align: center;
+}
+
+.match-details-pending .pending-icon {
+  font-size: 26px;
+}
+
+.match-details-pending .pending-text {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 
