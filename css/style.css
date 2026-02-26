@@ -2010,46 +2010,53 @@ body {
    =============================== */
 
 .why-ice-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 per riga */
+  gap: 20px;
+}
+
+/* Mobile molto piccoli: torna a 1 colonna */
+@media (max-width: 480px) {
+  .why-ice-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .why-ice-card {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 24px;
+  text-align: center; /* centra tutto il contenuto */
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .why-ice-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   border-color: rgba(56, 189, 248, 0.35);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
 }
 
 .why-ice-icon {
-  font-size: 40px;
-  margin-bottom: 12px;
+  font-size: 48px; /* più grande */
+  margin-bottom: 16px;
+  display: block;
 }
 
 .why-ice-card h4 {
-  font-size: 22px;
+  font-size: 24px; /* leggermente più grande */
   font-weight: 600;
   color: var(--text-main);
-  margin: 0 0 10px 0;
-  line-height: 1.3;
+  margin: 0 0 12px 0;
+  line-height: 1.35;
 }
 
 .why-ice-card p {
-  font-size: 18px;
+  font-size: 19px; /* leggermente più grande */
   color: var(--text-muted);
-  line-height: 1.6;
+  line-height: 1.7;
   margin: 0;
 }
-
-
 
 
 
