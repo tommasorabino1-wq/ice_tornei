@@ -14,7 +14,9 @@ const API_URLS = {
 };
 
 let TOURNAMENT_STATUS = null;
+let TOURNAMENT_FORMAT = null;  // ← NUOVO: salva format_type
 let ALL_MATCHES = [];
+let ALL_STANDINGS = [];  // ← NUOVO: salva standings per il podio
 let AVAILABLE_ROUNDS = [];
 let FINALS_MATCHES = [];
 let FINALS_SELECTED_ROUND_ID = null;
@@ -37,7 +39,17 @@ function fadeOutSkeleton(wrapper) {
   }, 350);
 }
 
+// ===============================
+// CHECK IF FORMAT HAS FINALS
+// ===============================
+function formatHasFinals(formatType) {
+  const formatsWithFinals = ['round_robin_finals', 'double_round_robin_finals'];
+  return formatsWithFinals.includes(String(formatType || '').toLowerCase());
+}
 
+// ===============================
+// LOAD STANDINGS PAGE
+// ===============================
 function loadStandingsPage(tournamentId) {
   fetch(API_URLS.getTournaments)
     .then(res => {
@@ -55,6 +67,7 @@ function loadStandingsPage(tournamentId) {
       }
 
       TOURNAMENT_STATUS = t?.status || null;
+      TOURNAMENT_FORMAT = t?.format_type || null;  // ← NUOVO
 
       if (TOURNAMENT_STATUS === "open") {
         showTournamentNotStarted(t);
@@ -71,12 +84,19 @@ function loadStandingsPage(tournamentId) {
       loadMatches(tournamentId);
       loadStandings(tournamentId);
 
-      if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished") {
-        loadFinalsBracket(tournamentId).then(bracket => {
-          if (bracket) renderFinalsBracket(bracket);
+      // ← MODIFICATO: Carica finals solo se il formato le prevede
+      if (formatHasFinals(TOURNAMENT_FORMAT)) {
+        if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished") {
+          loadFinalsBracket(tournamentId).then(bracket => {
+            if (bracket) renderFinalsBracket(bracket);
+            applyLayoutByStatus();
+          });
+        } else {
+          FINALS_MATCHES = [];
           applyLayoutByStatus();
-        });
+        }
       } else {
+        // Formato senza finals: mostra podio se finished
         FINALS_MATCHES = [];
         applyLayoutByStatus();
       }
@@ -372,7 +392,13 @@ function loadStandings(tournamentId) {
     })
     .then(data => {
       fadeOutSkeleton(skeleton);
+      ALL_STANDINGS = Array.isArray(data) ? data : [];  // ← NUOVO: salva per podio
       renderStandings(data);
+      
+      // ← NUOVO: Renderizza podio se necessario (dopo aver caricato standings)
+      if (!formatHasFinals(TOURNAMENT_FORMAT) && TOURNAMENT_STATUS === "finished") {
+        renderPodium(ALL_STANDINGS);
+      }
     })
     .catch(err => {
       console.error("Errore caricamento standings:", err);
@@ -598,13 +624,28 @@ function loadFinalsBracket(tournamentId) {
     });
 }
 
+// ===============================
+// APPLY LAYOUT BY STATUS (MODIFICATO)
+// ===============================
 function applyLayoutByStatus() {
   const finals = document.getElementById("finals-container");
+  const podium = document.getElementById("podium-container");
 
+  // Nascondi tutto di default
   finals.classList.add("hidden");
+  if (podium) podium.classList.add("hidden");
 
-  if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished") {
-    finals.classList.remove("hidden");
+  // Formato CON finals
+  if (formatHasFinals(TOURNAMENT_FORMAT)) {
+    if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished") {
+      finals.classList.remove("hidden");
+    }
+  } 
+  // Formato SENZA finals
+  else {
+    if (TOURNAMENT_STATUS === "finished" && podium) {
+      podium.classList.remove("hidden");
+    }
   }
 }
 
@@ -920,4 +961,77 @@ function renderFinalsMatchCard(match, roundLabel = "Fase Finale") {
   `;
 
   return card;
+}
+
+
+// ===============================
+// RENDER PODIUM (NUOVO)
+// ===============================
+function renderPodium(standings) {
+  const container = document.getElementById("podium-content");
+  if (!container) return;
+
+  // Prendi le prime 3 squadre ordinate per rank_level
+  // (assumendo girone unico per tornei senza finals)
+  const sorted = [...standings].sort((a, b) => {
+    // Prima per rank_level
+    const rankDiff = (a.rank_level || 99) - (b.rank_level || 99);
+    if (rankDiff !== 0) return rankDiff;
+    
+    // Poi per punti
+    const pointsDiff = (b.points || 0) - (a.points || 0);
+    if (pointsDiff !== 0) return pointsDiff;
+    
+    // Poi per differenza reti
+    return (b.goal_diff || 0) - (a.goal_diff || 0);
+  });
+
+  const top3 = sorted.slice(0, 3);
+
+  if (top3.length === 0) {
+    container.innerHTML = "<p class='placeholder'>Classifica non disponibile</p>";
+    return;
+  }
+
+  const podiumHTML = `
+    <div class="podium">
+      ${top3.length >= 2 ? `
+        <div class="podium-place podium-second">
+          <div class="podium-medal">🥈</div>
+          <div class="podium-rank">2°</div>
+          <div class="podium-team">${escapeHTML(top3[1].team_name)}</div>
+          <div class="podium-stats">${top3[1].points} pts · ${top3[1].goal_diff > 0 ? '+' : ''}${top3[1].goal_diff}</div>
+          <div class="podium-bar second"></div>
+        </div>
+      ` : ''}
+      
+      ${top3.length >= 1 ? `
+        <div class="podium-place podium-first">
+          <div class="podium-medal">🥇</div>
+          <div class="podium-rank">1°</div>
+          <div class="podium-team">${escapeHTML(top3[0].team_name)}</div>
+          <div class="podium-stats">${top3[0].points} pts · ${top3[0].goal_diff > 0 ? '+' : ''}${top3[0].goal_diff}</div>
+          <div class="podium-bar first"></div>
+        </div>
+      ` : ''}
+      
+      ${top3.length >= 3 ? `
+        <div class="podium-place podium-third">
+          <div class="podium-medal">🥉</div>
+          <div class="podium-rank">3°</div>
+          <div class="podium-team">${escapeHTML(top3[2].team_name)}</div>
+          <div class="podium-stats">${top3[2].points} pts · ${top3[2].goal_diff > 0 ? '+' : ''}${top3[2].goal_diff}</div>
+          <div class="podium-bar third"></div>
+        </div>
+      ` : ''}
+    </div>
+    
+    <div class="podium-champion">
+      <span class="champion-trophy">🏆</span>
+      <span class="champion-label">Campione</span>
+      <span class="champion-name">${escapeHTML(top3[0]?.team_name || 'TBD')}</span>
+    </div>
+  `;
+
+  container.innerHTML = podiumHTML;
 }

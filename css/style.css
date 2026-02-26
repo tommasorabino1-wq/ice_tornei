@@ -3339,6 +3339,154 @@ body {
 }
 
 
+
+
+/* ===============================
+   PODIUM SECTION
+   =============================== */
+
+.podium-section {
+  margin-bottom: 32px;
+}
+
+.podium-section-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.podium-section-title .section-icon {
+  font-size: 28px;
+}
+
+/* ===============================
+   PODIUM LAYOUT
+   =============================== */
+
+.podium {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 20px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.podium-place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  max-width: 180px;
+}
+
+.podium-medal {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.podium-rank {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.podium-team {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.podium-stats {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.podium-bar {
+  width: 100%;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.3) 0%, rgba(56, 189, 248, 0.1) 100%);
+}
+
+.podium-bar.first {
+  height: 120px;
+  background: linear-gradient(180deg, rgba(255, 215, 0, 0.4) 0%, rgba(255, 215, 0, 0.15) 100%);
+}
+
+.podium-bar.second {
+  height: 90px;
+  background: linear-gradient(180deg, rgba(192, 192, 192, 0.4) 0%, rgba(192, 192, 192, 0.15) 100%);
+}
+
+.podium-bar.third {
+  height: 60px;
+  background: linear-gradient(180deg, rgba(205, 127, 50, 0.4) 0%, rgba(205, 127, 50, 0.15) 100%);
+}
+
+/* Ordine visivo: 2° - 1° - 3° */
+.podium-first {
+  order: 2;
+}
+
+.podium-second {
+  order: 1;
+}
+
+.podium-third {
+  order: 3;
+}
+
+/* ===============================
+   PODIUM CHAMPION
+   =============================== */
+
+.podium-champion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: var(--radius);
+}
+
+.champion-trophy {
+  font-size: 56px;
+  margin-bottom: 8px;
+}
+
+.champion-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+
+.champion-name {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+
+
+
+
 /* =========================
    SKELETON UI – STANDINGS
 ========================= */
