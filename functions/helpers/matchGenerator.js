@@ -134,7 +134,7 @@ async function generateMatchesIfReady(tournamentId) {
       return;
     }
 
-    // 3) ✅ Recupera teams da SUBSCRIPTIONS (non più da collection "teams")
+    // 3) Recupera teams da SUBSCRIPTIONS
     const subscriptionsSnapshot = await db.collection('subscriptions')
       .where('tournament_id', '==', tournamentId)
       .get();
@@ -159,7 +159,7 @@ async function generateMatchesIfReady(tournamentId) {
     const { teamsPerGroup, numGroups } = groupConfig;
     console.log(`📊 Group config: ${numGroups} groups × ${teamsPerGroup} teams each`);
 
-    // 5) ✅ Estrai team_id e team_name da subscriptions
+    // 5) Estrai team_id e team_name da subscriptions
     const teamIds = [];
     const teamNamesMap = {};
     
@@ -215,7 +215,11 @@ async function generateMatchesIfReady(tournamentId) {
             team_b_name: teamNamesMap[m.away] || m.away,
             score_a: null,
             score_b: null,
-            played: false
+            played: false,
+            // ← NUOVI CAMPI
+            court: 'none',
+            day: 'none',
+            hour: 'none'
           });
 
           console.log(`   ✓ Match ${matchId}: ${teamNamesMap[m.home]} vs ${teamNamesMap[m.away]}`);
@@ -276,5 +280,6 @@ async function generateMatchesIfReady(tournamentId) {
     throw error;
   }
 }
+
 
 module.exports = { generateMatchesIfReady };

@@ -174,7 +174,11 @@ async function generateFinalsIfReady(tournamentId) {
         score_a: null,
         score_b: null,
         winner_team_id: null,
-        played: false
+        played: false,
+        // ← NUOVI CAMPI
+        court: 'none',
+        day: 'none',
+        hour: 'none'
       });
 
       console.log(`   ✓ Match ${matchId}: ${teamNamesMap[teamA]} vs ${teamNamesMap[teamB]}`);
@@ -298,7 +302,11 @@ async function tryGenerateNextFinalRound(tournamentId) {
         score_a: null,
         score_b: null,
         winner_team_id: null,
-        played: false
+        played: false,
+        // ← NUOVI CAMPI
+        court: 'none',
+        day: 'none',
+        hour: 'none'
       });
 
       console.log(`   ✓ Match ${matchId}: ${teamNamesMap[teamA] || teamA} vs ${teamNamesMap[teamB] || teamB}`);
