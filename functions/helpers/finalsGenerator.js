@@ -8,6 +8,26 @@ async function generateFinalsIfReady(tournamentId) {
   try {
     console.log(`🏆 [START] Checking if finals can be generated for ${tournamentId}`);
 
+    // 0) Recupera torneo per verificare format_type
+    const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
+    if (!tournamentDoc.exists) {
+      console.log('⚠️ Tournament not found');
+      return;
+    }
+
+    const tournament = tournamentDoc.data();
+    const formatType = String(tournament.format_type || '').toLowerCase();
+
+    // Check se il formato prevede finals
+    const formatsWithFinals = ['round_robin_finals', 'double_round_robin_finals'];
+    
+    if (!formatsWithFinals.includes(formatType)) {
+      console.log(`ℹ️ Tournament format "${formatType}" does not have finals phase - skipping`);
+      return;
+    }
+
+    console.log(`✅ Tournament format "${formatType}" includes finals phase`);
+
     // 1) Recupera standings
     const standingsSnapshot = await db.collection('standings')
       .where('tournament_id', '==', tournamentId)
@@ -69,14 +89,7 @@ async function generateFinalsIfReady(tournamentId) {
     console.log(`🥇 First-placed teams: ${firsts.length}`);
     console.log(`🥈 Second-placed teams: ${seconds.length}`);
 
-    // 4) Recupera torneo per sapere quanti slot
-    const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
-    if (!tournamentDoc.exists) {
-      console.log('⚠️ Tournament not found');
-      return;
-    }
-
-    const tournament = tournamentDoc.data();
+    // 4) Verifica teams_in_final
     const slots = Number(tournament.teams_in_final);
 
     if (!slots || slots <= 0) {
