@@ -4255,3 +4255,13 @@ match-card.played {
     display: none;
   }
 }
+
+
+
+
+.bracket-svg-wrapper {
+  overflow-x: auto;
+  padding: 24px 8px;
+  display: block;
+  width: 100%;
+}

@@ -818,35 +818,9 @@ function renderFinalsBracket(bracket) {
 // RENDER BRACKET VISUAL (router)
 // ===============================
 function renderBracketVisual(bracket, container) {
-  container.innerHTML = "";
-
-  const rounds = Object.keys(bracket.rounds)
-    .map(Number)
-    .sort((a, b) => a - b);
-
-  if (rounds.length === 0) {
-    container.innerHTML = "<p class='placeholder'>Nessun match disponibile</p>";
-    return;
-  }
-
-  const totalRounds = rounds.length;
-  const firstRoundMatches = bracket.rounds[rounds[0]].length;
-  const isSymmetric = firstRoundMatches >= 4 || (firstRoundMatches === 2 && totalRounds >= 2);
-
-  if (isSymmetric && totalRounds >= 2) {
-    renderSymmetricBracket(bracket, rounds, container);
-  } else {
-    renderLinearBracket(bracket, rounds, container);
-  }
-
-  // Render finale 3°/4° separata sotto il bracket principale
-  if (bracket.thirdPlaceMatch) {
-    // Nel symmetric: inserisce dentro il wrapper centrato
-    // Nel linear: appende dopo
-    const wrapper = container.querySelector(".bracket-wrapper-with-3x4") || container;
-    renderThirdPlaceSection(bracket.thirdPlaceMatch, wrapper);
-  }
+  renderBracketSVG(bracket, container);
 }
+
 
 // ===============================
 // RENDER 3°/4° POSTO SECTION
