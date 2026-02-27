@@ -107,6 +107,34 @@ function calculateGroupConfig(totalTeams, preferredTeamsPerGroup) {
 }
 
 // ===============================
+// HELPER: Normalizza sport
+// ===============================
+function normalizeSport(sport) {
+  const s = String(sport || '').toLowerCase().trim();
+  
+  if (s.includes('calcio') || s.includes('football') || s.includes('soccer')) {
+    return 'calcio';
+  }
+  if (s.includes('padel')) {
+    return 'padel';
+  }
+  if (s.includes('beach') || s.includes('volley')) {
+    return 'beach_volley';
+  }
+  
+  // Default a calcio se non riconosciuto
+  return 'calcio';
+}
+
+// ===============================
+// HELPER: Determina se il format è a set
+// ===============================
+function isSetBasedFormat(matchFormat) {
+  const setFormats = ['1su1', '2su3', '3su5'];
+  return setFormats.includes(String(matchFormat || '').toLowerCase());
+}
+
+// ===============================
 // MAIN: Genera match (trigger manuale via status change)
 // ===============================
 async function generateMatchesIfReady(tournamentId) {
@@ -122,6 +150,13 @@ async function generateMatchesIfReady(tournamentId) {
 
     const tournament = tournamentDoc.data();
     const preferredTeamsPerGroup = Number(tournament.teams_per_group) || 0;
+    
+    // Estrai sport e format
+    const sport = normalizeSport(tournament.sport);
+    const matchFormatGironi = String(tournament.match_format_gironi || '').toLowerCase();
+    const isSetBased = isSetBasedFormat(matchFormatGironi);
+    
+    console.log(`🏆 Sport: ${sport}, Format Gironi: ${matchFormatGironi}, Set-based: ${isSetBased}`);
 
     // 2) Verifica se match già esistono
     const matchesSnapshot = await db.collection('matches')
@@ -204,7 +239,9 @@ async function generateMatchesIfReady(tournamentId) {
           const matchId = `${tournamentId}_${groupId}_R${String(roundNumber).padStart(2, '0')}_M${String(globalMatchCounter).padStart(3, '0')}`;
           
           const matchRef = db.collection('matches').doc(matchId);
-          batch.set(matchRef, {
+          
+          // Costruisci oggetto match con campi appropriati per sport/format
+          const matchData = {
             match_id: matchId,
             tournament_id: tournamentId,
             group_id: groupId,
@@ -213,14 +250,29 @@ async function generateMatchesIfReady(tournamentId) {
             team_b: m.away,
             team_a_name: teamNamesMap[m.home] || m.home,
             team_b_name: teamNamesMap[m.away] || m.away,
-            score_a: null,
+            
+            // Risultato principale
+            score_a: null,            // Gol (calcio/tempo) o Set vinti (set-based)
             score_b: null,
             played: false,
-            // ← NUOVI CAMPI
+            
+            // Logistica
             court: 'none',
             day: 'none',
-            hour: 'none'
-          });
+            hour: 'none',
+            
+            // Campi per format a set (padel/beach)
+            sets_detail: null,        // Es: "6-4,3-6,7-5"
+            games_a: null,            // Totale game vinti da A
+            games_b: null,            // Totale game vinti da B
+            
+            // Metadata
+            sport: sport,
+            match_format: matchFormatGironi,
+            is_set_based: isSetBased
+          };
+          
+          batch.set(matchRef, matchData);
 
           console.log(`   ✓ Match ${matchId}: ${teamNamesMap[m.home]} vs ${teamNamesMap[m.away]}`);
 
@@ -238,26 +290,53 @@ async function generateMatchesIfReady(tournamentId) {
       const standingId = `standings_${teamId}`;
       const standingRef = db.collection('standings').doc(standingId);
 
-      batch.set(standingRef, {
+      const standingData = {
         standing_id: standingId,
         team_id: teamId,
         tournament_id: tournamentId,
         group_id: groupId,
         team_name: teamName,
+        
+        // Stats generali
         matches_played: 0,
         points: 0,
-        goal_diff: 0,
-        goals_for: 0,
-        goals_against: 0,
         wins: 0,
-        draws: 0,
+        draws: 0,                   // Solo per format a tempo
         losses: 0,
+        
+        // Stats per CALCIO e format a TEMPO (gol/game)
+        goals_for: 0,               // Gol (calcio) o Game (padel/beach tempo)
+        goals_against: 0,
+        goal_diff: 0,
+        
+        // Stats per format a SET (padel/beach)
+        sets_for: 0,                // Set vinti totali
+        sets_against: 0,            // Set persi totali
+        set_diff: 0,                // Differenza set
+        games_for: 0,               // Game vinti totali (attraverso tutti i set)
+        games_against: 0,           // Game persi totali
+        game_diff: 0,               // Differenza game
+        
+        // H2H
         h2h_points: 0,
-        h2h_goal_diff: 0,
+        h2h_goal_diff: 0,           // Usato anche per game/set diff in H2H
         h2h_goals_for: 0,
+        h2h_set_diff: 0,            // Per format a set
+        h2h_sets_for: 0,            // Per format a set
+        h2h_game_diff: 0,           // Per format a set
+        h2h_games_for: 0,           // Per format a set
+        
+        // Ranking
         rank_level: 1,
-        rank_group: 'INIT'
-      });
+        rank_group: 'INIT',
+        
+        // Metadata
+        sport: sport,
+        match_format: matchFormatGironi,
+        is_set_based: isSetBased
+      };
+
+      batch.set(standingRef, standingData);
 
       console.log(`   ✓ Standing ${standingId}: ${teamName} (${groupId})`);
     });

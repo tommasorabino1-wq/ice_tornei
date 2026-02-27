@@ -4047,4 +4047,71 @@ match-card.played {
 
 
 
+/* ===============================
+   SETS DETAIL (for set-based formats)
+   =============================== */
 
+.match-sets-detail {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.sets-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.set-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+}
+
+.match-card.played .set-badge {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+/* ===============================
+   STANDINGS TABLE SET-BASED
+   =============================== */
+
+.standings-table-set {
+  font-size: 18px;
+}
+
+.standings-table-set thead th {
+  font-size: 16px;
+  padding: 8px 4px;
+}
+
+.standings-table-set td {
+  padding: 10px 4px;
+  font-size: 18px;
+}
+
+/* Responsive: nascondi alcune colonne su mobile */
+@media (max-width: 768px) {
+  .standings-table-set th:nth-child(n+9),
+  .standings-table-set td:nth-child(n+9) {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .standings-table-set th:nth-child(n+6),
+  .standings-table-set td:nth-child(n+6) {
+    display: none;
+  }
+}

@@ -1375,6 +1375,7 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   `;
 }
 
+
 // ===============================
 // 9g. BUILD MATCH FORMAT RULE (REGOLA 6)
 // ===============================
@@ -1394,6 +1395,10 @@ function buildMatchFormatRule(tournament, ruleNumber) {
 
   const isFootball = sport.includes("calcio");
   const isGameBasedSport = sport.includes("padel") || sport.includes("volley") || sport.includes("beach");
+  
+  // Determina se è format a set
+  const isSetBasedGironi = ["1su1", "2su3", "3su5"].includes(matchFormatGironi);
+  const isSetBasedFinals = ["1su1", "2su3", "3su5"].includes(matchFormatFinals);
 
   const winConditionText = isGameBasedSport
     ? "al termine, vince la squadra con più game vinti"
@@ -1403,9 +1408,11 @@ function buildMatchFormatRule(tournament, ruleNumber) {
     "1x30": `un tempo unico da 30 minuti (${winConditionText})`,
     "1x60": `un tempo unico da 60 minuti (${winConditionText})`,
     "2x25": `due tempi da 25 minuti ciascuno (${winConditionText})`,
+    "2x30": `due tempi da 30 minuti ciascuno (${winConditionText})`,
     "1x50": `un tempo unico da 50 minuti (${winConditionText})`,
     "1su1": "set singolo (vince chi si aggiudica il set)",
-    "2su3": "due set su tre (vince chi si aggiudica per primo 2 set)"
+    "2su3": "due set su tre (vince chi si aggiudica per primo 2 set)",
+    "3su5": "tre set su cinque (vince chi si aggiudica per primo 3 set)"
   };
 
   const matchFormatGironiText = matchFormatMap[matchFormatGironi] || "da comunicare";
@@ -1426,6 +1433,11 @@ function buildMatchFormatRule(tournament, ruleNumber) {
   let gironiFormatText = hasFinals
     ? `Le partite della fase a gironi si disputeranno con la seguente formula: <strong>${matchFormatGironiText}</strong>.`
     : `Tutte le partite del torneo si disputeranno con la seguente formula: <strong>${matchFormatGironiText}</strong>.`;
+  
+  // Nota su pareggi per format a set
+  if (isSetBasedGironi) {
+    gironiFormatText += ` <em>In questo formato non sono previsti pareggi.</em>`;
+  }
 
   // =====================================================
   // FORMATO FINALI
@@ -1438,6 +1450,9 @@ function buildMatchFormatRule(tournament, ruleNumber) {
       finalsFormatText = `Le partite delle fasi finali si disputeranno con la <strong>stessa formula</strong> della fase a gironi.`;
     } else if (matchFormatFinals !== "na") {
       finalsFormatText = `Le partite delle fasi finali si disputeranno con la seguente formula: <strong>${matchFormatFinalsText}</strong>.`;
+      if (isSetBasedFinals) {
+        finalsFormatText += ` <em>In questo formato non sono previsti pareggi.</em>`;
+      }
     } else {
       finalsFormatText = `Il formato delle partite delle fasi finali sarà comunicato al termine della fase a gironi.`;
     }
@@ -1446,7 +1461,7 @@ function buildMatchFormatRule(tournament, ruleNumber) {
   }
 
   // =====================================================
-  // MANCATA PRESENTAZIONE (NUOVO PUNTO SEMPRE PRESENTE)
+  // MANCATA PRESENTAZIONE
   // =====================================================
 
   let forfeitResultText = "";
@@ -1454,18 +1469,13 @@ function buildMatchFormatRule(tournament, ruleNumber) {
   if (isFootball) {
     forfeitResultText = "una sconfitta a tavolino per <strong>3-0</strong>";
   } else if (isGameBasedSport) {
-
-    const isTimeMatch = matchFormatGironi.includes("x");
-    const isSetMatch = matchFormatGironi.includes("su");
-
-    if (isTimeMatch) {
-      forfeitResultText = "una sconfitta a tavolino per <strong>10 game a 0</strong>";
-    } else if (isSetMatch) {
-      forfeitResultText = "una sconfitta a tavolino per <strong>2 set a 0</strong>";
+    if (isSetBasedGironi) {
+      // Format a set: forfait con 2-0 set e 6-0, 6-0 game
+      forfeitResultText = "una sconfitta a tavolino per <strong>2 set a 0</strong> (6-0, 6-0)";
     } else {
-      forfeitResultText = "una sconfitta a tavolino secondo il formato previsto dal torneo";
+      // Format a tempo: forfait con 6-0 game
+      forfeitResultText = "una sconfitta a tavolino per <strong>6 game a 0</strong>";
     }
-
   } else {
     forfeitResultText = "una sconfitta a tavolino secondo il regolamento del torneo";
   }
@@ -1495,9 +1505,6 @@ function buildMatchFormatRule(tournament, ruleNumber) {
 }
 
 
-
-
-
 // ===============================
 // 9h. BUILD STANDINGS RULE (REGOLA 7)
 // ===============================
@@ -1505,59 +1512,137 @@ function buildStandingsRule(tournament, ruleNumber) {
   const sport = String(tournament.sport || "").toLowerCase();
   const formatType = String(tournament.format_type || "").toLowerCase();
   const hasFinals = formatType.includes("finals");
+  const matchFormatGironi = String(tournament.match_format_gironi || "").toLowerCase();
   
-  const pointSystemGironi = String(tournament.point_system_gironi || "3-1-0").toLowerCase();
+  const pointSystem = String(tournament.point_system || "").toLowerCase();
   const tieStandingGironi = String(tournament.tie_standing_gironi_criteria || "").toLowerCase();
   
   // =====================================================
-  // MAPPING BASE
+  // DETERMINA TIPO DI FORMAT
   // =====================================================
   
-  // Terminologia in base allo sport
   const isGameBasedSport = sport.includes("padel") || sport.includes("volley") || sport.includes("beach");
-  const goalTerminology = isGameBasedSport ? "game vinti" : "gol fatti";
-  const goalDiffTerminology = isGameBasedSport ? "differenza game" : "differenza reti";
-  
-  // Sistema punti
-  const pointSystemMap = {
-    "3-1-0": "3 punti per la vittoria, 1 punto per il pareggio, 0 punti per la sconfitta",
-    "2-1-0": "2 punti per la vittoria, 1 punto per il pareggio, 0 punti per la sconfitta"
-  };
-  
-  // Criteri parità finale
-  const tieStandingMap = {
-    "moneta": "tramite lancio della moneta",
-    "spareggio": "tramite una partita di spareggio"
-  };
-  
-  const pointSystemText = pointSystemMap[pointSystemGironi] || "da comunicare";
-  const tieStandingText = tieStandingMap[tieStandingGironi] || "";
+  const isSetBased = ["1su1", "2su3", "3su5"].includes(matchFormatGironi);
   
   // =====================================================
-  // COSTRUZIONE TESTI
+  // TERMINOLOGIA IN BASE A SPORT E FORMAT
   // =====================================================
   
-  // Sistema punti
-  let pointsText = "";
-  if (hasFinals) {
-    pointsText = `Il sistema di punteggio per la classifica della fase a gironi prevede: ${pointSystemText}.`;
+  let terminology;
+  
+  if (isSetBased) {
+    // Format a set (padel/beach)
+    terminology = {
+      scoreType: "set",
+      scorePlural: "set",
+      secondaryType: "game",
+      secondaryPlural: "game",
+      forLabel: "set vinti",
+      againstLabel: "set persi",
+      diffLabel: "differenza set",
+      secondaryForLabel: "game vinti",
+      secondaryDiffLabel: "differenza game"
+    };
+  } else if (isGameBasedSport) {
+    // Format a tempo (padel/beach)
+    terminology = {
+      scoreType: "game",
+      scorePlural: "game",
+      forLabel: "game vinti",
+      againstLabel: "game subiti",
+      diffLabel: "differenza game"
+    };
   } else {
-    pointsText = `Il sistema di punteggio per la classifica prevede: ${pointSystemText}.`;
+    // Calcio
+    terminology = {
+      scoreType: "gol",
+      scorePlural: "gol",
+      forLabel: "gol fatti",
+      againstLabel: "gol subiti",
+      diffLabel: "differenza reti"
+    };
   }
   
-  // Criteri parità stesso girone
-  const sameGroupText = `In caso di parità di punti tra due o più squadre dello stesso girone, l'ordine sarà determinato dai seguenti criteri (in ordine di importanza): <strong>scontri diretti</strong>, <strong>${goalDiffTerminology}</strong>, <strong>${goalTerminology}</strong>.`;
+  // =====================================================
+  // SISTEMA PUNTI
+  // =====================================================
   
-  // Criteri parità gironi diversi (solo se ci sono finali)
-  let crossGroupText = "";
+  let pointSystemText;
+  
+  if (isSetBased) {
+    // Format a set: default 2-0 (no pareggi)
+    const parsed = pointSystem.split("-").map(p => parseInt(p.trim(), 10));
+    const winPts = parsed[0] || 2;
+    pointSystemText = `<strong>${winPts} punti</strong> per la vittoria, <strong>0 punti</strong> per la sconfitta. <em>Non sono previsti pareggi in questo formato.</em>`;
+  } else {
+    // Format a tempo: default 3-1-0
+    const pointSystemMap = {
+      "3-1-0": "<strong>3 punti</strong> per la vittoria, <strong>1 punto</strong> per il pareggio, <strong>0 punti</strong> per la sconfitta",
+      "2-1-0": "<strong>2 punti</strong> per la vittoria, <strong>1 punto</strong> per il pareggio, <strong>0 punti</strong> per la sconfitta"
+    };
+    pointSystemText = pointSystemMap[pointSystem] || pointSystemMap["3-1-0"];
+  }
+  
+  // Testo finale sistema punti
+  let pointsText = hasFinals
+    ? `Il sistema di punteggio per la classifica della fase a gironi prevede: ${pointSystemText}.`
+    : `Il sistema di punteggio per la classifica prevede: ${pointSystemText}.`;
+  
+  // =====================================================
+  // CRITERI PARITÀ STESSO GIRONE
+  // =====================================================
+  
+  let sameGroupText;
+  
+  if (isSetBased) {
+    // Criteri per format a set
+    sameGroupText = `In caso di parità di punti tra due o più squadre dello stesso girone, l'ordine sarà determinato dai seguenti criteri (in ordine di priorità):
+      <ol>
+        <li><strong>Scontri diretti</strong> (punti, differenza set, differenza game)</li>
+        <li><strong>Differenza set</strong> generale</li>
+        <li><strong>Set vinti</strong> totali</li>
+        <li><strong>Differenza game</strong> generale</li>
+        <li><strong>Game vinti</strong> totali</li>
+      </ol>`;
+  } else {
+    // Criteri per format a tempo
+    sameGroupText = `In caso di parità di punti tra due o più squadre dello stesso girone, l'ordine sarà determinato dai seguenti criteri (in ordine di priorità):
+      <ol>
+        <li><strong>Scontri diretti</strong> (punti, ${terminology.diffLabel}, ${terminology.forLabel})</li>
+        <li><strong>${capitalizeFirst(terminology.diffLabel)}</strong> generale</li>
+        <li><strong>${capitalizeFirst(terminology.forLabel)}</strong> totali</li>
+      </ol>`;
+  }
+  
+  // =====================================================
+  // CRITERI PARITÀ GIRONI DIVERSI
+  // =====================================================
+  
+  let crossGroupText;
+  
   if (hasFinals) {
-    crossGroupText = `Per confrontare squadre di gironi diversi (es. migliori seconde), in caso di parità di punti si useranno: <strong>${goalDiffTerminology}</strong>, <strong>${goalTerminology}</strong>.`;
+    if (isSetBased) {
+      crossGroupText = `Per confrontare squadre di gironi diversi (es. migliori seconde), in caso di parità di punti si useranno: <strong>differenza set</strong>, <strong>set vinti</strong>, <strong>differenza game</strong>, <strong>game vinti</strong>.`;
+    } else {
+      crossGroupText = `Per confrontare squadre di gironi diversi (es. migliori seconde), in caso di parità di punti si useranno: <strong>${terminology.diffLabel}</strong>, <strong>${terminology.forLabel}</strong>.`;
+    }
   } else {
     crossGroupText = `Essendo un girone unico, non sarà necessario confrontare squadre di gironi diversi.`;
   }
   
-  // Parità persistente
-  let persistentTieText = "";
+  // =====================================================
+  // PARITÀ PERSISTENTE
+  // =====================================================
+  
+  const tieStandingMap = {
+    "moneta": "tramite lancio della moneta",
+    "spareggio": "tramite una partita di spareggio",
+    "sorteggio": "tramite sorteggio"
+  };
+  
+  const tieStandingText = tieStandingMap[tieStandingGironi] || "";
+  
+  let persistentTieText;
   if (tieStandingText) {
     persistentTieText = `Se, dopo l'applicazione di tutti i criteri, dovesse persistere una situazione di parità, questa verrà risolta ${tieStandingText}.`;
   } else {
@@ -1583,6 +1668,15 @@ function buildStandingsRule(tournament, ruleNumber) {
     </div>
   `;
 }
+
+// ===============================
+// HELPER: Capitalize first letter
+// ===============================
+function capitalizeFirst(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+
 
 
 

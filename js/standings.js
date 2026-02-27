@@ -13,10 +13,16 @@ const API_URLS = {
   getBracket: "https://getbracket-dzvezz2yhq-uc.a.run.app"
 };
 
+// ===============================
+// GLOBAL STATE
+// ===============================
 let TOURNAMENT_STATUS = null;
-let TOURNAMENT_FORMAT = null;  // ← NUOVO: salva format_type
+let TOURNAMENT_FORMAT = null;
+let TOURNAMENT_SPORT = null;
+let TOURNAMENT_MATCH_FORMAT_GIRONI = null;
+let TOURNAMENT_MATCH_FORMAT_FINALS = null;
 let ALL_MATCHES = [];
-let ALL_STANDINGS = [];  // ← NUOVO: salva standings per il podio
+let ALL_STANDINGS = [];
 let AVAILABLE_ROUNDS = [];
 let FINALS_MATCHES = [];
 let FINALS_SELECTED_ROUND_ID = null;
@@ -27,6 +33,68 @@ let FINALS_SELECTED_ROUND_ID = null;
 const standingsSelectSection = document.getElementById("standings-select-section");
 const standingsSpecificSection = document.getElementById("standings-specific-section");
 const standingsTournamentSelect = document.getElementById("standings-tournament-select");
+
+// ===============================
+// HELPER: Normalizza sport
+// ===============================
+function normalizeSport(sport) {
+  const s = String(sport || '').toLowerCase().trim();
+  
+  if (s.includes('calcio') || s.includes('football') || s.includes('soccer')) {
+    return 'calcio';
+  }
+  if (s.includes('padel')) {
+    return 'padel';
+  }
+  if (s.includes('beach') || s.includes('volley')) {
+    return 'beach_volley';
+  }
+  
+  return 'calcio';
+}
+
+// ===============================
+// HELPER: Determina se il format è a set
+// ===============================
+function isSetBasedFormat(matchFormat) {
+  const setFormats = ['1su1', '2su3', '3su5'];
+  return setFormats.includes(String(matchFormat || '').toLowerCase());
+}
+
+// ===============================
+// HELPER: Ottieni label per lo sport
+// ===============================
+function getSportLabels(sport, isSetBased) {
+  if (sport === 'calcio') {
+    return {
+      scoreLabel: 'Gol',
+      forLabel: 'GF',
+      againstLabel: 'GS',
+      diffLabel: 'Diff'
+    };
+  }
+  
+  if (isSetBased) {
+    // Padel/Beach con format a set
+    return {
+      scoreLabel: 'Set',
+      forLabel: 'SF',
+      againstLabel: 'SS',
+      diffLabel: 'DS',
+      gamesForLabel: 'GmF',
+      gamesAgainstLabel: 'GmS',
+      gamesDiffLabel: 'DG'
+    };
+  }
+  
+  // Padel/Beach con format a tempo
+  return {
+    scoreLabel: 'Game',
+    forLabel: 'GmF',
+    againstLabel: 'GmS',
+    diffLabel: 'Diff'
+  };
+}
 
 // ===============================
 // SKELETON HELPERS
@@ -66,8 +134,12 @@ function loadStandingsPage(tournamentId) {
         return;
       }
 
+      // Salva info torneo globalmente
       TOURNAMENT_STATUS = t?.status || null;
-      TOURNAMENT_FORMAT = t?.format_type || null;  // ← NUOVO
+      TOURNAMENT_FORMAT = t?.format_type || null;
+      TOURNAMENT_SPORT = normalizeSport(t?.sport);
+      TOURNAMENT_MATCH_FORMAT_GIRONI = String(t?.match_format_gironi || '').toLowerCase();
+      TOURNAMENT_MATCH_FORMAT_FINALS = String(t?.match_format_finals || '').toLowerCase();
 
       if (TOURNAMENT_STATUS === "open") {
         showTournamentNotStarted(t);
@@ -84,7 +156,6 @@ function loadStandingsPage(tournamentId) {
       loadMatches(tournamentId);
       loadStandings(tournamentId);
 
-      // ← MODIFICATO: Carica finals solo se il formato le prevede
       if (formatHasFinals(TOURNAMENT_FORMAT)) {
         if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished") {
           loadFinalsBracket(tournamentId).then(bracket => {
@@ -96,7 +167,6 @@ function loadStandingsPage(tournamentId) {
           applyLayoutByStatus();
         }
       } else {
-        // Formato senza finals: mostra podio se finished
         FINALS_MATCHES = [];
         applyLayoutByStatus();
       }
@@ -329,118 +399,191 @@ function renderMatchesByRound(roundId) {
     return;
   }
 
+  // Determina se format a set (dai match o dal torneo)
+  const isSetBased = matches[0]?.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_GIRONI);
+
   matches.forEach(match => {
-    const isPlayed =
-      match.played === true ||
-      String(match.played).toUpperCase() === "TRUE";
-
-    const teamAName = match.team_a_name || formatTeam(match.team_a);
-    const teamBName = match.team_b_name || formatTeam(match.team_b);
-
-    // Campi logistica
-    const court = match.court || "none";
-    const day = match.day || "none";
-    const hour = match.hour || "none";
-    const hasDetails = court !== "none" || day !== "none" || hour !== "none";
-
-    const card = document.createElement("div");
-    card.className = "match-card";
-    if (isPlayed) card.classList.add("played");
-
-    // Genera ID univoco per il collapse
-    const collapseId = `match-details-${match.match_id}`;
-
-    // Determina scores display
-    const scoreA = isPlayed ? (match.score_a ?? "-") : "-";
-    const scoreB = isPlayed ? (match.score_b ?? "-") : "-";
-
-    card.innerHTML = `
-      <div class="match-card-inner">
-        
-        <!-- MAIN CONTENT: Teams + Score -->
-        <div class="match-main">
-          <div class="match-team match-team-a">
-            <span class="team-name">${escapeHTML(teamAName)}</span>
-          </div>
-          
-          <div class="match-score-block">
-            <span class="score score-a">${scoreA}</span>
-            <span class="score-separator">:</span>
-            <span class="score score-b">${scoreB}</span>
-          </div>
-          
-          <div class="match-team match-team-b">
-            <span class="team-name">${escapeHTML(teamBName)}</span>
-          </div>
-        </div>
-
-        <!-- FOOTER: Meta + Actions -->
-        <div class="match-card-footer">
-          <div class="match-meta-inline">
-            <span class="meta-item meta-group">Girone ${escapeHTML(match.group_id || "?")}</span>
-          </div>
-
-          <div class="match-actions">
-            <button class="match-details-toggle" aria-expanded="false" aria-controls="${collapseId}">
-              <span class="toggle-icon">+</span>
-              <span class="toggle-text">Info</span>
-            </button>
-            
-            ${isPlayed ? `
-              <div class="match-status-badge played">✓</div>
-            ` : ''}
-          </div>
-
-      </div>
-
-      <!-- EXPANDABLE DETAILS -->
-      <div id="${collapseId}" class="match-details-panel" hidden>
-        ${hasDetails ? `
-          <div class="match-details-grid">
-            ${court !== "none" ? `
-              <div class="match-detail-item">
-                <span class="detail-icon">🥅</span>
-                <span class="detail-value">${escapeHTML(court)}</span>
-              </div>
-            ` : ''}
-            ${day !== "none" ? `
-              <div class="match-detail-item">
-                <span class="detail-icon">📅</span>
-                <span class="detail-value">${escapeHTML(day)}</span>
-              </div>
-            ` : ''}
-            ${hour !== "none" ? `
-              <div class="match-detail-item">
-                <span class="detail-icon">🕐</span>
-                <span class="detail-value">${escapeHTML(hour)}</span>
-              </div>
-            ` : ''}
-          </div>
-        ` : `
-          <div class="match-details-pending">
-            <span class="pending-icon">⏳</span>
-            <span class="pending-text">Campo, giorno e orario ancora da definire</span>
-          </div>
-        `}
-      </div>
-    `;
-
-    // Event listener per toggle
-    const toggleBtn = card.querySelector(".match-details-toggle");
-    const panel = card.querySelector(".match-details-panel");
-
-    toggleBtn.addEventListener("click", () => {
-      const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
-      toggleBtn.setAttribute("aria-expanded", !isExpanded);
-      panel.hidden = isExpanded;
-    });
-    
+    const card = renderMatchCard(match, isSetBased, false);
     container.appendChild(card);
   });
 }
 
+// ===============================
+// RENDER MATCH CARD (UNIFIED)
+// ===============================
+function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
+  const card = document.createElement("div");
+  card.className = "match-card";
+  if (isFinals) card.classList.add("finals");
 
+  const isPlayed =
+    match.played === true ||
+    String(match.played).toUpperCase() === "TRUE";
 
+  if (isPlayed) card.classList.add("played");
+
+  const teamAName = match.team_a_name || formatTeam(match.team_a);
+  const teamBName = match.team_b_name || formatTeam(match.team_b);
+
+  // Campi logistica
+  const court = match.court || "none";
+  const day = match.day || "none";
+  const hour = match.hour || "none";
+  const hasDetails = court !== "none" || day !== "none" || hour !== "none";
+
+  // Genera ID univoco per il collapse
+  const collapseId = `match-details-${match.match_id || match.final_id}`;
+
+  // Determina scores display
+  const scoreA = isPlayed ? (match.score_a ?? "-") : "-";
+  const scoreB = isPlayed ? (match.score_b ?? "-") : "-";
+
+  // Determina vincitore
+  let winnerTeamId = null;
+  let isDraw = false;
+  
+  if (isPlayed) {
+    const numA = Number(match.score_a);
+    const numB = Number(match.score_b);
+    
+    if (match.winner_team_id) {
+      winnerTeamId = match.winner_team_id;
+      isDraw = numA === numB;
+    } else if (numA > numB) {
+      winnerTeamId = match.team_a;
+    } else if (numB > numA) {
+      winnerTeamId = match.team_b;
+    }
+  }
+
+  // Classi per evidenziare vincitore/perdente
+  const teamAClass = winnerTeamId === match.team_a ? "winner" : (winnerTeamId === match.team_b ? "loser" : "");
+  const teamBClass = winnerTeamId === match.team_b ? "winner" : (winnerTeamId === match.team_a ? "loser" : "");
+
+  // Sets detail per format a set
+  const setsDetail = match.sets_detail || null;
+  const showSetsDetail = isSetBased && isPlayed && setsDetail;
+
+  // Meta info
+  const metaInfo = isFinals 
+    ? `<span class="meta-item meta-round">${escapeHTML(roundLabel || 'Fase Finale')}</span>`
+    : `<span class="meta-item meta-group">Girone ${escapeHTML(match.group_id || "?")}</span>`;
+
+  card.innerHTML = `
+    <div class="match-card-inner">
+      
+      <!-- MAIN CONTENT: Teams + Score -->
+      <div class="match-main">
+        <div class="match-team match-team-a ${teamAClass}">
+          <span class="team-name">${escapeHTML(teamAName)}</span>
+        </div>
+        
+        <div class="match-score-block">
+          <span class="score score-a">${scoreA}</span>
+          <span class="score-separator">:</span>
+          <span class="score score-b">${scoreB}</span>
+        </div>
+        
+        <div class="match-team match-team-b ${teamBClass}">
+          <span class="team-name">${escapeHTML(teamBName)}</span>
+        </div>
+      </div>
+
+      ${showSetsDetail ? `
+        <div class="match-sets-detail">
+          ${formatSetsDetail(setsDetail)}
+        </div>
+      ` : ''}
+
+      ${isDraw && winnerTeamId && isFinals ? `
+        <div class="match-tiebreaker">
+          <span class="tiebreaker-icon">⚡</span>
+          <span class="tiebreaker-text">Spareggio: <strong>${escapeHTML(winnerTeamId === match.team_a ? teamAName : teamBName)}</strong></span>
+        </div>
+      ` : ''}
+
+      <!-- FOOTER: Meta + Actions -->
+      <div class="match-card-footer">
+        <div class="match-meta-inline">
+          ${metaInfo}
+        </div>
+
+        <div class="match-actions">
+          <button class="match-details-toggle" aria-expanded="false" aria-controls="${collapseId}">
+            <span class="toggle-icon">+</span>
+            <span class="toggle-text">Info</span>
+          </button>
+          
+          ${isPlayed ? `
+            <div class="match-status-badge played">✓</div>
+          ` : ''}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- EXPANDABLE DETAILS -->
+    <div id="${collapseId}" class="match-details-panel" hidden>
+      ${hasDetails ? `
+        <div class="match-details-grid">
+          ${court !== "none" ? `
+            <div class="match-detail-item">
+              <span class="detail-icon">🥅</span>
+              <span class="detail-value">${escapeHTML(court)}</span>
+            </div>
+          ` : ''}
+          ${day !== "none" ? `
+            <div class="match-detail-item">
+              <span class="detail-icon">📅</span>
+              <span class="detail-value">${escapeHTML(day)}</span>
+            </div>
+          ` : ''}
+          ${hour !== "none" ? `
+            <div class="match-detail-item">
+              <span class="detail-icon">🕐</span>
+              <span class="detail-value">${escapeHTML(hour)}</span>
+            </div>
+          ` : ''}
+        </div>
+      ` : `
+        <div class="match-details-pending">
+          <span class="pending-icon">⏳</span>
+          <span class="pending-text">Campo, giorno e orario ancora da definire</span>
+        </div>
+      `}
+    </div>
+  `;
+
+  // Event listener per toggle
+  const toggleBtn = card.querySelector(".match-details-toggle");
+  const panel = card.querySelector(".match-details-panel");
+
+  toggleBtn.addEventListener("click", () => {
+    const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
+    toggleBtn.setAttribute("aria-expanded", !isExpanded);
+    panel.hidden = isExpanded;
+  });
+
+  return card;
+}
+
+// ===============================
+// FORMAT SETS DETAIL
+// ===============================
+function formatSetsDetail(setsDetail) {
+  if (!setsDetail) return '';
+  
+  // "6-4,3-6,7-5" → ["6-4", "3-6", "7-5"]
+  const sets = setsDetail.split(',').map(s => s.trim());
+  
+  return `
+    <div class="sets-badges">
+      ${sets.map((set, index) => `
+        <span class="set-badge">${escapeHTML(set)}</span>
+      `).join('')}
+    </div>
+  `;
+}
 
 function onRoundChange(value) {
   if (!value) return;
@@ -470,10 +613,9 @@ function loadStandings(tournamentId) {
     })
     .then(data => {
       fadeOutSkeleton(skeleton);
-      ALL_STANDINGS = Array.isArray(data) ? data : [];  // ← NUOVO: salva per podio
+      ALL_STANDINGS = Array.isArray(data) ? data : [];
       renderStandings(data);
       
-      // ← NUOVO: Renderizza podio se necessario (dopo aver caricato standings)
       if (!formatHasFinals(TOURNAMENT_FORMAT) && TOURNAMENT_STATUS === "finished") {
         renderPodium(ALL_STANDINGS);
       }
@@ -506,7 +648,7 @@ function showToast(message) {
 }
 
 // ===============================
-// RENDER STANDINGS
+// RENDER STANDINGS (DYNAMIC)
 // ===============================
 function renderStandings(data) {
   const standingsEl = document.getElementById("standings");
@@ -516,6 +658,11 @@ function renderStandings(data) {
       "<p class='placeholder'>Nessuna classifica disponibile</p>";
     return;
   }
+
+  // Determina se format a set (dai dati o dal torneo)
+  const isSetBased = data[0]?.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_GIRONI);
+  const sport = data[0]?.sport || TOURNAMENT_SPORT;
+  const labels = getSportLabels(sport, isSetBased);
 
   const groupsMap = {};
   data.forEach(row => {
@@ -540,45 +687,99 @@ function renderStandings(data) {
       const group = document.createElement("div");
       group.className = "standings-group";
 
-      group.innerHTML = `
-        <h3 class="standings-title">Girone ${escapeHTML(groupId)}</h3>
-        <table class="standings-table">
-          <thead>
-            <tr>
-              <th>Squadra</th>
-              <th>Pts</th>
-              <th>PG</th>
-              <th>V</th>
-              <th>N</th>
-              <th>P</th>
-              <th>GF</th>
-              <th>GS</th>
-              <th>Diff</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${teams.map(team => `
+      if (isSetBased) {
+        // Tabella per format a SET
+        group.innerHTML = `
+          <h3 class="standings-title">Girone ${escapeHTML(groupId)}</h3>
+          <table class="standings-table standings-table-set">
+            <thead>
               <tr>
-                <td class="team-cell">
-                  <span class="rank-badge">${team.rank_level}</span>
-                  <span class="team-name">${escapeHTML(team.team_name || "")}</span>
-                </td>
-                <td>${Number(team.points) || 0}</td>
-                <td>${Number(team.matches_played) || 0}</td>
-                <td>${Number(team.wins) || 0}</td>
-                <td>${Number(team.draws) || 0}</td>
-                <td>${Number(team.losses) || 0}</td>
-                <td>${Number(team.goals_for) || 0}</td>
-                <td>${Number(team.goals_against) || 0}</td>
-                <td>${Number(team.goal_diff) || 0}</td>
+                <th>Squadra</th>
+                <th>Pts</th>
+                <th>PG</th>
+                <th>V</th>
+                <th>P</th>
+                <th>${labels.forLabel}</th>
+                <th>${labels.againstLabel}</th>
+                <th>${labels.diffLabel}</th>
+                <th>${labels.gamesForLabel}</th>
+                <th>${labels.gamesAgainstLabel}</th>
+                <th>${labels.gamesDiffLabel}</th>
               </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      `;
+            </thead>
+            <tbody>
+              ${teams.map(team => `
+                <tr>
+                  <td class="team-cell">
+                    <span class="rank-badge">${team.rank_level}</span>
+                    <span class="team-name">${escapeHTML(team.team_name || "")}</span>
+                  </td>
+                  <td>${Number(team.points) || 0}</td>
+                  <td>${Number(team.matches_played) || 0}</td>
+                  <td>${Number(team.wins) || 0}</td>
+                  <td>${Number(team.losses) || 0}</td>
+                  <td>${Number(team.sets_for) || 0}</td>
+                  <td>${Number(team.sets_against) || 0}</td>
+                  <td>${formatDiff(team.set_diff)}</td>
+                  <td>${Number(team.games_for) || 0}</td>
+                  <td>${Number(team.games_against) || 0}</td>
+                  <td>${formatDiff(team.game_diff)}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+      } else {
+        // Tabella per format a TEMPO (calcio/padel-tempo/beach-tempo)
+        group.innerHTML = `
+          <h3 class="standings-title">Girone ${escapeHTML(groupId)}</h3>
+          <table class="standings-table">
+            <thead>
+              <tr>
+                <th>Squadra</th>
+                <th>Pts</th>
+                <th>PG</th>
+                <th>V</th>
+                <th>N</th>
+                <th>P</th>
+                <th>${labels.forLabel}</th>
+                <th>${labels.againstLabel}</th>
+                <th>${labels.diffLabel}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${teams.map(team => `
+                <tr>
+                  <td class="team-cell">
+                    <span class="rank-badge">${team.rank_level}</span>
+                    <span class="team-name">${escapeHTML(team.team_name || "")}</span>
+                  </td>
+                  <td>${Number(team.points) || 0}</td>
+                  <td>${Number(team.matches_played) || 0}</td>
+                  <td>${Number(team.wins) || 0}</td>
+                  <td>${Number(team.draws) || 0}</td>
+                  <td>${Number(team.losses) || 0}</td>
+                  <td>${Number(team.goals_for) || 0}</td>
+                  <td>${Number(team.goals_against) || 0}</td>
+                  <td>${formatDiff(team.goal_diff)}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+      }
 
       standingsEl.appendChild(group);
     });
+}
+
+// ===============================
+// FORMAT DIFF (con segno +/-)
+// ===============================
+function formatDiff(diff) {
+  const n = Number(diff) || 0;
+  if (n > 0) return `+${n}`;
+  return String(n);
 }
 
 function escapeHTML(str) {
@@ -671,12 +872,15 @@ function renderFinalsMatchesByRound(roundId, bracket) {
     return;
   }
 
+  // Determina se format a set
+  const isSetBased = matchesInRound[0]?.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_FINALS);
+
   const roundBox = document.createElement("div");
   roundBox.className = "finals-round";
   roundBox.innerHTML = `<h3>${escapeHTML(roundLabel)}</h3>`;
 
   matchesInRound.forEach(match => {
-    const card = renderFinalsMatchCard(match, roundLabel);
+    const card = renderMatchCard(match, isSetBased, true, roundLabel);
     roundBox.appendChild(card);
   });
 
@@ -703,24 +907,20 @@ function loadFinalsBracket(tournamentId) {
 }
 
 // ===============================
-// APPLY LAYOUT BY STATUS (MODIFICATO)
+// APPLY LAYOUT BY STATUS
 // ===============================
 function applyLayoutByStatus() {
   const finals = document.getElementById("finals-container");
   const podium = document.getElementById("podium-container");
 
-  // Nascondi tutto di default
   finals.classList.add("hidden");
   if (podium) podium.classList.add("hidden");
 
-  // Formato CON finals
   if (formatHasFinals(TOURNAMENT_FORMAT)) {
     if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished") {
       finals.classList.remove("hidden");
     }
-  } 
-  // Formato SENZA finals
-  else {
+  } else {
     if (TOURNAMENT_STATUS === "finished" && podium) {
       podium.classList.remove("hidden");
     }
@@ -989,171 +1189,27 @@ function createBracketMatch(match) {
 
 
 // ===============================
-// RENDER FINALS MATCH CARD (READ-ONLY)
-// ===============================
-function renderFinalsMatchCard(match, roundLabel = "Fase Finale") {
-  const card = document.createElement("div");
-  card.className = "match-card finals";
-
-  const isPlayed =
-    match.played === true ||
-    String(match.played).toUpperCase() === "TRUE";
-
-  if (isPlayed) card.classList.add("played");
-
-  const teamAName = match.team_a_name || formatTeam(match.team_a);
-  const teamBName = match.team_b_name || formatTeam(match.team_b);
-
-  // Campi logistica
-  const court = match.court || "none";
-  const day = match.day || "none";
-  const hour = match.hour || "none";
-  const hasDetails = court !== "none" || day !== "none" || hour !== "none";
-
-  // Genera ID univoco per il collapse
-  const collapseId = `finals-details-${match.final_id || match.match_id}`;
-
-  // Determina scores display
-  const scoreA = isPlayed ? (match.score_a ?? "-") : "-";
-  const scoreB = isPlayed ? (match.score_b ?? "-") : "-";
-
-  // Determina vincitore (per spareggi)
-  let winnerTeamId = null;
-  let isDraw = false;
-  
-  if (isPlayed) {
-    const numA = Number(match.score_a);
-    const numB = Number(match.score_b);
-    
-    if (match.winner_team_id) {
-      // Vincitore esplicito (spareggio)
-      winnerTeamId = match.winner_team_id;
-      isDraw = numA === numB; // Pareggio con winner = spareggio
-    } else if (numA > numB) {
-      winnerTeamId = match.team_a;
-    } else if (numB > numA) {
-      winnerTeamId = match.team_b;
-    }
-  }
-
-  // Classi per evidenziare vincitore/perdente
-  const teamAClass = winnerTeamId === match.team_a ? "winner" : (winnerTeamId === match.team_b ? "loser" : "");
-  const teamBClass = winnerTeamId === match.team_b ? "winner" : (winnerTeamId === match.team_a ? "loser" : "");
-
-  card.innerHTML = `
-    <div class="match-card-inner">
-      
-      <!-- MAIN CONTENT: Teams + Score -->
-      <div class="match-main">
-        <div class="match-team match-team-a ${teamAClass}">
-          <span class="team-name">${escapeHTML(teamAName)}</span>
-        </div>
-        
-        <div class="match-score-block">
-          <span class="score score-a">${scoreA}</span>
-          <span class="score-separator">:</span>
-          <span class="score score-b">${scoreB}</span>
-        </div>
-        
-        <div class="match-team match-team-b ${teamBClass}">
-          <span class="team-name">${escapeHTML(teamBName)}</span>
-        </div>
-      </div>
-
-      ${isDraw && winnerTeamId ? `
-        <div class="match-tiebreaker">
-          <span class="tiebreaker-icon">⚡</span>
-          <span class="tiebreaker-text">Spareggio: <strong>${escapeHTML(winnerTeamId === match.team_a ? teamAName : teamBName)}</strong></span>
-        </div>
-      ` : ''}
-
-      <!-- FOOTER: Meta + Actions -->
-      <div class="match-card-footer">
-        <div class="match-meta-inline">
-          <span class="meta-item meta-round">${escapeHTML(roundLabel)}</span>
-        </div>
-
-        <div class="match-actions">
-          <button class="match-details-toggle" aria-expanded="false" aria-controls="${collapseId}">
-            <span class="toggle-icon">+</span>
-            <span class="toggle-text">Info</span>
-          </button>
-          
-          ${isPlayed ? `
-            <div class="match-status-badge played">✓</div>
-          ` : ''}
-        </div>
-      </div>
-
-    </div>
-
-    <!-- EXPANDABLE DETAILS -->
-    <div id="${collapseId}" class="match-details-panel" hidden>
-      ${hasDetails ? `
-        <div class="match-details-grid">
-          ${court !== "none" ? `
-            <div class="match-detail-item">
-              <span class="detail-icon">🥅</span>
-              <span class="detail-value">${escapeHTML(court)}</span>
-            </div>
-          ` : ''}
-          ${day !== "none" ? `
-            <div class="match-detail-item">
-              <span class="detail-icon">📅</span>
-              <span class="detail-value">${escapeHTML(day)}</span>
-            </div>
-          ` : ''}
-          ${hour !== "none" ? `
-            <div class="match-detail-item">
-              <span class="detail-icon">🕐</span>
-              <span class="detail-value">${escapeHTML(hour)}</span>
-            </div>
-          ` : ''}
-        </div>
-      ` : `
-        <div class="match-details-pending">
-          <span class="pending-icon">⏳</span>
-          <span class="pending-text">Campo, giorno e orario ancora da definire</span>
-        </div>
-      `}
-    </div>
-  `;
-
-  // Event listener per toggle
-  const toggleBtn = card.querySelector(".match-details-toggle");
-  const panel = card.querySelector(".match-details-panel");
-
-  toggleBtn.addEventListener("click", () => {
-    const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
-    toggleBtn.setAttribute("aria-expanded", !isExpanded);
-    panel.hidden = isExpanded;
-  });
-
-  return card;
-}
-
-
-
-
-// ===============================
-// RENDER PODIUM (NUOVO)
+// RENDER PODIUM
 // ===============================
 function renderPodium(standings) {
   const container = document.getElementById("podium-content");
   if (!container) return;
 
-  // Prendi le prime 3 squadre ordinate per rank_level
-  // (assumendo girone unico per tornei senza finals)
+  // Determina se format a set
+  const isSetBased = standings[0]?.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_GIRONI);
+
+  // Ordina per rank_level
   const sorted = [...standings].sort((a, b) => {
-    // Prima per rank_level
     const rankDiff = (a.rank_level || 99) - (b.rank_level || 99);
     if (rankDiff !== 0) return rankDiff;
     
-    // Poi per punti
     const pointsDiff = (b.points || 0) - (a.points || 0);
     if (pointsDiff !== 0) return pointsDiff;
     
-    // Poi per differenza reti
+    // Usa la differenza appropriata in base al format
+    if (isSetBased) {
+      return (b.set_diff || 0) - (a.set_diff || 0);
+    }
     return (b.goal_diff || 0) - (a.goal_diff || 0);
   });
 
@@ -1164,6 +1220,14 @@ function renderPodium(standings) {
     return;
   }
 
+  // Formatta stats in base al format
+  const formatPodiumStats = (team) => {
+    if (isSetBased) {
+      return `${team.points} pts · Set ${formatDiff(team.set_diff)}`;
+    }
+    return `${team.points} pts · ${formatDiff(team.goal_diff)}`;
+  };
+
   const podiumHTML = `
     <div class="podium">
       ${top3.length >= 2 ? `
@@ -1171,7 +1235,7 @@ function renderPodium(standings) {
           <div class="podium-medal">🥈</div>
           <div class="podium-rank">2°</div>
           <div class="podium-team">${escapeHTML(top3[1].team_name)}</div>
-          <div class="podium-stats">${top3[1].points} pts · ${top3[1].goal_diff > 0 ? '+' : ''}${top3[1].goal_diff}</div>
+          <div class="podium-stats">${formatPodiumStats(top3[1])}</div>
           <div class="podium-bar second"></div>
         </div>
       ` : ''}
@@ -1181,7 +1245,7 @@ function renderPodium(standings) {
           <div class="podium-medal">🥇</div>
           <div class="podium-rank">1°</div>
           <div class="podium-team">${escapeHTML(top3[0].team_name)}</div>
-          <div class="podium-stats">${top3[0].points} pts · ${top3[0].goal_diff > 0 ? '+' : ''}${top3[0].goal_diff}</div>
+          <div class="podium-stats">${formatPodiumStats(top3[0])}</div>
           <div class="podium-bar first"></div>
         </div>
       ` : ''}
@@ -1191,7 +1255,7 @@ function renderPodium(standings) {
           <div class="podium-medal">🥉</div>
           <div class="podium-rank">3°</div>
           <div class="podium-team">${escapeHTML(top3[2].team_name)}</div>
-          <div class="podium-stats">${top3[2].points} pts · ${top3[2].goal_diff > 0 ? '+' : ''}${top3[2].goal_diff}</div>
+          <div class="podium-stats">${formatPodiumStats(top3[2])}</div>
           <div class="podium-bar third"></div>
         </div>
       ` : ''}

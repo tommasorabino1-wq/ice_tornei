@@ -2,6 +2,34 @@ const admin = require('firebase-admin');
 const db = admin.firestore();
 
 // ===============================
+// HELPER: Normalizza sport
+// ===============================
+function normalizeSport(sport) {
+  const s = String(sport || '').toLowerCase().trim();
+  
+  if (s.includes('calcio') || s.includes('football') || s.includes('soccer')) {
+    return 'calcio';
+  }
+  if (s.includes('padel')) {
+    return 'padel';
+  }
+  if (s.includes('beach') || s.includes('volley')) {
+    return 'beach_volley';
+  }
+  
+  // Default a calcio se non riconosciuto
+  return 'calcio';
+}
+
+// ===============================
+// HELPER: Determina se il format è a set
+// ===============================
+function isSetBasedFormat(matchFormat) {
+  const setFormats = ['1su1', '2su3', '3su5'];
+  return setFormats.includes(String(matchFormat || '').toLowerCase());
+}
+
+// ===============================
 // MAIN: Genera Finals se pronto
 // ===============================
 async function generateFinalsIfReady(tournamentId) {
@@ -28,6 +56,13 @@ async function generateFinalsIfReady(tournamentId) {
 
     console.log(`✅ Tournament format "${formatType}" includes finals phase`);
 
+    // Estrai sport e format finals
+    const sport = normalizeSport(tournament.sport);
+    const matchFormatFinals = String(tournament.match_format_finals || '').toLowerCase();
+    const isSetBased = isSetBasedFormat(matchFormatFinals);
+    
+    console.log(`🏆 Sport: ${sport}, Format Finals: ${matchFormatFinals}, Set-based: ${isSetBased}`);
+
     // 1) Recupera standings
     const standingsSnapshot = await db.collection('standings')
       .where('tournament_id', '==', tournamentId)
@@ -46,6 +81,9 @@ async function generateFinalsIfReady(tournamentId) {
     standings.forEach(s => {
       teamNamesMap[s.team_id] = s.team_name;
     });
+
+    // Determina se standings sono set-based (per criteri di ordinamento)
+    const standingsIsSetBased = standings[0]?.is_set_based || false;
 
     // 2) Raggruppa per girone
     const byGroup = {};
@@ -106,13 +144,26 @@ async function generateFinalsIfReady(tournamentId) {
       return;
     }
 
-    // 5) Ordina seconde (criteri cross-girone)
-    seconds.sort((a, b) =>
-      b.points - a.points ||
-      b.goal_diff - a.goal_diff ||
-      b.goals_for - a.goals_for ||
-      String(a.team_id).localeCompare(String(b.team_id))
-    );
+    // 5) Ordina seconde (criteri cross-girone) - diversi per set-based vs tempo
+    if (standingsIsSetBased) {
+      // Criteri per format a set
+      seconds.sort((a, b) =>
+        b.points - a.points ||
+        b.set_diff - a.set_diff ||
+        b.sets_for - a.sets_for ||
+        b.game_diff - a.game_diff ||
+        b.games_for - a.games_for ||
+        String(a.team_id).localeCompare(String(b.team_id))
+      );
+    } else {
+      // Criteri per format a tempo (calcio/padel-tempo/beach-tempo)
+      seconds.sort((a, b) =>
+        b.points - a.points ||
+        b.goal_diff - a.goal_diff ||
+        b.goals_for - a.goals_for ||
+        String(a.team_id).localeCompare(String(b.team_id))
+      );
+    }
 
     const need = slots - qualified.length;
 
@@ -123,10 +174,20 @@ async function generateFinalsIfReady(tournamentId) {
       const A = seconds[need - 1];
       const B = seconds[need];
 
-      const same =
-        A.points === B.points &&
-        A.goal_diff === B.goal_diff &&
-        A.goals_for === B.goals_for;
+      let same;
+      if (standingsIsSetBased) {
+        same =
+          A.points === B.points &&
+          A.set_diff === B.set_diff &&
+          A.sets_for === B.sets_for &&
+          A.game_diff === B.game_diff &&
+          A.games_for === B.games_for;
+      } else {
+        same =
+          A.points === B.points &&
+          A.goal_diff === B.goal_diff &&
+          A.goals_for === B.goals_for;
+      }
 
       if (same) {
         console.error('❌ Ambiguity in second-placed teams selection');
@@ -163,7 +224,7 @@ async function generateFinalsIfReady(tournamentId) {
       const matchId = `${tournamentId}_FINAL_R${roundId}_M${matchIndex}`;
       const finalRef = db.collection('finals').doc(matchId);
 
-      batch.set(finalRef, {
+      const finalMatchData = {
         match_id: matchId,
         tournament_id: tournamentId,
         round_id: roundId,
@@ -171,15 +232,30 @@ async function generateFinalsIfReady(tournamentId) {
         team_b: teamB,
         team_a_name: teamNamesMap[teamA] || teamA,
         team_b_name: teamNamesMap[teamB] || teamB,
+        
+        // Risultato principale
         score_a: null,
         score_b: null,
         winner_team_id: null,
         played: false,
-        // ← NUOVI CAMPI
+        
+        // Logistica
         court: 'none',
         day: 'none',
-        hour: 'none'
-      });
+        hour: 'none',
+        
+        // Campi per format a set (padel/beach)
+        sets_detail: null,        // Es: "6-4,3-6,7-5"
+        games_a: null,            // Totale game vinti da A
+        games_b: null,            // Totale game vinti da B
+        
+        // Metadata
+        sport: sport,
+        match_format: matchFormatFinals,
+        is_set_based: isSetBased
+      };
+
+      batch.set(finalRef, finalMatchData);
 
       console.log(`   ✓ Match ${matchId}: ${teamNamesMap[teamA]} vs ${teamNamesMap[teamB]}`);
 
@@ -205,7 +281,19 @@ async function tryGenerateNextFinalRound(tournamentId) {
   try {
     console.log(`🏆 [START] Checking if next final round can be generated for ${tournamentId}`);
 
-    // ✅ RIMUOVI orderBy, ordina in memoria
+    // 0) Recupera torneo per sport e format
+    const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
+    if (!tournamentDoc.exists) {
+      console.log('⚠️ Tournament not found');
+      return;
+    }
+
+    const tournament = tournamentDoc.data();
+    const sport = normalizeSport(tournament.sport);
+    const matchFormatFinals = String(tournament.match_format_finals || '').toLowerCase();
+    const isSetBased = isSetBasedFormat(matchFormatFinals);
+
+    // 1) Recupera finals esistenti
     const finalsSnapshot = await db.collection('finals')
       .where('tournament_id', '==', tournamentId)
       .get();
@@ -217,7 +305,7 @@ async function tryGenerateNextFinalRound(tournamentId) {
 
     const finals = finalsSnapshot.docs.map(doc => doc.data());
 
-    // ✅ Ordina in memoria per round_id
+    // Ordina in memoria per round_id
     finals.sort((a, b) => Number(a.round_id || 0) - Number(b.round_id || 0));
 
     console.log(`📋 Found ${finals.length} finals matches`);
@@ -291,7 +379,7 @@ async function tryGenerateNextFinalRound(tournamentId) {
       const matchId = `${tournamentId}_FINAL_R${nextRound}_M${matchIndex}`;
       const finalRef = db.collection('finals').doc(matchId);
 
-      batch.set(finalRef, {
+      const finalMatchData = {
         match_id: matchId,
         tournament_id: tournamentId,
         round_id: nextRound,
@@ -299,15 +387,30 @@ async function tryGenerateNextFinalRound(tournamentId) {
         team_b: teamB,
         team_a_name: teamNamesMap[teamA] || teamA,
         team_b_name: teamNamesMap[teamB] || teamB,
+        
+        // Risultato principale
         score_a: null,
         score_b: null,
         winner_team_id: null,
         played: false,
-        // ← NUOVI CAMPI
+        
+        // Logistica
         court: 'none',
         day: 'none',
-        hour: 'none'
-      });
+        hour: 'none',
+        
+        // Campi per format a set (padel/beach)
+        sets_detail: null,
+        games_a: null,
+        games_b: null,
+        
+        // Metadata
+        sport: sport,
+        match_format: matchFormatFinals,
+        is_set_based: isSetBased
+      };
+
+      batch.set(finalRef, finalMatchData);
 
       console.log(`   ✓ Match ${matchId}: ${teamNamesMap[teamA] || teamA} vs ${teamNamesMap[teamB] || teamB}`);
 
