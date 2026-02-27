@@ -331,18 +331,26 @@ exports.onTournamentStatusChange = onDocumentUpdated(
     
     console.log(`🔄 Tournament ${tournamentId} status change: ${oldStatus} → ${newStatus}`);
     
-    // Trigger generazione match solo se:
-    // - Lo status è cambiato da "open" a "full"
+    // Trigger generazione match: open → full
     if (oldStatus === 'open' && newStatus === 'full') {
       console.log(`🚀 Triggering match generation for ${tournamentId}`);
-      
       try {
-        const { generateMatchesIfReady } = require('./helpers/matchGenerator');
         await generateMatchesIfReady(tournamentId);
         console.log(`✅ Match generation completed for ${tournamentId}`);
       } catch (error) {
         console.error(`❌ Match generation failed for ${tournamentId}:`, error);
-        // Non rilanciamo l'errore per evitare retry infiniti
+      }
+    }
+
+    // ← AGGIUNGI QUESTO BLOCCO
+    // Trigger generazione finals: qualsiasi status → final_phase
+    if (oldStatus !== 'final_phase' && newStatus === 'final_phase') {
+      console.log(`🏆 Triggering finals generation for ${tournamentId}`);
+      try {
+        await generateFinalsIfReady(tournamentId);
+        console.log(`✅ Finals generation completed for ${tournamentId}`);
+      } catch (error) {
+        console.error(`❌ Finals generation failed for ${tournamentId}:`, error);
       }
     }
     
