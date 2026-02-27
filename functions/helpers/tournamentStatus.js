@@ -16,7 +16,6 @@ async function updateTournamentStatus(tournamentId) {
   try {
     console.log(`📊 Updating status for ${tournamentId}`);
 
-    // 1) Recupera torneo
     const tournamentRef = db.collection('tournaments').doc(tournamentId);
     const tournamentDoc = await tournamentRef.get();
 
@@ -28,9 +27,8 @@ async function updateTournamentStatus(tournamentId) {
     const tournament = tournamentDoc.data();
     const currentStatus = tournament.status;
     const formatType = tournament.format_type;
-    const hasFinals = formatHasFinals(formatType);
 
-    console.log(`ℹ️ Current status: ${currentStatus}, format: ${formatType}, hasFinals: ${hasFinals}`);
+    console.log(`ℹ️ Current status: ${currentStatus}, format: ${formatType}`);
 
     // ⚠️ NON modificare se lo status è "open" (gestito manualmente)
     if (currentStatus === 'open') {
@@ -38,7 +36,13 @@ async function updateTournamentStatus(tournamentId) {
       return;
     }
 
-    let newStatus = currentStatus;
+    // ⚠️ NON modificare mai automaticamente verso final_phase o finished.
+    // Queste transizioni sono sempre manuali.
+    // L'unica transizione automatica permessa è: full/live → live (quando iniziano i match).
+    if (currentStatus === 'final_phase' || currentStatus === 'finished') {
+      console.log(`ℹ️ Status is "${currentStatus}" - no automatic update allowed from this state`);
+      return;
+    }
 
     // 2) Recupera matches (gironi)
     const matchesSnapshot = await db.collection('matches')
@@ -46,66 +50,15 @@ async function updateTournamentStatus(tournamentId) {
       .get();
 
     const matches = matchesSnapshot.docs.map(doc => doc.data());
-    const allMatchesPlayed = matches.length > 0 && matches.every(m => m.played === true);
     const someMatchesPlayed = matches.some(m => m.played === true);
 
-    console.log(`📋 Matches: ${matches.length} total, allPlayed: ${allMatchesPlayed}, somePlayed: ${someMatchesPlayed}`);
+    console.log(`📋 Matches: ${matches.length} total, somePlayed: ${someMatchesPlayed}`);
 
-    // 3) Recupera finals (se il formato le prevede)
-    let finals = [];
-    let allFinalsPlayed = false;
+    let newStatus = currentStatus;
 
-    if (hasFinals) {
-      const finalsSnapshot = await db.collection('finals')
-        .where('tournament_id', '==', tournamentId)
-        .get();
-
-      finals = finalsSnapshot.docs.map(doc => doc.data());
-      allFinalsPlayed = finals.length > 0 && finals.every(f => f.played === true);
-
-      console.log(`🏆 Finals: ${finals.length} total, allPlayed: ${allFinalsPlayed}`);
-    }
-
-    // =====================================================
-    // LOGICA TRANSIZIONI STATUS
-    // =====================================================
-
-    // CASO 1: Formato CON finals
-    if (hasFinals) {
-      
-      // finished ← tutte le finals giocate
-      if (allFinalsPlayed) {
-        newStatus = 'finished';
-      }
-      // final_phase ← tutti i gironi giocati E finals esistono
-      else if (allMatchesPlayed && finals.length > 0) {
-        newStatus = 'final_phase';
-      }
-      // live ← almeno un match giocato
-      else if (someMatchesPlayed) {
-        newStatus = 'live';
-      }
-      // full ← nessun match giocato (mantieni)
-      else if (currentStatus === 'full') {
-        newStatus = 'full';
-      }
-    }
-    
-    // CASO 2: Formato SENZA finals
-    else {
-      
-      // finished ← tutti i gironi giocati (non ci sono finals)
-      if (allMatchesPlayed) {
-        newStatus = 'finished';
-      }
-      // live ← almeno un match giocato
-      else if (someMatchesPlayed) {
-        newStatus = 'live';
-      }
-      // full ← nessun match giocato (mantieni)
-      else if (currentStatus === 'full') {
-        newStatus = 'full';
-      }
+    // Unica transizione automatica: full → live quando almeno un match è giocato
+    if (currentStatus === 'full' && someMatchesPlayed) {
+      newStatus = 'live';
     }
 
     // =====================================================
@@ -126,4 +79,3 @@ async function updateTournamentStatus(tournamentId) {
 }
 
 module.exports = { updateTournamentStatus };
-

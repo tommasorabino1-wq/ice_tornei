@@ -6,18 +6,11 @@ const db = admin.firestore();
 // ===============================
 function normalizeSport(sport) {
   const s = String(sport || '').toLowerCase().trim();
-  
-  if (s.includes('calcio') || s.includes('football') || s.includes('soccer')) {
-    return 'calcio';
-  }
-  if (s.includes('padel')) {
-    return 'padel';
-  }
-  if (s.includes('beach') || s.includes('volley')) {
-    return 'beach_volley';
-  }
-  
-  // Default a calcio se non riconosciuto
+
+  if (s.includes('calcio') || s.includes('football') || s.includes('soccer')) return 'calcio';
+  if (s.includes('padel')) return 'padel';
+  if (s.includes('beach') || s.includes('volley')) return 'beach_volley';
+
   return 'calcio';
 }
 
@@ -30,13 +23,96 @@ function isSetBasedFormat(matchFormat) {
 }
 
 // ===============================
-// MAIN: Genera Finals se pronto
+// HELPER: Check if format has finals
+// ===============================
+function formatHasFinals(formatType) {
+  const formatsWithFinals = ['round_robin_finals', 'double_round_robin_finals'];
+  return formatsWithFinals.includes(String(formatType || '').toLowerCase());
+}
+
+// ===============================
+// HELPER: Controlla parità intra-girone nelle standings
+// ===============================
+function checkIntraGroupTies(byGroup, standingsIsSetBased) {
+  for (const [groupId, group] of Object.entries(byGroup)) {
+    // Raggruppa per rank_level
+    const byRank = {};
+    group.forEach(s => {
+      const rank = s.rank_level;
+      if (!byRank[rank]) byRank[rank] = [];
+      byRank[rank].push(s);
+    });
+
+    for (const [rank, teams] of Object.entries(byRank)) {
+      if (teams.length > 1) {
+        console.error(`❌ Tie at rank ${rank} in group ${groupId}: ${teams.map(t => t.team_name).join(', ')}`);
+        throw new Error('E6');
+      }
+    }
+  }
+}
+
+// ===============================
+// HELPER: Controlla parità tra seconde (o terze) cross-girone
+// ===============================
+function checkCrossGroupTie(sorted, need, standingsIsSetBased) {
+  if (need <= 0 || sorted.length <= need) return; // nessuna ambiguità possibile
+
+  const A = sorted[need - 1];
+  const B = sorted[need];
+
+  let same;
+  if (standingsIsSetBased) {
+    same =
+      A.points === B.points &&
+      A.set_diff === B.set_diff &&
+      A.sets_for === B.sets_for &&
+      A.game_diff === B.game_diff &&
+      A.games_for === B.games_for;
+  } else {
+    same =
+      A.points === B.points &&
+      A.goal_diff === B.goal_diff &&
+      A.goals_for === B.goals_for;
+  }
+
+  if (same) {
+    console.error(`❌ Ambiguity in cross-group selection at position ${need}`);
+    throw new Error('E4');
+  }
+}
+
+// ===============================
+// HELPER: Ordina squadre per criteri cross-girone
+// ===============================
+function sortCrossGroup(teams, standingsIsSetBased) {
+  if (standingsIsSetBased) {
+    return [...teams].sort((a, b) =>
+      b.points - a.points ||
+      b.set_diff - a.set_diff ||
+      b.sets_for - a.sets_for ||
+      b.game_diff - a.game_diff ||
+      b.games_for - a.games_for ||
+      String(a.team_id).localeCompare(String(b.team_id))
+    );
+  } else {
+    return [...teams].sort((a, b) =>
+      b.points - a.points ||
+      b.goal_diff - a.goal_diff ||
+      b.goals_for - a.goals_for ||
+      String(a.team_id).localeCompare(String(b.team_id))
+    );
+  }
+}
+
+// ===============================
+// MAIN: Genera Finals (triggerata da status → final_phase)
 // ===============================
 async function generateFinalsIfReady(tournamentId) {
   try {
-    console.log(`🏆 [START] Checking if finals can be generated for ${tournamentId}`);
+    console.log(`🏆 [START] generateFinalsIfReady for ${tournamentId}`);
 
-    // 0) Recupera torneo per verificare format_type
+    // 0) Recupera torneo
     const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
     if (!tournamentDoc.exists) {
       console.log('⚠️ Tournament not found');
@@ -46,185 +122,141 @@ async function generateFinalsIfReady(tournamentId) {
     const tournament = tournamentDoc.data();
     const formatType = String(tournament.format_type || '').toLowerCase();
 
-    // Check se il formato prevede finals
-    const formatsWithFinals = ['round_robin_finals', 'double_round_robin_finals'];
-    
-    if (!formatsWithFinals.includes(formatType)) {
-      console.log(`ℹ️ Tournament format "${formatType}" does not have finals phase - skipping`);
-      return;
+    // 3b) Verifica che il formato preveda finals
+    if (!formatHasFinals(formatType)) {
+      console.log(`⛔ Tournament format "${formatType}" does not support finals - blocked`);
+      throw new Error('E_FORMAT_NO_FINALS');
     }
 
-    console.log(`✅ Tournament format "${formatType}" includes finals phase`);
+    console.log(`✅ Format "${formatType}" supports finals`);
 
-    // Estrai sport e format finals
     const sport = normalizeSport(tournament.sport);
     const matchFormatFinals = String(tournament.match_format_finals || '').toLowerCase();
     const isSetBased = isSetBasedFormat(matchFormatFinals);
-    
+
     console.log(`🏆 Sport: ${sport}, Format Finals: ${matchFormatFinals}, Set-based: ${isSetBased}`);
 
-    // 1) Recupera standings
-    const standingsSnapshot = await db.collection('standings')
-      .where('tournament_id', '==', tournamentId)
-      .get();
-
-    if (standingsSnapshot.empty) {
-      console.log('⚠️ No standings found');
-      return;
-    }
-
-    const standings = standingsSnapshot.docs.map(doc => doc.data());
-    console.log(`📊 Found ${standings.length} standings`);
-
-    // Crea mappa team_id -> team_name
-    const teamNamesMap = {};
-    standings.forEach(s => {
-      teamNamesMap[s.team_id] = s.team_name;
-    });
-
-    // Determina se standings sono set-based (per criteri di ordinamento)
-    const standingsIsSetBased = standings[0]?.is_set_based || false;
-
-    // 2) Raggruppa per girone
-    const byGroup = {};
-    standings.forEach(s => {
-      const groupId = s.group_id;
-      if (!byGroup[groupId]) byGroup[groupId] = [];
-      byGroup[groupId].push(s);
-    });
-
-    console.log(`🏟️ Groups: ${Object.keys(byGroup).join(', ')}`);
-
-    // 3) Estrai primi e secondi
-    const firsts = [];
-    const seconds = [];
-
-    Object.values(byGroup).forEach(group => {
-      const byRank = {};
-      group.forEach(s => {
-        const rank = s.rank_level;
-        if (!byRank[rank]) byRank[rank] = [];
-        byRank[rank].push(s);
-      });
-
-      // Deve esserci esattamente 1 primo
-      if (!byRank[1] || byRank[1].length !== 1) {
-        console.error('❌ Multiple teams at rank 1 in a group');
-        throw new Error('E6');
-      }
-      firsts.push(byRank[1][0]);
-
-      // Secondi (opzionale)
-      if (byRank[2]) {
-        if (byRank[2].length !== 1) {
-          console.error('❌ Multiple teams at rank 2 in a group');
-          throw new Error('E6');
-        }
-        seconds.push(byRank[2][0]);
-      }
-    });
-
-    console.log(`🥇 First-placed teams: ${firsts.length}`);
-    console.log(`🥈 Second-placed teams: ${seconds.length}`);
-
-    // 4) Verifica teams_in_final
-    const slots = Number(tournament.teams_in_final);
-
-    if (!slots || slots <= 0) {
-      console.log('⚠️ Invalid teams_in_final');
-      return;
-    }
-
-    console.log(`🎯 Finals slots: ${slots}`);
-
-    let qualified = [...firsts];
-
-    if (qualified.length > slots) {
-      console.log('⚠️ Too many first-placed teams');
-      return;
-    }
-
-    // 5) Ordina seconde (criteri cross-girone) - diversi per set-based vs tempo
-    if (standingsIsSetBased) {
-      // Criteri per format a set
-      seconds.sort((a, b) =>
-        b.points - a.points ||
-        b.set_diff - a.set_diff ||
-        b.sets_for - a.sets_for ||
-        b.game_diff - a.game_diff ||
-        b.games_for - a.games_for ||
-        String(a.team_id).localeCompare(String(b.team_id))
-      );
-    } else {
-      // Criteri per format a tempo (calcio/padel-tempo/beach-tempo)
-      seconds.sort((a, b) =>
-        b.points - a.points ||
-        b.goal_diff - a.goal_diff ||
-        b.goals_for - a.goals_for ||
-        String(a.team_id).localeCompare(String(b.team_id))
-      );
-    }
-
-    const need = slots - qualified.length;
-
-    console.log(`📊 Need ${need} more teams from second-placed`);
-
-    // 6) Controllo ambiguità E4 (solo se serve almeno 1 seconda)
-    if (need > 0 && seconds.length > need) {
-      const A = seconds[need - 1];
-      const B = seconds[need];
-
-      let same;
-      if (standingsIsSetBased) {
-        same =
-          A.points === B.points &&
-          A.set_diff === B.set_diff &&
-          A.sets_for === B.sets_for &&
-          A.game_diff === B.game_diff &&
-          A.games_for === B.games_for;
-      } else {
-        same =
-          A.points === B.points &&
-          A.goal_diff === B.goal_diff &&
-          A.goals_for === B.goals_for;
-      }
-
-      if (same) {
-        console.error('❌ Ambiguity in second-placed teams selection');
-        throw new Error('E4');
-      }
-    }
-
-    qualified = qualified.concat(seconds.slice(0, need));
-
-    console.log(`✅ Qualified teams: ${qualified.map(q => q.team_name).join(', ')}`);
-
-    // 7) Verifica se finals già esistono
+    // 3d) Verifica che non esistano già finals per questo torneo
     const existingFinals = await db.collection('finals')
       .where('tournament_id', '==', tournamentId)
       .limit(1)
       .get();
 
     if (!existingFinals.empty) {
-      console.log('⚠️ Finals already exist');
+      console.log('⚠️ Finals already exist for this tournament - skipping');
       return;
     }
 
-    // 8) Crea finals (primo round)
+    // 3c) Recupera standings e verifica esistenza
+    const standingsSnapshot = await db.collection('standings')
+      .where('tournament_id', '==', tournamentId)
+      .get();
+
+    if (standingsSnapshot.empty) {
+      console.log('⚠️ No standings found');
+      throw new Error('E_NO_STANDINGS');
+    }
+
+    const standings = standingsSnapshot.docs.map(doc => doc.data());
+    console.log(`📊 Found ${standings.length} standings entries`);
+
+    const standingsIsSetBased = standings[0]?.is_set_based || false;
+
+    // Crea mappa team_id -> team_name
+    const teamNamesMap = {};
+    standings.forEach(s => { teamNamesMap[s.team_id] = s.team_name; });
+
+    // Raggruppa per girone
+    const byGroup = {};
+    standings.forEach(s => {
+      if (!byGroup[s.group_id]) byGroup[s.group_id] = [];
+      byGroup[s.group_id].push(s);
+    });
+
+    console.log(`🏟️ Groups: ${Object.keys(byGroup).join(', ')}`);
+
+    // 3c) Controlla parità intra-girone
+    checkIntraGroupTies(byGroup, standingsIsSetBased);
+
+    // 3e) Estrai teams_in_final e determina quanti prendere per rank
+    const slots = Number(tournament.teams_in_final);
+    if (!slots || slots <= 0) {
+      console.log('⚠️ Invalid or missing teams_in_final');
+      throw new Error('E_INVALID_SLOTS');
+    }
+
+    console.log(`🎯 Finals slots: ${slots}`);
+
+    // Estrai squadre per rank (primi, secondi, terzi, ...)
+    const byRankGlobal = {}; // rank_level → [standings entry]
+    Object.values(byGroup).forEach(group => {
+      group.forEach(s => {
+        const rank = s.rank_level;
+        if (!byRankGlobal[rank]) byRankGlobal[rank] = [];
+        byRankGlobal[rank].push(s);
+      });
+    });
+
+    const numGroups = Object.keys(byGroup).length;
+    let qualified = [];
+    let remainingSlots = slots;
+
+    // Prendi i primi (tutti i gironi hanno 1 primo)
+    const firsts = byRankGlobal[1] || [];
+    if (firsts.length > remainingSlots) {
+      console.log(`⚠️ More first-placed teams (${firsts.length}) than available slots (${remainingSlots})`);
+      throw new Error('E_TOO_MANY_FIRSTS');
+    }
+    qualified = qualified.concat(firsts);
+    remainingSlots -= firsts.length;
+
+    console.log(`🥇 First-placed: ${firsts.length}, remaining slots: ${remainingSlots}`);
+
+    // Se restano slot, prendiamo dalla posizione successiva (secondi, poi terzi, ecc.)
+    let currentRank = 2;
+    while (remainingSlots > 0) {
+      const rankTeams = byRankGlobal[currentRank] || [];
+
+      if (rankTeams.length === 0) {
+        console.log(`ℹ️ No more teams at rank ${currentRank}`);
+        break;
+      }
+
+      const sorted = sortCrossGroup(rankTeams, standingsIsSetBased);
+
+      // 3c) Controlla parità cross-girone per questo rank
+      checkCrossGroupTie(sorted, remainingSlots, standingsIsSetBased);
+
+      const toTake = Math.min(remainingSlots, sorted.length);
+      qualified = qualified.concat(sorted.slice(0, toTake));
+      remainingSlots -= toTake;
+
+      console.log(`🥈 Rank ${currentRank}: took ${toTake}, remaining slots: ${remainingSlots}`);
+      currentRank++;
+    }
+
+    if (qualified.length !== slots) {
+      console.log(`⚠️ Could not fill all slots: needed ${slots}, got ${qualified.length}`);
+      throw new Error('E_NOT_ENOUGH_TEAMS');
+    }
+
+    console.log(`✅ Qualified: ${qualified.map(q => q.team_name).join(', ')}`);
+
+    // 3f) Genera il primo round delle finals
     const batch = db.batch();
     const teams = qualified.map(q => q.team_id);
     const roundId = 1;
     let matchIndex = 1;
 
-    console.log(`🏗️ Creating ${teams.length / 2} finals matches (Round ${roundId})`);
+    console.log(`🏗️ Creating ${Math.floor(teams.length / 2)} finals matches (Round ${roundId})`);
 
-    for (let i = 0; i < teams.length / 2; i++) {
+    for (let i = 0; i < Math.floor(teams.length / 2); i++) {
       const teamA = teams[i];
       const teamB = teams[teams.length - 1 - i];
       const matchId = `${tournamentId}_FINAL_R${roundId}_M${matchIndex}`;
       const finalRef = db.collection('finals').doc(matchId);
 
-      const finalMatchData = {
+      batch.set(finalRef, {
         match_id: matchId,
         tournament_id: tournamentId,
         round_id: roundId,
@@ -232,56 +264,42 @@ async function generateFinalsIfReady(tournamentId) {
         team_b: teamB,
         team_a_name: teamNamesMap[teamA] || teamA,
         team_b_name: teamNamesMap[teamB] || teamB,
-        
-        // Risultato principale
         score_a: null,
         score_b: null,
         winner_team_id: null,
         played: false,
-        
-        // Logistica
         court: 'none',
         day: 'none',
         hour: 'none',
-        
-        // Campi per format a set (padel/beach)
-        sets_detail: null,        // Es: "6-4,3-6,7-5"
-        games_a: null,            // Totale game vinti da A
-        games_b: null,            // Totale game vinti da B
-        
-        // Metadata
-        sport: sport,
+        sets_detail: null,
+        games_a: null,
+        games_b: null,
+        sport,
         match_format: matchFormatFinals,
-        is_set_based: isSetBased
-      };
+        is_set_based: isSetBased,
+      });
 
-      batch.set(finalRef, finalMatchData);
-
-      console.log(`   ✓ Match ${matchId}: ${teamNamesMap[teamA]} vs ${teamNamesMap[teamB]}`);
-
+      console.log(`   ✓ ${matchId}: ${teamNamesMap[teamA]} vs ${teamNamesMap[teamB]}`);
       matchIndex++;
     }
 
     await batch.commit();
-    console.log(`✅ [SUCCESS] Finals generated for ${tournamentId}: ${teams.length / 2} matches`);
+    console.log(`✅ [SUCCESS] Finals R1 generated for ${tournamentId}`);
 
   } catch (error) {
-    console.error('❌ [ERROR] generateFinalsIfReady failed:', error);
-    console.error('Stack trace:', error.stack);
+    console.error('❌ [ERROR] generateFinalsIfReady failed:', error.message);
     throw error;
   }
 }
 
-
-
 // ===============================
-// HELPER: Genera prossimo round Finals
+// 3g) Genera prossimo round Finals (automatico quando round precedente è completato)
 // ===============================
 async function tryGenerateNextFinalRound(tournamentId) {
   try {
-    console.log(`🏆 [START] Checking if next final round can be generated for ${tournamentId}`);
+    console.log(`🏆 [START] tryGenerateNextFinalRound for ${tournamentId}`);
 
-    // 0) Recupera torneo per sport e format
+    // Recupera torneo per sport e format
     const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
     if (!tournamentDoc.exists) {
       console.log('⚠️ Tournament not found');
@@ -293,7 +311,7 @@ async function tryGenerateNextFinalRound(tournamentId) {
     const matchFormatFinals = String(tournament.match_format_finals || '').toLowerCase();
     const isSetBased = isSetBasedFormat(matchFormatFinals);
 
-    // 1) Recupera finals esistenti
+    // Recupera tutte le finals
     const finalsSnapshot = await db.collection('finals')
       .where('tournament_id', '==', tournamentId)
       .get();
@@ -304,56 +322,47 @@ async function tryGenerateNextFinalRound(tournamentId) {
     }
 
     const finals = finalsSnapshot.docs.map(doc => doc.data());
-
-    // Ordina in memoria per round_id
     finals.sort((a, b) => Number(a.round_id || 0) - Number(b.round_id || 0));
 
     console.log(`📋 Found ${finals.length} finals matches`);
 
-    // Crea mappa team_id -> team_name da tutti i match esistenti
+    // Mappa team_id → team_name
     const teamNamesMap = {};
     finals.forEach(f => {
       if (f.team_a && f.team_a_name) teamNamesMap[f.team_a] = f.team_a_name;
       if (f.team_b && f.team_b_name) teamNamesMap[f.team_b] = f.team_b_name;
     });
 
-    // 2) Trova ultimo round
+    // Trova ultimo round
     const rounds = finals.map(f => f.round_id).filter(r => Number.isFinite(r));
     const lastRound = Math.max(...rounds);
-
-    console.log(`🎯 Last round: ${lastRound}`);
-
     const lastRoundMatches = finals.filter(f => f.round_id === lastRound);
 
-    console.log(`📊 Matches in last round: ${lastRoundMatches.length}`);
+    console.log(`🎯 Last round: ${lastRound}, matches: ${lastRoundMatches.length}`);
 
+    // Se c'è solo 1 match nell'ultimo round → siamo già alla finale secca
     if (lastRoundMatches.length < 2) {
-      console.log('✅ Already at final match (only 1 match in last round)');
+      console.log('✅ Already at the final match - no further rounds to generate');
       return;
     }
 
-    // 3) Verifica che siano tutti giocati
+    // Verifica che tutte le partite dell'ultimo round siano giocate
     const allPlayed = lastRoundMatches.every(f => f.played === true);
-
-    console.log(`✔️ All matches played: ${allPlayed}`);
-
     if (!allPlayed) {
-      console.log('⚠️ Not all matches in last round are played');
+      console.log('⚠️ Not all matches in last round are played yet');
       return;
     }
 
-    // 4) Evita doppia generazione
+    // Evita doppia generazione
     const nextRound = lastRound + 1;
-    const nextRoundExists = finals.some(f => f.round_id === nextRound);
-
-    if (nextRoundExists) {
+    if (finals.some(f => f.round_id === nextRound)) {
       console.log('⚠️ Next round already exists');
       return;
     }
 
-    console.log(`🏗️ Generating next round: ${nextRound}`);
+    console.log(`🏗️ Generating next round: R${nextRound}`);
 
-    // 5) Estrai vincitori (ordine stabile)
+    // Estrai vincitori (ordine stabile)
     const winners = lastRoundMatches.map(f => {
       if (!f.winner_team_id) {
         console.error(`❌ Match ${f.match_id} has no winner_team_id`);
@@ -364,22 +373,17 @@ async function tryGenerateNextFinalRound(tournamentId) {
 
     console.log(`🏆 Winners: ${winners.join(', ')}`);
 
-    // 6) Crea nuovi match
+    // Crea nuovi match
     const batch = db.batch();
     let matchIndex = 1;
 
-    for (let i = 0; i < winners.length; i += 2) {
-      if (!winners[i + 1]) {
-        console.log(`⚠️ Skipping odd winner at index ${i}`);
-        break;
-      }
-
+    for (let i = 0; i < winners.length - 1; i += 2) {
       const teamA = winners[i];
       const teamB = winners[i + 1];
       const matchId = `${tournamentId}_FINAL_R${nextRound}_M${matchIndex}`;
       const finalRef = db.collection('finals').doc(matchId);
 
-      const finalMatchData = {
+      batch.set(finalRef, {
         match_id: matchId,
         tournament_id: tournamentId,
         round_id: nextRound,
@@ -387,49 +391,35 @@ async function tryGenerateNextFinalRound(tournamentId) {
         team_b: teamB,
         team_a_name: teamNamesMap[teamA] || teamA,
         team_b_name: teamNamesMap[teamB] || teamB,
-        
-        // Risultato principale
         score_a: null,
         score_b: null,
         winner_team_id: null,
         played: false,
-        
-        // Logistica
         court: 'none',
         day: 'none',
         hour: 'none',
-        
-        // Campi per format a set (padel/beach)
         sets_detail: null,
         games_a: null,
         games_b: null,
-        
-        // Metadata
-        sport: sport,
+        sport,
         match_format: matchFormatFinals,
-        is_set_based: isSetBased
-      };
+        is_set_based: isSetBased,
+      });
 
-      batch.set(finalRef, finalMatchData);
-
-      console.log(`   ✓ Match ${matchId}: ${teamNamesMap[teamA] || teamA} vs ${teamNamesMap[teamB] || teamB}`);
-
+      console.log(`   ✓ ${matchId}: ${teamNamesMap[teamA] || teamA} vs ${teamNamesMap[teamB] || teamB}`);
       matchIndex++;
     }
 
     await batch.commit();
-    console.log(`✅ [SUCCESS] Next final round (R${nextRound}) generated for ${tournamentId}`);
+    console.log(`✅ [SUCCESS] Final round R${nextRound} generated for ${tournamentId}`);
 
   } catch (error) {
-    console.error('❌ [ERROR] tryGenerateNextFinalRound failed:', error);
-    console.error('Stack trace:', error.stack);
+    console.error('❌ [ERROR] tryGenerateNextFinalRound failed:', error.message);
     throw error;
   }
 }
 
-
-
 module.exports = {
   generateFinalsIfReady,
-  tryGenerateNextFinalRound
+  tryGenerateNextFinalRound,
 };
