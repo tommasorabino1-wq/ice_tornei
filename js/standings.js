@@ -350,53 +350,79 @@ function renderMatchesByRound(roundId) {
     // Genera ID univoco per il collapse
     const collapseId = `match-details-${match.match_id}`;
 
+    // Determina scores display
+    const scoreA = isPlayed ? (match.score_a ?? "-") : "-";
+    const scoreB = isPlayed ? (match.score_b ?? "-") : "-";
+
     card.innerHTML = `
-      <div class="match-meta">
-        <span class="match-round">Giornata ${roundId}</span>
-        <span class="match-group">Girone ${escapeHTML(match.group_id || "?")}</span>
-      </div>
-
-      <div class="match-teams">
-        <span class="team">${escapeHTML(teamAName)}</span>
-        <span class="score">${isPlayed ? match.score_a ?? "-" : "-"}</span>
-        <span class="dash">-</span>
-        <span class="score">${isPlayed ? match.score_b ?? "-" : "-"}</span>
-        <span class="team">${escapeHTML(teamBName)}</span>
-      </div>
-
-      <div class="match-footer">
-        <button class="match-details-toggle" aria-expanded="false" aria-controls="${collapseId}">
-          <span class="toggle-icon">+</span>
-          <span class="toggle-text">Dettagli</span>
-        </button>
-
-        <div class="match-status">
-          ${isPlayed ? '<span class="status-played">✓ Giocata</span>' : '<span class="status-pending">In programma</span>'}
+      <div class="match-card-inner">
+        
+        <!-- MAIN CONTENT: Teams + Score -->
+        <div class="match-main">
+          <div class="match-team match-team-a">
+            <span class="team-name">${escapeHTML(teamAName)}</span>
+          </div>
+          
+          <div class="match-score-block">
+            <span class="score score-a">${scoreA}</span>
+            <span class="score-separator">:</span>
+            <span class="score score-b">${scoreB}</span>
+          </div>
+          
+          <div class="match-team match-team-b">
+            <span class="team-name">${escapeHTML(teamBName)}</span>
+          </div>
         </div>
+
+        <!-- FOOTER: Meta + Actions -->
+        <div class="match-card-footer">
+          <div class="match-meta-inline">
+            <span class="meta-item meta-group">Girone ${escapeHTML(match.group_id || "?")}</span>
+          </div>
+
+          <div class="match-actions">
+            <button class="match-details-toggle" aria-expanded="false" aria-controls="${collapseId}">
+              <span class="toggle-icon">+</span>
+              <span class="toggle-text">Info</span>
+            </button>
+            
+            <div class="match-status-badge ${isPlayed ? 'played' : 'pending'}">
+              ${isPlayed ? '✓' : '○'}
+            </div>
+          </div>
+        </div>
+
       </div>
 
+      <!-- EXPANDABLE DETAILS -->
       <div id="${collapseId}" class="match-details-panel" hidden>
         ${hasDetails ? `
           <div class="match-details-grid">
             ${court !== "none" ? `
               <div class="match-detail-item">
                 <span class="detail-icon">🏟️</span>
-                <span class="detail-label">Campo</span>
-                <span class="detail-value">${escapeHTML(court)}</span>
+                <div class="detail-content">
+                  <span class="detail-label">Campo</span>
+                  <span class="detail-value">${escapeHTML(court)}</span>
+                </div>
               </div>
             ` : ''}
             ${day !== "none" ? `
               <div class="match-detail-item">
                 <span class="detail-icon">📅</span>
-                <span class="detail-label">Giorno</span>
-                <span class="detail-value">${escapeHTML(day)}</span>
+                <div class="detail-content">
+                  <span class="detail-label">Giorno</span>
+                  <span class="detail-value">${escapeHTML(day)}</span>
+                </div>
               </div>
             ` : ''}
             ${hour !== "none" ? `
               <div class="match-detail-item">
                 <span class="detail-icon">🕐</span>
-                <span class="detail-label">Orario</span>
-                <span class="detail-value">${escapeHTML(hour)}</span>
+                <div class="detail-content">
+                  <span class="detail-label">Orario</span>
+                  <span class="detail-value">${escapeHTML(hour)}</span>
+                </div>
               </div>
             ` : ''}
           </div>
@@ -415,7 +441,6 @@ function renderMatchesByRound(roundId) {
 
     toggleBtn.addEventListener("click", () => {
       const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
-      
       toggleBtn.setAttribute("aria-expanded", !isExpanded);
       panel.hidden = isExpanded;
     });
@@ -423,6 +448,7 @@ function renderMatchesByRound(roundId) {
     container.appendChild(card);
   });
 }
+
 
 
 
