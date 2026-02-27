@@ -3971,5 +3971,83 @@ match-card.played {
 
 
 
+/* =========================
+   MATCH TEAM WINNER/LOSER STATE
+========================= */
+.match-team.winner .team-name {
+  color: #22c55e;
+  font-weight: 800;
+}
+
+.match-team.loser .team-name {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* =========================
+   TIEBREAKER INDICATOR (FINALS ONLY)
+========================= */
+.match-tiebreaker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(251, 191, 36, 0.06) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 8px;
+}
+
+.match-tiebreaker .tiebreaker-icon {
+  font-size: 16px;
+}
+
+.match-tiebreaker .tiebreaker-text {
+  font-size: 14px;
+  color: rgba(251, 191, 36, 0.9);
+}
+
+.match-tiebreaker .tiebreaker-text strong {
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+/* =========================
+   FINALS CARD ADJUSTMENTS
+========================= */
+.match-card.finals {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: linear-gradient(
+    145deg,
+    rgba(22, 29, 39, 0.95) 0%,
+    rgba(18, 24, 32, 0.98) 100%
+  );
+}
+
+.match-card.finals:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.match-card.finals.played {
+  background: linear-gradient(
+    145deg,
+    rgba(56, 189, 248, 0.04) 0%,
+    rgba(22, 29, 39, 0.95) 100%
+  );
+  border-color: rgba(56, 189, 248, 0.3);
+  opacity: 1;
+}
+
+/* Meta round badge per finals */
+.meta-item.meta-round {
+  padding: 4px 10px;
+  background: rgba(139, 92, 246, 0.12);
+  border-radius: 6px;
+  color: rgba(167, 139, 250, 0.9);
+}
+
+
+
 
 

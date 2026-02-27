@@ -4,7 +4,7 @@ const db = admin.firestore();
 // ===============================
 // HELPER: H2H MINI-STANDINGS
 // ===============================
-function buildH2HStats(teamIds, matches) {
+function buildH2HStats(teamIds, matches, winPoints) {
   const set = new Set(teamIds);
   const h2h = {};
 
@@ -28,9 +28,9 @@ function buildH2HStats(teamIds, matches) {
     h2h[b].h2h_goal_diff += (sb - sa);
 
     if (sa > sb) {
-      h2h[a].h2h_points += 3;
+      h2h[a].h2h_points += winPoints;
     } else if (sa < sb) {
-      h2h[b].h2h_points += 3;
+      h2h[b].h2h_points += winPoints;
     } else {
       h2h[a].h2h_points += 1;
       h2h[b].h2h_points += 1;
@@ -57,7 +57,7 @@ function sameTuple(a, b) {
 // ===============================
 // HELPER: Ranking con H2H
 // ===============================
-function rankGroupTeams(teamsStats, groupMatches) {
+function rankGroupTeams(teamsStats, groupMatches, winPoints) {
   const buckets = {};
   teamsStats.forEach(t => {
     const p = t.points;
@@ -81,7 +81,7 @@ function rankGroupTeams(teamsStats, groupMatches) {
     }
 
     const ids = bucket.map(x => x.team_id);
-    const h2hMap = buildH2HStats(ids, groupMatches);
+    const h2hMap = buildH2HStats(ids, groupMatches, winPoints);
 
     bucket.forEach(t => {
       const h = h2hMap[t.team_id] || { h2h_points: 0, h2h_goal_diff: 0, h2h_goals_for: 0 };
@@ -122,11 +122,49 @@ function rankGroupTeams(teamsStats, groupMatches) {
 }
 
 // ===============================
+// HELPER: Parse point_system
+// ===============================
+function parsePointSystem(pointSystem) {
+  // Default: 3-1-0
+  const defaultPoints = { win: 3, draw: 1, loss: 0 };
+  
+  if (!pointSystem || typeof pointSystem !== 'string') {
+    return defaultPoints;
+  }
+
+  const parts = pointSystem.split('-').map(p => parseInt(p.trim(), 10));
+  
+  if (parts.length !== 3 || parts.some(isNaN)) {
+    console.log(`⚠️ Invalid point_system "${pointSystem}", using default 3-1-0`);
+    return defaultPoints;
+  }
+
+  return {
+    win: parts[0],
+    draw: parts[1],
+    loss: parts[2]
+  };
+}
+
+// ===============================
 // MAIN: Genera Standings
 // ===============================
 async function generateStandingsBackend(tournamentId) {
   try {
     console.log(`📊 [START] Generating standings for ${tournamentId}`);
+
+    // 0) Recupera torneo per point_system
+    const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
+    
+    if (!tournamentDoc.exists) {
+      console.log('⚠️ Tournament not found:', tournamentId);
+      return;
+    }
+
+    const tournament = tournamentDoc.data();
+    const pointSystem = parsePointSystem(tournament.point_system);
+    
+    console.log(`⚙️ Point system: ${tournament.point_system || 'default'} → Win=${pointSystem.win}, Draw=${pointSystem.draw}, Loss=${pointSystem.loss}`);
 
     // 1) Recupera match
     const matchesSnapshot = await db.collection('matches')
@@ -215,12 +253,13 @@ async function generateStandingsBackend(tournamentId) {
 
         if (gf > ga) {
           stats.wins++;
-          stats.points += 3;
+          stats.points += pointSystem.win;
         } else if (gf === ga) {
           stats.draws++;
-          stats.points += 1;
+          stats.points += pointSystem.draw;
         } else {
           stats.losses++;
+          stats.points += pointSystem.loss;
         }
       });
 
@@ -270,7 +309,7 @@ async function generateStandingsBackend(tournamentId) {
       }
 
       const groupMatches = matches.filter(m => m.group_id === groupId);
-      const ordered = rankGroupTeams(groupTeams, groupMatches);
+      const ordered = rankGroupTeams(groupTeams, groupMatches, pointSystem.win);
 
       ordered.forEach(t => {
         const rankGroupKey = [

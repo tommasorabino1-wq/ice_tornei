@@ -1013,42 +1013,144 @@ function renderFinalsMatchCard(match, roundLabel = "Fase Finale") {
   const teamAName = match.team_a_name || formatTeam(match.team_a);
   const teamBName = match.team_b_name || formatTeam(match.team_b);
 
-  const scoreA = match.score_a;
-  const scoreB = match.score_b;
+  // Campi logistica
+  const court = match.court || "none";
+  const day = match.day || "none";
+  const hour = match.hour || "none";
+  const hasDetails = court !== "none" || day !== "none" || hour !== "none";
 
-  // Determina vincitore per evidenziarlo
-  let winnerClass = { a: "", b: "" };
-  if (isPlayed && match.winner_team_id) {
-    if (match.winner_team_id === match.team_a) {
-      winnerClass.a = "winner";
-      winnerClass.b = "loser";
-    } else if (match.winner_team_id === match.team_b) {
-      winnerClass.a = "loser";
-      winnerClass.b = "winner";
+  // Genera ID univoco per il collapse
+  const collapseId = `finals-details-${match.final_id || match.match_id}`;
+
+  // Determina scores display
+  const scoreA = isPlayed ? (match.score_a ?? "-") : "-";
+  const scoreB = isPlayed ? (match.score_b ?? "-") : "-";
+
+  // Determina vincitore (per spareggi)
+  let winnerTeamId = null;
+  let isDraw = false;
+  
+  if (isPlayed) {
+    const numA = Number(match.score_a);
+    const numB = Number(match.score_b);
+    
+    if (match.winner_team_id) {
+      // Vincitore esplicito (spareggio)
+      winnerTeamId = match.winner_team_id;
+      isDraw = numA === numB; // Pareggio con winner = spareggio
+    } else if (numA > numB) {
+      winnerTeamId = match.team_a;
+    } else if (numB > numA) {
+      winnerTeamId = match.team_b;
     }
   }
 
+  // Classi per evidenziare vincitore/perdente
+  const teamAClass = winnerTeamId === match.team_a ? "winner" : (winnerTeamId === match.team_b ? "loser" : "");
+  const teamBClass = winnerTeamId === match.team_b ? "winner" : (winnerTeamId === match.team_a ? "loser" : "");
+
   card.innerHTML = `
-    <div class="match-meta">
-      <span class="match-round">${escapeHTML(roundLabel)}</span>
-      <span class="match-group">Fase Finale</span>
+    <div class="match-card-inner">
+      
+      <!-- MAIN CONTENT: Teams + Score -->
+      <div class="match-main">
+        <div class="match-team match-team-a ${teamAClass}">
+          <span class="team-name">${escapeHTML(teamAName)}</span>
+        </div>
+        
+        <div class="match-score-block">
+          <span class="score score-a">${scoreA}</span>
+          <span class="score-separator">:</span>
+          <span class="score score-b">${scoreB}</span>
+        </div>
+        
+        <div class="match-team match-team-b ${teamBClass}">
+          <span class="team-name">${escapeHTML(teamBName)}</span>
+        </div>
+      </div>
+
+      ${isDraw && winnerTeamId ? `
+        <div class="match-tiebreaker">
+          <span class="tiebreaker-icon">⚡</span>
+          <span class="tiebreaker-text">Spareggio: <strong>${escapeHTML(winnerTeamId === match.team_a ? teamAName : teamBName)}</strong></span>
+        </div>
+      ` : ''}
+
+      <!-- FOOTER: Meta + Actions -->
+      <div class="match-card-footer">
+        <div class="match-meta-inline">
+          <span class="meta-item meta-round">${escapeHTML(roundLabel)}</span>
+        </div>
+
+        <div class="match-actions">
+          <button class="match-details-toggle" aria-expanded="false" aria-controls="${collapseId}">
+            <span class="toggle-icon">+</span>
+            <span class="toggle-text">Info</span>
+          </button>
+          
+          ${isPlayed ? `
+            <div class="match-status-badge played">✓</div>
+          ` : ''}
+        </div>
+      </div>
+
     </div>
 
-    <div class="match-teams">
-      <span class="team ${winnerClass.a}">${escapeHTML(teamAName)}</span>
-      <span class="score">${isPlayed ? (scoreA ?? "-") : "-"}</span>
-      <span class="dash">-</span>
-      <span class="score">${isPlayed ? (scoreB ?? "-") : "-"}</span>
-      <span class="team ${winnerClass.b}">${escapeHTML(teamBName)}</span>
-    </div>
-
-    <div class="match-status">
-      ${isPlayed ? '<span class="status-played">✓ Giocata</span>' : '<span class="status-pending">In programma</span>'}
+    <!-- EXPANDABLE DETAILS -->
+    <div id="${collapseId}" class="match-details-panel" hidden>
+      ${hasDetails ? `
+        <div class="match-details-grid">
+          ${court !== "none" ? `
+            <div class="match-detail-item">
+              <span class="detail-icon">🏟️</span>
+              <div class="detail-content">
+                <span class="detail-label">Campo</span>
+                <span class="detail-value">${escapeHTML(court)}</span>
+              </div>
+            </div>
+          ` : ''}
+          ${day !== "none" ? `
+            <div class="match-detail-item">
+              <span class="detail-icon">📅</span>
+              <div class="detail-content">
+                <span class="detail-label">Giorno</span>
+                <span class="detail-value">${escapeHTML(day)}</span>
+              </div>
+            </div>
+          ` : ''}
+          ${hour !== "none" ? `
+            <div class="match-detail-item">
+              <span class="detail-icon">🕐</span>
+              <div class="detail-content">
+                <span class="detail-label">Orario</span>
+                <span class="detail-value">${escapeHTML(hour)}</span>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      ` : `
+        <div class="match-details-pending">
+          <span class="pending-icon">⏳</span>
+          <span class="pending-text">Campo, giorno e orario ancora da definire</span>
+        </div>
+      `}
     </div>
   `;
 
+  // Event listener per toggle
+  const toggleBtn = card.querySelector(".match-details-toggle");
+  const panel = card.querySelector(".match-details-panel");
+
+  toggleBtn.addEventListener("click", () => {
+    const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
+    toggleBtn.setAttribute("aria-expanded", !isExpanded);
+    panel.hidden = isExpanded;
+  });
+
   return card;
 }
+
+
 
 
 // ===============================
