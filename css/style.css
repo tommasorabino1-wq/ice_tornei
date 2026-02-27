@@ -3793,10 +3793,10 @@ match-card.played {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 6px 22px;
   background: transparent;
   color: var(--brand);
-  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  border: 2px solid rgba(56, 189, 248, 0.4);
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
@@ -3820,7 +3820,7 @@ match-card.played {
 
 
 .match-details-toggle .toggle-icon {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1;
   transition: transform 0.2s ease;
@@ -3831,7 +3831,7 @@ match-card.played {
 }
 
 .match-details-toggle .toggle-text {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -3917,15 +3917,15 @@ match-card.played {
 
 
 .match-detail-item .detail-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.699);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .match-detail-item .detail-value {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--text-main);
   word-break: break-word;
@@ -3950,14 +3950,11 @@ match-card.played {
 
 .match-details-pending .pending-icon {
   font-size: 24px;
-  opacity: 0.7;
 }
 
 .match-details-pending .pending-text {
-  font-size: 14px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
-  font-style: italic;
+  font-size: 17px;
+  color: rgba(255, 255, 255, 0.918);
 }
 
 

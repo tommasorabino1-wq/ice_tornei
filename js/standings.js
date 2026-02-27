@@ -386,11 +386,10 @@ function renderMatchesByRound(roundId) {
               <span class="toggle-text">Info</span>
             </button>
             
-            <div class="match-status-badge ${isPlayed ? 'played' : 'pending'}">
-              ${isPlayed ? '✓' : '○'}
-            </div>
+            ${isPlayed ? `
+              <div class="match-status-badge played">✓</div>
+            ` : ''}
           </div>
-        </div>
 
       </div>
 
