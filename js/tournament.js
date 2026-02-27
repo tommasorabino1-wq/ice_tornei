@@ -1684,65 +1684,103 @@ function capitalizeFirst(str) {
 // 9i. BUILD MATCH TIEBREAKERS RULE (REGOLA 8)
 // ===============================
 function buildMatchTiebreakersRule(tournament, ruleNumber) {
+
   const formatType = String(tournament.format_type || "").toLowerCase();
   const hasFinals = formatType.includes("finals");
-  
+
+  const matchFormatGironi = String(tournament.match_format_gironi || "").toLowerCase();
+  const matchFormatFinals = String(tournament.match_format_finals || "").toLowerCase();
+
   const tieMatchGironi = String(tournament.tie_match_gironi_criteria || "").toLowerCase();
   const tieMatchFinals = String(tournament.tie_match_finals_criteria || "").toLowerCase();
-  
+
+  // =====================================================
+  // DETERMINA SE È FORMATO A SET
+  // =====================================================
+
+  const setFormats = ["1su1", "2su3", "3su5"];
+  const isSetBasedGironi = setFormats.includes(matchFormatGironi);
+  const isSetBasedFinals = setFormats.includes(matchFormatFinals);
+
   // =====================================================
   // MAPPING BASE
   // =====================================================
-  
+
   const tieMatchMap = {
     "tie_accettato": "il pareggio è un risultato valido e verrà assegnato 1 punto a ciascuna squadra",
     "moneta": "in caso di parità al termine del tempo regolamentare, il vincitore sarà deciso tramite lancio della moneta",
     "rigori": "in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato ai calci di rigore",
-    "tiebreak": "in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato con un tiebreak a 7 punti",
+    "tiebreak": "in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato con un tiebreak decisivo",
     "spareggio": "in caso di parità al termine del tempo regolamentare, si procederà con un tempo supplementare di spareggio"
   };
-  
-  const tieMatchGironiText = tieMatchMap[tieMatchGironi] || "da comunicare";
-  const tieMatchFinalsText = tieMatchMap[tieMatchFinals] || "da comunicare";
-  
+
   // =====================================================
-  // COSTRUZIONE TESTI
+  // FASE GIRONI
   // =====================================================
-  
-  // Pareggio in fase gironi
-  let gironiTieText = "";
-  if (hasFinals) {
-    gironiTieText = `${tieMatchGironiText}.`;
+
+  let gironiTieText;
+
+  if (isSetBasedGironi) {
+
+    gironiTieText = `Non essendo previsti pareggi in questo formato (a set), ogni partita determinerà automaticamente una squadra vincitrice.`;
+
   } else {
-    gironiTieText = `${tieMatchGironiText}.`;
+
+    const text = tieMatchMap[tieMatchGironi] || "la modalità di gestione sarà comunicata dall'organizzazione";
+    gironiTieText = `${text}.`;
   }
-  
-  // Pareggio in fase finale
-  let finalsTieText = "";
-  if (hasFinals) {
-    if (tieMatchGironi === tieMatchFinals) {
-      finalsTieText = `Durante le fasi finali si applicherà la <strong>stessa regola</strong> della fase a gironi.`;
-    } else {
-      finalsTieText = `${tieMatchFinalsText}.`;
-    }
-  } else {
+
+  // =====================================================
+  // FASE FINALE
+  // =====================================================
+
+  let finalsTieText;
+
+  if (!hasFinals) {
+
     finalsTieText = `Non essendo prevista una fase finale, la regola sopra indicata si applica a tutte le partite.`;
-  }
-  
-  // Nota importante
-  let noteText = "";
-  if (tieMatchGironi === "tie_accettato" && hasFinals && tieMatchFinals !== "tie_accettato") {
-    noteText = `<strong>Nota:</strong> mentre nella fase a gironi il pareggio è ammesso, nelle fasi finali sarà sempre necessario determinare un vincitore.`;
-  } else if (tieMatchGironi !== "tie_accettato") {
-    noteText = `<strong>Nota:</strong> ogni partita dovrà avere un vincitore; non sono ammessi pareggi.`;
+
+  } else if (isSetBasedFinals) {
+
+    finalsTieText = `Anche nelle fasi finali, il formato a set non prevede pareggi: ogni partita determinerà una squadra vincitrice.`;
+
+  } else if (tieMatchGironi === tieMatchFinals) {
+
+    finalsTieText = `Durante le fasi finali si applicherà la <strong>stessa regola</strong> prevista per la fase a gironi.`;
+
   } else {
-    noteText = `<strong>Nota:</strong> il pareggio è ammesso e contribuisce alla classifica con 1 punto per squadra.`;
+
+    const text = tieMatchMap[tieMatchFinals] || "la modalità sarà comunicata dall'organizzazione";
+    finalsTieText = `${text}.`;
   }
-  
+
   // =====================================================
-  // OUTPUT FINALE
+  // NOTA GENERALE
   // =====================================================
-  
+
+  let noteText;
+
+  if (isSetBasedGironi && (!hasFinals || isSetBasedFinals)) {
+
+    noteText = `<strong>Nota:</strong> il formato a set non consente risultati di pareggio.`;
+
+  } else if (tieMatchGironi === "tie_accettato" && hasFinals && tieMatchFinals !== "tie_accettato") {
+
+    noteText = `<strong>Nota:</strong> mentre nella fase a gironi il pareggio è ammesso, nelle fasi finali sarà sempre necessario determinare un vincitore.`;
+
+  } else if (tieMatchGironi !== "tie_accettato") {
+
+    noteText = `<strong>Nota:</strong> ogni partita dovrà avere un vincitore, salvo diversa indicazione per la fase a gironi.`;
+
+  } else {
+
+    noteText = `<strong>Nota:</strong> il pareggio è ammesso nei casi sopra indicati e contribuisce alla classifica secondo il sistema punti previsto.`;
+  }
+
+  // =====================================================
+  // OUTPUT
+  // =====================================================
+
   return `
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
@@ -1757,7 +1795,6 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
     </div>
   `;
 }
-
 
 
 
