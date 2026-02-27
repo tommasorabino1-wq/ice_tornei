@@ -841,7 +841,10 @@ function renderBracketVisual(bracket, container) {
 
   // Render finale 3°/4° separata sotto il bracket principale
   if (bracket.thirdPlaceMatch) {
-    renderThirdPlaceSection(bracket.thirdPlaceMatch, container);
+    // Nel symmetric: inserisce dentro il wrapper centrato
+    // Nel linear: appende dopo
+    const wrapper = container.querySelector(".bracket-wrapper-with-3x4") || container;
+    renderThirdPlaceSection(bracket.thirdPlaceMatch, wrapper);
   }
 }
 
@@ -852,21 +855,18 @@ function renderThirdPlaceSection(match, container) {
   const section = document.createElement("div");
   section.className = "bracket-third-place-section";
 
-  const title = document.createElement("div");
-  title.className = "bracket-third-place-title";
-  title.innerHTML = `<span>🥉</span> Finale 3°/4° Posto`;
-  section.appendChild(title);
+  const divider = document.createElement("div");
+  divider.className = "bracket-3x4-divider";
+  divider.innerHTML = `<span class="bracket-3x4-divider-line"></span><span class="bracket-3x4-divider-label">Finale 3° / 4° Posto</span><span class="bracket-3x4-divider-line"></span>`;
+  section.appendChild(divider);
 
   const matchEl = createBracketMatch(match);
-  matchEl.classList.add("bracket-match-3x4");
   section.appendChild(matchEl);
 
-  // Se c'è un vincitore, mostra il risultato
   if (match.winner_team_id) {
     const thirdName = match.winner_team_id === match.team_a
       ? (match.team_a_name || formatTeam(match.team_a))
       : (match.team_b_name || formatTeam(match.team_b));
-
     const resultEl = document.createElement("div");
     resultEl.className = "bracket-third-winner";
     resultEl.textContent = `🥉 3° posto: ${thirdName}`;
@@ -875,6 +875,8 @@ function renderThirdPlaceSection(match, container) {
 
   container.appendChild(section);
 }
+
+
 
 // ===============================
 // RENDER LINEAR BRACKET
@@ -973,7 +975,11 @@ function renderSymmetricBracket(bracket, rounds, container) {
   bracketEl.appendChild(centerEl);
   bracketEl.appendChild(rightSide);
 
-  container.appendChild(bracketEl);
+  // Wrapper verticale per centrare bracket + 3/4 posto
+  const bracketWrapper = document.createElement("div");
+  bracketWrapper.className = "bracket-wrapper-with-3x4";
+  bracketWrapper.appendChild(bracketEl);
+  container.appendChild(bracketWrapper);
 }
 
 // ===============================

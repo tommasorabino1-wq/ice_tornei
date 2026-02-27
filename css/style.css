@@ -2833,7 +2833,7 @@ match-card.played {
 
 /* Evidenzia vincitore/perdente */
 .match-teams .team.winner {
-  color: #22c55e;
+  color: #38bdf8;
   font-weight: 700;
 }
 
@@ -3210,17 +3210,29 @@ match-card.played {
 }
 
 .bracket-round-label {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(156, 163, 175, 0.8);
+  letter-spacing: 0.1em;
+  color: rgba(56, 189, 248, 0.5);
   text-align: center;
-  margin-bottom: 24px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+  margin-bottom: 32px;
+  padding: 6px 14px;
+  border-bottom: none;
   white-space: nowrap;
+  background: rgba(56, 189, 248, 0.06);
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  align-self: center;
 }
+
+.bracket-final .bracket-round-label {
+  font-size: 13px;
+  color: rgba(255, 215, 0, 0.6);
+  background: rgba(255, 215, 0, 0.06);
+  border-color: rgba(255, 215, 0, 0.15);
+}
+
 
 
 /* =============================
@@ -3402,51 +3414,88 @@ match-card.played {
    TBD / EMPTY SLOT
 ============================= */
 .bracket-team.tbd {
-  color: var(--text-muted);
-  font-style: italic;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.015);
   border-color: rgba(255, 255, 255, 0.06);
   border-style: dashed;
 }
 
-.bracket-team.tbd .bracket-team-score {
-  opacity: 0.5;
+.bracket-team.tbd .bracket-team-name {
+  font-size: 16px;          /* più piccolo rispetto ai 24px normali */
+  font-style: italic;
+  font-weight: 400;
+  color: #6b7280;           /* grigio spento, stesso usato per .loser */
+  letter-spacing: 0.02em;
 }
+
+.bracket-team.tbd .bracket-team-score {
+  font-size: 16px;
+  color: #4b5563;
+  font-weight: 400;
+}
+
+
+
 
 
 /* =============================
    BRACKET CONNECTORS (LINES)
 ============================= */
+/* =============================
+   BRACKET CONNECTORS – L-shape
+============================= */
+
+/* Rimuovi i vecchi ::after semplici e sostituisci con questi */
+
 .bracket-left .bracket-match::after {
   content: "";
   position: absolute;
-  right: -24px;
+  right: -25px;
   top: 50%;
   transform: translateY(-50%);
-  width: 24px;
+  width: 25px;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    rgba(56, 189, 248, 0.25) 0%,
-    rgba(56, 189, 248, 0.08) 100%
-  );
+  background: rgba(56, 189, 248, 0.3);
 }
 
 .bracket-right .bracket-match::after {
   content: "";
   position: absolute;
-  left: -24px;
+  left: -25px;
   right: auto;
   top: 50%;
   transform: translateY(-50%);
-  width: 24px;
+  width: 25px;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    rgba(56, 189, 248, 0.08) 0%,
-    rgba(56, 189, 248, 0.25) 100%
-  );
+  background: rgba(56, 189, 248, 0.3);
 }
+
+/* Tratto verticale che connette i due match verso il round successivo */
+/* Si applica ai match dispari (primo di ogni coppia) */
+.bracket-left .bracket-round:not(:last-child) .bracket-match:nth-child(odd)::before {
+  content: "";
+  position: absolute;
+  right: -25px;
+  top: 50%;
+  width: 2px;
+  background: rgba(56, 189, 248, 0.2);
+  /* L'altezza viene calcolata per arrivare al match successivo.
+     Con margin: 20px per round 1, il tratto copre la distanza tra i due match.
+     Usa un valore generoso; il clipping del parent lo nasconde se supera. */
+  height: calc(100% + 40px);
+}
+
+.bracket-right .bracket-round:not(:last-child) .bracket-match:nth-child(odd)::before {
+  content: "";
+  position: absolute;
+  left: -25px;
+  right: auto;
+  top: 50%;
+  width: 2px;
+  background: rgba(56, 189, 248, 0.2);
+  height: calc(100% + 40px);
+}
+
+
 
 
 /* =============================
@@ -3544,6 +3593,83 @@ match-card.played {
 .bracket-linear .bracket-match::after {
   right: -24px;
   left: auto;
+}
+
+
+
+/* =============================
+   BRACKET WRAPPER WITH 3x4
+============================= */
+.bracket-wrapper-with-3x4 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* =============================
+   3°/4° POSTO SECTION
+============================= */
+.bracket-third-place-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 40px;
+  padding-top: 0;
+}
+
+.bracket-3x4-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.bracket-3x4-divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(205, 127, 50, 0.3);
+}
+
+.bracket-3x4-divider-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(205, 127, 50, 0.7);
+  white-space: nowrap;
+}
+
+.bracket-third-winner {
+  font-size: 18px;
+  font-weight: 700;
+  color: rgba(205, 127, 50, 0.9);
+  padding: 10px 20px;
+  background: rgba(205, 127, 50, 0.08);
+  border: 1px solid rgba(205, 127, 50, 0.2);
+  border-radius: 999px;
+}
+
+/* Match 3x4 leggermente diverso dal normale */
+.bracket-match-3x4 .bracket-team {
+  border-color: rgba(205, 127, 50, 0.15);
+}
+
+.bracket-match-3x4 .bracket-team.winner {
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.08) 0%, rgba(205, 127, 50, 0.04) 100%);
+  border-color: rgba(205, 127, 50, 0.35);
+}
+
+.bracket-match-3x4 .bracket-team.winner::after {
+  background: linear-gradient(180deg, rgba(205, 127, 50, 0.8) 0%, rgba(205, 127, 50, 0.4) 100%);
+  box-shadow: 0 0 8px rgba(205, 127, 50, 0.4);
+}
+
+.bracket-match-3x4 .bracket-team.winner .bracket-team-score {
+  color: rgb(205, 127, 50);
 }
 
 
@@ -3972,7 +4098,7 @@ match-card.played {
    MATCH TEAM WINNER/LOSER STATE
 ========================= */
 .match-team.winner .team-name {
-  color: #22c55e;
+  color: #38bdf8;
   font-weight: 800;
 }
 
@@ -3980,6 +4106,20 @@ match-card.played {
   color: var(--text-muted);
   opacity: 0.5;
 }
+
+/* metti DOPO .match-team.loser .team-name */
+.match-team.tbd .team-name {
+  font-size: 22px;
+  font-weight: 400;
+  font-style: italic;
+  color: #6b7280;
+}
+
+
+
+
+
+
 
 /* =========================
    TIEBREAKER INDICATOR (FINALS ONLY)
