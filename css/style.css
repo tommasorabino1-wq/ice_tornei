@@ -2518,9 +2518,9 @@ body {
 }
 
 
-/* =========================
-   MATCH CARD - REDESIGNED
-========================= */
+
+
+
 /* =========================
    MATCH CARD - REDESIGNED
 ========================= */
@@ -2576,7 +2576,7 @@ body {
 
 .match-team .team-name {
   display: block;
-  font-size: 26px;
+  font-size: 34px;
   font-weight: 700;
   color: var(--text-main);
   line-height: 1.3;
@@ -2597,6 +2597,7 @@ body {
   background: rgba(56, 189, 248, 0.08);
   border: 1px solid rgba(56, 189, 248, 0.15);
   border-radius: 12px;
+  margin-top: 10px;
 }
 
 .match-score-block .score {
@@ -2631,7 +2632,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 16px;
+  margin-top: 30px;
   padding-top: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -2648,14 +2649,14 @@ body {
 }
 
 .meta-item {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.753);
   letter-spacing: 0.02em;
 }
 
 .meta-item.meta-group {
-  padding: 4px 10px;
+  padding: 5px 11px;
   background: rgba(255, 255, 255, 0.04);
   border-radius: 6px;
 }
@@ -2676,13 +2677,13 @@ body {
    STATUS BADGE - Minimal
 ========================= */
 .match-status-badge {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
   transition: all 0.2s ease;
 }
@@ -3796,7 +3797,7 @@ match-card.played {
   padding: 6px 22px;
   background: transparent;
   color: var(--brand);
-  border: 2px solid rgba(56, 189, 248, 0.4);
+  border: 3px solid rgba(56, 189, 248, 0.4);
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
@@ -3820,7 +3821,7 @@ match-card.played {
 
 
 .match-details-toggle .toggle-icon {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 700;
   line-height: 1;
   transition: transform 0.2s ease;
@@ -3831,7 +3832,7 @@ match-card.played {
 }
 
 .match-details-toggle .toggle-text {
-  font-size: 16px;
+  font-size: 23px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -3876,8 +3877,8 @@ match-card.played {
    =============================== */
 
 .match-details-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   padding: 16px;
   background: rgba(56, 189, 248, 0.05);
@@ -3887,24 +3888,27 @@ match-card.played {
 
 .match-detail-item {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 10px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
   transition: background 0.15s ease;
 }
 
 .match-detail-item:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
 }
-
-
 
 .match-detail-item .detail-icon {
   font-size: 24px;
   flex-shrink: 0;
-  filter: grayscale(20%);
+}
+
+.match-detail-item .detail-value {
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--text-main);
 }
 
 .match-detail-item .detail-content {
@@ -3914,8 +3918,6 @@ match-card.played {
   min-width: 0;
 }
 
-
-
 .match-detail-item .detail-label {
   font-size: 12px;
   font-weight: 600;
@@ -3924,12 +3926,7 @@ match-card.played {
   letter-spacing: 0.08em;
 }
 
-.match-detail-item .detail-value {
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--text-main);
-  word-break: break-word;
-}
+
 
 
 

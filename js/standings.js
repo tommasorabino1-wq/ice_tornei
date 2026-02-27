@@ -399,29 +399,20 @@ function renderMatchesByRound(roundId) {
           <div class="match-details-grid">
             ${court !== "none" ? `
               <div class="match-detail-item">
-                <span class="detail-icon">🏟️</span>
-                <div class="detail-content">
-                  <span class="detail-label">Campo</span>
-                  <span class="detail-value">${escapeHTML(court)}</span>
-                </div>
+                <span class="detail-icon">🥅</span>
+                <span class="detail-value">${escapeHTML(court)}</span>
               </div>
             ` : ''}
             ${day !== "none" ? `
               <div class="match-detail-item">
                 <span class="detail-icon">📅</span>
-                <div class="detail-content">
-                  <span class="detail-label">Giorno</span>
-                  <span class="detail-value">${escapeHTML(day)}</span>
-                </div>
+                <span class="detail-value">${escapeHTML(day)}</span>
               </div>
             ` : ''}
             ${hour !== "none" ? `
               <div class="match-detail-item">
                 <span class="detail-icon">🕐</span>
-                <div class="detail-content">
-                  <span class="detail-label">Orario</span>
-                  <span class="detail-value">${escapeHTML(hour)}</span>
-                </div>
+                <span class="detail-value">${escapeHTML(hour)}</span>
               </div>
             ` : ''}
           </div>
@@ -1102,29 +1093,20 @@ function renderFinalsMatchCard(match, roundLabel = "Fase Finale") {
         <div class="match-details-grid">
           ${court !== "none" ? `
             <div class="match-detail-item">
-              <span class="detail-icon">🏟️</span>
-              <div class="detail-content">
-                <span class="detail-label">Campo</span>
-                <span class="detail-value">${escapeHTML(court)}</span>
-              </div>
+              <span class="detail-icon">🥅</span>
+              <span class="detail-value">${escapeHTML(court)}</span>
             </div>
           ` : ''}
           ${day !== "none" ? `
             <div class="match-detail-item">
               <span class="detail-icon">📅</span>
-              <div class="detail-content">
-                <span class="detail-label">Giorno</span>
-                <span class="detail-value">${escapeHTML(day)}</span>
-              </div>
+              <span class="detail-value">${escapeHTML(day)}</span>
             </div>
           ` : ''}
           ${hour !== "none" ? `
             <div class="match-detail-item">
               <span class="detail-icon">🕐</span>
-              <div class="detail-content">
-                <span class="detail-label">Orario</span>
-                <span class="detail-value">${escapeHTML(hour)}</span>
-              </div>
+              <span class="detail-value">${escapeHTML(hour)}</span>
             </div>
           ` : ''}
         </div>
