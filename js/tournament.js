@@ -2028,7 +2028,7 @@ function buildCommunicationsRule(ruleNumber) {
   
   const emailPaymentText = `<strong>Email per il pagamento</strong> della quota di iscrizione, inviata dopo il completamento del form di iscrizione.`;
   
-  const emailTeamText = `<strong>Email per i componenti della squadra</strong> e per l'invio dei certificati medici (o moduli di scarico responsabilità), inviata circa 3 settimane prima dell'inizio del torneo.`;
+  const emailTeamText = `<strong>Email per i componenti della squadra</strong> e per l'invio dei certificati medici (o moduli di scarico responsabilità), inviata circa 2 settimane prima dell'inizio del torneo.`;
   
   const emailRulesText = `<strong>Email riepilogativa delle regole</strong> del torneo, inviata nei giorni precedenti all'inizio delle partite.`;
   
