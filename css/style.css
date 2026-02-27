@@ -3599,11 +3599,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 6px 16px;
+  gap: 10px;
+  padding: 14px 28px;
   background: transparent;
   color: var(--brand);
-  border: 2px solid var(--brand);
+  border: 3px solid var(--brand);
   border-radius: 50px;
   font-size: 14px;
   font-weight: 600;
@@ -3627,13 +3627,13 @@ body {
 }
 
 .match-details-toggle .toggle-text {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 
 .match-details-toggle .toggle-icon {
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1;
   transition: transform 0.2s ease;
