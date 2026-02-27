@@ -52,7 +52,6 @@ exports.getTournaments = functions.https.onRequest(async (req, res) => {
       
       const tournamentId = data.tournament_id || doc.id;
       
-      // ✅ Conta teams_current da subscriptions (non più da collection separata)
       const subsSnapshot = await db.collection('subscriptions')
         .where('tournament_id', '==', tournamentId)
         .get();
@@ -72,9 +71,6 @@ exports.getTournaments = functions.https.onRequest(async (req, res) => {
 });
 
 
-
-
-
 // ===============================
 // GET STANDINGS
 // ===============================
@@ -89,20 +85,15 @@ exports.getStandings = functions.https.onRequest(async (req, res) => {
       return res.status(200).json([]);
     }
 
-    // ✅ Rimuovi orderBy, ordina in memoria
     const snapshot = await db.collection('standings')
       .where('tournament_id', '==', tournamentId)
       .get();
 
     const standings = snapshot.docs.map(doc => doc.data());
 
-    // ✅ Ordina in memoria
     standings.sort((a, b) => {
-      // Prima per group_id
       const groupCompare = String(a.group_id || '').localeCompare(String(b.group_id || ''));
       if (groupCompare !== 0) return groupCompare;
-      
-      // Poi per rank_level
       return Number(a.rank_level || 0) - Number(b.rank_level || 0);
     });
 
@@ -127,20 +118,15 @@ exports.getMatches = functions.https.onRequest(async (req, res) => {
       return res.status(200).json([]);
     }
 
-    // ✅ Rimuovi orderBy, ordina in memoria
     const snapshot = await db.collection('matches')
       .where('tournament_id', '==', tournamentId)
       .get();
 
     const matches = snapshot.docs.map(doc => doc.data());
 
-    // ✅ Ordina in memoria
     matches.sort((a, b) => {
-      // Prima per group_id
       const groupCompare = String(a.group_id || '').localeCompare(String(b.group_id || ''));
       if (groupCompare !== 0) return groupCompare;
-      
-      // Poi per round_id
       return Number(a.round_id || 0) - Number(b.round_id || 0);
     });
 
@@ -165,14 +151,12 @@ exports.getFinals = functions.https.onRequest(async (req, res) => {
       return res.status(200).json([]);
     }
 
-    // ✅ Rimuovi orderBy, ordina in memoria
     const snapshot = await db.collection('finals')
       .where('tournament_id', '==', tournamentId)
       .get();
 
     const finals = snapshot.docs.map(doc => doc.data());
 
-    // ✅ Ordina in memoria
     finals.sort((a, b) => Number(a.round_id || 0) - Number(b.round_id || 0));
 
     res.status(200).json(finals);
@@ -196,7 +180,6 @@ exports.getTeams = functions.https.onRequest(async (req, res) => {
       return res.status(200).json([]);
     }
 
-    // ✅ Ora legge da subscriptions invece che da teams
     const snapshot = await db.collection('subscriptions')
       .where('tournament_id', '==', tournamentId)
       .get();
@@ -220,6 +203,7 @@ exports.getTeams = functions.https.onRequest(async (req, res) => {
 
 // ===============================
 // GET BRACKET (struttura finals)
+// ✅ MODIFICATO: separa il match 3°/4° posto in thirdPlaceMatch
 // ===============================
 exports.getBracket = functions.https.onRequest(async (req, res) => {
   setCORS(res);
@@ -229,23 +213,30 @@ exports.getBracket = functions.https.onRequest(async (req, res) => {
     const tournamentId = req.query.tournament_id;
     
     if (!tournamentId) {
-      return res.status(200).json({ rounds: {}, paths: {} });
+      return res.status(200).json({ rounds: {}, paths: {}, thirdPlaceMatch: null });
     }
 
-    // ✅ Rimuovi orderBy, ordina dopo
     const snapshot = await db.collection('finals')
       .where('tournament_id', '==', tournamentId)
       .get();
 
     if (snapshot.empty) {
-      return res.status(200).json({ rounds: {}, paths: {} });
+      return res.status(200).json({ rounds: {}, paths: {}, thirdPlaceMatch: null });
     }
 
     const rounds = {};
     const paths = {};
+    let thirdPlaceMatch = null; // ✅ NUOVO: match 3°/4° posto separato
 
     snapshot.docs.forEach(doc => {
       const data = doc.data();
+
+      // ✅ NUOVO: il match 3°/4° viene estratto separatamente, non finisce in rounds
+      if (data.is_third_place_match === true) {
+        thirdPlaceMatch = data;
+        return; // non aggiungerlo a rounds né a paths
+      }
+
       const roundId = data.round_id;
 
       // Aggiungi a rounds
@@ -273,22 +264,23 @@ exports.getBracket = functions.https.onRequest(async (req, res) => {
       }
     });
 
-    // ✅ Ordina paths per round in memoria
+    // Ordina paths per round
     Object.keys(paths).forEach(teamId => {
       paths[teamId].sort((a, b) => a.round - b.round);
     });
 
-    // ✅ Ordina anche i rounds
+    // Ordina match dentro ogni round per match_id
     Object.keys(rounds).forEach(roundId => {
-      rounds[roundId].sort((a, b) => {
-        return String(a.match_id || '').localeCompare(String(b.match_id || ''));
-      });
+      rounds[roundId].sort((a, b) =>
+        String(a.match_id || '').localeCompare(String(b.match_id || ''))
+      );
     });
 
     res.status(200).json({
       tournament_id: tournamentId,
       rounds,
-      paths
+      paths,
+      thirdPlaceMatch // ✅ null se non esiste, altrimenti il documento del match
     });
   } catch (error) {
     console.error('getBracket error:', error);
@@ -302,12 +294,9 @@ exports.getBracket = functions.https.onRequest(async (req, res) => {
 // ===============================
 const { generateMatchesIfReady } = require('./helpers/matchGenerator');
 const { generateStandingsBackend } = require('./helpers/standingsCalculator');
-const { generateFinalsIfReady, tryGenerateNextFinalRound } = require('./helpers/finalsGenerator');
+// ✅ MODIFICATO: importa propagateFinalsResult invece di tryGenerateNextFinalRound
+const { generateFinalsIfReady, propagateFinalsResult } = require('./helpers/finalsGenerator');
 const { updateTournamentStatus } = require('./helpers/tournamentStatus');
-
-
-
-
 
 
 // ===============================
@@ -342,7 +331,6 @@ exports.onTournamentStatusChange = onDocumentUpdated(
       }
     }
 
-    // ← AGGIUNGI QUESTO BLOCCO
     // Trigger generazione finals: qualsiasi status → final_phase
     if (oldStatus !== 'final_phase' && newStatus === 'final_phase') {
       console.log(`🏆 Triggering finals generation for ${tournamentId}`);
@@ -378,16 +366,12 @@ exports.onMatchResultUpdated = onDocumentUpdated(
       return null;
     }
     
-    // Controlla se il risultato è cambiato
     const beforePlayed = beforeData?.played === true;
     const afterPlayed = afterData?.played === true;
     const scoreChanged = 
       beforeData?.score_a !== afterData?.score_a || 
       beforeData?.score_b !== afterData?.score_b;
     
-    // Trigger solo se:
-    // - Il match è stato segnato come "played" (nuovo risultato)
-    // - Oppure il punteggio è cambiato (modifica risultato)
     if (!afterPlayed && !scoreChanged) {
       console.log(`ℹ️ Match ${matchId} - no relevant changes`);
       return null;
@@ -397,12 +381,10 @@ exports.onMatchResultUpdated = onDocumentUpdated(
     
     try {
       // 1) Ricalcola standings
-      const { generateStandingsBackend } = require('./helpers/standingsCalculator');
       await generateStandingsBackend(tournamentId);
       console.log(`✅ Standings recalculated for ${tournamentId}`);
       
       // 2) Aggiorna status torneo
-      const { updateTournamentStatus } = require('./helpers/tournamentStatus');
       await updateTournamentStatus(tournamentId);
       
       // 3) Verifica se tutti i match dei gironi sono giocati
@@ -416,7 +398,6 @@ exports.onMatchResultUpdated = onDocumentUpdated(
       if (allPlayed) {
         console.log(`🏆 All group matches played for ${tournamentId} - checking finals generation`);
         
-        // Cancella vecchie finals prima di rigenerare
         const existingFinals = await db.collection('finals')
           .where('tournament_id', '==', tournamentId)
           .get();
@@ -428,9 +409,7 @@ exports.onMatchResultUpdated = onDocumentUpdated(
           console.log(`🗑️ Deleted ${existingFinals.size} existing finals`);
         }
         
-        // Genera nuove finals
         try {
-          const { generateFinalsIfReady } = require('./helpers/finalsGenerator');
           await generateFinalsIfReady(tournamentId);
           console.log(`✅ Finals generated for ${tournamentId}`);
         } catch (err) {
@@ -441,7 +420,6 @@ exports.onMatchResultUpdated = onDocumentUpdated(
           }
         }
       } else {
-        // Se non tutti i match sono giocati, cancella eventuali finals esistenti
         const existingFinals = await db.collection('finals')
           .where('tournament_id', '==', tournamentId)
           .get();
@@ -465,6 +443,7 @@ exports.onMatchResultUpdated = onDocumentUpdated(
 
 // ===============================
 // FIRESTORE TRIGGER: ON FINAL RESULT UPDATED
+// ✅ MODIFICATO: usa propagateFinalsResult invece di tryGenerateNextFinalRound
 // ===============================
 exports.onFinalResultUpdated = onDocumentUpdated(
   "finals/{matchId}",
@@ -481,7 +460,6 @@ exports.onFinalResultUpdated = onDocumentUpdated(
       return null;
     }
     
-    // Controlla se il risultato è cambiato
     const beforePlayed = beforeData?.played === true;
     const afterPlayed = afterData?.played === true;
     const scoreChanged = 
@@ -489,8 +467,12 @@ exports.onFinalResultUpdated = onDocumentUpdated(
       beforeData?.score_b !== afterData?.score_b ||
       beforeData?.winner_team_id !== afterData?.winner_team_id;
     
-    // Trigger solo se il match è played e qualcosa è cambiato
-    if (!afterPlayed || !scoreChanged) {
+    // ✅ Trigger se il match è appena diventato played, oppure se era già played
+    // e i dati sono cambiati (correzione risultato)
+    const justBecamePlayed = !beforePlayed && afterPlayed;
+    const resultCorrected = beforePlayed && afterPlayed && scoreChanged;
+
+    if (!justBecamePlayed && !resultCorrected) {
       console.log(`ℹ️ Final ${matchId} - no relevant changes`);
       return null;
     }
@@ -504,12 +486,10 @@ exports.onFinalResultUpdated = onDocumentUpdated(
     }
     
     try {
-      // 1) Genera prossimo round finals (se necessario)
-      const { tryGenerateNextFinalRound } = require('./helpers/finalsGenerator');
-      await tryGenerateNextFinalRound(tournamentId);
+      // 1) ✅ NUOVO: Propaga il risultato ai match futuri (popola team_a/team_b nei round successivi)
+      await propagateFinalsResult(tournamentId, matchId);
       
       // 2) Aggiorna status torneo
-      const { updateTournamentStatus } = require('./helpers/tournamentStatus');
       await updateTournamentStatus(tournamentId);
       
       console.log(`✅ Final processing completed for ${tournamentId}`);
@@ -539,12 +519,10 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
   try {
     const { tournament_id, team_name, email, phone, preferred_zone, preferred_days, preferred_hours, additional_notes } = req.body;
 
-    // Validazione base
     if (!tournament_id || !team_name || !email) {
       return res.status(400).send('INVALID_DATA');
     }
 
-    // 1) Verifica torneo esistente
     const tournamentDoc = await db.collection('tournaments').doc(tournament_id).get();
     if (!tournamentDoc.exists) {
       return res.status(404).send('TOURNAMENT_NOT_FOUND');
@@ -552,22 +530,16 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
 
     const tournament = tournamentDoc.data();
     
-    // 2) Blocco iscrizioni se torneo non è "open"
     if (tournament.status !== 'open') {
       return res.status(403).send('REGISTRATIONS_CLOSED');
     }
     
-    // 3) Determina se i campi preferenze sono necessari
-    // fixed_court_days_hours può essere: "false", "fixed_all", "fixed_finals"
-    // I campi preferenze servono se NON è "fixed_all"
     const fixedCourtDaysHours = String(tournament.fixed_court_days_hours || 'false').toLowerCase();
     const needsPreferences = fixedCourtDaysHours !== 'fixed_all';
 
-    // 4) Genera team_id normalizzato
     const normalizedTeamName = team_name.trim().toLowerCase();
     const teamId = `${tournament_id}_${normalizedTeamName}`;
 
-    // 5) Blocco team duplicato (stesso team_name normalizzato)
     const duplicateTeamCheck = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .where('team_id', '==', teamId)
@@ -578,7 +550,6 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
       return res.status(409).send('DUPLICATE_TEAM');
     }
 
-    // 6) Blocco email duplicata
     const duplicateEmailCheck = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .where('email', '==', email)
@@ -589,7 +560,6 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
       return res.status(409).send('DUPLICATE_EMAIL');
     }
 
-    // 7) Conta subscriptions esistenti per generare ID incrementale
     const existingSubsSnapshot = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .get();
@@ -597,7 +567,6 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     const subsCount = existingSubsSnapshot.size + 1;
     const subscriptionId = `${tournament_id}_sub${subsCount}`;
 
-    // 8) Crea subscription con team_id incluso
     const subscriptionData = {
       subscription_id: subscriptionId,
       team_id: teamId,
@@ -608,20 +577,12 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
       timestamp: admin.firestore.FieldValue.serverTimestamp()
     };
 
-    // 9) Campi extra se servono preferenze (non fixed_all)
     if (needsPreferences) {
-      if (preferred_zone) {
-        subscriptionData.preferred_zone = preferred_zone.trim();
-      }
-      if (preferred_days) {
-        subscriptionData.preferred_days = preferred_days.trim();
-      }
-      if (preferred_hours) {
-        subscriptionData.preferred_hours = preferred_hours.trim();
-      }
+      if (preferred_zone) subscriptionData.preferred_zone = preferred_zone.trim();
+      if (preferred_days) subscriptionData.preferred_days = preferred_days.trim();
+      if (preferred_hours) subscriptionData.preferred_hours = preferred_hours.trim();
     }
     
-    // 10) Campo note aggiuntive (sempre opzionale)
     if (additional_notes && additional_notes.trim()) {
       subscriptionData.additional_notes = additional_notes.trim();
     }
@@ -637,11 +598,6 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
 });
 
 
-
-
-
-
-
 // ===============================
 // FIRESTORE TRIGGER: SEND PAYMENT EMAIL ON NEW SUBSCRIPTION
 // ===============================
@@ -651,7 +607,6 @@ exports.onSubscriptionCreated = onDocumentCreated(
     const subscription = event.data.data();
     const subscriptionId = event.params.subscriptionId;
 
-    // Skip se email già inviata
     if (subscription.emailStatus === "sent") {
       console.log(`Email già inviata per subscription ${subscriptionId}`);
       return null;
@@ -668,7 +623,6 @@ exports.onSubscriptionCreated = onDocumentCreated(
     }
 
     try {
-      // 1. Leggi tournament per ottenere price e name
       const tournamentDoc = await db.collection("tournaments").doc(tournamentId).get();
 
       if (!tournamentDoc.exists) {
@@ -687,13 +641,11 @@ exports.onSubscriptionCreated = onDocumentCreated(
         return null;
       }
 
-      // 2. Configura dati pagamento
       const paymentConfig = {
-        iban: "IT36T0200820097000105204736", // ← SOSTITUISCI CON IL TUO IBAN
-        paypalLink: `https://paypal.me/TommasoRabino/${amount}`, // ← SOSTITUISCI CON IL TUO USERNAME PAYPAL
+        iban: "IT36T0200820097000105204736",
+        paypalLink: `https://paypal.me/TommasoRabino/${amount}`,
       };
 
-      // 3. Chiama Apps Script Webhook
       const mailerUrl = "https://script.google.com/macros/s/AKfycbxnAuMenN7bRSNIRcXPOCjEFX8Onj9-9qo5sVxEEAx_9odFGugsGkzBr2sNhTPI-en0qw/exec";
       const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
@@ -737,9 +689,3 @@ exports.onSubscriptionCreated = onDocumentCreated(
     return null;
   }
 );
-
-
-
-
-
-

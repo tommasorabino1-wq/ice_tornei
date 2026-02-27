@@ -6,11 +6,9 @@ const db = admin.firestore();
 // ===============================
 function normalizeSport(sport) {
   const s = String(sport || '').toLowerCase().trim();
-
   if (s.includes('calcio') || s.includes('football') || s.includes('soccer')) return 'calcio';
   if (s.includes('padel')) return 'padel';
   if (s.includes('beach') || s.includes('volley')) return 'beach_volley';
-
   return 'calcio';
 }
 
@@ -35,14 +33,12 @@ function formatHasFinals(formatType) {
 // ===============================
 function checkIntraGroupTies(byGroup, standingsIsSetBased) {
   for (const [groupId, group] of Object.entries(byGroup)) {
-    // Raggruppa per rank_level
     const byRank = {};
     group.forEach(s => {
       const rank = s.rank_level;
       if (!byRank[rank]) byRank[rank] = [];
       byRank[rank].push(s);
     });
-
     for (const [rank, teams] of Object.entries(byRank)) {
       if (teams.length > 1) {
         console.error(`❌ Tie at rank ${rank} in group ${groupId}: ${teams.map(t => t.team_name).join(', ')}`);
@@ -53,14 +49,12 @@ function checkIntraGroupTies(byGroup, standingsIsSetBased) {
 }
 
 // ===============================
-// HELPER: Controlla parità tra seconde (o terze) cross-girone
+// HELPER: Controlla parità cross-girone
 // ===============================
 function checkCrossGroupTie(sorted, need, standingsIsSetBased) {
-  if (need <= 0 || sorted.length <= need) return; // nessuna ambiguità possibile
-
+  if (need <= 0 || sorted.length <= need) return;
   const A = sorted[need - 1];
   const B = sorted[need];
-
   let same;
   if (standingsIsSetBased) {
     same =
@@ -75,7 +69,6 @@ function checkCrossGroupTie(sorted, need, standingsIsSetBased) {
       A.goal_diff === B.goal_diff &&
       A.goals_for === B.goals_for;
   }
-
   if (same) {
     console.error(`❌ Ambiguity in cross-group selection at position ${need}`);
     throw new Error('E4');
@@ -106,7 +99,53 @@ function sortCrossGroup(teams, standingsIsSetBased) {
 }
 
 // ===============================
-// MAIN: Genera Finals (triggerata da status → final_phase)
+// HELPER: Crea documento vuoto per un match futuro
+// ===============================
+function createEmptyMatchDoc(matchId, tournamentId, roundId, sport, matchFormatFinals, isSetBased) {
+  return {
+    match_id: matchId,
+    tournament_id: tournamentId,
+    round_id: roundId,
+    team_a: null,
+    team_b: null,
+    team_a_name: null,
+    team_b_name: null,
+    score_a: null,
+    score_b: null,
+    winner_team_id: null,
+    played: false,
+    court: 'none',
+    day: 'none',
+    hour: 'none',
+    sets_detail: null,
+    games_a: null,
+    games_b: null,
+    sport,
+    match_format: matchFormatFinals,
+    is_set_based: isSetBased,
+    // Metadati per ricostruire il bracket
+    source_matches: [],   // popolato dopo: [{match_id, role: 'winner'|'loser'}]
+  };
+}
+
+// ===============================
+// HELPER: Calcola numero di round necessari
+// ===============================
+function computeRounds(numTeams) {
+  // Restituisce il numero di round del bracket principale (potenza di 2 più vicina)
+  let rounds = 0;
+  let n = numTeams;
+  while (n > 1) {
+    n = Math.floor(n / 2);
+    rounds++;
+  }
+  return rounds;
+}
+
+// ===============================
+// MAIN: Genera tutte le Finals (triggerata da status → final_phase)
+// Genera TUTTI i round in anticipo, con i round futuri vuoti.
+// Se 3_4_posto === true, genera anche il match per il 3°/4° posto.
 // ===============================
 async function generateFinalsIfReady(tournamentId) {
   try {
@@ -121,22 +160,21 @@ async function generateFinalsIfReady(tournamentId) {
 
     const tournament = tournamentDoc.data();
     const formatType = String(tournament.format_type || '').toLowerCase();
+    const has3x4 = tournament['3_4_posto'] === true;
 
-    // 3b) Verifica che il formato preveda finals
+    // Verifica formato
     if (!formatHasFinals(formatType)) {
       console.log(`⛔ Tournament format "${formatType}" does not support finals - blocked`);
       throw new Error('E_FORMAT_NO_FINALS');
     }
 
-    console.log(`✅ Format "${formatType}" supports finals`);
-
     const sport = normalizeSport(tournament.sport);
     const matchFormatFinals = String(tournament.match_format_finals || '').toLowerCase();
     const isSetBased = isSetBasedFormat(matchFormatFinals);
 
-    console.log(`🏆 Sport: ${sport}, Format Finals: ${matchFormatFinals}, Set-based: ${isSetBased}`);
+    console.log(`🏆 Sport: ${sport}, Format Finals: ${matchFormatFinals}, Set-based: ${isSetBased}, 3/4 posto: ${has3x4}`);
 
-    // 3d) Verifica che non esistano già finals per questo torneo
+    // Verifica che non esistano già finals
     const existingFinals = await db.collection('finals')
       .where('tournament_id', '==', tournamentId)
       .limit(1)
@@ -147,7 +185,7 @@ async function generateFinalsIfReady(tournamentId) {
       return;
     }
 
-    // 3c) Recupera standings e verifica esistenza
+    // Recupera standings
     const standingsSnapshot = await db.collection('standings')
       .where('tournament_id', '==', tournamentId)
       .get();
@@ -158,11 +196,9 @@ async function generateFinalsIfReady(tournamentId) {
     }
 
     const standings = standingsSnapshot.docs.map(doc => doc.data());
-    console.log(`📊 Found ${standings.length} standings entries`);
-
     const standingsIsSetBased = standings[0]?.is_set_based || false;
 
-    // Crea mappa team_id -> team_name
+    // Mappa team_id -> team_name
     const teamNamesMap = {};
     standings.forEach(s => { teamNamesMap[s.team_id] = s.team_name; });
 
@@ -173,22 +209,14 @@ async function generateFinalsIfReady(tournamentId) {
       byGroup[s.group_id].push(s);
     });
 
-    console.log(`🏟️ Groups: ${Object.keys(byGroup).join(', ')}`);
-
-    // 3c) Controlla parità intra-girone
+    // Controlla parità intra-girone
     checkIntraGroupTies(byGroup, standingsIsSetBased);
 
-    // 3e) Estrai teams_in_final e determina quanti prendere per rank
     const slots = Number(tournament.teams_in_final);
-    if (!slots || slots <= 0) {
-      console.log('⚠️ Invalid or missing teams_in_final');
-      throw new Error('E_INVALID_SLOTS');
-    }
+    if (!slots || slots <= 0) throw new Error('E_INVALID_SLOTS');
 
-    console.log(`🎯 Finals slots: ${slots}`);
-
-    // Estrai squadre per rank (primi, secondi, terzi, ...)
-    const byRankGlobal = {}; // rank_level → [standings entry]
+    // Estrai teams qualificati (stessa logica di prima)
+    const byRankGlobal = {};
     Object.values(byGroup).forEach(group => {
       group.forEach(s => {
         const rank = s.rank_level;
@@ -197,69 +225,56 @@ async function generateFinalsIfReady(tournamentId) {
       });
     });
 
-    const numGroups = Object.keys(byGroup).length;
     let qualified = [];
     let remainingSlots = slots;
 
-    // Prendi i primi (tutti i gironi hanno 1 primo)
     const firsts = byRankGlobal[1] || [];
-    if (firsts.length > remainingSlots) {
-      console.log(`⚠️ More first-placed teams (${firsts.length}) than available slots (${remainingSlots})`);
-      throw new Error('E_TOO_MANY_FIRSTS');
-    }
+    if (firsts.length > remainingSlots) throw new Error('E_TOO_MANY_FIRSTS');
     qualified = qualified.concat(firsts);
     remainingSlots -= firsts.length;
 
-    console.log(`🥇 First-placed: ${firsts.length}, remaining slots: ${remainingSlots}`);
-
-    // Se restano slot, prendiamo dalla posizione successiva (secondi, poi terzi, ecc.)
     let currentRank = 2;
     while (remainingSlots > 0) {
       const rankTeams = byRankGlobal[currentRank] || [];
-
-      if (rankTeams.length === 0) {
-        console.log(`ℹ️ No more teams at rank ${currentRank}`);
-        break;
-      }
-
+      if (rankTeams.length === 0) break;
       const sorted = sortCrossGroup(rankTeams, standingsIsSetBased);
-
-      // 3c) Controlla parità cross-girone per questo rank
       checkCrossGroupTie(sorted, remainingSlots, standingsIsSetBased);
-
       const toTake = Math.min(remainingSlots, sorted.length);
       qualified = qualified.concat(sorted.slice(0, toTake));
       remainingSlots -= toTake;
-
-      console.log(`🥈 Rank ${currentRank}: took ${toTake}, remaining slots: ${remainingSlots}`);
       currentRank++;
     }
 
-    if (qualified.length !== slots) {
-      console.log(`⚠️ Could not fill all slots: needed ${slots}, got ${qualified.length}`);
-      throw new Error('E_NOT_ENOUGH_TEAMS');
-    }
+    if (qualified.length !== slots) throw new Error('E_NOT_ENOUGH_TEAMS');
 
     console.log(`✅ Qualified: ${qualified.map(q => q.team_name).join(', ')}`);
 
-    // 3f) Genera il primo round delle finals
+    // ===============================
+    // COSTRUISCI IL BRACKET COMPLETO
+    // ===============================
+    const numRounds = computeRounds(slots);
     const batch = db.batch();
     const teams = qualified.map(q => q.team_id);
-    const roundId = 1;
-    let matchIndex = 1;
 
-    console.log(`🏗️ Creating ${Math.floor(teams.length / 2)} finals matches (Round ${roundId})`);
+    // Struttura: roundMatchIds[roundId] = [matchId, matchId, ...]
+    // Serve per collegare source_matches nei round successivi
+    const roundMatchIds = {};
+
+    // --- ROUND 1: squadre reali ---
+    roundMatchIds[1] = [];
+    let matchIndex = 1;
 
     for (let i = 0; i < Math.floor(teams.length / 2); i++) {
       const teamA = teams[i];
       const teamB = teams[teams.length - 1 - i];
-      const matchId = `${tournamentId}_FINAL_R${roundId}_M${matchIndex}`;
-      const finalRef = db.collection('finals').doc(matchId);
+      const matchId = `${tournamentId}_FINAL_R1_M${matchIndex}`;
+      roundMatchIds[1].push(matchId);
 
+      const finalRef = db.collection('finals').doc(matchId);
       batch.set(finalRef, {
         match_id: matchId,
         tournament_id: tournamentId,
-        round_id: roundId,
+        round_id: 1,
         team_a: teamA,
         team_b: teamB,
         team_a_name: teamNamesMap[teamA] || teamA,
@@ -277,14 +292,67 @@ async function generateFinalsIfReady(tournamentId) {
         sport,
         match_format: matchFormatFinals,
         is_set_based: isSetBased,
+        source_matches: [],
       });
 
-      console.log(`   ✓ ${matchId}: ${teamNamesMap[teamA]} vs ${teamNamesMap[teamB]}`);
+      console.log(`   ✓ R1_M${matchIndex}: ${teamNamesMap[teamA]} vs ${teamNamesMap[teamB]}`);
       matchIndex++;
     }
 
+    // --- ROUND 2..N: vuoti, con source_matches ---
+    for (let round = 2; round <= numRounds; round++) {
+      const prevMatches = roundMatchIds[round - 1];
+      roundMatchIds[round] = [];
+      matchIndex = 1;
+
+      for (let i = 0; i < Math.floor(prevMatches.length / 2); i++) {
+        const srcA = prevMatches[i];
+        const srcB = prevMatches[prevMatches.length - 1 - i];
+        const matchId = `${tournamentId}_FINAL_R${round}_M${matchIndex}`;
+        roundMatchIds[round].push(matchId);
+
+        const finalRef = db.collection('finals').doc(matchId);
+        const doc = createEmptyMatchDoc(matchId, tournamentId, round, sport, matchFormatFinals, isSetBased);
+        doc.source_matches = [
+          { match_id: srcA, role: 'winner' },
+          { match_id: srcB, role: 'winner' },
+        ];
+        batch.set(finalRef, doc);
+
+        console.log(`   ✓ R${round}_M${matchIndex}: TBD vs TBD (src: ${srcA}, ${srcB})`);
+        matchIndex++;
+      }
+    }
+
+    // --- FINALE 3°/4° POSTO (se richiesta) ---
+    // Prende i perdenti delle due semifinali (ultimo round prima della finale)
+    if (has3x4 && numRounds >= 2) {
+      const semifinalRound = numRounds - 1;
+      const semiMatches = roundMatchIds[semifinalRound];
+
+      if (semiMatches && semiMatches.length >= 2) {
+        // Prendiamo i perdenti delle prime due semifinali
+        const srcA = semiMatches[0];
+        const srcB = semiMatches[1];
+        const matchId = `${tournamentId}_FINAL_3X4`;
+
+        const finalRef = db.collection('finals').doc(matchId);
+        const doc = createEmptyMatchDoc(matchId, tournamentId, numRounds, sport, matchFormatFinals, isSetBased);
+        doc.source_matches = [
+          { match_id: srcA, role: 'loser' },
+          { match_id: srcB, role: 'loser' },
+        ];
+        doc.is_third_place_match = true;
+        batch.set(finalRef, doc);
+
+        console.log(`   ✓ 3x4: TBD vs TBD (loser of ${srcA}, loser of ${srcB})`);
+      } else {
+        console.log(`⚠️ Not enough semi-final matches to generate 3/4 place match`);
+      }
+    }
+
     await batch.commit();
-    console.log(`✅ [SUCCESS] Finals R1 generated for ${tournamentId}`);
+    console.log(`✅ [SUCCESS] Full finals bracket generated for ${tournamentId} (${numRounds} rounds${has3x4 ? ' + 3/4 posto' : ''})`);
 
   } catch (error) {
     console.error('❌ [ERROR] generateFinalsIfReady failed:', error.message);
@@ -293,133 +361,106 @@ async function generateFinalsIfReady(tournamentId) {
 }
 
 // ===============================
-// 3g) Genera prossimo round Finals (automatico quando round precedente è completato)
+// Popola automaticamente i match futuri quando un match viene completato
+// Chiamare questa funzione ogni volta che un finale viene marcato come played: true
 // ===============================
-async function tryGenerateNextFinalRound(tournamentId) {
+async function propagateFinalsResult(tournamentId, completedMatchId) {
   try {
-    console.log(`🏆 [START] tryGenerateNextFinalRound for ${tournamentId}`);
+    console.log(`🔄 [START] propagateFinalsResult for match ${completedMatchId}`);
 
-    // Recupera torneo per sport e format
-    const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
-    if (!tournamentDoc.exists) {
-      console.log('⚠️ Tournament not found');
+    // Recupera il match completato
+    const completedDoc = await db.collection('finals').doc(completedMatchId).get();
+    if (!completedDoc.exists) {
+      console.log('⚠️ Completed match not found');
       return;
     }
 
-    const tournament = tournamentDoc.data();
-    const sport = normalizeSport(tournament.sport);
-    const matchFormatFinals = String(tournament.match_format_finals || '').toLowerCase();
-    const isSetBased = isSetBasedFormat(matchFormatFinals);
+    const completed = completedDoc.data();
+    if (!completed.played) {
+      console.log('⚠️ Match not yet played');
+      return;
+    }
 
-    // Recupera tutte le finals
-    const finalsSnapshot = await db.collection('finals')
+    const winner = completed.winner_team_id;
+    const loser = winner === completed.team_a ? completed.team_b : completed.team_a;
+    const winnerName = winner === completed.team_a ? completed.team_a_name : completed.team_b_name;
+    const loserName = winner === completed.team_a ? completed.team_b_name : completed.team_a_name;
+
+    if (!winner) {
+      console.log('⚠️ No winner set on completed match');
+      return;
+    }
+
+    console.log(`🏆 Winner: ${winnerName}, Loser: ${loserName}`);
+
+    // Cerca tutti i match futuri che dipendono da questo match
+    const dependentSnapshot = await db.collection('finals')
       .where('tournament_id', '==', tournamentId)
       .get();
 
-    if (finalsSnapshot.empty) {
-      console.log('⚠️ No finals found');
-      return;
-    }
-
-    const finals = finalsSnapshot.docs.map(doc => doc.data());
-    finals.sort((a, b) => Number(a.round_id || 0) - Number(b.round_id || 0));
-
-    console.log(`📋 Found ${finals.length} finals matches`);
-
-    // Mappa team_id → team_name
-    const teamNamesMap = {};
-    finals.forEach(f => {
-      if (f.team_a && f.team_a_name) teamNamesMap[f.team_a] = f.team_a_name;
-      if (f.team_b && f.team_b_name) teamNamesMap[f.team_b] = f.team_b_name;
-    });
-
-    // Trova ultimo round
-    const rounds = finals.map(f => f.round_id).filter(r => Number.isFinite(r));
-    const lastRound = Math.max(...rounds);
-    const lastRoundMatches = finals.filter(f => f.round_id === lastRound);
-
-    console.log(`🎯 Last round: ${lastRound}, matches: ${lastRoundMatches.length}`);
-
-    // Se c'è solo 1 match nell'ultimo round → siamo già alla finale secca
-    if (lastRoundMatches.length < 2) {
-      console.log('✅ Already at the final match - no further rounds to generate');
-      return;
-    }
-
-    // Verifica che tutte le partite dell'ultimo round siano giocate
-    const allPlayed = lastRoundMatches.every(f => f.played === true);
-    if (!allPlayed) {
-      console.log('⚠️ Not all matches in last round are played yet');
-      return;
-    }
-
-    // Evita doppia generazione
-    const nextRound = lastRound + 1;
-    if (finals.some(f => f.round_id === nextRound)) {
-      console.log('⚠️ Next round already exists');
-      return;
-    }
-
-    console.log(`🏗️ Generating next round: R${nextRound}`);
-
-    // Estrai vincitori (ordine stabile)
-    const winners = lastRoundMatches.map(f => {
-      if (!f.winner_team_id) {
-        console.error(`❌ Match ${f.match_id} has no winner_team_id`);
-        throw new Error('FINAL_WINNER_MISSING');
-      }
-      return f.winner_team_id;
-    });
-
-    console.log(`🏆 Winners: ${winners.join(', ')}`);
-
-    // Crea nuovi match
     const batch = db.batch();
-    let matchIndex = 1;
+    let updateCount = 0;
 
-    for (let i = 0; i < winners.length - 1; i += 2) {
-      const teamA = winners[i];
-      const teamB = winners[i + 1];
-      const matchId = `${tournamentId}_FINAL_R${nextRound}_M${matchIndex}`;
-      const finalRef = db.collection('finals').doc(matchId);
+    for (const doc of dependentSnapshot.docs) {
+      const data = doc.data();
+      if (!Array.isArray(data.source_matches) || data.source_matches.length === 0) continue;
 
-      batch.set(finalRef, {
-        match_id: matchId,
-        tournament_id: tournamentId,
-        round_id: nextRound,
-        team_a: teamA,
-        team_b: teamB,
-        team_a_name: teamNamesMap[teamA] || teamA,
-        team_b_name: teamNamesMap[teamB] || teamB,
-        score_a: null,
-        score_b: null,
-        winner_team_id: null,
-        played: false,
-        court: 'none',
-        day: 'none',
-        hour: 'none',
-        sets_detail: null,
-        games_a: null,
-        games_b: null,
-        sport,
-        match_format: matchFormatFinals,
-        is_set_based: isSetBased,
-      });
+      const sources = data.source_matches;
 
-      console.log(`   ✓ ${matchId}: ${teamNamesMap[teamA] || teamA} vs ${teamNamesMap[teamB] || teamB}`);
-      matchIndex++;
+      // Trova se questo match è una source per il documento corrente
+      const srcA = sources[0]; // primo source → team_a nel match futuro
+      const srcB = sources[1]; // secondo source → team_b nel match futuro
+
+      let updates = {};
+
+      if (srcA && srcA.match_id === completedMatchId) {
+        const teamId = srcA.role === 'winner' ? winner : loser;
+        const teamName = srcA.role === 'winner' ? winnerName : loserName;
+        updates.team_a = teamId;
+        updates.team_a_name = teamName;
+        console.log(`   → ${doc.id}: team_a = ${teamName} (${srcA.role} of ${completedMatchId})`);
+      }
+
+      if (srcB && srcB.match_id === completedMatchId) {
+        const teamId = srcB.role === 'winner' ? winner : loser;
+        const teamName = srcB.role === 'winner' ? winnerName : loserName;
+        updates.team_b = teamId;
+        updates.team_b_name = teamName;
+        console.log(`   → ${doc.id}: team_b = ${teamName} (${srcB.role} of ${completedMatchId})`);
+      }
+
+      if (Object.keys(updates).length > 0) {
+        batch.update(doc.ref, updates);
+        updateCount++;
+      }
     }
 
-    await batch.commit();
-    console.log(`✅ [SUCCESS] Final round R${nextRound} generated for ${tournamentId}`);
+    if (updateCount > 0) {
+      await batch.commit();
+      console.log(`✅ [SUCCESS] Propagated result to ${updateCount} future match(es)`);
+    } else {
+      console.log('ℹ️ No dependent matches found to update');
+    }
 
   } catch (error) {
-    console.error('❌ [ERROR] tryGenerateNextFinalRound failed:', error.message);
+    console.error('❌ [ERROR] propagateFinalsResult failed:', error.message);
     throw error;
   }
 }
 
+// ===============================
+// DEPRECATED: tryGenerateNextFinalRound
+// Mantenuta per retrocompatibilità ma non più necessaria con la nuova logica.
+// I round vengono generati tutti in anticipo da generateFinalsIfReady.
+// ===============================
+async function tryGenerateNextFinalRound(tournamentId) {
+  console.log(`⚠️ [DEPRECATED] tryGenerateNextFinalRound is no longer needed.`);
+  console.log(`   All rounds are now pre-generated by generateFinalsIfReady.`);
+  console.log(`   Use propagateFinalsResult to populate team names as matches are played.`);
+}
+
 module.exports = {
   generateFinalsIfReady,
-  tryGenerateNextFinalRound,
+  propagateFinalsResult,
+  tryGenerateNextFinalRound, // mantenuta per retrocompatibilità
 };
