@@ -447,3 +447,5 @@ function renderLinearSVG(bracket, container) {
   wrap.innerHTML = svg;
   container.appendChild(wrap);
 }
+
+
