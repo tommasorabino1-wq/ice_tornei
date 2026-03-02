@@ -507,6 +507,7 @@ exports.onFinalResultUpdated = onDocumentUpdated(
 
 // ===============================
 // POST: SUBMIT SUBSCRIPTION
+// ✅ Crea anche documento teams (con campi giocatori vuoti per ora)
 // ===============================
 exports.submitSubscription = functions.https.onRequest(async (req, res) => {
   setCORS(res);
@@ -540,6 +541,7 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     const normalizedTeamName = team_name.trim().toLowerCase();
     const teamId = `${tournament_id}_${normalizedTeamName}`;
 
+    // ✅ Verifica duplicati in subscriptions
     const duplicateTeamCheck = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .where('team_id', '==', teamId)
@@ -567,6 +569,7 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     const subsCount = existingSubsSnapshot.size + 1;
     const subscriptionId = `${tournament_id}_sub${subsCount}`;
 
+    // ✅ 1) Crea subscription
     const subscriptionData = {
       subscription_id: subscriptionId,
       team_id: teamId,
@@ -588,6 +591,27 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     }
 
     await db.collection('subscriptions').doc(subscriptionId).set(subscriptionData);
+
+    // ===============================
+    // ✅ 2) Crea documento teams (NECESSARIO per match generation)
+    // ===============================
+    const teamSizeMax = Number(tournament.team_size_max || 2); // default 2
+
+    const teamData = {
+      team_id: teamId,
+      tournament_id,
+      team_name, // nome originale (non normalizzato)
+      team_logo: null // per ora vuoto
+    };
+
+    // ✅ Crea campi giocatori vuoti (name_player_1, name_player_2, ecc.)
+    for (let i = 1; i <= teamSizeMax; i++) {
+      teamData[`name_player_${i}`] = null;
+    }
+
+    await db.collection('teams').doc(teamId).set(teamData);
+
+    console.log(`✅ Team ${teamId} created with ${teamSizeMax} empty player slots`);
 
     res.status(200).send('SUBSCRIPTION_SAVED');
 
