@@ -299,13 +299,108 @@ const { generateFinalsIfReady, propagateFinalsResult } = require('./helpers/fina
 const { updateTournamentStatus } = require('./helpers/tournamentStatus');
 
 
+
+
+// ===============================
+// HELPER: Invia email richiesta info squadre
+// ===============================
+async function sendTeamInfoRequestEmails(tournamentId) {
+  try {
+    console.log(`📧 Sending team info request emails for ${tournamentId}`);
+
+    // 1) Recupera torneo
+    const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
+    if (!tournamentDoc.exists) {
+      throw new Error('Tournament not found');
+    }
+
+    const tournament = tournamentDoc.data();
+    const tournamentName = tournament.name;
+    const teamSizeMax = Number(tournament.team_size_max || 2);
+
+    // 2) Recupera subscriptions
+    const subscriptionsSnapshot = await db.collection('subscriptions')
+      .where('tournament_id', '==', tournamentId)
+      .get();
+
+    if (subscriptionsSnapshot.empty) {
+      console.log('⚠️ No subscriptions found');
+      return;
+    }
+
+    // 3) Configurazione mailer
+    const mailerUrl = "https://script.google.com/macros/s/AKfycbyHvhD9-ZMtAm5bROD9hMiNXg7gHLckGr5FdZFEEak7fBnzlmpMhNL-w6Dk9v29HTHqVQ/exec";
+    const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
+
+    // 4) URL Google Form (DEVI CREARLO E INSERIRLO QUI)
+    const googleFormUrl = "https://forms.gle/TUO_FORM_ID_QUI"; // ⚠️ DA CONFIGURARE
+
+    // 5) Invia email a ogni squadra
+    const emailPromises = subscriptionsSnapshot.docs.map(async (doc) => {
+      const subscription = doc.data();
+      const email = subscription.email;
+      const teamName = subscription.team_name;
+      const teamId = subscription.team_id;
+
+      const payload = {
+        token: mailerToken,
+        action: "team_info_request", // ✅ NUOVO: tipo di email diverso
+        to: email,
+        team_name: teamName,
+        team_id: teamId,
+        tournament_name: tournamentName,
+        team_size_max: teamSizeMax,
+        google_form_url: googleFormUrl
+      };
+
+      try {
+        const response = await axios.post(mailerUrl, payload, {
+          headers: { "Content-Type": "application/json" },
+          timeout: 30000
+        });
+
+        if (response.data === "OK") {
+          console.log(`✅ Team info email sent to ${email}`);
+          // ✅ Traccia invio email nella subscription
+          await doc.ref.update({
+            teamInfoEmailStatus: "sent",
+            teamInfoEmailSentAt: new Date().toISOString()
+          });
+        } else {
+          console.error(`❌ Email failed for ${email}: ${response.data}`);
+          await doc.ref.update({
+            teamInfoEmailStatus: "error",
+            teamInfoEmailError: `mailer_response_${response.data}`
+          });
+        }
+      } catch (error) {
+        console.error(`❌ Email error for ${email}:`, error.message);
+        await doc.ref.update({
+          teamInfoEmailStatus: "error",
+          teamInfoEmailError: error.message
+        });
+      }
+    });
+
+    await Promise.all(emailPromises);
+    console.log(`✅ All team info emails processed for ${tournamentId}`);
+
+  } catch (error) {
+    console.error('sendTeamInfoRequestEmails error:', error);
+    throw error;
+  }
+}
+
+
+
+
 // ===============================
 // IMPORT per Firestore Triggers v2
 // ===============================
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
 
 // ===============================
-// FIRESTORE TRIGGER: GENERATE MATCHES ON STATUS CHANGE TO "FULL"
+// FIRESTORE TRIGGER: GENERATE MATCHES ON STATUS CHANGE
 // ===============================
 exports.onTournamentStatusChange = onDocumentUpdated(
   "tournaments/{tournamentId}",
@@ -320,11 +415,23 @@ exports.onTournamentStatusChange = onDocumentUpdated(
     
     console.log(`🔄 Tournament ${tournamentId} status change: ${oldStatus} → ${newStatus}`);
     
-    // Trigger generazione match: open → full
-    if (oldStatus === 'open' && newStatus === 'full') {
+    // ✅ NUOVO: Trigger invio email info squadre: open → wip
+    if (oldStatus === 'open' && newStatus === 'wip') {
+      console.log(`📧 Triggering team info email for ${tournamentId}`);
+      try {
+        await sendTeamInfoRequestEmails(tournamentId);
+        console.log(`✅ Team info emails sent for ${tournamentId}`);
+      } catch (error) {
+        console.error(`❌ Team info email failed for ${tournamentId}:`, error);
+      }
+    }
+
+    // ✅ MODIFICATO: Trigger generazione match: wip → full (non più open → full)
+    if (oldStatus === 'wip' && newStatus === 'full') {
       console.log(`🚀 Triggering match generation for ${tournamentId}`);
       try {
         await generateMatchesIfReady(tournamentId);
+        await generateStandingsBackend(tournamentId);
         console.log(`✅ Match generation completed for ${tournamentId}`);
       } catch (error) {
         console.error(`❌ Match generation failed for ${tournamentId}:`, error);
@@ -607,6 +714,8 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     // ✅ Crea campi giocatori vuoti (name_player_1, name_player_2, ecc.)
     for (let i = 1; i <= teamSizeMax; i++) {
       teamData[`name_player_${i}`] = null;
+      teamData[`certificato_player_${i}`] = null;
+      teamData[`scarico_player_${i}`] = null
     }
 
     await db.collection('teams').doc(teamId).set(teamData);
@@ -670,7 +779,7 @@ exports.onSubscriptionCreated = onDocumentCreated(
         paypalLink: `https://paypal.me/TommasoRabino/${amount}`,
       };
 
-      const mailerUrl = "https://script.google.com/macros/s/AKfycbxnAuMenN7bRSNIRcXPOCjEFX8Onj9-9qo5sVxEEAx_9odFGugsGkzBr2sNhTPI-en0qw/exec";
+      const mailerUrl = "https://script.google.com/macros/s/AKfycbyHvhD9-ZMtAm5bROD9hMiNXg7gHLckGr5FdZFEEak7fBnzlmpMhNL-w6Dk9v29HTHqVQ/exec";
       const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
       const payload = {

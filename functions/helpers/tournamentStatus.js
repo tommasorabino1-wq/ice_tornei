@@ -2,15 +2,8 @@ const admin = require('firebase-admin');
 const db = admin.firestore();
 
 // ===============================
-// HELPER: Check if format has finals
-// ===============================
-function formatHasFinals(formatType) {
-  const formatsWithFinals = ['round_robin_finals', 'double_round_robin_finals'];
-  return formatsWithFinals.includes(String(formatType || '').toLowerCase());
-}
-
-// ===============================
 // MAIN: Aggiorna Status Torneo
+// ✅ MODIFICATO: supporta nuovo status "wip"
 // ===============================
 async function updateTournamentStatus(tournamentId) {
   try {
@@ -26,25 +19,22 @@ async function updateTournamentStatus(tournamentId) {
 
     const tournament = tournamentDoc.data();
     const currentStatus = tournament.status;
-    const formatType = tournament.format_type;
 
-    console.log(`ℹ️ Current status: ${currentStatus}, format: ${formatType}`);
+    console.log(`ℹ️ Current status: ${currentStatus}`);
 
-    // ⚠️ NON modificare se lo status è "open" (gestito manualmente)
-    if (currentStatus === 'open') {
-      console.log('ℹ️ Status is "open" - no automatic update (manual trigger required)');
+    // ⚠️ NON modificare questi status (gestiti manualmente):
+    // - open (apertura iscrizioni)
+    // - wip (chiusura iscrizioni + richiesta info)
+    // - final_phase (inizio fase finale)
+    // - finished (torneo concluso)
+    const manualStatuses = ['open', 'wip', 'final_phase', 'finished'];
+    
+    if (manualStatuses.includes(currentStatus)) {
+      console.log(`ℹ️ Status "${currentStatus}" is manual - no automatic update`);
       return;
     }
 
-    // ⚠️ NON modificare mai automaticamente verso final_phase o finished.
-    // Queste transizioni sono sempre manuali.
-    // L'unica transizione automatica permessa è: full/live → live (quando iniziano i match).
-    if (currentStatus === 'final_phase' || currentStatus === 'finished') {
-      console.log(`ℹ️ Status is "${currentStatus}" - no automatic update allowed from this state`);
-      return;
-    }
-
-    // 2) Recupera matches (gironi)
+    // Recupera matches
     const matchesSnapshot = await db.collection('matches')
       .where('tournament_id', '==', tournamentId)
       .get();
@@ -56,15 +46,12 @@ async function updateTournamentStatus(tournamentId) {
 
     let newStatus = currentStatus;
 
-    // Unica transizione automatica: full → live quando almeno un match è giocato
+    // ✅ Unica transizione automatica: full → live quando almeno un match è giocato
     if (currentStatus === 'full' && someMatchesPlayed) {
       newStatus = 'live';
     }
 
-    // =====================================================
-    // AGGIORNA STATUS SE CAMBIATO
-    // =====================================================
-
+    // Aggiorna status se cambiato
     if (newStatus !== currentStatus) {
       await tournamentRef.update({ status: newStatus });
       console.log(`✅ Status updated: ${currentStatus} → ${newStatus}`);
