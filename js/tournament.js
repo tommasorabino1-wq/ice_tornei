@@ -2660,6 +2660,20 @@ function applyTournamentState(tournament) {
     return;
   }
 
+  // ✅ NUOVO: Status WIP
+  if (tournament.status === "wip") {
+    badge.textContent = "IN DEFINIZIONE";
+    badge.classList.add("wip");
+    subscribeMessage.innerHTML = `
+      <span class="registration-closed-icon">⏳</span>
+      <strong>Iscrizioni chiuse</strong><br>
+      Il torneo è in fase di definizione. I gironi saranno comunicati a breve.
+    `;
+    form.style.display = "none";
+    registrationBlock.style.display = "block";
+    return;
+  }
+
   if (tournament.status === "full") {
     badge.textContent = "COMPLETO";
     badge.classList.add("full");

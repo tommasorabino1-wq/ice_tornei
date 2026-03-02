@@ -79,10 +79,11 @@ function renderTournaments(tournaments) {
   const statusPriority = {
     needs_attention: 0,
     open: 1,
-    live: 2,
-    final_phase: 3,
-    full: 4,
-    finished: 5
+    wip: 2,                 
+    live: 3,
+    final_phase: 4,
+    full: 5,
+    finished: 6
   };
 
   tournaments.sort((a, b) => {
@@ -168,6 +169,7 @@ function renderTournaments(tournaments) {
 function buildStatusLabel(status) {
   const labels = {
     open: "ISCRIZIONI APERTE",
+    wip: "IN DEFINIZIONE",        // ✅ NUOVO
     live: "IN CORSO",
     final_phase: "FASE FINALE",
     full: "COMPLETO",
