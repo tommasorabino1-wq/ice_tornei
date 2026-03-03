@@ -1,7 +1,8 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { onRequest } = require("firebase-functions/v2/https");
 const axios = require("axios");
 
 
@@ -34,7 +35,7 @@ function handleOptions(req, res) {
 // ===============================
 // GET TOURNAMENTS
 // ===============================
-exports.getTournaments = functions.https.onRequest(async (req, res) => {
+exports.getTournaments = onRequest(async (req, res) => {
   setCORS(res);
   if (handleOptions(req, res)) return;
 
@@ -74,7 +75,7 @@ exports.getTournaments = functions.https.onRequest(async (req, res) => {
 // ===============================
 // GET STANDINGS
 // ===============================
-exports.getStandings = functions.https.onRequest(async (req, res) => {
+exports.getStandings = onRequest(async (req, res) => {
   setCORS(res);
   if (handleOptions(req, res)) return;
 
@@ -107,7 +108,7 @@ exports.getStandings = functions.https.onRequest(async (req, res) => {
 // ===============================
 // GET MATCHES (GIRONI)
 // ===============================
-exports.getMatches = functions.https.onRequest(async (req, res) => {
+exports.getMatches = onRequest(async (req, res) => {
   setCORS(res);
   if (handleOptions(req, res)) return;
 
@@ -140,7 +141,7 @@ exports.getMatches = functions.https.onRequest(async (req, res) => {
 // ===============================
 // GET FINALS
 // ===============================
-exports.getFinals = functions.https.onRequest(async (req, res) => {
+exports.getFinals = onRequest(async (req, res) => {
   setCORS(res);
   if (handleOptions(req, res)) return;
 
@@ -169,7 +170,7 @@ exports.getFinals = functions.https.onRequest(async (req, res) => {
 // ===============================
 // GET TEAMS (from subscriptions)
 // ===============================
-exports.getTeams = functions.https.onRequest(async (req, res) => {
+exports.getTeams = onRequest(async (req, res) => {
   setCORS(res);
   if (handleOptions(req, res)) return;
 
@@ -205,7 +206,7 @@ exports.getTeams = functions.https.onRequest(async (req, res) => {
 // GET BRACKET (struttura finals)
 // ✅ MODIFICATO: separa il match 3°/4° posto in thirdPlaceMatch
 // ===============================
-exports.getBracket = functions.https.onRequest(async (req, res) => {
+exports.getBracket = onRequest(async (req, res) => {
   setCORS(res);
   if (handleOptions(req, res)) return;
 
@@ -396,10 +397,7 @@ async function sendTeamInfoRequestEmails(tournamentId) {
 
 
 
-// ===============================
-// IMPORT per Firestore Triggers v2
-// ===============================
-const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
+
 
 // ===============================
 // FIRESTORE TRIGGER: GENERATE MATCHES ON STATUS CHANGE
@@ -617,7 +615,7 @@ exports.onFinalResultUpdated = onDocumentUpdated(
 // ===============================
 // POST: SUBMIT SUBSCRIPTION
 // ===============================
-exports.submitSubscription = functions.https.onRequest(async (req, res) => {
+exports.submitSubscription = onRequest(async (req, res) => {
   setCORS(res);
   if (handleOptions(req, res)) return;
 
@@ -736,7 +734,7 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
 // POST: SUBMIT TEAM INFO
 // ✅ CON LOGGING DETTAGLIATO PER DEBUG
 // ===============================
-exports.submitTeamInfo = functions.https.onRequest(async (req, res) => {
+exports.submitTeamInfo = onRequest(async (req, res) => {
   setCORS(res);
   if (handleOptions(req, res)) return;
 
@@ -1034,7 +1032,7 @@ exports.onSubscriptionCreated = onDocumentCreated(
 // ===============================
 // GET: TEAM INFO (per form pre-compilazione)
 // ===============================
-exports.getTeamInfo = functions.https.onRequest(async (req, res) => {
+exports.getTeamInfo = onRequest(async (req, res) => {
   setCORS(res);
   if (handleOptions(req, res)) return;
 
@@ -1106,7 +1104,7 @@ exports.getTeamInfo = functions.https.onRequest(async (req, res) => {
 // GET TEAMS WITH LOGOS (from teams collection)
 // ✅ NUOVO: Ritorna team_name + team_logo
 // ===============================
-exports.getTeamsWithLogos = functions.https.onRequest(async (req, res) => {
+exports.getTeamsWithLogos = onRequest(async (req, res) => {
   setCORS(res);
   if (handleOptions(req, res)) return;
 
