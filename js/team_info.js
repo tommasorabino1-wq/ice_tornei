@@ -136,7 +136,7 @@ function generatePlayerSections(min, max) {
       
       <!-- Nome Giocatore -->
       <div class="player-name-group">
-        <label for="player-name-${i}">Nome e Cognome${isRequired ? ' *' : ''}</label>
+        <label for="player-name-${i}">Nome e Cognome${isRequired ? ' <span class="required-asterisk">*</span>' : ''}</label>
         <input 
           type="text" 
           id="player-name-${i}" 
@@ -147,7 +147,7 @@ function generatePlayerSections(min, max) {
 
       <!-- Certificato Giocatore -->
       <div class="player-certificate-group">
-        <label for="player-cert-${i}">Certificato / Scarico Responsabilità${isRequired ? ' *' : ''}</label>
+        <label for="player-cert-${i}">Certificato / Scarico Responsabilità${isRequired ? ' <span class="required-asterisk">*</span>' : ''}</label>
         <p class="section-description">Formati accettati: PDF, JPG, PNG - max 10MB</p>
         <label class="file-upload-btn">
           <input 
@@ -175,6 +175,8 @@ function generatePlayerSections(min, max) {
     certInput.addEventListener('change', (e) => handleCertificateUpload(e, i - 1));
   }
 }
+
+
 
 // ===================================
 // HANDLE CERTIFICATE UPLOAD
