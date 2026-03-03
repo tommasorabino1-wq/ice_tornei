@@ -333,7 +333,7 @@ async function sendTeamInfoRequestEmails(tournamentId) {
 
     // 3) Configurazione mailer
     // ✅ QUESTO È IL TUO TEAM INFO MAILER SCRIPT
-    const mailerUrl = "https://script.google.com/macros/s/AKfycbz3a9tjQSnVFakw0ZRICOND4C5_q88NmTUiBZjREU80G_9cLCXMy6kAQhabUOUtlPbn/exec";
+    const mailerUrl = "https://script.google.com/macros/s/AKfycbxdjD_ZCaaCwx3yKXWd6wbuyMAPG7KXE65Y9sTdLISDBu5AwL1tDMbKYpOMozinnmKH/exec";
     const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
     // 4) Invia email a ogni squadra
@@ -703,7 +703,6 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
 
     // ===============================
     // 2) Crea documento teams
-    // ✅ MODIFICATO: rimuovi scarico_player_
     // ===============================
     const teamSizeMax = Number(tournament.team_size_max || 2);
 

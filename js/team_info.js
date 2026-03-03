@@ -147,7 +147,7 @@ function generatePlayerSections(min, max) {
 
       <!-- Certificato Giocatore -->
       <div class="player-certificate-group">
-        <label for="player-cert-${i}">Certificato / Scarico Responsabilità${isRequired ? ' <span class="required-asterisk">*</span>' : ''}</label>
+        <label for="player-cert-${i}">Certificato Medico Agonistico o Non Agonistico${isRequired ? ' <span class="required-asterisk">*</span>' : ''}</label>
         <p class="section-description">Formati accettati: PDF, JPG, PNG - max 10MB</p>
         <label class="file-upload-btn">
           <input 
