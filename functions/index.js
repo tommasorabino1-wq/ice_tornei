@@ -333,7 +333,7 @@ async function sendTeamInfoRequestEmails(tournamentId) {
 
     // 3) Configurazione mailer
     // ✅ QUESTO È IL TUO TEAM INFO MAILER SCRIPT
-    const mailerUrl = "https://script.google.com/macros/s/AKfycbz3SrlCqcWBAlAPS6MpnelGV9vAc_yK1WNlQBEJ86mKkEF6GClisg2iX4WEJN3sgyBw/exec";
+    const mailerUrl = "https://script.google.com/macros/s/AKfycbz3a9tjQSnVFakw0ZRICOND4C5_q88NmTUiBZjREU80G_9cLCXMy6kAQhabUOUtlPbn/exec";
     const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
     // 4) Invia email a ogni squadra
