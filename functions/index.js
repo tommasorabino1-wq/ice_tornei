@@ -649,7 +649,7 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     const normalizedTeamName = team_name.trim().toLowerCase();
     const teamId = `${tournament_id}_${normalizedTeamName}`;
 
-    // ✅ Verifica duplicati in subscriptions
+    // Verifica duplicati in subscriptions
     const duplicateTeamCheck = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .where('team_id', '==', teamId)
@@ -677,7 +677,7 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     const subsCount = existingSubsSnapshot.size + 1;
     const subscriptionId = `${tournament_id}_sub${subsCount}`;
 
-    // ✅ 1) Crea subscription
+    // 1) Crea subscription
     const subscriptionData = {
       subscription_id: subscriptionId,
       team_id: teamId,
@@ -685,7 +685,7 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
       team_name,
       email,
       phone: phone || '',
-      payment: false, // ✅ NUOVO: campo payment inizializzato a false
+      payment: false,
       timestamp: admin.firestore.FieldValue.serverTimestamp()
     };
 
@@ -702,22 +702,22 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
     await db.collection('subscriptions').doc(subscriptionId).set(subscriptionData);
 
     // ===============================
-    // ✅ 2) Crea documento teams (NECESSARIO per match generation)
+    // 2) Crea documento teams
+    // ✅ MODIFICATO: rimuovi scarico_player_
     // ===============================
-    const teamSizeMax = Number(tournament.team_size_max || 2); // default 2
+    const teamSizeMax = Number(tournament.team_size_max || 2);
 
     const teamData = {
       team_id: teamId,
       tournament_id,
-      team_name, // nome originale (non normalizzato)
-      team_logo: null // per ora vuoto
+      team_name,
+      team_logo: null
     };
 
-    // ✅ Crea campi giocatori vuoti (name_player_1, name_player_2, ecc.)
+    // ✅ MODIFICATO: solo name_player_ e certificato_player_
     for (let i = 1; i <= teamSizeMax; i++) {
       teamData[`name_player_${i}`] = null;
       teamData[`certificato_player_${i}`] = null;
-      teamData[`scarico_player_${i}`] = null
     }
 
     await db.collection('teams').doc(teamId).set(teamData);
@@ -728,6 +728,156 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
 
   } catch (error) {
     console.error('submitSubscription error:', error);
+    res.status(500).send('ERROR');
+  }
+});
+
+
+// ===============================
+// POST: SUBMIT TEAM INFO
+// ✅ COMPLETAMENTE RISCRITTO
+// ===============================
+exports.submitTeamInfo = functions.https.onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  if (req.method !== 'POST') {
+    return res.status(405).send('METHOD_NOT_ALLOWED');
+  }
+
+  try {
+    const { 
+      team_id, 
+      tournament_id, 
+      players,        // Array di oggetti: [{ name, certificate_base64, certificate_filename }, ...]
+      logo_base64,    // Base64 string (opzionale)
+      logo_filename   // Nome file logo (opzionale)
+    } = req.body;
+
+    // Validazione
+    if (!team_id || !tournament_id || !players) {
+      return res.status(400).send('INVALID_DATA');
+    }
+
+    if (!Array.isArray(players) || players.length === 0) {
+      return res.status(400).send('INVALID_PLAYERS');
+    }
+
+    // Verifica team esista
+    const teamDoc = await db.collection('teams').doc(team_id).get();
+    if (!teamDoc.exists) {
+      return res.status(404).send('TEAM_NOT_FOUND');
+    }
+
+    const teamData = teamDoc.data();
+
+    // Verifica tournament match
+    if (teamData.tournament_id !== tournament_id) {
+      return res.status(403).send('TOURNAMENT_MISMATCH');
+    }
+
+    // Verifica non già completato
+    if (teamData.info_completed === true) {
+      return res.status(409).send('ALREADY_COMPLETED');
+    }
+
+    // Recupera tournament per validazione
+    const tournamentDoc = await db.collection('tournaments').doc(tournament_id).get();
+    if (!tournamentDoc.exists) {
+      return res.status(404).send('TOURNAMENT_NOT_FOUND');
+    }
+
+    const tournament = tournamentDoc.data();
+    const teamSizeMax = Number(tournament.team_size_max || 2);
+
+    // Prepara update object
+    const updateData = {
+      info_completed: true,
+      info_completed_at: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    // ===============================
+    // UPLOAD LOGO (se presente)
+    // ===============================
+    if (logo_base64 && logo_filename) {
+      try {
+        const bucket = admin.storage().bucket('ice-tournaments-ba14a.firebasestorage.app');
+        const logoPath = `teams/${team_id}/logo_${Date.now()}_${logo_filename}`;
+        const logoFile = bucket.file(logoPath);
+
+        const logoBuffer = Buffer.from(logo_base64, 'base64');
+
+        await logoFile.save(logoBuffer, {
+          metadata: { contentType: 'image/png' },
+          public: true
+        });
+
+        const logoUrl = `https://storage.googleapis.com/${bucket.name}/${logoPath}`;
+        updateData.team_logo = logoUrl;
+
+        console.log(`✅ Logo uploaded: ${logoUrl}`);
+      } catch (err) {
+        console.error('Logo upload error:', err);
+      }
+    }
+
+    // ===============================
+    // PROCESSA GIOCATORI + CERTIFICATI
+    // ✅ NUOVO: Upload certificati direttamente nei campi certificato_player_
+    // ===============================
+    const bucket = admin.storage().bucket('ice-tournaments-ba14a.firebasestorage.app');
+
+    for (let i = 0; i < Math.min(players.length, teamSizeMax); i++) {
+      const player = players[i];
+      const playerIndex = i + 1;
+
+      // Nome giocatore
+      if (player.name && player.name.trim()) {
+        updateData[`name_player_${playerIndex}`] = player.name.trim();
+      }
+
+      // Certificato giocatore
+      if (player.certificate_base64 && player.certificate_filename) {
+        try {
+          const certPath = `teams/${team_id}/certificates/player_${playerIndex}_${Date.now()}_${player.certificate_filename}`;
+          const certFile = bucket.file(certPath);
+
+          const certBuffer = Buffer.from(player.certificate_base64, 'base64');
+
+          // Determina content type
+          let contentType = 'application/pdf';
+          if (player.certificate_filename.match(/\.(jpg|jpeg)$/i)) {
+            contentType = 'image/jpeg';
+          } else if (player.certificate_filename.match(/\.png$/i)) {
+            contentType = 'image/png';
+          }
+
+          await certFile.save(certBuffer, {
+            metadata: { contentType },
+            public: true
+          });
+
+          const certUrl = `https://storage.googleapis.com/${bucket.name}/${certPath}`;
+          updateData[`certificato_player_${playerIndex}`] = certUrl;
+
+          console.log(`✅ Certificate uploaded for player ${playerIndex}: ${certUrl}`);
+        } catch (err) {
+          console.error(`Certificate upload error for player ${playerIndex}:`, err);
+        }
+      }
+    }
+
+    // ===============================
+    // AGGIORNA FIRESTORE
+    // ===============================
+    await db.collection('teams').doc(team_id).update(updateData);
+
+    console.log(`✅ Team info completed for ${team_id}`);
+
+    res.status(200).send('INFO_SAVED');
+
+  } catch (error) {
+    console.error('submitTeamInfo error:', error);
     res.status(500).send('ERROR');
   }
 });
