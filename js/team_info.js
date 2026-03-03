@@ -2,8 +2,8 @@
 // API CONFIGURATION
 // ===================================
 const API_URLS = {
-  getTeamInfo: "https://us-central1-ice-tournaments-ba14a.cloudfunctions.net/getTeamInfo",
-  submitTeamInfo: "https://us-central1-ice-tournaments-ba14a.cloudfunctions.net/submitTeamInfo"
+  getTeamInfo: "https://getteaminfo-dzvezz2yhq-uc.a.run.app",
+  submitTeamInfo: "https://submitteaminfo-dzvezz2yhq-uc.a.run.app"
 };
 
 // ===================================
