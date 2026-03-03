@@ -293,11 +293,14 @@ form.addEventListener('submit', async (e) => {
 
     // Converti giocatori + certificati
     loadingText.textContent = 'Caricamento certificati...';
-    
+
     const players = [];
     for (const player of playerData) {
       if (player.name && player.certificateFile) {
+        console.log('🔄 Converting certificate for:', player.name);
         const certBase64 = await fileToBase64(player.certificateFile);
+        console.log('✅ Certificate converted, length:', certBase64 ? certBase64.length : 'NULL');
+        
         players.push({
           name: player.name,
           certificate_base64: certBase64,
@@ -307,6 +310,14 @@ form.addEventListener('submit', async (e) => {
     }
 
     console.log('👥 Players converted:', players.length);
+
+    // ✅ VERIFICA FINALE - Controlla che tutti i certificati ci siano
+    console.log('📦 REAL PAYLOAD players:', players.map(p => ({
+      name: p.name,
+      has_cert_base64: !!p.certificate_base64,
+      cert_base64_length: p.certificate_base64 ? p.certificate_base64.length : 0,
+      cert_filename: p.certificate_filename
+    })));
 
     // Invia dati
     loadingText.textContent = 'Salvataggio informazioni...';
