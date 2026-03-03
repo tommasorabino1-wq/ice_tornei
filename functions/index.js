@@ -978,7 +978,7 @@ exports.submitTeamInfo = functions.https.onRequest(async (req, res) => {
     // ===============================
     if (logo_base64 && logo_filename) {
       try {
-        const bucket = admin.storage().bucket();
+        const bucket = admin.storage().bucket('ice-tournaments-ba14a.firebasestorage.app');
         const logoPath = `teams/${team_id}/logo_${Date.now()}_${logo_filename}`;
         const logoFile = bucket.file(logoPath);
 
@@ -1009,7 +1009,7 @@ exports.submitTeamInfo = functions.https.onRequest(async (req, res) => {
       if (!cert.filename || !cert.base64) continue;
 
       try {
-        const bucket = admin.storage().bucket();
+        const bucket = admin.storage().bucket('ice-tournaments-ba14a.firebasestorage.app');
         const certPath = `teams/${team_id}/certificates/${Date.now()}_${cert.filename}`;
         const certFile = bucket.file(certPath);
 
