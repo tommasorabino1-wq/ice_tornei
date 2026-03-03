@@ -1132,11 +1132,18 @@ exports.submitTeamInfo = functions.https.onRequest(async (req, res) => {
         const logoPath = `teams/${team_id}/logo_${Date.now()}_${logo_filename}`;
         const logoFile = bucket.file(logoPath);
 
-        // Converti base64 to buffer
         const logoBuffer = Buffer.from(logo_base64, 'base64');
 
+        // ✅ CORREZIONE: Determina content type corretto
+        let contentType = 'image/png';
+        if (logo_filename.match(/\.(jpg|jpeg)$/i)) {
+          contentType = 'image/jpeg';
+        } else if (logo_filename.match(/\.svg$/i)) {
+          contentType = 'image/svg+xml';
+        }
+
         await logoFile.save(logoBuffer, {
-          metadata: { contentType: 'image/png' },
+          metadata: { contentType },
           public: true
         });
 
@@ -1146,7 +1153,7 @@ exports.submitTeamInfo = functions.https.onRequest(async (req, res) => {
         console.log(`✅ Logo uploaded: ${logoUrl}`);
       } catch (err) {
         console.error('Logo upload error:', err);
-        // Non bloccare il processo se logo fallisce
+        // ✅ NON bloccare il processo se logo fallisce
       }
     }
 

@@ -311,6 +311,15 @@ form.addEventListener('submit', async (e) => {
     // Invia dati
     loadingText.textContent = 'Salvataggio informazioni...';
 
+    // ✅ DEBUG PRE-PAYLOAD
+    console.log('🔍 Pre-payload check:', {
+      teamId,
+      tournamentId,
+      playersLength: players.length,
+      logoBase64: logoBase64 ? `${logoBase64.substring(0, 50)}...` : null,
+      logoFilename
+    });
+
     const payload = {
       team_id: teamId,
       tournament_id: tournamentId,
@@ -318,6 +327,21 @@ form.addEventListener('submit', async (e) => {
       logo_base64: logoBase64,
       logo_filename: logoFilename
     };
+
+    // ✅ DEBUG PAYLOAD COMPLETO
+    console.log('📦 Payload structure:', {
+      team_id: payload.team_id,
+      tournament_id: payload.tournament_id,
+      players_count: payload.players.length,
+      players_sample: payload.players.map(p => ({
+        name: p.name,
+        has_certificate: !!p.certificate_base64,
+        cert_filename: p.certificate_filename,
+        cert_size: p.certificate_base64 ? p.certificate_base64.length : 0
+      })),
+      has_logo: !!payload.logo_base64,
+      logo_filename: payload.logo_filename
+    });
 
     console.log('📡 Sending payload...');
 
