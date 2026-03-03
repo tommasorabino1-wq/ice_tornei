@@ -2582,7 +2582,7 @@ body {
 
 .match-team .team-name {
   display: block;
-  font-size: 34px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-main);
   line-height: 1.3;
@@ -4823,55 +4823,84 @@ match-card.played {
 }
 
 /* ===============================
-   MATCH LAYOUT SIMMETRICO
-   ✅ Logo A - Nome A - Score - Nome B - Logo B
+   MATCH LAYOUT - SIMMETRICO
+   Logo A | Nome A | Score | Nome B | Logo B
    =============================== */
 
 .match-main {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
+  width: 100%;
 }
 
-/* Team A: Logo → Nome (flex-start) */
+/* Team A: Logo a sinistra */
 .match-team-a {
+  grid-column: 1 / 3; /* Occupa colonne 1-2 */
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1;
-  justify-content: flex-start; /* Logo e nome allineati a sinistra */
+  justify-content: flex-start;
 }
 
-/* Team B: Nome → Logo (flex-end) */
-.match-team-b {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  justify-content: flex-end; /* Nome e logo allineati a destra */
-  flex-direction: row-reverse; /* Inverte ordine: logo dopo nome */
-}
-
-/* Score block centrato */
+/* Score: Centrato */
 .match-score-block {
+  grid-column: 3; /* Colonna centrale */
   display: flex;
   align-items: center;
   gap: 6px;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-/* Team name trucato se troppo lungo */
+/* Team B: Logo a destra */
+.match-team-b {
+  grid-column: 4 / 6; /* Occupa colonne 4-5 */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Loghi match */
+.team-logo-match,
+.team-logo-match-fallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.team-logo-match {
+  object-fit: cover;
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+
+.team-logo-match-fallback {
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+
+/* Team B: allinea testo a destra */
+.team-name-b {
+  text-align: right;
+}
+
+/* Nomi squadre - truncate se troppo lunghi */
 .match-team .team-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 150px;
+  max-width: 160px;
+  font-weight: 500;
 }
 
-/* Responsive: riduci max-width su mobile */
-@media (max-width: 768px) {
-  .match-team .team-name {
-    max-width: 80px;
-  }
-}
+
+
+
