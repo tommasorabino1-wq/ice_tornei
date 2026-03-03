@@ -304,6 +304,7 @@ const { updateTournamentStatus } = require('./helpers/tournamentStatus');
 // ===============================
 // HELPER: Invia email richiesta info squadre
 // ===============================
+
 async function sendTeamInfoRequestEmails(tournamentId) {
   try {
     console.log(`📧 Sending team info request emails for ${tournamentId}`);
@@ -316,7 +317,9 @@ async function sendTeamInfoRequestEmails(tournamentId) {
 
     const tournament = tournamentDoc.data();
     const tournamentName = tournament.name;
+    const teamSizeMin = Number(tournament.team_size_min || 2);
     const teamSizeMax = Number(tournament.team_size_max || 2);
+    const sport = tournament.sport || "Sport";
 
     // 2) Recupera subscriptions
     const subscriptionsSnapshot = await db.collection('subscriptions')
@@ -329,28 +332,28 @@ async function sendTeamInfoRequestEmails(tournamentId) {
     }
 
     // 3) Configurazione mailer
-    const mailerUrl = "https://script.google.com/macros/s/AKfycbyHvhD9-ZMtAm5bROD9hMiNXg7gHLckGr5FdZFEEak7fBnzlmpMhNL-w6Dk9v29HTHqVQ/exec";
+    // ✅ QUESTO È IL TUO TEAM INFO MAILER SCRIPT
+    const mailerUrl = "https://script.google.com/macros/s/AKfycbzkauxH11TtwDVfPvdlcBk0lsn_4sFkkV_xMEtjEDZggprrBxbw7BYulhOrJvTEgeIN/exec";
     const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
-    // 4) URL Google Form (DEVI CREARLO E INSERIRLO QUI)
-    const googleFormUrl = "https://forms.gle/TUO_FORM_ID_QUI"; // ⚠️ DA CONFIGURARE
-
-    // 5) Invia email a ogni squadra
+    // 4) Invia email a ogni squadra
     const emailPromises = subscriptionsSnapshot.docs.map(async (doc) => {
       const subscription = doc.data();
       const email = subscription.email;
       const teamName = subscription.team_name;
       const teamId = subscription.team_id;
 
+      // ✅ PAYLOAD CORRETTO (senza google_form_url)
       const payload = {
         token: mailerToken,
-        action: "team_info_request", // ✅ NUOVO: tipo di email diverso
         to: email,
         team_name: teamName,
         team_id: teamId,
+        tournament_id: tournamentId,
         tournament_name: tournamentName,
+        team_size_min: teamSizeMin,
         team_size_max: teamSizeMax,
-        google_form_url: googleFormUrl
+        sport: sport
       };
 
       try {
@@ -361,7 +364,6 @@ async function sendTeamInfoRequestEmails(tournamentId) {
 
         if (response.data === "OK") {
           console.log(`✅ Team info email sent to ${email}`);
-          // ✅ Traccia invio email nella subscription
           await doc.ref.update({
             teamInfoEmailStatus: "sent",
             teamInfoEmailSentAt: new Date().toISOString()
@@ -779,7 +781,7 @@ exports.onSubscriptionCreated = onDocumentCreated(
         paypalLink: `https://paypal.me/TommasoRabino/${amount}`,
       };
 
-      const mailerUrl = "https://script.google.com/macros/s/AKfycbyHvhD9-ZMtAm5bROD9hMiNXg7gHLckGr5FdZFEEak7fBnzlmpMhNL-w6Dk9v29HTHqVQ/exec";
+      const mailerUrl = "https://script.google.com/macros/s/AKfycbxvueWNImSA3zhX7MczpoXOsPR0ikSrOBlWVcsX342ZL-BiU6d3FZrWD5dVx05rtJNqdA/exec";
       const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
       const payload = {
