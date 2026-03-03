@@ -1100,3 +1100,45 @@ exports.getTeamInfo = functions.https.onRequest(async (req, res) => {
 });
 
 
+
+
+// ===============================
+// GET TEAMS WITH LOGOS (from teams collection)
+// ✅ NUOVO: Ritorna team_name + team_logo
+// ===============================
+exports.getTeamsWithLogos = functions.https.onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  try {
+    const tournamentId = req.query.tournament_id;
+    
+    if (!tournamentId) {
+      return res.status(200).json([]);
+    }
+
+    // Query sulla collection 'teams' invece di 'subscriptions'
+    const snapshot = await db.collection('teams')
+      .where('tournament_id', '==', tournamentId)
+      .get();
+
+    const teams = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        team_id: data.team_id,
+        team_name: data.team_name,
+        team_logo: data.team_logo || null // ✅ Include il logo
+      };
+    });
+
+    // Ordina alfabeticamente per nome squadra
+    teams.sort((a, b) => 
+      String(a.team_name || '').localeCompare(String(b.team_name || ''))
+    );
+
+    res.status(200).json(teams);
+  } catch (error) {
+    console.error('getTeamsWithLogos error:', error);
+    res.status(500).json([]);
+  }
+});

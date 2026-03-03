@@ -4655,3 +4655,62 @@ match-card.played {
     background-position: -100% 0;
   }
 }
+
+
+/* ===============================
+   TEAM CHIP - LOGO
+   ✅ NUOVO: Styling per loghi squadre
+   =============================== */
+
+.team-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.team-chip:hover {
+  border-color: var(--primary);
+  background: var(--surface-hover);
+}
+
+/* Logo immagine */
+.team-chip-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+
+/* Logo fallback (icona) */
+.team-chip-logo-fallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* Nome squadra */
+.team-chip-name {
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+}
+
+/* Skeleton */
+.team-chip--skeleton .team-chip-logo {
+  background: var(--skeleton-bg);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}

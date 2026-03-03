@@ -34,9 +34,11 @@ const tournamentSelect = document.getElementById("tournament-select");
 // ===============================
 // 3. API URLS (FIREBASE FUNCTIONS)
 // ===============================
+
 const API_URLS = {
   getTournaments: "https://gettournaments-dzvezz2yhq-uc.a.run.app",
   getTeams: "https://getteams-dzvezz2yhq-uc.a.run.app",
+  getTeamsWithLogos: "https://getteamswithlogos-dzvezz2yhq-uc.a.run.app",
   submitSubscription: "https://submitsubscription-dzvezz2yhq-uc.a.run.app"
 };
 
@@ -2822,7 +2824,8 @@ function loadAndRenderTeamsList(tournament) {
 
   renderTeamsSkeleton(8);
 
-  const url = `${API_URLS.getTeams}?tournament_id=${encodeURIComponent(tournament.tournament_id)}`;
+  // ✅ NUOVO: Usa getTeamsWithLogos invece di getTeams
+  const url = `${API_URLS.getTeamsWithLogos}?tournament_id=${encodeURIComponent(tournament.tournament_id)}`;
 
   fetch(url)
     .then(res => {
@@ -2850,6 +2853,12 @@ function loadAndRenderTeamsList(tournament) {
     });
 }
 
+
+
+// ===============================
+// RENDER TEAMS CHIPS
+// ✅ MODIFICATO: Mostra logo squadra invece del numero
+// ===============================
 function renderTeamsChips(teams) {
   const frag = document.createDocumentFragment();
 
@@ -2857,8 +2866,13 @@ function renderTeamsChips(teams) {
     const chip = document.createElement("div");
     chip.className = "team-chip";
 
+    // ✅ NUOVO: Logo o icona di fallback
+    const logoHTML = t.team_logo 
+      ? `<img src="${escapeHTML(t.team_logo)}" alt="${escapeHTML(t.team_name)}" class="team-chip-logo">`
+      : `<span class="team-chip-logo-fallback">👥</span>`;
+
     chip.innerHTML = `
-      <span class="team-chip-index">${idx + 1}</span>
+      ${logoHTML}
       <span class="team-chip-name">${escapeHTML(t.team_name || "")}</span>
     `;
 
@@ -2867,6 +2881,9 @@ function renderTeamsChips(teams) {
 
   teamsListContainer.appendChild(frag);
 }
+
+
+
 
 // ===============================
 // 30. TEAMS LIST STATES
