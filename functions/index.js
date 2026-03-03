@@ -822,3 +822,231 @@ exports.onSubscriptionCreated = onDocumentCreated(
     return null;
   }
 );
+
+
+
+
+
+// ===============================
+// GET: TEAM INFO (per form pre-compilazione)
+// ===============================
+exports.getTeamInfo = functions.https.onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  try {
+    const teamId = req.query.team_id;
+    const tournamentId = req.query.tournament_id;
+
+    if (!teamId || !tournamentId) {
+      return res.status(400).json({ error: 'MISSING_PARAMS' });
+    }
+
+    // Verifica che il team esista
+    const teamDoc = await db.collection('teams').doc(teamId).get();
+    if (!teamDoc.exists) {
+      return res.status(404).json({ error: 'TEAM_NOT_FOUND' });
+    }
+
+    const teamData = teamDoc.data();
+
+    // Verifica che appartenga al torneo corretto
+    if (teamData.tournament_id !== tournamentId) {
+      return res.status(403).json({ error: 'TOURNAMENT_MISMATCH' });
+    }
+
+    // Verifica che non abbia già completato il form
+    if (teamData.info_completed === true) {
+      return res.status(409).json({ 
+        error: 'ALREADY_COMPLETED',
+        message: 'Hai già completato la registrazione per questo torneo.'
+      });
+    }
+
+    // Recupera tournament
+    const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
+    if (!tournamentDoc.exists) {
+      return res.status(404).json({ error: 'TOURNAMENT_NOT_FOUND' });
+    }
+
+    const tournamentData = tournamentDoc.data();
+
+    // Ritorna solo i dati necessari
+    const response = {
+      team: {
+        team_id: teamData.team_id,
+        team_name: teamData.team_name,
+        tournament_id: teamData.tournament_id
+      },
+      tournament: {
+        tournament_id: tournamentData.tournament_id || tournamentId,
+        name: tournamentData.name,
+        sport: tournamentData.sport || 'Sport',
+        team_size_min: Number(tournamentData.team_size_min || 2),
+        team_size_max: Number(tournamentData.team_size_max || 2)
+      }
+    };
+
+    res.status(200).json(response);
+
+  } catch (error) {
+    console.error('getTeamInfo error:', error);
+    res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+
+// ===============================
+// POST: SUBMIT TEAM INFO
+// ===============================
+exports.submitTeamInfo = functions.https.onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  if (req.method !== 'POST') {
+    return res.status(405).send('METHOD_NOT_ALLOWED');
+  }
+
+  try {
+    const { 
+      team_id, 
+      tournament_id, 
+      players,        // Array di nomi: ["Mario Rossi", "Luigi Verdi", ...]
+      logo_base64,    // Base64 string (opzionale)
+      logo_filename,  // Nome file logo (opzionale)
+      certificates    // Array di { filename, base64 }
+    } = req.body;
+
+    // Validazione
+    if (!team_id || !tournament_id || !players || !certificates) {
+      return res.status(400).send('INVALID_DATA');
+    }
+
+    if (!Array.isArray(players) || players.length === 0) {
+      return res.status(400).send('INVALID_PLAYERS');
+    }
+
+    if (!Array.isArray(certificates) || certificates.length === 0) {
+      return res.status(400).send('MISSING_CERTIFICATES');
+    }
+
+    // Verifica team esista
+    const teamDoc = await db.collection('teams').doc(team_id).get();
+    if (!teamDoc.exists) {
+      return res.status(404).send('TEAM_NOT_FOUND');
+    }
+
+    const teamData = teamDoc.data();
+
+    // Verifica tournament match
+    if (teamData.tournament_id !== tournament_id) {
+      return res.status(403).send('TOURNAMENT_MISMATCH');
+    }
+
+    // Verifica non già completato
+    if (teamData.info_completed === true) {
+      return res.status(409).send('ALREADY_COMPLETED');
+    }
+
+    // Recupera tournament per validazione
+    const tournamentDoc = await db.collection('tournaments').doc(tournament_id).get();
+    if (!tournamentDoc.exists) {
+      return res.status(404).send('TOURNAMENT_NOT_FOUND');
+    }
+
+    const tournament = tournamentDoc.data();
+    const teamSizeMax = Number(tournament.team_size_max || 2);
+
+    // Prepara update object
+    const updateData = {
+      info_completed: true,
+      info_completed_at: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    // Aggiungi nomi giocatori
+    for (let i = 0; i < Math.min(players.length, teamSizeMax); i++) {
+      const playerName = players[i]?.trim();
+      if (playerName) {
+        updateData[`name_player_${i + 1}`] = playerName;
+      }
+    }
+
+    // ===============================
+    // UPLOAD LOGO (se presente)
+    // ===============================
+    if (logo_base64 && logo_filename) {
+      try {
+        const bucket = admin.storage().bucket();
+        const logoPath = `teams/${team_id}/logo_${Date.now()}_${logo_filename}`;
+        const logoFile = bucket.file(logoPath);
+
+        // Converti base64 to buffer
+        const logoBuffer = Buffer.from(logo_base64, 'base64');
+
+        await logoFile.save(logoBuffer, {
+          metadata: { contentType: 'image/png' },
+          public: true
+        });
+
+        const logoUrl = `https://storage.googleapis.com/${bucket.name}/${logoPath}`;
+        updateData.team_logo = logoUrl;
+
+        console.log(`✅ Logo uploaded: ${logoUrl}`);
+      } catch (err) {
+        console.error('Logo upload error:', err);
+        // Non bloccare il processo se logo fallisce
+      }
+    }
+
+    // ===============================
+    // UPLOAD CERTIFICATI
+    // ===============================
+    const certificateUrls = [];
+
+    for (const cert of certificates) {
+      if (!cert.filename || !cert.base64) continue;
+
+      try {
+        const bucket = admin.storage().bucket();
+        const certPath = `teams/${team_id}/certificates/${Date.now()}_${cert.filename}`;
+        const certFile = bucket.file(certPath);
+
+        const certBuffer = Buffer.from(cert.base64, 'base64');
+
+        await certFile.save(certBuffer, {
+          metadata: { contentType: 'application/pdf' },
+          public: true
+        });
+
+        const certUrl = `https://storage.googleapis.com/${bucket.name}/${certPath}`;
+        certificateUrls.push({
+          filename: cert.filename,
+          url: certUrl
+        });
+
+        console.log(`✅ Certificate uploaded: ${certUrl}`);
+      } catch (err) {
+        console.error(`Certificate upload error (${cert.filename}):`, err);
+        // Continua con gli altri file
+      }
+    }
+
+    if (certificateUrls.length > 0) {
+      updateData.certificates = certificateUrls;
+    }
+
+    // ===============================
+    // AGGIORNA FIRESTORE
+    // ===============================
+    await db.collection('teams').doc(team_id).update(updateData);
+
+    console.log(`✅ Team info completed for ${team_id}`);
+
+    res.status(200).send('INFO_SAVED');
+
+  } catch (error) {
+    console.error('submitTeamInfo error:', error);
+    res.status(500).send('ERROR');
+  }
+});
+

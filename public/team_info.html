@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>ICE | Completa Registrazione Squadra</title>
+  <meta name="description" content="Completa la registrazione della tua squadra per il torneo ICE">
+  <link rel="icon" href="assets/logo.png">
+  <link rel="apple-touch-icon" href="assets/logo.png">
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <!-- HEADER (SOLO LOGO, NIENTE NAV) -->
+  <header class="main-header">
+    <div class="main-header-container">
+      <div class="brand">
+        <a href="index.html">
+          <img src="assets/logo.png" alt="ICE logo">
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="container">
+
+    <!-- ===================================
+         SKELETON (visibile durante caricamento)
+    ==================================== -->
+    <div id="loading-skeleton" class="team-info-skeleton">
+      <div class="skeleton-box">
+        <div class="skeleton-title"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line"></div>
+      </div>
+      <div class="skeleton-box">
+        <div class="skeleton-line"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+    </div>
+
+    <!-- ===================================
+         ERROR STATE (nascosto di default)
+    ==================================== -->
+    <div id="error-state" class="state-container hidden">
+      <div class="state-icon error-icon">❌</div>
+      <h2 id="error-title" class="state-title">Errore</h2>
+      <p id="error-message" class="state-message">Si è verificato un errore.</p>
+      <a href="index.html" class="btn secondary">Torna alla home</a>
+    </div>
+
+    <!-- ===================================
+         SUCCESS STATE (nascosto di default)
+    ==================================== -->
+    <div id="success-state" class="state-container hidden">
+      <div class="state-icon success-icon">✅</div>
+      <h2 class="state-title">Informazioni inviate con successo!</h2>
+      <p class="state-message">
+        Grazie per aver completato la registrazione. 
+        Procederemo a breve con la creazione dei gironi.
+      </p>
+      <a href="index.html" class="btn primary">Torna alla home</a>
+    </div>
+
+    <!-- ===================================
+         CONTENT (nascosto di default)
+    ==================================== -->
+    <div id="content" class="hidden">
+
+      <!-- PAGE HEADER -->
+      <div class="page-header">
+        <h2>Completa Registrazione Squadra</h2>
+      </div>
+
+      <!-- INFO BOX -->
+      <div class="tournament-info-box">
+        <div class="info-row">
+          <span class="info-icon">🏆</span>
+          <span><strong>Torneo:</strong> <span id="tournament-name">-</span></span>
+        </div>
+        <div class="info-row">
+          <span class="info-icon">👥</span>
+          <span><strong>Squadra:</strong> <span id="team-name">-</span></span>
+        </div>
+        <div class="info-row">
+          <span class="info-icon">⚽</span>
+          <span><strong>Sport:</strong> <span id="sport-name">-</span></span>
+        </div>
+      </div>
+
+      <!-- FORM -->
+      <form id="team-info-form" class="team-info-form">
+
+        <!-- SEZIONE GIOCATORI -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <span class="section-icon">👥</span>
+            Giocatori
+          </h3>
+          <p class="section-description">
+            Inserisci i nomi completi dei giocatori della tua squadra.
+            <br>Minimo <strong id="min-players">-</strong>, massimo <strong id="max-players">-</strong> giocatori.
+          </p>
+          <div id="players-container" class="players-grid"></div>
+        </div>
+
+        <!-- SEZIONE LOGO -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <span class="section-icon">🖼️</span>
+            Logo Squadra <span class="optional-label">(Facoltativo)</span>
+          </h3>
+          <p class="section-description">
+            Carica il logo della tua squadra (PNG, JPG, SVG - max 5MB)
+          </p>
+          <label class="file-upload-btn">
+            <input type="file" id="logo-input" accept="image/png,image/jpeg,image/jpg,image/svg+xml">
+            <span class="btn secondary">📁 Seleziona file</span>
+          </label>
+          <div id="logo-preview" class="file-preview hidden"></div>
+        </div>
+
+        <!-- SEZIONE CERTIFICATI -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <span class="section-icon">📄</span>
+            Certificati Medici / Scarichi Responsabilità <span class="required-asterisk">*</span>
+          </h3>
+          <p class="section-description">
+            Carica i certificati medici o i moduli di scarico responsabilità per tutti i giocatori (PDF - max 20MB totali)
+          </p>
+          <label class="file-upload-btn">
+            <input type="file" id="certificates-input" accept="application/pdf" multiple required>
+            <span class="btn secondary">📁 Seleziona file</span>
+          </label>
+          <div id="certificates-preview" class="file-preview hidden"></div>
+        </div>
+
+        <!-- SUBMIT -->
+        <button type="submit" class="btn primary" id="submit-btn">
+          Invia Informazioni
+        </button>
+
+      </form>
+
+    </div>
+
+    <!-- ===================================
+         LOADING OVERLAY
+    ==================================== -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+      <div class="loading-spinner"></div>
+      <p id="loading-text" class="loading-text">Caricamento in corso...</p>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-container">
+
+      <!-- BRAND TOP -->
+      <div class="footer-brand">
+        <img src="assets/logo.png" alt="ICE logo">
+        <p>La tua piattaforma per tornei sportivi</p>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="footer-content">
+        
+        <!-- CONTATTI -->
+        <div class="footer-section footer-contacts">
+          <h4>Contatti</h4>
+          <p>📞 +39 339 616 0901</p>
+          <p>✉️ tornei.ice.torino@gmail.com</p>
+        </div>
+
+        <!-- NAVIGA -->
+        <div class="footer-section footer-nav">
+          <h4>Naviga</h4>
+          <a href="index.html">Homepage</a>
+          <a href="tournament.html">Regolamento</a>
+        </div>
+
+        <!-- LEGAL -->
+        <div class="footer-section footer-legal">
+          <h4>Legal</h4>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Termini e condizioni</a>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM -->
+      <div class="footer-bottom">
+        © 2026 ICE Tournament. Tutti i diritti riservati.
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- Custom JS -->
+  <script src="js/team-info.js"></script>
+
+</body>
+</html>
