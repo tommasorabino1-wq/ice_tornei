@@ -2427,19 +2427,61 @@ function parseHoursRange(range) {
 
 // ===============================
 // 26. PARSE HOURS SLOTS (DINAMICO)
+// ✅ MODIFICATO: Gestisce correttamente range piccoli
 // ===============================
 function parseHoursSlots(range) {
   const { start, end } = parseHoursRange(range);
   
-  // Se il range è troppo piccolo (meno di 3 ore), nessuno slot
-  if (end - start < 3) {
+  const totalHours = end - start;
+  
+  // Se il range è troppo piccolo (meno di 2 ore), nessuno slot
+  if (totalHours < 2) {
     return [];
   }
   
   const slots = [];
+  
+  // =====================================================
+  // CASO 1: Range piccolo (2-4 ore) → Slot unico
+  // =====================================================
+  
+  if (totalHours <= 4) {
+    const slotNames = {
+      6: "Prima mattina",
+      7: "Prima mattina",
+      8: "Mattina",
+      9: "Mattina",
+      10: "Mattina",
+      11: "Tarda mattina",
+      12: "Mezzogiorno",
+      13: "Primo pomeriggio",
+      14: "Primo pomeriggio",
+      15: "Pomeriggio",
+      16: "Tardo pomeriggio",
+      17: "Tardo pomeriggio",
+      18: "Pre-serata",
+      19: "Sera",
+      20: "Sera",
+      21: "Sera",
+      22: "Tarda serata"
+    };
+    
+    const slotName = slotNames[start] || "Fascia";
+    
+    slots.push({
+      value: `${start}-${end}`,
+      label: `${slotName} (${String(start).padStart(2, '0')}:00 - ${String(end).padStart(2, '0')}:00)`
+    });
+    
+    return slots;
+  }
+  
+  // =====================================================
+  // CASO 2: Range medio/grande (5+ ore) → Slot multipli da 3 ore
+  // =====================================================
+  
   const slotDuration = 3; // Ogni slot dura 3 ore
   
-  // Definizione fasce orarie con nomi descrittivi
   const slotNames = {
     6: "Prima mattina",
     7: "Prima mattina",
@@ -2487,7 +2529,6 @@ function parseHoursSlots(range) {
   
   return slots;
 }
-
 
 
 // ===============================
