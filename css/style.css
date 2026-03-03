@@ -4714,3 +4714,110 @@ match-card.played {
   background: var(--skeleton-bg);
   animation: skeleton-pulse 1.5s ease-in-out infinite;
 }
+
+
+
+/* ===============================
+   TEAM LOGOS IN STANDINGS
+   =============================== */
+
+.team-logo-mini {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  margin-right: 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+
+.team-logo-mini-fallback {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  text-align: center;
+  line-height: 24px;
+  font-size: 12px;
+  margin-right: 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.team-name-text {
+  vertical-align: middle;
+}
+
+.team-cell {
+  text-align: left !important;
+}
+
+/* ===============================
+   TEAM LOGOS IN MATCHES (GIRONI)
+   =============================== */
+
+.match-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-logo-match {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--background);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.team-logo-match-fallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ===============================
+   TEAM LOGOS IN BRACKET (FINALS)
+   =============================== */
+
+.bracket-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.team-logo-bracket {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--background);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.team-logo-bracket-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}

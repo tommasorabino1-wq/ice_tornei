@@ -7,11 +7,14 @@
 // ===============================
 const API_URLS = {
   getTournaments: "https://gettournaments-dzvezz2yhq-uc.a.run.app",
-  getMatches: "https://getmatches-dzvezz2yhq-uc.a.run.app",
   getStandings: "https://getstandings-dzvezz2yhq-uc.a.run.app",
+  getMatches: "https://getmatches-dzvezz2yhq-uc.a.run.app",
   getFinals: "https://getfinals-dzvezz2yhq-uc.a.run.app",
-  getBracket: "https://getbracket-dzvezz2yhq-uc.a.run.app"
+  getBracket: "https://getbracket-dzvezz2yhq-uc.a.run.app",
+  getTeamsLogosMap: "https://getteamslogosmap-dzvezz2yhq-uc.a.run.app"
 };
+
+
 
 // ===============================
 // GLOBAL STATE
@@ -22,11 +25,13 @@ let TOURNAMENT_SPORT = null;
 let TOURNAMENT_MATCH_FORMAT_GIRONI = null;
 let TOURNAMENT_MATCH_FORMAT_FINALS = null;
 let TOURNAMENT_HAS_3X4 = false;
+let currentTournamentData = null;
 let ALL_MATCHES = [];
 let ALL_STANDINGS = [];
 let AVAILABLE_ROUNDS = [];
 let FINALS_MATCHES = [];
 let FINALS_SELECTED_ROUND_ID = null;
+let teamsLogosMap = {};
 
 // ===============================
 // ELEMENTI DOM
@@ -94,60 +99,70 @@ function formatHasFinals(formatType) {
 // ===============================
 // LOAD STANDINGS PAGE
 // ===============================
-function loadStandingsPage(tournamentId) {
-  fetch(API_URLS.getTournaments)
-    .then(res => {
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      return res.json();
-    })
-    .then(tournaments => {
-      const t = tournaments.find(t => t.tournament_id === tournamentId);
+async function loadStandingsPage(tournamentId) {
+  try {
+    // Carica tornei
+    const tournamentsRes = await fetch(API_URLS.getTournaments);
+    if (!tournamentsRes.ok) throw new Error(`HTTP error! status: ${tournamentsRes.ok}`);
+    const tournaments = await tournamentsRes.json();
 
-      if (!t) {
-        showTournamentNotFound();
-        return;
+    const t = tournaments.find(t => t.tournament_id === tournamentId);
+    if (!t) {
+      showTournamentNotFound();
+      return;
+    }
+
+    TOURNAMENT_STATUS = t?.status || null;
+    TOURNAMENT_FORMAT = t?.format_type || null;
+    TOURNAMENT_SPORT = normalizeSport(t?.sport);
+    TOURNAMENT_MATCH_FORMAT_GIRONI = String(t?.match_format_gironi || '').toLowerCase();
+    TOURNAMENT_MATCH_FORMAT_FINALS = String(t?.match_format_finals || '').toLowerCase();
+    TOURNAMENT_HAS_3X4 = t?.['3_4_posto'] === true;
+
+    // ✅ NUOVO: Carica loghi squadre
+    try {
+      const logosRes = await fetch(`${API_URLS.getTeamsLogosMap}?tournament_id=${encodeURIComponent(tournamentId)}`);
+      if (logosRes.ok) {
+        teamsLogosMap = await logosRes.json();
+        console.log('✅ Logos loaded:', Object.keys(teamsLogosMap).length);
       }
+    } catch (err) {
+      console.error('⚠️ Failed to load logos:', err);
+      teamsLogosMap = {};
+    }
 
-      TOURNAMENT_STATUS = t?.status || null;
-      TOURNAMENT_FORMAT = t?.format_type || null;
-      TOURNAMENT_SPORT = normalizeSport(t?.sport);
-      TOURNAMENT_MATCH_FORMAT_GIRONI = String(t?.match_format_gironi || '').toLowerCase();
-      TOURNAMENT_MATCH_FORMAT_FINALS = String(t?.match_format_finals || '').toLowerCase();
-      TOURNAMENT_HAS_3X4 = t?.['3_4_posto'] === true;
+    if (TOURNAMENT_STATUS === "open") {
+      showTournamentNotStarted(t);
+      return;
+    }
 
-      if (TOURNAMENT_STATUS === "open") {
-        showTournamentNotStarted(t);
-        return;
-      }
+    renderStandingsHeader(t);
 
-      renderStandingsHeader(t);
+    const layout = document.querySelector(".standings-layout");
+    if (layout) {
+      layout.classList.toggle("finished", TOURNAMENT_STATUS === "finished");
+    }
 
-      const layout = document.querySelector(".standings-layout");
-      if (layout) {
-        layout.classList.toggle("finished", TOURNAMENT_STATUS === "finished");
-      }
+    loadMatches(tournamentId);
+    loadStandings(tournamentId);
 
-      loadMatches(tournamentId);
-      loadStandings(tournamentId);
-
-      if (formatHasFinals(TOURNAMENT_FORMAT)) {
-        if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished") {
-          loadFinalsBracket(tournamentId).then(bracket => {
-            if (bracket) renderFinalsBracket(bracket);
-            applyLayoutByStatus();
-          });
-        } else {
-          FINALS_MATCHES = [];
+    if (formatHasFinals(TOURNAMENT_FORMAT)) {
+      if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished") {
+        loadFinalsBracket(tournamentId).then(bracket => {
+          if (bracket) renderFinalsBracket(bracket);
           applyLayoutByStatus();
-        }
+        });
       } else {
         FINALS_MATCHES = [];
         applyLayoutByStatus();
       }
-    })
-    .catch(err => {
-      console.error("Errore caricamento tornei:", err);
-    });
+    } else {
+      FINALS_MATCHES = [];
+      applyLayoutByStatus();
+    }
+  } catch (err) {
+    console.error("Errore caricamento tornei:", err);
+  }
 }
 
 // ===============================
@@ -385,10 +400,23 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
     metaInfo = `<span class="meta-item meta-group">Girone ${escapeHTML(match.group_id || "?")}</span>`;
   }
 
+  // ✅ NUOVO: Loghi squadre
+  const logoA = teamsLogosMap[match.team_a];
+  const logoB = teamsLogosMap[match.team_b];
+
+  const logoAHTML = logoA
+    ? `<img src="${escapeHTML(logoA)}" alt="" class="team-logo-match">`
+    : `<span class="team-logo-match-fallback">👥</span>`;
+
+  const logoBHTML = logoB
+    ? `<img src="${escapeHTML(logoB)}" alt="" class="team-logo-match">`
+    : `<span class="team-logo-match-fallback">👥</span>`;
+
   card.innerHTML = `
     <div class="match-card-inner">
       <div class="match-main">
         <div class="match-team match-team-a ${teamAClass}${isTbd ? ' tbd' : ''}">
+          ${logoAHTML}
           <span class="team-name">${escapeHTML(teamAName)}</span>
         </div>
         <div class="match-score-block">
@@ -397,6 +425,7 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
           <span class="score score-b">${scoreB}</span>
         </div>
         <div class="match-team match-team-b ${teamBClass}${isTbd ? ' tbd' : ''}">
+          ${logoBHTML}
           <span class="team-name">${escapeHTML(teamBName)}</span>
         </div>
       </div>
@@ -561,11 +590,19 @@ function renderStandings(data) {
             </tr>
           </thead>
           <tbody>
-            ${teams.map(team => `
+            ${teams.map(team => {
+              // ✅ NUOVO: Logo o icona fallback
+              const teamLogo = teamsLogosMap[team.team_id];
+              const logoHTML = teamLogo
+                ? `<img src="${escapeHTML(teamLogo)}" alt="" class="team-logo-mini">`
+                : `<span class="team-logo-mini-fallback">👥</span>`;
+
+              return `
               <tr>
                 <td class="team-cell">
                   <span class="rank-badge">${team.rank_level}</span>
-                  <span class="team-name">${escapeHTML(team.team_name || "")}</span>
+                  ${logoHTML}
+                  <span class="team-name-text">${escapeHTML(team.team_name || "")}</span>
                 </td>
                 <td>${Number(team.points) || 0}</td>
                 <td>${Number(team.matches_played) || 0}</td>
@@ -578,7 +615,8 @@ function renderStandings(data) {
                 <td>${Number(team.games_against) || 0}</td>
                 <td>${formatDiff(team.game_diff)}</td>
               </tr>
-            `).join("")}
+            `;
+            }).join("")}
           </tbody>
         </table>
       `;
@@ -593,11 +631,19 @@ function renderStandings(data) {
             </tr>
           </thead>
           <tbody>
-            ${teams.map(team => `
+            ${teams.map(team => {
+              // ✅ NUOVO: Logo o icona fallback
+              const teamLogo = teamsLogosMap[team.team_id];
+              const logoHTML = teamLogo
+                ? `<img src="${escapeHTML(teamLogo)}" alt="" class="team-logo-mini">`
+                : `<span class="team-logo-mini-fallback">👥</span>`;
+
+              return `
               <tr>
                 <td class="team-cell">
                   <span class="rank-badge">${team.rank_level}</span>
-                  <span class="team-name">${escapeHTML(team.team_name || "")}</span>
+                  ${logoHTML}
+                  <span class="team-name-text">${escapeHTML(team.team_name || "")}</span>
                 </td>
                 <td>${Number(team.points) || 0}</td>
                 <td>${Number(team.matches_played) || 0}</td>
@@ -608,7 +654,8 @@ function renderStandings(data) {
                 <td>${Number(team.goals_against) || 0}</td>
                 <td>${formatDiff(team.goal_diff)}</td>
               </tr>
-            `).join("")}
+            `;
+            }).join("")}
           </tbody>
         </table>
       `;
@@ -617,6 +664,8 @@ function renderStandings(data) {
     standingsEl.appendChild(group);
   });
 }
+
+
 
 // ===============================
 // FORMAT DIFF

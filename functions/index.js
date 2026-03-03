@@ -1140,3 +1140,40 @@ exports.getTeamsWithLogos = onRequest(async (req, res) => {
     res.status(500).json([]);
   }
 });
+
+
+
+// ===============================
+// GET TEAMS LOGOS MAP (lightweight)
+// ✅ NUOVO: Ritorna solo { team_id: logo_url } per lookup
+// ===============================
+exports.getTeamsLogosMap = onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  try {
+    const tournamentId = req.query.tournament_id;
+    
+    if (!tournamentId) {
+      return res.status(200).json({});
+    }
+
+    const snapshot = await db.collection('teams')
+      .where('tournament_id', '==', tournamentId)
+      .get();
+
+    const logosMap = {};
+    
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.team_id) {
+        logosMap[data.team_id] = data.team_logo || null;
+      }
+    });
+
+    res.status(200).json(logosMap);
+  } catch (error) {
+    console.error('getTeamsLogosMap error:', error);
+    res.status(500).json({});
+  }
+});
