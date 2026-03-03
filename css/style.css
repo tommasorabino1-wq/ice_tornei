@@ -4821,3 +4821,57 @@ match-card.played {
   color: var(--text-muted);
   flex-shrink: 0;
 }
+
+/* ===============================
+   MATCH LAYOUT SIMMETRICO
+   ✅ Logo A - Nome A - Score - Nome B - Logo B
+   =============================== */
+
+.match-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Team A: Logo → Nome (flex-start) */
+.match-team-a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-start; /* Logo e nome allineati a sinistra */
+}
+
+/* Team B: Nome → Logo (flex-end) */
+.match-team-b {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end; /* Nome e logo allineati a destra */
+  flex-direction: row-reverse; /* Inverte ordine: logo dopo nome */
+}
+
+/* Score block centrato */
+.match-score-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Team name trucato se troppo lungo */
+.match-team .team-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+
+/* Responsive: riduci max-width su mobile */
+@media (max-width: 768px) {
+  .match-team .team-name {
+    max-width: 80px;
+  }
+}

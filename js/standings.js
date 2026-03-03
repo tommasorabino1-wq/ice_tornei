@@ -425,8 +425,8 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
           <span class="score score-b">${scoreB}</span>
         </div>
         <div class="match-team match-team-b ${teamBClass}${isTbd ? ' tbd' : ''}">
-          ${logoBHTML}
           <span class="team-name">${escapeHTML(teamBName)}</span>
+          ${logoBHTML}
         </div>
       </div>
 
