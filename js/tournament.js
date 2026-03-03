@@ -1507,6 +1507,7 @@ function buildMatchFormatRule(tournament, ruleNumber) {
 
 // ===============================
 // 9h. BUILD STANDINGS RULE (REGOLA 7)
+// ✅ MIGLIORATO: Elenchi annidati per criteri parità
 // ===============================
 function buildStandingsRule(tournament, ruleNumber) {
   const sport = String(tournament.sport || "").toLowerCase();
@@ -1589,7 +1590,7 @@ function buildStandingsRule(tournament, ruleNumber) {
     : `Il sistema di punteggio per la classifica prevede: ${pointSystemText}.`;
   
   // =====================================================
-  // CRITERI PARITÀ STESSO GIRONE
+  // CRITERI PARITÀ STESSO GIRONE (ANNIDATO)
   // =====================================================
   
   let sameGroupText;
@@ -1597,34 +1598,44 @@ function buildStandingsRule(tournament, ruleNumber) {
   if (isSetBased) {
     // Criteri per format a set
     sameGroupText = `In caso di parità di punti tra due o più squadre dello stesso girone, l'ordine sarà determinato dai seguenti criteri (in ordine di priorità):
-      <ol>
+      <ul style="margin-top:8px; margin-bottom:0; padding-left:20px;">
         <li><strong>Scontri diretti</strong> (punti, differenza set, differenza game)</li>
         <li><strong>Differenza set</strong> generale</li>
         <li><strong>Set vinti</strong> totali</li>
         <li><strong>Differenza game</strong> generale</li>
         <li><strong>Game vinti</strong> totali</li>
-      </ol>`;
+      </ul>`;
   } else {
     // Criteri per format a tempo
     sameGroupText = `In caso di parità di punti tra due o più squadre dello stesso girone, l'ordine sarà determinato dai seguenti criteri (in ordine di priorità):
-      <ol>
+      <ul style="margin-top:8px; margin-bottom:0; padding-left:20px;">
         <li><strong>Scontri diretti</strong> (punti, ${terminology.diffLabel}, ${terminology.forLabel})</li>
         <li><strong>${capitalizeFirst(terminology.diffLabel)}</strong> generale</li>
         <li><strong>${capitalizeFirst(terminology.forLabel)}</strong> totali</li>
-      </ol>`;
+      </ul>`;
   }
   
   // =====================================================
-  // CRITERI PARITÀ GIRONI DIVERSI
+  // CRITERI PARITÀ GIRONI DIVERSI (ANNIDATO)
   // =====================================================
   
   let crossGroupText;
   
   if (hasFinals) {
     if (isSetBased) {
-      crossGroupText = `Per confrontare squadre di gironi diversi (es. migliori seconde), in caso di parità di punti si useranno: <strong>differenza set</strong>, <strong>set vinti</strong>, <strong>differenza game</strong>, <strong>game vinti</strong>.`;
+      crossGroupText = `Per confrontare squadre di gironi diversi (es. migliori seconde), in caso di parità di punti si useranno (in ordine di priorità):
+        <ul style="margin-top:8px; margin-bottom:0; padding-left:20px;">
+          <li><strong>Differenza set</strong></li>
+          <li><strong>Set vinti</strong></li>
+          <li><strong>Differenza game</strong></li>
+          <li><strong>Game vinti</strong></li>
+        </ul>`;
     } else {
-      crossGroupText = `Per confrontare squadre di gironi diversi (es. migliori seconde), in caso di parità di punti si useranno: <strong>${terminology.diffLabel}</strong>, <strong>${terminology.forLabel}</strong>.`;
+      crossGroupText = `Per confrontare squadre di gironi diversi (es. migliori seconde), in caso di parità di punti si useranno (in ordine di priorità):
+        <ul style="margin-top:8px; margin-bottom:0; padding-left:20px;">
+          <li><strong>${capitalizeFirst(terminology.diffLabel)}</strong></li>
+          <li><strong>${capitalizeFirst(terminology.forLabel)}</strong></li>
+        </ul>`;
     }
   } else {
     crossGroupText = `Essendo un girone unico, non sarà necessario confrontare squadre di gironi diversi.`;
@@ -1667,6 +1678,13 @@ function buildStandingsRule(tournament, ruleNumber) {
       </div>
     </div>
   `;
+}
+
+// ===============================
+// HELPER: Capitalize first letter
+// ===============================
+function capitalizeFirst(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 // ===============================

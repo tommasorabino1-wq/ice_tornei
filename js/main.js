@@ -229,17 +229,17 @@ function buildPriceInfoText(t) {
 
   switch (courtPrice) {
     case "compreso_gironi_finals":
-      courtText = "campi inclusi";
+      courtText = "Campi inclusi";
       break;
     case "compreso_gironi":
-      courtText = "campi inclusi (solo gironi)";
+      courtText = "Campi inclusi solo per la fase a gironi";
       break;
     case "compreso_finals":
-      courtText = "campi inclusi (solo fase finale)";
+      courtText = "Campi inclusi solo per la fase finale";
       break;
     case "non_compreso":
     default:
-      courtText = "campi non inclusi";
+      courtText = "Campi non inclusi";
   }
 
   // ===============================
@@ -251,9 +251,9 @@ function buildPriceInfoText(t) {
   if (refereePrice === "na") {
     refereeText = ""; // non menzioniamo
   } else if (refereePrice === "non_compreso") {
-    refereeText = "arbitro non incluso";
+    refereeText = "Arbitro non incluso";
   } else {
-    refereeText = "arbitro incluso";
+    refereeText = "Arbitro incluso";
   }
 
   // ===============================
@@ -279,7 +279,7 @@ function buildAwardInfoText(t) {
   const hasAward = t.award === true || String(t.award).toUpperCase() === "TRUE";
   
   if (!hasAward) {
-    return "Solo premi simbolici";
+    return "Premi simbolici";
   }
 
   const perc = t.award_amount_perc;
