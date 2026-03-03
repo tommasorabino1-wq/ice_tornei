@@ -616,7 +616,6 @@ exports.onFinalResultUpdated = onDocumentUpdated(
 
 // ===============================
 // POST: SUBMIT SUBSCRIPTION
-// ✅ Crea anche documento teams (con campi giocatori vuoti per ora)
 // ===============================
 exports.submitSubscription = functions.https.onRequest(async (req, res) => {
   setCORS(res);
@@ -686,6 +685,7 @@ exports.submitSubscription = functions.https.onRequest(async (req, res) => {
       team_name,
       email,
       phone: phone || '',
+      payment: false, // ✅ NUOVO: campo payment inizializzato a false
       timestamp: admin.firestore.FieldValue.serverTimestamp()
     };
 
