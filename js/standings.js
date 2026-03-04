@@ -794,38 +794,33 @@ function loadFinalsBracket(tournamentId) {
     });
 }
 
+
 // ===============================
 // APPLY LAYOUT BY STATUS
-// Determina quali sezioni mostrare in base ai 4 casi
+// Versione semplificata basata su status backend
 // ===============================
 function applyLayoutByStatus() {
   const finalsSection = document.getElementById("finals-container");
-  const podiumSection = document.getElementById("podium-container");
+  const podiumWrapper = document.getElementById("podium-subsection-wrapper");
   
-  // Reset iniziale: nascondi tutto
+  // Reset: nascondi tutto
   finalsSection.classList.add("hidden");
-  podiumSection.classList.add("hidden");
+  if (podiumWrapper) podiumWrapper.classList.add("hidden");
   
   const hasFinals = formatHasFinals(TOURNAMENT_FORMAT);
-  const isFinished = TOURNAMENT_STATUS === "finished";
-  const isFinalPhase = TOURNAMENT_STATUS === "final_phase";
   
-  // CASO A: Torneo con finals + tutti match finals giocati
-  if (hasFinals && isFinished && areAllFinalsPlayed()) {
-    podiumSection.classList.remove("hidden");
+  // ✅ FINALS: mostra se in final_phase o finished (e se il formato lo prevede)
+  if (hasFinals && (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished")) {
     finalsSection.classList.remove("hidden");
+    
+    // ✅ PODIUM: mostra solo se torneo finito (dentro finals)
+    if (TOURNAMENT_STATUS === "finished" && podiumWrapper) {
+      podiumWrapper.classList.remove("hidden");
+    }
   }
-  // CASO B: Torneo con finals + match finals non tutti giocati
-  else if (hasFinals && (isFinalPhase || isFinished)) {
-    finalsSection.classList.remove("hidden");
-  }
-  // CASO C: Torneo senza finals + match gironi tutti giocati
-  else if (!hasFinals && isFinished && areAllGroupMatchesPlayed()) {
-    podiumSection.classList.remove("hidden");
-  }
-  // CASO D: Torneo senza finals + match gironi non tutti giocati
-  // (nessuna sezione aggiuntiva da mostrare)
 }
+
+
 
 // ===============================
 // ROUND LABEL
@@ -887,68 +882,32 @@ function renderBracketVisual(bracket, container) {
 
 // ===============================
 // HANDLE PODIUM RENDERING
-// Determina quando mostrare il podium
+// Versione semplificata
 // ===============================
 function handlePodiumRendering() {
-  const shouldShowPodium = determineShouldShowPodium();
-  
-  if (shouldShowPodium && ALL_STANDINGS.length > 0) {
-    renderPodiumSVG();
+  // Mostra podium solo se torneo finito e ci sono standings
+  if (TOURNAMENT_STATUS === "finished" && ALL_STANDINGS.length > 0) {
+    callPodiumRenderer();
   }
 }
 
-// ===============================
-// DETERMINE SHOULD SHOW PODIUM
-// ===============================
-function determineShouldShowPodium() {
-  // CASO A: Torneo con finals + tutti i match finals giocati
-  if (formatHasFinals(TOURNAMENT_FORMAT) && TOURNAMENT_STATUS === "finished") {
-    return areAllFinalsPlayed();
-  }
-  
-  // CASO C: Torneo senza finals + tutti i match gironi giocati
-  if (!formatHasFinals(TOURNAMENT_FORMAT) && TOURNAMENT_STATUS === "finished") {
-    return areAllGroupMatchesPlayed();
-  }
-  
-  return false;
-}
+
+
 
 // ===============================
-// CHECK IF ALL FINALS PLAYED
+// CALL PODIUM RENDERER
+// Invariata
 // ===============================
-function areAllFinalsPlayed() {
-  // Verifica se tutti i match finals sono stati giocati
-  // Questa funzione verrà popolata quando caricheremo i dati finals
-  return TOURNAMENT_STATUS === "finished";
-}
-
-// ===============================
-// CHECK IF ALL GROUP MATCHES PLAYED
-// ===============================
-function areAllGroupMatchesPlayed() {
-  if (ALL_MATCHES.length === 0) return false;
-  return ALL_MATCHES.every(match => {
-    return match.played === true || String(match.played).toUpperCase() === "TRUE";
-  });
-}
-
-// ===============================
-// RENDER PODIUM SVG
-// Wrapper che chiama il renderer esterno
-// ===============================
-function renderPodiumSVG() {
+function callPodiumRenderer() {
   const container = document.getElementById("podium-svg-container");
   const skeleton = document.getElementById("podium-skeleton");
   
   if (!container) return;
   
-  // Nascondi skeleton
   if (skeleton) {
     fadeOutSkeleton(skeleton);
   }
   
-  // Prepara i dati per il podium
   const isSetBased = ALL_STANDINGS[0]?.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_GIRONI);
   const sport = ALL_STANDINGS[0]?.sport || TOURNAMENT_SPORT;
   
@@ -959,8 +918,7 @@ function renderPodiumSVG() {
     teamsLogosMap: teamsLogosMap
   };
   
-  // ✅ Chiama il renderer esterno (sarà definito in podium-svg-renderer.js)
-  if (typeof renderPodiumSVG !== 'undefined') {
+  if (typeof window.renderPodiumSVG === 'function') {
     window.renderPodiumSVG(podiumData, container);
   } else {
     console.warn('⚠️ podium-svg-renderer.js non caricato');
