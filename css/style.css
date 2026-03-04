@@ -2582,7 +2582,7 @@ body {
 
 .match-team .team-name {
   display: block;
-  font-size: 38px;
+  font-size: 48px;
   font-weight: 500;
   color: var(--text-main);
   line-height: 1.3;
@@ -2879,7 +2879,7 @@ match-card.played {
   align-items: center;
   gap: 6px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   color: #22c55e;
   padding: 6px 14px;
   background-color: rgba(34, 197, 94, 0.12);
@@ -4867,8 +4867,8 @@ match-card.played {
 /* Loghi match */
 .team-logo-match,
 .team-logo-match-fallback {
-  width: 50px;
-  height: 50px;
+  width: 70px;
+  height: 70px;
   border-radius: 6px;
   flex-shrink: 0;
 }
@@ -4884,7 +4884,7 @@ match-card.played {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 42px;
 }
 
 
@@ -4898,7 +4898,7 @@ match-card.played {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 300px;
+  max-width: 400px;
   font-weight: 500;
 }
 
