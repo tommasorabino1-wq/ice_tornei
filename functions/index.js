@@ -10,6 +10,8 @@ const { defineSecret } = require("firebase-functions/params");
 
 const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
 
+const sharp = require("sharp");
+
 
 // Inizializza Firebase Admin (IMPORTANTE: va fatto UNA VOLTA SOLA)
 admin.initializeApp();
@@ -1191,6 +1193,7 @@ exports.getTeamsLogosMap = onRequest(async (req, res) => {
 // ===============================
 // FIRESTORE TRIGGER: AUTO GENERATE TEAM LOGO
 // ===============================
+
 exports.onTeamInfoCompleted = onDocumentUpdated(
   {
     document: "teams/{teamId}",
@@ -1227,17 +1230,49 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
 
       const result = await openai.images.generate({
         model: "gpt-image-1-mini",
-        size: "128x128",
-        prompt: `Minimal flat sports team logo based on the following team name: "${teamName}", simple shapes, bold colors, white background`
+        size: "1024x1024",
+        prompt: `Minimal flat sports team logo for "${teamName}", simple shapes, bold colors, white background`
       });
 
       const base64Image = result.data[0].b64_json;
+      const imageBuffer = Buffer.from(base64Image, "base64");
 
-      console.log(`✅ Logo generated for ${teamName}`);
-      console.log(`📦 Base64 size: ${base64Image.length}`);
+      console.log("🖼️ Image generated, resizing...");
+
+      const resizedImage = await sharp(imageBuffer)
+        .resize(128, 128)
+        .png({ quality: 80 })
+        .toBuffer();
+
+      console.log("📦 Image resized to 128px");
+
+      const bucket = admin.storage().bucket("ice-tournaments-ba14a.firebasestorage.app");
+
+      const logoPath = `teams/${teamId}/generated_logo.png`;
+
+      const file = bucket.file(logoPath);
+
+      await file.save(resizedImage, {
+        metadata: {
+          contentType: "image/png",
+          cacheControl: "public, max-age=31536000"
+        },
+        public: true
+      });
+
+      const logoUrl = `https://storage.googleapis.com/${bucket.name}/${logoPath}`;
+
+      console.log(`✅ Logo uploaded: ${logoUrl}`);
+
+      await db.collection("teams").doc(teamId).update({
+        team_logo: logoUrl,
+        logo_generated: true
+      });
+
+      console.log(`🏁 Team ${teamId} updated with generated logo`);
 
     } catch (error) {
-      console.error("❌ OpenAI generation error:", error);
+      console.error("❌ Logo generation error:", error);
     }
 
     return null;
