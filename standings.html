@@ -83,7 +83,32 @@
       <section class="standings-layout">
 
         <!-- =====================
+            PODIUM SECTION (SVG)
+            Visibile nei casi A e C
+        ====================== -->
+        <section
+          id="podium-container"
+          class="podium-section hidden"
+          aria-label="Podio finale">
+
+          <h3 class="podium-section-title">
+            <span class="section-icon">🏆</span>
+            Classifica Finale
+          </h3>
+
+          <!-- Skeleton Podium -->
+          <div class="standings-skeleton podium-skeleton" id="podium-skeleton">
+            <div class="skeleton-podium"></div>
+          </div>
+
+          <!-- SVG Podium Container -->
+          <div id="podium-svg-container"></div>
+
+        </section>
+
+        <!-- =====================
             FINALS SECTION
+            Visibile nei casi A e B
         ====================== -->
         <section
           id="finals-container"
@@ -126,47 +151,11 @@
           </div>
 
         </section>
-
-        <!-- =====================
-            BRACKET SECTION (FULL WIDTH)
-        ====================== -->
-        <section
-          id="bracket-container-section"
-          class="hidden"
-          aria-label="Tabellone fasi finali">
-
-          <h3 class="finals-section-title"> <!-- ✅ Usa classe esistente -->
-            <span class="section-icon">📊</span>
-            Tabellone Fasi Finali
-          </h3>
-
-          <div class="finals-bracket-column">
-            <div id="finals-bracket-visual"></div>
-          </div>
-        </section>
-
-
-        <!-- =====================
-            PODIUM SECTION (per tornei senza finals)
-        ====================== -->
-        <section
-          id="podium-container"
-          class="podium-section hidden"
-          aria-label="Podio finale">
-
-          <h3 class="podium-section-title">
-            <span class="section-icon">🏆</span>
-            Classifica Finale
-          </h3>
-
-          <div id="podium-content"></div>
-
-        </section>
-        
         
         
         <!-- =====================
             GIRONI SECTION
+            Visibile in tutti i casi
         ====================== -->
         <section class="gironi-section">
 
@@ -296,6 +285,7 @@
 
 
   <script src="js/bracket-svg-renderer.js"></script>
+  <script src="js/podium-svg-renderer.js"></script>
   <script src="js/standings.js"></script>
 
 </body>

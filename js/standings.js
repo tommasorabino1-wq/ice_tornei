@@ -517,16 +517,17 @@ function loadStandings(tournamentId) {
       fadeOutSkeleton(skeleton);
       ALL_STANDINGS = Array.isArray(data) ? data : [];
       renderStandings(data);
-
-      if (!formatHasFinals(TOURNAMENT_FORMAT) && TOURNAMENT_STATUS === "finished") {
-        renderPodium(ALL_STANDINGS);
-      }
+      
+      // ✅ NUOVO: Gestione podium in base ai casi
+      handlePodiumRendering();
     })
     .catch(err => {
       console.error("Errore caricamento standings:", err);
       standingsEl.innerHTML = "<p class='error'>Errore caricamento classifica</p>";
     });
 }
+
+
 
 // ===============================
 // HELPERS
@@ -795,23 +796,35 @@ function loadFinalsBracket(tournamentId) {
 
 // ===============================
 // APPLY LAYOUT BY STATUS
+// Determina quali sezioni mostrare in base ai 4 casi
 // ===============================
 function applyLayoutByStatus() {
-  const finals = document.getElementById("finals-container");
-  const podium = document.getElementById("podium-container");
-
-  finals.classList.add("hidden");
-  if (podium) podium.classList.add("hidden");
-
-  if (formatHasFinals(TOURNAMENT_FORMAT)) {
-    if (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished") {
-      finals.classList.remove("hidden");
-    }
-  } else {
-    if (TOURNAMENT_STATUS === "finished" && podium) {
-      podium.classList.remove("hidden");
-    }
+  const finalsSection = document.getElementById("finals-container");
+  const podiumSection = document.getElementById("podium-container");
+  
+  // Reset iniziale: nascondi tutto
+  finalsSection.classList.add("hidden");
+  podiumSection.classList.add("hidden");
+  
+  const hasFinals = formatHasFinals(TOURNAMENT_FORMAT);
+  const isFinished = TOURNAMENT_STATUS === "finished";
+  const isFinalPhase = TOURNAMENT_STATUS === "final_phase";
+  
+  // CASO A: Torneo con finals + tutti match finals giocati
+  if (hasFinals && isFinished && areAllFinalsPlayed()) {
+    podiumSection.classList.remove("hidden");
+    finalsSection.classList.remove("hidden");
   }
+  // CASO B: Torneo con finals + match finals non tutti giocati
+  else if (hasFinals && (isFinalPhase || isFinished)) {
+    finalsSection.classList.remove("hidden");
+  }
+  // CASO C: Torneo senza finals + match gironi tutti giocati
+  else if (!hasFinals && isFinished && areAllGroupMatchesPlayed()) {
+    podiumSection.classList.remove("hidden");
+  }
+  // CASO D: Torneo senza finals + match gironi non tutti giocati
+  // (nessuna sezione aggiuntiva da mostrare)
 }
 
 // ===============================
@@ -871,271 +884,86 @@ function renderBracketVisual(bracket, container) {
 }
 
 
+
 // ===============================
-// RENDER 3°/4° POSTO SECTION
+// HANDLE PODIUM RENDERING
+// Determina quando mostrare il podium
 // ===============================
-function renderThirdPlaceSection(match, container) {
-  const section = document.createElement("div");
-  section.className = "bracket-third-place-section";
-
-  const divider = document.createElement("div");
-  divider.className = "bracket-3x4-divider";
-  divider.innerHTML = `<span class="bracket-3x4-divider-line"></span><span class="bracket-3x4-divider-label">Finale 3° / 4° Posto</span><span class="bracket-3x4-divider-line"></span>`;
-  section.appendChild(divider);
-
-  const matchEl = createBracketMatch(match);
-  section.appendChild(matchEl);
-
-  if (match.winner_team_id) {
-    const thirdName = match.winner_team_id === match.team_a
-      ? (match.team_a_name || formatTeam(match.team_a))
-      : (match.team_b_name || formatTeam(match.team_b));
-    const resultEl = document.createElement("div");
-    resultEl.className = "bracket-third-winner";
-    resultEl.textContent = `🥉 3° posto: ${thirdName}`;
-    section.appendChild(resultEl);
+function handlePodiumRendering() {
+  const shouldShowPodium = determineShouldShowPodium();
+  
+  if (shouldShowPodium && ALL_STANDINGS.length > 0) {
+    renderPodiumSVG();
   }
-
-  container.appendChild(section);
 }
 
-
+// ===============================
+// DETERMINE SHOULD SHOW PODIUM
+// ===============================
+function determineShouldShowPodium() {
+  // CASO A: Torneo con finals + tutti i match finals giocati
+  if (formatHasFinals(TOURNAMENT_FORMAT) && TOURNAMENT_STATUS === "finished") {
+    return areAllFinalsPlayed();
+  }
+  
+  // CASO C: Torneo senza finals + tutti i match gironi giocati
+  if (!formatHasFinals(TOURNAMENT_FORMAT) && TOURNAMENT_STATUS === "finished") {
+    return areAllGroupMatchesPlayed();
+  }
+  
+  return false;
+}
 
 // ===============================
-// RENDER LINEAR BRACKET
+// CHECK IF ALL FINALS PLAYED
 // ===============================
-function renderLinearBracket(bracket, rounds, container) {
-  const bracketEl = document.createElement("div");
-  bracketEl.className = "bracket-container bracket-linear";
+function areAllFinalsPlayed() {
+  // Verifica se tutti i match finals sono stati giocati
+  // Questa funzione verrà popolata quando caricheremo i dati finals
+  return TOURNAMENT_STATUS === "finished";
+}
 
-  rounds.forEach(roundId => {
-    const matches = bracket.rounds[roundId];
-    const roundLabel = getRoundLabel(matches.length);
-
-    const roundEl = document.createElement("div");
-    roundEl.className = "bracket-round";
-    roundEl.innerHTML = `<div class="bracket-round-label">${escapeHTML(roundLabel)}</div>`;
-
-    matches.forEach(match => {
-      const matchEl = createBracketMatch(match);
-      roundEl.appendChild(matchEl);
-    });
-
-    bracketEl.appendChild(roundEl);
+// ===============================
+// CHECK IF ALL GROUP MATCHES PLAYED
+// ===============================
+function areAllGroupMatchesPlayed() {
+  if (ALL_MATCHES.length === 0) return false;
+  return ALL_MATCHES.every(match => {
+    return match.played === true || String(match.played).toUpperCase() === "TRUE";
   });
-
-  container.appendChild(bracketEl);
 }
 
 // ===============================
-// RENDER SYMMETRIC BRACKET
+// RENDER PODIUM SVG
+// Wrapper che chiama il renderer esterno
 // ===============================
-function renderSymmetricBracket(bracket, rounds, container) {
-  const bracketEl = document.createElement("div");
-  bracketEl.className = "bracket-container bracket-symmetric";
-
-  const leftSide = document.createElement("div");
-  leftSide.className = "bracket-side bracket-left";
-
-  const rightSide = document.createElement("div");
-  rightSide.className = "bracket-side bracket-right";
-
-  const centerEl = document.createElement("div");
-  centerEl.className = "bracket-final";
-
-  rounds.forEach(roundId => {
-    const matches = bracket.rounds[roundId];
-    const roundLabel = getRoundLabel(matches.length);
-    const isFinal = matches.length === 1;
-
-    if (isFinal) {
-      const finalMatch = matches[0];
-
-      let championName = "";
-      if (finalMatch.winner_team_id) {
-        if (finalMatch.winner_team_id === finalMatch.team_a) {
-          championName = finalMatch.team_a_name || formatTeam(finalMatch.team_a);
-        } else if (finalMatch.winner_team_id === finalMatch.team_b) {
-          championName = finalMatch.team_b_name || formatTeam(finalMatch.team_b);
-        } else {
-          championName = formatTeam(finalMatch.winner_team_id);
-        }
-      }
-
-      centerEl.innerHTML = `<div class="bracket-trophy">🏆</div><div class="bracket-round-label">Finale</div>`;
-      const matchEl = createBracketMatch(finalMatch);
-      centerEl.appendChild(matchEl);
-
-      if (championName) {
-        const championEl = document.createElement("div");
-        championEl.className = "bracket-champion";
-        championEl.textContent = championName;
-        centerEl.appendChild(championEl);
-      }
-    } else {
-      const leftMatches = matches.slice(0, Math.ceil(matches.length / 2));
-      const rightMatches = matches.slice(Math.ceil(matches.length / 2));
-
-      if (leftMatches.length > 0) {
-        const leftRoundEl = document.createElement("div");
-        leftRoundEl.className = "bracket-round left";
-        leftRoundEl.innerHTML = `<div class="bracket-round-label">${escapeHTML(roundLabel)}</div>`;
-        leftMatches.forEach(match => leftRoundEl.appendChild(createBracketMatch(match)));
-        leftSide.appendChild(leftRoundEl);
-      }
-
-      if (rightMatches.length > 0) {
-        const rightRoundEl = document.createElement("div");
-        rightRoundEl.className = "bracket-round right";
-        rightRoundEl.innerHTML = `<div class="bracket-round-label">${escapeHTML(roundLabel)}</div>`;
-        rightMatches.forEach(match => rightRoundEl.appendChild(createBracketMatch(match)));
-        rightSide.appendChild(rightRoundEl);
-      }
-    }
-  });
-
-  bracketEl.appendChild(leftSide);
-  bracketEl.appendChild(centerEl);
-  bracketEl.appendChild(rightSide);
-
-  // Wrapper verticale per centrare bracket + 3/4 posto
-  const bracketWrapper = document.createElement("div");
-  bracketWrapper.className = "bracket-wrapper-with-3x4";
-  bracketWrapper.appendChild(bracketEl);
-  container.appendChild(bracketWrapper);
-}
-
-// ===============================
-// CREATE BRACKET MATCH ELEMENT
-// ===============================
-function createBracketMatch(match) {
-  const matchEl = document.createElement("div");
-  matchEl.className = "bracket-match";
-  if (match.is_third_place_match) matchEl.classList.add("bracket-match-3x4");
-
-  const isPlayed = match.played === true || String(match.played).toUpperCase() === "TRUE";
-  const scoreA = match.score_a;
-  const scoreB = match.score_b;
-
-  const teamAName = match.team_a_name || (match.team_a ? formatTeam(match.team_a) : null);
-  const teamBName = match.team_b_name || (match.team_b ? formatTeam(match.team_b) : null);
-
-  let winnerTeam = null;
-  if (isPlayed) {
-    if (match.winner_team_id) {
-      winnerTeam = match.winner_team_id;
-    } else if (scoreA !== "" && scoreB !== "" && scoreA !== null && scoreB !== null) {
-      const numA = Number(scoreA);
-      const numB = Number(scoreB);
-      if (numA > numB) winnerTeam = match.team_a;
-      else if (numB > numA) winnerTeam = match.team_b;
-    }
-  }
-
-  // Team A
-  const teamAEl = document.createElement("div");
-  teamAEl.className = "bracket-team";
-
-  if (match.team_a && teamAName) {
-    if (winnerTeam === match.team_a) teamAEl.classList.add("winner");
-    else if (winnerTeam && winnerTeam !== match.team_a) teamAEl.classList.add("loser");
-
-    teamAEl.innerHTML = `
-      <span class="bracket-team-name">${escapeHTML(teamAName)}</span>
-      <span class="bracket-team-score">${isPlayed && scoreA !== "" && scoreA !== null ? scoreA : "−"}</span>
-    `;
-  } else {
-    teamAEl.classList.add("tbd");
-    teamAEl.innerHTML = `<span class="bracket-team-name">TBD</span><span class="bracket-team-score">−</span>`;
-  }
-
-  // Team B
-  const teamBEl = document.createElement("div");
-  teamBEl.className = "bracket-team";
-
-  if (match.team_b && teamBName) {
-    if (winnerTeam === match.team_b) teamBEl.classList.add("winner");
-    else if (winnerTeam && winnerTeam !== match.team_b) teamBEl.classList.add("loser");
-
-    teamBEl.innerHTML = `
-      <span class="bracket-team-name">${escapeHTML(teamBName)}</span>
-      <span class="bracket-team-score">${isPlayed && scoreB !== "" && scoreB !== null ? scoreB : "−"}</span>
-    `;
-  } else {
-    teamBEl.classList.add("tbd");
-    teamBEl.innerHTML = `<span class="bracket-team-name">TBD</span><span class="bracket-team-score">−</span>`;
-  }
-
-  matchEl.appendChild(teamAEl);
-  matchEl.appendChild(teamBEl);
-
-  return matchEl;
-}
-
-// ===============================
-// RENDER PODIUM
-// ===============================
-function renderPodium(standings) {
-  const container = document.getElementById("podium-content");
+function renderPodiumSVG() {
+  const container = document.getElementById("podium-svg-container");
+  const skeleton = document.getElementById("podium-skeleton");
+  
   if (!container) return;
-
-  const isSetBased = standings[0]?.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_GIRONI);
-
-  const sorted = [...standings].sort((a, b) => {
-    const rankDiff = (a.rank_level || 99) - (b.rank_level || 99);
-    if (rankDiff !== 0) return rankDiff;
-    const pointsDiff = (b.points || 0) - (a.points || 0);
-    if (pointsDiff !== 0) return pointsDiff;
-    if (isSetBased) return (b.set_diff || 0) - (a.set_diff || 0);
-    return (b.goal_diff || 0) - (a.goal_diff || 0);
-  });
-
-  const top3 = sorted.slice(0, 3);
-
-  if (top3.length === 0) {
-    container.innerHTML = "<p class='placeholder'>Classifica non disponibile</p>";
-    return;
+  
+  // Nascondi skeleton
+  if (skeleton) {
+    fadeOutSkeleton(skeleton);
   }
-
-  const formatPodiumStats = (team) => {
-    if (isSetBased) return `${team.points} pts · Set ${formatDiff(team.set_diff)}`;
-    return `${team.points} pts · ${formatDiff(team.goal_diff)}`;
+  
+  // Prepara i dati per il podium
+  const isSetBased = ALL_STANDINGS[0]?.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_GIRONI);
+  const sport = ALL_STANDINGS[0]?.sport || TOURNAMENT_SPORT;
+  
+  const podiumData = {
+    standings: ALL_STANDINGS,
+    isSetBased: isSetBased,
+    sport: sport,
+    teamsLogosMap: teamsLogosMap
   };
-
-  container.innerHTML = `
-    <div class="podium">
-      ${top3.length >= 2 ? `
-        <div class="podium-place podium-second">
-          <div class="podium-medal">🥈</div>
-          <div class="podium-rank">2°</div>
-          <div class="podium-team">${escapeHTML(top3[1].team_name)}</div>
-          <div class="podium-stats">${formatPodiumStats(top3[1])}</div>
-          <div class="podium-bar second"></div>
-        </div>
-      ` : ''}
-      ${top3.length >= 1 ? `
-        <div class="podium-place podium-first">
-          <div class="podium-medal">🥇</div>
-          <div class="podium-rank">1°</div>
-          <div class="podium-team">${escapeHTML(top3[0].team_name)}</div>
-          <div class="podium-stats">${formatPodiumStats(top3[0])}</div>
-          <div class="podium-bar first"></div>
-        </div>
-      ` : ''}
-      ${top3.length >= 3 ? `
-        <div class="podium-place podium-third">
-          <div class="podium-medal">🥉</div>
-          <div class="podium-rank">3°</div>
-          <div class="podium-team">${escapeHTML(top3[2].team_name)}</div>
-          <div class="podium-stats">${formatPodiumStats(top3[2])}</div>
-          <div class="podium-bar third"></div>
-        </div>
-      ` : ''}
-    </div>
-    <div class="podium-champion">
-      <span class="champion-trophy">🏆</span>
-      <span class="champion-label">Campione</span>
-      <span class="champion-name">${escapeHTML(top3[0]?.team_name || 'TBD')}</span>
-    </div>
-  `;
+  
+  // ✅ Chiama il renderer esterno (sarà definito in podium-svg-renderer.js)
+  if (typeof renderPodiumSVG !== 'undefined') {
+    window.renderPodiumSVG(podiumData, container);
+  } else {
+    console.warn('⚠️ podium-svg-renderer.js non caricato');
+  }
 }
+
