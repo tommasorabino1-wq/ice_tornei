@@ -5,6 +5,11 @@ const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/
 const { onRequest } = require("firebase-functions/v2/https");
 const axios = require("axios");
 
+const OpenAI = require("openai");
+const { defineSecret } = require("firebase-functions/params");
+
+const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
+
 
 // Inizializza Firebase Admin (IMPORTANTE: va fatto UNA VOLTA SOLA)
 admin.initializeApp();
@@ -1187,7 +1192,10 @@ exports.getTeamsLogosMap = onRequest(async (req, res) => {
 // FIRESTORE TRIGGER: AUTO GENERATE TEAM LOGO
 // ===============================
 exports.onTeamInfoCompleted = onDocumentUpdated(
-  "teams/{teamId}",
+  {
+    document: "teams/{teamId}",
+    secrets: [OPENAI_API_KEY]
+  },
   async (event) => {
 
     const teamId = event.params.teamId;
@@ -1195,7 +1203,6 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
     const beforeData = event.data.before.data();
     const afterData = event.data.after.data();
 
-    // Controllo se il form è appena stato completato
     const beforeCompleted = beforeData?.info_completed === true;
     const afterCompleted = afterData?.info_completed === true;
 
@@ -1203,15 +1210,20 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
       return null;
     }
 
-    console.log(`📝 Team info completed for ${teamId}`);
-
-    // Controlla se il logo è già presente
     if (afterData.team_logo) {
-      console.log(`🖼️ Team ${teamId} already has a logo`);
+      console.log(`🖼️ Team ${teamId} already has logo`);
       return null;
     }
 
-    console.log(`🎨 Team ${teamId} has no logo - should generate one`);
+    const teamName = afterData.team_name;
+
+    console.log(`🔑 Initializing OpenAI for team ${teamName}`);
+
+    const openai = new OpenAI({
+      apiKey: OPENAI_API_KEY.value()
+    });
+
+    console.log("✅ OpenAI client initialized correctly");
 
     return null;
   }
