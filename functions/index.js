@@ -1213,7 +1213,7 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
       return null;
     }
 
-    if (afterData.team_logo) {
+    if (afterData.team_logo || afterData.logo_generated) {
       console.log(`🖼️ Team ${teamId} already has logo`);
       return null;
     }
