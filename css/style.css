@@ -2545,7 +2545,7 @@ body {
 
 .match-team .team-name {
   display: block;
-  font-size: 34px;
+  font-size: 30px;
   font-weight: 500;
   color: var(--text-main);
   line-height: 1.3;
@@ -2967,9 +2967,14 @@ body {
 }
 
 .team-name {
-  font-size: 30px;
-  font-weight: 500;
-  white-space: nowrap; /* ✅ AGGIUNGI questa riga */
+  font-size: 26px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;            /* ✅ Usa tutto lo spazio disponibile */
+  flex: 1;                    /* ✅ Espandi nel flex container */
+  min-width: 0;               /* ✅ Permetti shrink sotto larghezza naturale */
 }
 
 
@@ -4032,7 +4037,7 @@ body {
 ========================= */
 .match-team.winner .team-name {
   color: #38bdf8;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .match-team.loser .team-name {
