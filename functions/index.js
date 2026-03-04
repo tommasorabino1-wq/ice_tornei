@@ -1231,7 +1231,7 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
       const result = await openai.images.generate({
         model: "gpt-image-1-mini",
         size: "1024x1024",
-        prompt: `Minimal flat emblem inspired by the name "${teamName}", simple geometric shapes, bold colors, clean design, white background, centered`
+        prompt: `Minimal flat vector emblem inspired by the name "${teamName}", simple geometric shapes, bold colors, centered symbol, no text, white background`
       });
 
       const base64Image = result.data[0].b64_json;
