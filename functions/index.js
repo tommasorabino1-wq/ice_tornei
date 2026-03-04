@@ -1177,3 +1177,42 @@ exports.getTeamsLogosMap = onRequest(async (req, res) => {
     res.status(500).json({});
   }
 });
+
+
+
+
+
+
+// ===============================
+// FIRESTORE TRIGGER: AUTO GENERATE TEAM LOGO
+// ===============================
+exports.onTeamInfoCompleted = onDocumentUpdated(
+  "teams/{teamId}",
+  async (event) => {
+
+    const teamId = event.params.teamId;
+
+    const beforeData = event.data.before.data();
+    const afterData = event.data.after.data();
+
+    // Controllo se il form è appena stato completato
+    const beforeCompleted = beforeData?.info_completed === true;
+    const afterCompleted = afterData?.info_completed === true;
+
+    if (beforeCompleted || !afterCompleted) {
+      return null;
+    }
+
+    console.log(`📝 Team info completed for ${teamId}`);
+
+    // Controlla se il logo è già presente
+    if (afterData.team_logo) {
+      console.log(`🖼️ Team ${teamId} already has a logo`);
+      return null;
+    }
+
+    console.log(`🎨 Team ${teamId} has no logo - should generate one`);
+
+    return null;
+  }
+);
