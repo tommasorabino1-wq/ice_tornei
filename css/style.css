@@ -2967,8 +2967,8 @@ body {
 }
 
 .team-name {
-  font-size: 26px;
-  font-weight: 600;
+  font-size: 30px;
+  font-weight: 500;
   white-space: nowrap; /* ✅ AGGIUNGI questa riga */
 }
 
