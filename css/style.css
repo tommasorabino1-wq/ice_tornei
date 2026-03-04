@@ -29,7 +29,7 @@
   --skeleton-bg: #1f2933;
   --text: var(--text-main); /* Alias di --text-main */
   --background: var(--bg-main); /* Alias di --bg-main */
-    
+
   --border: #3f4a55;
   --radius: 6px;
   --shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
@@ -4268,12 +4268,12 @@ body {
    =============================== */
 
 .team-logo-mini {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
+  width: 30px;        /* 24px → 32px */
+  height: 30px;       /* 24px → 32px */
+  border-radius: 6px; /* 4px → 6px (proporzionale) */
   object-fit: cover;
-  margin-right: 8px;
-  margin-left: 8px;
+  margin-right: 10px; /* 8px → 10px (più spazio) */
+  margin-left: 10px;
   vertical-align: middle;
   background: var(--background);
   border: 1px solid var(--border);
@@ -4281,15 +4281,15 @@ body {
 
 .team-logo-mini-fallback {
   display: inline-block;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
+  width: 30px;        /* 24px → 32px */
+  height: 30px;       /* 24px → 32px */
+  border-radius: 6px; /* 4px → 6px */
   background: linear-gradient(135deg, var(--primary-light), var(--primary));
   text-align: center;
-  line-height: 24px;
-  font-size: 12px;
-  margin-right: 8px;
-  margin-left: 8px;
+  line-height: 30px; /* 24px → 32px */
+  font-size: 16px;   /* 12px → 16px (icona più grande) */
+  margin-right: 10px;
+  margin-left: 10px;
   vertical-align: middle;
 }
 
