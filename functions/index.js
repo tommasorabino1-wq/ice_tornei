@@ -1217,13 +1217,28 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
 
     const teamName = afterData.team_name;
 
-    console.log(`🔑 Initializing OpenAI for team ${teamName}`);
-
     const openai = new OpenAI({
       apiKey: OPENAI_API_KEY.value()
     });
 
-    console.log("✅ OpenAI client initialized correctly");
+    try {
+
+      console.log(`🎨 Generating logo for ${teamName}`);
+
+      const result = await openai.images.generate({
+        model: "gpt-image-1-mini",
+        size: "128x128",
+        prompt: `Minimal flat sports team logo based on the following team name: "${teamName}", simple shapes, bold colors, white background`
+      });
+
+      const base64Image = result.data[0].b64_json;
+
+      console.log(`✅ Logo generated for ${teamName}`);
+      console.log(`📦 Base64 size: ${base64Image.length}`);
+
+    } catch (error) {
+      console.error("❌ OpenAI generation error:", error);
+    }
 
     return null;
   }
