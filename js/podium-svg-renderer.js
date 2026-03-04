@@ -1,38 +1,34 @@
 // ===============================
-// SVG PODIUM RENDERER v1
-// Design: podio 3D sobrio, medaglie, statistiche, stile coerente con bracket
+// SVG PODIUM RENDERER v2
+// Design: podio compatto in box, logo+nome centrati nelle colonne
 // ===============================
 
 (function() {
   'use strict';
 
-// ── Layout constants ──────────────────────────────────────────────
-const PODIUM_W = 450;           // ✅ Era 900, ora metà
-const PODIUM_H = 500;           // Invariato
-const PLACE_W = 130;            // ✅ Era 260, ora metà
-const PLACE_GAP = 15;           // ✅ Era 30, ora metà
-const MEDAL_SIZE = 50;          // ✅ Era 60, ridotto proporzionalmente
-const LOGO_SIZE = 40;           // ✅ Era 50, ridotto proporzionalmente
-const BAR_HEIGHT_1ST = 200;     // Invariato
-const BAR_HEIGHT_2ND = 150;     // Invariato
-const BAR_HEIGHT_3RD = 120;     // Invariato
-const LABEL_H = 50;             // Invariato
-const TOP_PAD = 40;
-const BOT_PAD = 60;
-const STATS_Y_OFFSET = 30;
+  // ── Layout constants ──────────────────────────────────────────────
+  const PODIUM_W = 675;           // ✅ +50% rispetto a 450
+  const PODIUM_H = 400;           // ✅ Ridotto per compattezza
+  const PLACE_W = 195;            // ✅ +50% rispetto a 130
+  const PLACE_GAP = 22;           // ✅ +50% rispetto a 15
+  const MEDAL_SIZE = 60;          // ✅ Aumentato
+  const LOGO_SIZE = 50;           // ✅ Aumentato
+  const BAR_HEIGHT_1ST = 180;     // ✅ Leggermente ridotto
+  const BAR_HEIGHT_2ND = 140;     // ✅ Leggermente ridotto
+  const BAR_HEIGHT_3RD = 110;     // ✅ Leggermente ridotto
+  const LABEL_H = 50;
+  const TOP_PAD = 40;
+  const BOT_PAD = 60;
 
   // ── Palette (coerente con bracket) ────────────────────────────────
   const P = {
     // Medaglie
-    gold:               'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
     goldBorder:         '#FFA500',
     goldGlow:           'rgba(255, 215, 0, 0.3)',
     
-    silver:             'linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%)',
     silverBorder:       '#A8A8A8',
     silverGlow:         'rgba(192, 192, 192, 0.3)',
     
-    bronze:             'linear-gradient(135deg, #CD7F32 0%, #B87333 100%)',
     bronzeBorder:       '#B87333',
     bronzeGlow:         'rgba(205, 127, 50, 0.3)',
     
@@ -52,15 +48,11 @@ const STATS_Y_OFFSET = 30;
     // Testo
     text:               '#d1d5db',
     textBright:         '#ffffff',
-    textMuted:          '#9ca3af',
     
     // Label campione
     labelBg:            'rgba(255, 215, 0, 0.1)',
     labelBorder:        'rgba(255, 215, 0, 0.4)',
     labelText:          '#FFD700',
-    
-    // Background
-    bg:                 'rgba(22, 29, 39, 0.95)',
   };
 
   // ── SVG helpers ───────────────────────────────────────────────────
@@ -116,7 +108,7 @@ const STATS_Y_OFFSET = 30;
     o += svgElPodium('text', {
       x: x,
       y: y + 8,
-      'font-size': 28,
+      'font-size': 32,
       'text-anchor': 'middle',
       'dominant-baseline': 'middle'
     }, emoji);
@@ -131,7 +123,7 @@ const STATS_Y_OFFSET = 30;
       return svgElPodium('text', {
         x: x,
         y: y + 8,
-        'font-size': 26,
+        'font-size': 32,
         'text-anchor': 'middle',
         'dominant-baseline': 'middle'
       }, '👥');
@@ -197,68 +189,45 @@ const STATS_Y_OFFSET = 30;
   }
 
   // ── Disegna un posto del podio ───────────────────────────────────
-  function drawPlace(x, baseY, team, place, stats, logoUrl) {
+  function drawPlace(x, baseY, team, place, logoUrl) {
     let barHeight;
     if (place === 1) barHeight = BAR_HEIGHT_1ST;
     else if (place === 2) barHeight = BAR_HEIGHT_2ND;
     else barHeight = BAR_HEIGHT_3RD;
     
     const barY = baseY - barHeight;
-    const medalY = barY - MEDAL_SIZE / 2 - 20;
-    const logoY = medalY - MEDAL_SIZE - 20;
-    const nameY = logoY - 30;
-    const statsY = baseY - barHeight + STATS_Y_OFFSET;
-    const rankY = baseY - barHeight + 15;
-    
     const centerX = x + PLACE_W / 2;
+    const centerY = barY + barHeight / 2;
+    
+    // ✅ Medaglia sopra la barra
+    const medalY = barY - MEDAL_SIZE / 2 - 15;
     
     let o = '';
     
     // Barra podio
     o += drawPodiumBar(x, barY, PLACE_W, barHeight, place);
     
-    // Rank badge
-    const rankText = place === 1 ? '1°' : (place === 2 ? '2°' : '3°');
-    o += svgElPodium('text', {
-      x: centerX,
-      y: rankY,
-      fill: P.textBright,
-      'font-size': 20,
-      'font-weight': '800',
-      'font-family': 'Inter,sans-serif',
-      'text-anchor': 'middle'
-    }, rankText);
+    // ✅ Logo centrato verticalmente e orizzontalmente
+    const logoY = centerY - 20;
+    o += drawTeamLogo(centerX, logoY, logoUrl);
     
-    // Nome squadra (con clip per overflow)
+    // ✅ Nome squadra centrato sotto il logo
+    const nameY = logoY + LOGO_SIZE / 2 + 30;
     const clipId = `clip-name-${place}`;
-    o += `<defs><clipPath id="${clipId}"><rect x="${x + 10}" y="${nameY - 20}" width="${PLACE_W - 20}" height="30"/></clipPath></defs>`;
+    o += `<defs><clipPath id="${clipId}"><rect x="${x + 10}" y="${nameY - 15}" width="${PLACE_W - 20}" height="35"/></clipPath></defs>`;
     o += svgElPodium('text', {
       x: centerX,
       y: nameY,
       fill: P.textBright,
-      'font-size': 16,
+      'font-size': 18,
       'font-weight': '700',
       'font-family': 'Inter,sans-serif',
       'text-anchor': 'middle',
       'clip-path': `url(#${clipId})`
     }, escHPodium(team.team_name || ''));
     
-    // Logo squadra
-    o += drawTeamLogo(centerX, logoY, logoUrl);
-    
-    // Medaglia
+    // ✅ Medaglia sopra la barra
     o += drawMedal(centerX, medalY, place);
-    
-    // Statistiche
-    o += svgElPodium('text', {
-      x: centerX,
-      y: statsY,
-      fill: P.text,
-      'font-size': 13,
-      'font-weight': '600',
-      'font-family': 'Inter,sans-serif',
-      'text-anchor': 'middle'
-    }, stats);
     
     return o;
   }
@@ -287,7 +256,7 @@ const STATS_Y_OFFSET = 30;
     o += svgElPodium('text', {
       x: labelX + 30,
       y: y + LABEL_H / 2 + 6,
-      'font-size': 20,
+      'font-size': 22,
       'text-anchor': 'middle'
     }, '🏆');
     
@@ -296,7 +265,7 @@ const STATS_Y_OFFSET = 30;
       x: labelX + labelW / 2 - 20,
       y: y + LABEL_H / 2 - 8,
       fill: P.labelText,
-      'font-size': 12,
+      'font-size': 13,
       'font-weight': '700',
       'font-family': 'Inter,sans-serif',
       'text-anchor': 'middle',
@@ -310,7 +279,7 @@ const STATS_Y_OFFSET = 30;
       x: labelX + labelW / 2 - 20,
       y: y + LABEL_H / 2 + 18,
       fill: P.textBright,
-      'font-size': 15,
+      'font-size': 16,
       'font-weight': '800',
       'font-family': 'Inter,sans-serif',
       'text-anchor': 'middle',
@@ -318,21 +287,6 @@ const STATS_Y_OFFSET = 30;
     }, escHPodium(championName));
     
     return o;
-  }
-
-  // ── Format statistiche ────────────────────────────────────────────
-  function formatStats(team, isSetBased) {
-    const pts = team.points || 0;
-    
-    if (isSetBased) {
-      const setDiff = team.set_diff || 0;
-      const sign = setDiff > 0 ? '+' : '';
-      return `${pts} pts · Set ${sign}${setDiff}`;
-    }
-    
-    const goalDiff = team.goal_diff || 0;
-    const sign = goalDiff > 0 ? '+' : '';
-    return `${pts} pts · ${sign}${goalDiff}`;
   }
 
   // ── MAIN RENDERER ─────────────────────────────────────────────────
@@ -380,9 +334,8 @@ const STATS_Y_OFFSET = 30;
     // Disegna i 3 posti (se esistono)
     positions.forEach(pos => {
       if (pos.team) {
-        const stats = formatStats(pos.team, isSetBased);
         const logoUrl = teamsLogosMap[pos.team.team_id] || null;
-        body += drawPlace(pos.x, baseY, pos.team, pos.place, stats, logoUrl);
+        body += drawPlace(pos.x, baseY, pos.team, pos.place, logoUrl);
       }
     });
     

@@ -4455,6 +4455,44 @@ body {
 
 
 
+/* =============================================
+   PODIUM BOX STYLING
+============================================= */
+
+.finals-podium-fullwidth {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 16px;
+}
+
+.podium-svg-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 450px;
+}
+
+.podium-svg-wrapper svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Skeleton podium */
+.skeleton-podium {
+  height: 400px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
 
 
 
