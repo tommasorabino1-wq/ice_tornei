@@ -23,7 +23,7 @@ function matchH() { return MATCH_H * 2 + MATCH_GAP; }
 const C = {
   // Card base
   cardBg:             'rgba(22, 29, 39, 0.95)',
-  cardBgAlt:          'rgba(18, 24, 32, 0.98)',
+  cardBgAlt:          'rgba(22, 29, 39, 0.95)',
   cardBorder:         'rgba(255, 255, 255, 0.12)',
   cardBorderTbd:      'rgba(255, 255, 255, 0.06)',
   
@@ -160,7 +160,7 @@ function drawMatch(x, y, match, flip) {
 
   const yA = y, yB = y + MATCH_H + MATCH_GAP;
   o += drawRow(yA, teamA, sA, aTbd, aWin, aLose, false);
-  o += svgEl('rect', { x, y:yA+MATCH_H, width:MATCH_W, height:MATCH_GAP, fill:'rgba(0,0,0,0.6)' });
+  o += svgEl('rect', { x, y:yA+MATCH_H, width:MATCH_W, height:MATCH_GAP, fill:'rgba(22, 29, 39, 0.95)', });
   o += drawRow(yB, teamB, sB, bTbd, bWin, bLose, true);
   
   // Border esterno
