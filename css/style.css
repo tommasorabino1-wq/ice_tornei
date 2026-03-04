@@ -4300,6 +4300,12 @@ body {
 
 .team-name-text {
   vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;      /* ✅ Invece di 200px fissi */
+  flex: 1;              /* ✅ AGGIUNGI */
+  min-width: 0;         /* ✅ AGGIUNGI */
 }
 
 .team-cell {
@@ -4436,11 +4442,14 @@ body {
 }
 
 /* Nomi squadre - truncate se troppo lunghi */
+
 .match-team .team-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 400px;
+  max-width: 100%;      /* ✅ Usa tutto lo spazio disponibile */
+  flex: 1;              /* ✅ Espandi nel container */
+  min-width: 0;         /* ✅ Permetti shrink sotto larghezza naturale */
   font-weight: 500;
 }
 

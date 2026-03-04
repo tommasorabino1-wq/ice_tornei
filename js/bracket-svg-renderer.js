@@ -1,66 +1,56 @@
 // ===============================
-// SVG BRACKET RENDERER v2
-// Layout simmetrico a specchio — sinistra/destra convergono al centro
-// Finale 1°/2° al centro con palette oro, 3°/4° sotto centrato
+// SVG BRACKET RENDERER v3
+// Redesign: colori sobri, linee a gomito chiare, spacing generoso
 // ===============================
 
 // ── Layout constants ──────────────────────────────────────────────
-const MATCH_W         = 240;   // larghezza card squadra
-const MATCH_H         = 48;    // altezza singola riga
-const MATCH_GAP       = 3;     // separatore tra riga A e B
-const ROUND_GAP       = 56;    // gap orizzontale tra colonne
+const MATCH_W         = 280;   // ✅ Larghezza aumentata per nomi più grandi
+const MATCH_H         = 56;    // ✅ Altezza aumentata
+const MATCH_GAP       = 8;     // ✅ Più spazio tra squadre dello stesso match
+const ROUND_GAP       = 80;    // ✅ Più spazio tra colonne
 const COL_W           = MATCH_W + ROUND_GAP;
-const LABEL_H         = 30;    // altezza pill label
-const LABEL_MB        = 16;    // margine sotto label
-const TOP_PAD         = 16;
-const BOT_PAD         = 36;
-const CHAMP_GAP       = 20;
-const CHAMP_H         = 46;
-const THIRD_GAP_V     = 52;    // distanza verticale tra champion box e label 3/4
-const THIRD_LABEL_GAP = 14;
+const LABEL_H         = 40;    // ✅ Label più grandi
+const LABEL_MB        = 20;    // ✅ Più margine sotto label
+const TOP_PAD         = 20;
+const BOT_PAD         = 40;
+const THIRD_GAP_V     = 60;    // ✅ Più spazio tra sezioni
+const THIRD_LABEL_GAP = 20;
+const CONN_OFFSET     = 30;    // ✅ Distanza orizzontale gomito connettori
 
 function matchH() { return MATCH_H * 2 + MATCH_GAP; }
 
-// ── Palette ───────────────────────────────────────────────────────
+// ── Palette SEMPLIFICATA ──────────────────────────────────────────
 const C = {
-  cardBg:             'rgba(20,27,38,0.97)',
-  cardBgAlt:          'rgba(13,18,28,0.99)',
-  cardBorder:         'rgba(255,255,255,0.08)',
-  cardBorderTbd:      'rgba(255,255,255,0.06)',
+  // Card base
+  cardBg:             'rgba(22, 29, 39, 0.95)',
+  cardBgAlt:          'rgba(18, 24, 32, 0.98)',
+  cardBorder:         'rgba(255, 255, 255, 0.12)',
+  cardBorderTbd:      'rgba(255, 255, 255, 0.06)',
+  
+  // Testo
   text:               '#d1d5db',
   textWin:            '#ffffff',
+  textLose:           '#9ca3af',
   textTbd:            '#6b7280',
-  textScore:          'rgba(255,255,255,0.22)',
-  // Oro — finale 1/2
-  goldAccent:         '#fbbf24',
-  goldBar:            '#f59e0b',
-  goldBg:             'rgba(251,191,36,0.09)',
-  goldBorder:         'rgba(251,191,36,0.50)',
-  goldChampBg:        'rgba(251,191,36,0.13)',
-  goldChampBorder:    'rgba(251,191,36,0.55)',
-  goldLabel:          'rgba(251,191,36,0.75)',
-  goldLabelBg:        'rgba(251,191,36,0.07)',
-  goldLabelBorder:    'rgba(251,191,36,0.20)',
-  // Azzurro — round normali
-  blueAccent:         '#38bdf8',
-  blueBar:            '#0ea5e9',
-  blueBg:             'rgba(56,189,248,0.07)',
-  blueBorder:         'rgba(56,189,248,0.40)',
-  blueLabel:          'rgba(56,189,248,0.65)',
-  blueLabelBg:        'rgba(56,189,248,0.06)',
-  blueLabelBorder:    'rgba(56,189,248,0.15)',
-  blueConn:           'rgba(56,189,248,0.22)',
-  // Bronzo — 3/4
-  bronzeAccent:       'rgba(205,127,50,0.88)',
-  bronzeBar:          'rgba(205,127,50,0.92)',
-  bronzeBg:           'rgba(205,127,50,0.07)',
-  bronzeBorder:       'rgba(205,127,50,0.40)',
-  bronzeLabel:        'rgba(205,127,50,0.78)',
-  bronzeLabelBg:      'rgba(205,127,50,0.06)',
-  bronzeLabelBorder:  'rgba(205,127,50,0.20)',
-  bronzeConn:         'rgba(205,127,50,0.18)',
-  bronzeChampBg:      'rgba(205,127,50,0.11)',
-  bronzeChampBorder:  'rgba(205,127,50,0.48)',
+  textScore:          'rgba(255, 255, 255, 0.35)',
+  
+  // Vincitore (tenue)
+  winBg:              'rgba(56, 189, 248, 0.08)',
+  winBorder:          'rgba(56, 189, 248, 0.35)',
+  winBar:             'rgba(56, 189, 248, 0.6)',
+  winAccent:          '#38bdf8',
+  
+  // Perdente (molto tenue)
+  loseBg:             'rgba(255, 255, 255, 0.02)',
+  loseBorder:         'rgba(255, 255, 255, 0.08)',
+  
+  // Label
+  labelText:          '#e5e7eb',
+  labelBg:            'rgba(255, 255, 255, 0.06)',
+  labelBorder:        'rgba(255, 255, 255, 0.15)',
+  
+  // Connettori
+  connColor:          'rgba(156, 163, 175, 0.35)',
 };
 
 // ── SVG helpers ───────────────────────────────────────────────────
@@ -68,12 +58,15 @@ function svgEl(tag, attrs, children = '') {
   const a = Object.entries(attrs).map(([k,v]) => `${k}="${v}"`).join(' ');
   return `<${tag} ${a}>${children}</${tag}>`;
 }
+
 function escH(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
 function formatTeamSvg(id) {
   return String(id || '').split('_').slice(1).join(' ');
 }
+
 function resolveWinner(match) {
   const played = match.played === true || String(match.played||'').toUpperCase() === 'TRUE';
   if (!played) return null;
@@ -83,6 +76,7 @@ function resolveWinner(match) {
   if (nb > na) return match.team_b;
   return null;
 }
+
 function roundLabel(count) {
   if (count >= 8) return 'Quarti di Finale';
   if (count === 4) return 'Quarti';
@@ -92,9 +86,8 @@ function roundLabel(count) {
 }
 
 // ── Disegna una card match ────────────────────────────────────────
-// palette: 'blue' | 'gold' | 'bronze'
-// flip: true → barra e allineamento testo specchiati (lato sx del bracket)
-function drawMatch(x, y, match, palette, flip) {
+// flip: true → nomi/score specchiati (lato sinistro bracket)
+function drawMatch(x, y, match, flip) {
   const mh     = matchH();
   const played = match.played === true || String(match.played||'').toUpperCase() === 'TRUE';
   const winner = resolveWinner(match);
@@ -104,90 +97,190 @@ function drawMatch(x, y, match, palette, flip) {
   const bTbd   = !match.team_b;
   const aWin   = winner === match.team_a;
   const bWin   = winner === match.team_b;
+  const aLose  = played && winner && !aWin;
+  const bLose  = played && winner && !bWin;
   const sA     = played && match.score_a !== null && match.score_a !== '' ? String(match.score_a) : '−';
   const sB     = played && match.score_b !== null && match.score_b !== '' ? String(match.score_b) : '−';
 
-  const accent = palette==='gold' ? C.goldAccent : palette==='bronze' ? C.bronzeAccent : C.blueAccent;
-  const bar    = palette==='gold' ? C.goldBar    : palette==='bronze' ? C.bronzeBar    : C.blueBar;
-  const winBg  = palette==='gold' ? C.goldBg     : palette==='bronze' ? C.bronzeBg     : C.blueBg;
-  const winBrd = palette==='gold' ? C.goldBorder : palette==='bronze' ? C.bronzeBorder : C.blueBorder;
-  const barW   = 4;
-
+  const barW = 5;
   let o = '';
 
-  const drawRow = (rowY, name, score, isTbd, isWin, isAlt) => {
-    const bg   = isWin ? winBg : (isTbd ? 'rgba(255,255,255,0.015)' : (isAlt ? C.cardBgAlt : C.cardBg));
-    const brd  = isWin ? winBrd : (isTbd ? C.cardBorderTbd : C.cardBorder);
+  const drawRow = (rowY, name, score, isTbd, isWin, isLose, isAlt) => {
+    const bg   = isWin ? C.winBg : (isLose ? C.loseBg : (isTbd ? 'rgba(255,255,255,0.015)' : (isAlt ? C.cardBgAlt : C.cardBg)));
+    const brd  = isWin ? C.winBorder : (isLose ? C.loseBorder : (isTbd ? C.cardBorderTbd : C.cardBorder));
     const dash = isTbd ? {'stroke-dasharray':'4 4'} : {};
-    const nC   = isWin ? C.textWin : (isTbd ? C.textTbd : C.text);
-    const sC   = isWin ? accent : (isTbd ? C.textTbd : C.textScore);
+    const nC   = isWin ? C.textWin : (isLose ? C.textLose : (isTbd ? C.textTbd : C.text));
+    const sC   = isWin ? C.winAccent : (isTbd ? C.textTbd : C.textScore);
     const fw   = isWin ? '700' : (isTbd ? '400' : '500');
     const fi   = isTbd ? 'italic' : 'normal';
-    const fs   = isTbd ? 15 : 17;
+    const fs   = isTbd ? 17 : 20; // ✅ Font più grande
 
-    // flip=true: nome a destra, score a sinistra (per lato sinistro del bracket)
-    const nameX    = flip ? x + MATCH_W - (isWin ? 14 : 12) : x + (isWin ? 14 : 12);
-    const scoreX   = flip ? x + 14 : x + MATCH_W - 14;
+    // flip=true: nome a destra, score a sinistra
+    const nameX    = flip ? x + MATCH_W - (isWin ? 18 : 16) : x + (isWin ? 18 : 16);
+    const scoreX   = flip ? x + 18 : x + MATCH_W - 18;
     const nameAnchor  = flip ? 'end' : 'start';
     const scoreAnchor = flip ? 'start' : 'end';
 
     let r = '';
-    r += svgEl('rect', { x, y:rowY, width:MATCH_W, height:MATCH_H, rx:7, ry:7, fill:bg, stroke:brd, 'stroke-width':1, ...dash });
+    r += svgEl('rect', { x, y:rowY, width:MATCH_W, height:MATCH_H, rx:8, ry:8, fill:bg, stroke:brd, 'stroke-width':1, ...dash });
+    
     if (isWin) {
       const barX = flip ? x + MATCH_W - barW : x;
-      r += svgEl('rect', { x:barX, y:rowY, width:barW, height:MATCH_H, rx:2, fill:bar });
+      r += svgEl('rect', { x:barX, y:rowY, width:barW, height:MATCH_H, rx:2, fill:C.winBar });
     }
+    
     const clipId = `c${Math.round(x*10)}-${Math.round(rowY*10)}`;
-    const clipXs = flip ? x + 38 : x + 8;
-    const clipW  = MATCH_W - 52;
+    const clipXs = flip ? x + 45 : x + 10;
+    const clipW  = MATCH_W - 65;
     r += `<defs><clipPath id="${clipId}"><rect x="${clipXs}" y="${rowY}" width="${clipW}" height="${MATCH_H}"/></clipPath></defs>`;
-    r += svgEl('text', { x:nameX, y:rowY+MATCH_H/2+6, fill:nC, 'font-size':fs, 'font-weight':fw, 'font-style':fi, 'font-family':'Inter,sans-serif', 'text-anchor':nameAnchor, 'clip-path':`url(#${clipId})` }, isTbd ? 'TBD' : escH(name||''));
-    r += svgEl('text', { x:scoreX, y:rowY+MATCH_H/2+6, fill:sC, 'font-size':18, 'font-weight':isWin?'800':'500', 'font-family':'Inter,sans-serif', 'text-anchor':scoreAnchor }, escH(score));
+    r += svgEl('text', { 
+      x:nameX, 
+      y:rowY+MATCH_H/2+7, 
+      fill:nC, 
+      'font-size':fs, 
+      'font-weight':fw, 
+      'font-style':fi, 
+      'font-family':'Inter,sans-serif', 
+      'text-anchor':nameAnchor, 
+      'clip-path':`url(#${clipId})` 
+    }, isTbd ? 'TBD' : escH(name||''));
+    
+    r += svgEl('text', { 
+      x:scoreX, 
+      y:rowY+MATCH_H/2+7, 
+      fill:sC, 
+      'font-size':22, // ✅ Score più grande
+      'font-weight':isWin?'800':'500', 
+      'font-family':'Inter,sans-serif', 
+      'text-anchor':scoreAnchor 
+    }, escH(score));
+    
     return r;
   };
 
   const yA = y, yB = y + MATCH_H + MATCH_GAP;
-  o += drawRow(yA, teamA, sA, aTbd, aWin, false);
-  o += svgEl('rect', { x, y:yA+MATCH_H, width:MATCH_W, height:MATCH_GAP, fill:'rgba(0,0,0,0.55)' });
-  o += drawRow(yB, teamB, sB, bTbd, bWin, true);
-  o += svgEl('rect', { x, y:yA, width:MATCH_W, height:mh, rx:7, ry:7, fill:'none', stroke: aWin||bWin ? winBrd : C.cardBorder, 'stroke-width':1, 'pointer-events':'none' });
+  o += drawRow(yA, teamA, sA, aTbd, aWin, aLose, false);
+  o += svgEl('rect', { x, y:yA+MATCH_H, width:MATCH_W, height:MATCH_GAP, fill:'rgba(0,0,0,0.6)' });
+  o += drawRow(yB, teamB, sB, bTbd, bWin, bLose, true);
+  
+  // Border esterno
+  const borderColor = (aWin || bWin) ? C.winBorder : C.cardBorder;
+  o += svgEl('rect', { x, y:yA, width:MATCH_W, height:mh, rx:8, ry:8, fill:'none', stroke:borderColor, 'stroke-width':1, 'pointer-events':'none' });
+  
   return o;
 }
 
 // ── Pill label ────────────────────────────────────────────────────
-function drawLabel(x, y, text, palette) {
-  const lc = palette==='gold' ? C.goldLabel : palette==='bronze' ? C.bronzeLabel : C.blueLabel;
-  const lb = palette==='gold' ? C.goldLabelBg : palette==='bronze' ? C.bronzeLabelBg : C.blueLabelBg;
-  const lbr= palette==='gold' ? C.goldLabelBorder : palette==='bronze' ? C.bronzeLabelBorder : C.blueLabelBorder;
+function drawLabel(x, y, text) {
   let o = '';
-  o += svgEl('rect', { x, y, width:MATCH_W, height:LABEL_H, rx:LABEL_H/2, ry:LABEL_H/2, fill:lb, stroke:lbr, 'stroke-width':1 });
-  o += svgEl('text', { x:x+MATCH_W/2, y:y+LABEL_H/2+5, fill:lc, 'font-size':11, 'font-weight':'800', 'font-family':'Inter,sans-serif', 'text-anchor':'middle', 'letter-spacing':'0.1em' }, escH(text.toUpperCase()));
+  o += svgEl('rect', { 
+    x, 
+    y, 
+    width:MATCH_W, 
+    height:LABEL_H, 
+    rx:LABEL_H/2, 
+    ry:LABEL_H/2, 
+    fill:C.labelBg, 
+    stroke:C.labelBorder, 
+    'stroke-width':1 
+  });
+  o += svgEl('text', { 
+    x:x+MATCH_W/2, 
+    y:y+LABEL_H/2+7, 
+    fill:C.labelText, 
+    'font-size':16, // ✅ Font label più grande
+    'font-weight':'700', 
+    'font-family':'Inter,sans-serif', 
+    'text-anchor':'middle', 
+    'letter-spacing':'0.05em' 
+  }, escH(text.toUpperCase()));
   return o;
 }
 
-// ── Connettore a L ────────────────────────────────────────────────
-// dir='right': esce dal lato destro di src, arriva al lato sinistro di dst
-// dir='left':  esce dal lato sinistro di src, arriva al lato destro di dst
-function drawConn(srcX, srcY, dstX, dstY, color, dir) {
+// ── Connettore a gomito ───────────────────────────────────────────
+// Gomito: orizz → vert → orizz
+// dir='right': esce da destra di src, entra da sinistra di dst
+// dir='left':  esce da sinistra di src, entra da destra di dst
+function drawElbowConn(srcX, srcY, dstX, dstY, dir) {
   const mh = matchH();
-  const sm = srcY + mh / 2;
-  const dm = dstY + mh / 2;
-  let x1, x2, x3;
+  
+  // Punto medio di ogni match (centro verticale)
+  const srcMidY = srcY + mh / 2;
+  const dstMidY = dstY + mh / 2;
+  
+  let x1, x2, x3, x4;
+  
   if (dir === 'right') {
-    x1 = srcX + MATCH_W; x2 = x1 + ROUND_GAP / 2; x3 = dstX;
+    // Esce da destra
+    x1 = srcX + MATCH_W;              // Bordo destro src
+    x2 = x1 + CONN_OFFSET;             // Gomito orizzontale
+    x3 = dstX - CONN_OFFSET;           // Gomito orizzontale dst
+    x4 = dstX;                         // Bordo sinistro dst
   } else {
-    x1 = srcX; x2 = x1 - ROUND_GAP / 2; x3 = dstX + MATCH_W;
+    // Esce da sinistra
+    x1 = srcX;                         // Bordo sinistro src
+    x2 = x1 - CONN_OFFSET;             // Gomito orizzontale
+    x3 = dstX + MATCH_W + CONN_OFFSET; // Gomito orizzontale dst
+    x4 = dstX + MATCH_W;               // Bordo destro dst
   }
-  return svgEl('path', { d:`M ${x1} ${sm} H ${x2} V ${dm} H ${x3}`, fill:'none', stroke:color, 'stroke-width':1.5, 'stroke-linecap':'round', 'stroke-linejoin':'round' });
+  
+  // Path: orizz → vert → orizz
+  const d = `M ${x1} ${srcMidY} H ${x2} V ${dstMidY} H ${x4}`;
+  
+  return svgEl('path', { 
+    d, 
+    fill:'none', 
+    stroke:C.connColor, 
+    'stroke-width':2, // ✅ Linea più spessa
+    'stroke-linecap':'round', 
+    'stroke-linejoin':'round' 
+  });
+}
+
+// ── Connettore a Y (per collegare 2 match allo stesso successivo) ─
+function drawYConn(srcX1, srcY1, srcX2, srcY2, dstX, dstY, dir) {
+  const mh = matchH();
+  const src1MidY = srcY1 + mh / 2;
+  const src2MidY = srcY2 + mh / 2;
+  const dstMidY  = dstY + mh / 2;
+  
+  let x1, x2, xMid, x3, x4;
+  
+  if (dir === 'right') {
+    x1 = srcX1 + MATCH_W;
+    x2 = srcX2 + MATCH_W;
+    xMid = x1 + CONN_OFFSET;
+    x3 = dstX - CONN_OFFSET;
+    x4 = dstX;
+  } else {
+    x1 = srcX1;
+    x2 = srcX2;
+    xMid = x1 - CONN_OFFSET;
+    x3 = dstX + MATCH_W + CONN_OFFSET;
+    x4 = dstX + MATCH_W;
+  }
+  
+  // Due rami che si uniscono
+  const d1 = `M ${dir === 'right' ? srcX1 + MATCH_W : srcX1} ${src1MidY} H ${xMid}`;
+  const d2 = `M ${dir === 'right' ? srcX2 + MATCH_W : srcX2} ${src2MidY} H ${xMid}`;
+  const d3 = `M ${xMid} ${src1MidY} V ${dstMidY} H ${x4}`;
+  
+  let o = '';
+  o += svgEl('path', { d:d1, fill:'none', stroke:C.connColor, 'stroke-width':2, 'stroke-linecap':'round' });
+  o += svgEl('path', { d:d2, fill:'none', stroke:C.connColor, 'stroke-width':2, 'stroke-linecap':'round' });
+  o += svgEl('path', { d:d3, fill:'none', stroke:C.connColor, 'stroke-width':2, 'stroke-linecap':'round', 'stroke-linejoin':'round' });
+  
+  return o;
 }
 
 // ── Calcola posizioni Y per un lato ──────────────────────────────
 function computeSidePositions(roundIds, matchesByRound) {
   const mh = matchH();
-  const BASE = mh + 28;
+  const BASE = mh + 40; // ✅ Più spazio verticale
   const firstCount = matchesByRound[roundIds[0]].length;
   const totalH = firstCount * BASE - (BASE - mh);
   const pos = {};
+  
   roundIds.forEach((rid, ri) => {
     const count = matchesByRound[rid].length;
     pos[rid] = [];
@@ -200,6 +293,7 @@ function computeSidePositions(roundIds, matchesByRound) {
       for (let i = 0; i < count; i++) pos[rid][i] = startY + i * spacing;
     }
   });
+  
   return { pos, totalH };
 }
 
@@ -236,138 +330,133 @@ function renderBracketSVG(bracket, container) {
   const { pos: leftPos, totalH } = computeSidePositions(sideRounds, leftMs);
 
   // ── Indici colonne ────────────────────────────────────────────────
-  // Colonne da sinistra: 0…(n-1) = round laterali sx (0=più esterno)
-  // Colonna n = finale (centro)
-  // Colonne n+1…2n = round laterali dx (specchio, n+1=più interno)
   const n          = sideRounds.length;
   const finalColI  = n;
   const totalCols  = n * 2 + 1;
   const colX       = ci => ci * COL_W;
 
-  const LOFF = TOP_PAD + LABEL_H + LABEL_MB; // offset verticale per i match
+  const LOFF = TOP_PAD + LABEL_H + LABEL_MB;
   const finalMatchY = LOFF + totalH / 2 - mh / 2;
-  const champY      = finalMatchY + mh + CHAMP_GAP;
-  const champBot    = champY + CHAMP_H + 16;
 
-  let thirdLabelY = 0, thirdMatchY = 0, thirdChampY = 0;
+  let thirdLabelY = 0, thirdMatchY = 0;
   if (hasThird) {
-    thirdLabelY = champBot + THIRD_GAP_V;
+    thirdLabelY = finalMatchY + mh + THIRD_GAP_V;
     thirdMatchY = thirdLabelY + LABEL_H + THIRD_LABEL_GAP;
-    thirdChampY = thirdMatchY + mh + CHAMP_GAP;
   }
 
-  const svgW = totalCols * COL_W + 40;
-  const svgH = hasThird ? thirdChampY + CHAMP_H + BOT_PAD : champBot + BOT_PAD;
+  const svgW = totalCols * COL_W + 60;
+  const svgH = hasThird ? thirdMatchY + mh + BOT_PAD : finalMatchY + mh + BOT_PAD;
 
   let body = '';
 
   // ── CONNETTORI ───────────────────────────────────────────────────
   sideRounds.forEach((rid, ri) => {
     const isInner = ri === n - 1;
+    
     // Lato sinistro
-    leftMs[rid].forEach((_, mi) => {
-      const srcX = colX(ri);
-      const srcY = LOFF + leftPos[rid][mi];
+    for (let mi = 0; mi < leftMs[rid].length; mi += 2) {
+      const srcX1 = colX(ri);
+      const srcY1 = LOFF + leftPos[rid][mi];
+      
       if (isInner) {
-        body += drawConn(srcX, srcY, colX(finalColI), finalMatchY, C.blueConn, 'right');
+        // Ultima coppia: connetti direttamente alla finale
+        if (mi + 1 < leftMs[rid].length) {
+          const srcY2 = LOFF + leftPos[rid][mi + 1];
+          body += drawYConn(srcX1, srcY1, srcX1, srcY2, colX(finalColI), finalMatchY, 'right');
+        } else {
+          body += drawElbowConn(srcX1, srcY1, colX(finalColI), finalMatchY, 'right');
+        }
       } else {
+        // Round intermedi: connetti al round successivo
         const nextRid = sideRounds[ri + 1];
         const dstY    = LOFF + leftPos[nextRid][Math.floor(mi / 2)];
-        body += drawConn(srcX, srcY, colX(ri + 1), dstY, C.blueConn, 'right');
+        
+        if (mi + 1 < leftMs[rid].length) {
+          const srcY2 = LOFF + leftPos[rid][mi + 1];
+          body += drawYConn(srcX1, srcY1, srcX1, srcY2, colX(ri + 1), dstY, 'right');
+        } else {
+          body += drawElbowConn(srcX1, srcY1, colX(ri + 1), dstY, 'right');
+        }
       }
-    });
-    // Lato destro (colonna specchio)
+    }
+    
+    // Lato destro (simmetrico)
     const dxColI = finalColI + (n - ri);
-    rightMs[rid].forEach((_, mi) => {
-      const srcX = colX(dxColI);
-      const srcY = LOFF + leftPos[rid][mi]; // stesse posizioni Y del lato sx
+    for (let mi = 0; mi < rightMs[rid].length; mi += 2) {
+      const srcX1 = colX(dxColI);
+      const srcY1 = LOFF + leftPos[rid][mi];
+      
       if (isInner) {
-        body += drawConn(srcX, srcY, colX(finalColI), finalMatchY, C.blueConn, 'left');
+        if (mi + 1 < rightMs[rid].length) {
+          const srcY2 = LOFF + leftPos[rid][mi + 1];
+          body += drawYConn(srcX1, srcY1, srcX1, srcY2, colX(finalColI), finalMatchY, 'left');
+        } else {
+          body += drawElbowConn(srcX1, srcY1, colX(finalColI), finalMatchY, 'left');
+        }
       } else {
         const nextRid  = sideRounds[ri + 1];
         const nextColI = finalColI + (n - ri - 1);
         const dstY     = LOFF + leftPos[nextRid][Math.floor(mi / 2)];
-        body += drawConn(srcX, srcY, colX(nextColI), dstY, C.blueConn, 'left');
+        
+        if (mi + 1 < rightMs[rid].length) {
+          const srcY2 = LOFF + leftPos[rid][mi + 1];
+          body += drawYConn(srcX1, srcY1, srcX1, srcY2, colX(nextColI), dstY, 'left');
+        } else {
+          body += drawElbowConn(srcX1, srcY1, colX(nextColI), dstY, 'left');
+        }
       }
-    });
+    }
   });
 
-  // Connettore bronzo tratteggiato: dalle semifinali verso il 3/4
-  if (hasThird && n >= 1) {
-    const innerRid = sideRounds[n - 1];
-    const thirdX   = colX(finalColI);
-    const thirdCX  = thirdX + MATCH_W / 2;
-
-    [
-      { ms: leftMs[innerRid],  colI: n - 1,          dir: 'right' },
-      { ms: rightMs[innerRid], colI: finalColI + 1,   dir: 'left'  },
-    ].forEach(({ ms, colI, dir }) => {
-      if (!ms.length) return;
-      const srcX   = dir === 'right' ? colX(colI) + MATCH_W : colX(colI);
-      const srcMidY= LOFF + leftPos[innerRid][0] + mh / 2;
-      const midX   = dir === 'right' ? srcX + 20 : srcX - 20;
-      const d = `M ${srcX} ${srcMidY} H ${midX} V ${thirdMatchY - 12} H ${thirdCX} V ${thirdMatchY}`;
-      body += svgEl('path', { d, fill:'none', stroke:C.bronzeConn, 'stroke-width':1.5, 'stroke-linecap':'round', 'stroke-linejoin':'round', 'stroke-dasharray':'5 4' });
+  // Connettore 3/4 posto (linea tratteggiata che scende dalla finale)
+  if (hasThird) {
+    const thirdX  = colX(finalColI);
+    const thirdCX = thirdX + MATCH_W / 2;
+    const finalEndY = finalMatchY + mh;
+    const d = `M ${thirdCX} ${finalEndY} V ${thirdMatchY}`;
+    body += svgEl('path', { 
+      d, 
+      fill:'none', 
+      stroke:C.connColor, 
+      'stroke-width':2, 
+      'stroke-linecap':'round', 
+      'stroke-dasharray':'6 4' 
     });
   }
 
   // ── LABEL ────────────────────────────────────────────────────────
   sideRounds.forEach((rid, ri) => {
     const count = allMatches[rid].length;
-    body += drawLabel(colX(ri),                    TOP_PAD, roundLabel(count), 'blue');
-    body += drawLabel(colX(finalColI + (n - ri)),  TOP_PAD, roundLabel(count), 'blue');
+    body += drawLabel(colX(ri), TOP_PAD, roundLabel(count));
+    body += drawLabel(colX(finalColI + (n - ri)), TOP_PAD, roundLabel(count));
   });
-  body += drawLabel(colX(finalColI), TOP_PAD, 'Finale', 'gold');
+  body += drawLabel(colX(finalColI), TOP_PAD, 'Finale');
 
   // ── CARD MATCH ───────────────────────────────────────────────────
   sideRounds.forEach((rid, ri) => {
     const dxColI = finalColI + (n - ri);
     leftMs[rid].forEach((m, mi) => {
-      body += drawMatch(colX(ri),      LOFF + leftPos[rid][mi], m, 'blue', true);  // sx: flip
+      body += drawMatch(colX(ri), LOFF + leftPos[rid][mi], m, true);  // sx: flip
     });
     rightMs[rid].forEach((m, mi) => {
-      body += drawMatch(colX(dxColI),  LOFF + leftPos[rid][mi], m, 'blue', false); // dx: no flip
+      body += drawMatch(colX(dxColI), LOFF + leftPos[rid][mi], m, false); // dx: no flip
     });
   });
 
   // Finale
   const finalMatch = allMatches[finalRound][0];
-  body += drawMatch(colX(finalColI), finalMatchY, finalMatch, 'gold', false);
-
-  // ── CHAMPION BOX ─────────────────────────────────────────────────
-  const cx = colX(finalColI);
-  if (finalMatch?.winner_team_id) {
-    const cn = finalMatch.winner_team_id === finalMatch.team_a
-      ? (finalMatch.team_a_name || formatTeamSvg(finalMatch.team_a))
-      : (finalMatch.team_b_name || formatTeamSvg(finalMatch.team_b));
-    body += svgEl('rect', { x:cx, y:champY, width:MATCH_W, height:CHAMP_H, rx:CHAMP_H/2, ry:CHAMP_H/2, fill:C.goldChampBg, stroke:C.goldChampBorder, 'stroke-width':1.5 });
-    body += svgEl('text', { x:cx+MATCH_W/2, y:champY+CHAMP_H/2+6, fill:C.goldAccent, 'font-size':15, 'font-weight':'700', 'font-family':'Inter,sans-serif', 'text-anchor':'middle', 'letter-spacing':'0.03em' }, `🏆 ${escH(cn)}`);
-  } else {
-    body += svgEl('rect', { x:cx, y:champY, width:MATCH_W, height:CHAMP_H, rx:CHAMP_H/2, ry:CHAMP_H/2, fill:'rgba(251,191,36,0.03)', stroke:'rgba(251,191,36,0.15)', 'stroke-width':1, 'stroke-dasharray':'5 4' });
-    body += svgEl('text', { x:cx+MATCH_W/2, y:champY+CHAMP_H/2+6, fill:'rgba(251,191,36,0.28)', 'font-size':13, 'font-weight':'600', 'font-family':'Inter,sans-serif', 'text-anchor':'middle' }, '🏆 Campione');
-  }
+  body += drawMatch(colX(finalColI), finalMatchY, finalMatch, false);
 
   // ── 3°/4° POSTO ──────────────────────────────────────────────────
   if (hasThird) {
     const tx = colX(finalColI);
     const tm = bracket.thirdPlaceMatch;
-    body += drawLabel(tx, thirdLabelY, '3° / 4° Posto', 'bronze');
-    body += drawMatch(tx, thirdMatchY, tm, 'bronze', false);
-    if (tm.winner_team_id) {
-      const tn = tm.winner_team_id === tm.team_a
-        ? (tm.team_a_name || formatTeamSvg(tm.team_a))
-        : (tm.team_b_name || formatTeamSvg(tm.team_b));
-      body += svgEl('rect', { x:tx, y:thirdChampY, width:MATCH_W, height:CHAMP_H, rx:CHAMP_H/2, ry:CHAMP_H/2, fill:C.bronzeChampBg, stroke:C.bronzeChampBorder, 'stroke-width':1.5 });
-      body += svgEl('text', { x:tx+MATCH_W/2, y:thirdChampY+CHAMP_H/2+6, fill:C.bronzeAccent, 'font-size':15, 'font-weight':'700', 'font-family':'Inter,sans-serif', 'text-anchor':'middle' }, `🥉 ${escH(tn)}`);
-    } else {
-      body += svgEl('rect', { x:tx, y:thirdChampY, width:MATCH_W, height:CHAMP_H, rx:CHAMP_H/2, ry:CHAMP_H/2, fill:'rgba(205,127,50,0.03)', stroke:'rgba(205,127,50,0.15)', 'stroke-width':1, 'stroke-dasharray':'5 4' });
-      body += svgEl('text', { x:tx+MATCH_W/2, y:thirdChampY+CHAMP_H/2+6, fill:'rgba(205,127,50,0.28)', 'font-size':13, 'font-weight':'600', 'font-family':'Inter,sans-serif', 'text-anchor':'middle' }, '🥉 3° Posto');
-    }
+    body += drawLabel(tx, thirdLabelY, '3° / 4° Posto');
+    body += drawMatch(tx, thirdMatchY, tm, false);
   }
 
   // ── Assembla ─────────────────────────────────────────────────────
-  const realH = hasThird ? thirdChampY + CHAMP_H + BOT_PAD : champBot + BOT_PAD;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${realH}" viewBox="0 0 ${svgW} ${realH}" style="display:block;overflow:visible;">${body}</svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="display:block;overflow:visible;">${body}</svg>`;
   const wrap = document.createElement('div');
   wrap.className = 'bracket-svg-wrapper';
   wrap.innerHTML = svg;
@@ -381,7 +470,7 @@ function renderLinearSVG(bracket, container) {
   const mh          = matchH();
   const hasThird    = !!bracket.thirdPlaceMatch;
   const LOFF        = TOP_PAD + LABEL_H + LABEL_MB;
-  const BASE        = mh + 28;
+  const BASE        = mh + 40;
 
   const firstCount = allMatches[allRoundIds[0]].length;
   const totalH     = Math.max(firstCount * BASE - (BASE - mh), mh);
@@ -402,50 +491,38 @@ function renderLinearSVG(bracket, container) {
   });
 
   allRoundIds.forEach((rid, ri) => {
-    const ms    = allMatches[rid];
-    const isFin = ms.length === 1;
-    const pal   = isFin ? 'gold' : 'blue';
-    const x     = ri * COL_W;
+    const ms = allMatches[rid];
+    const x  = ri * COL_W;
 
-    body += drawLabel(x, TOP_PAD, roundLabel(ms.length), pal);
+    body += drawLabel(x, TOP_PAD, roundLabel(ms.length));
     ms.forEach((m, mi) => {
       const y = LOFF + pos[rid][mi];
-      body += drawMatch(x, y, m, pal, false);
+      body += drawMatch(x, y, m, false);
       maxY = Math.max(maxY, y + mh);
     });
 
     // Connettori verso round successivo
     if (ri < allRoundIds.length - 1) {
       const nextRid = allRoundIds[ri + 1];
-      ms.forEach((_, mi) => {
-        const srcY = LOFF + pos[rid][mi];
-        const dstY = LOFF + pos[nextRid][Math.floor(mi / 2)];
-        body += drawConn(x, srcY, x + COL_W, dstY, C.blueConn, 'right');
-      });
+      for (let mi = 0; mi < ms.length; mi += 2) {
+        const srcY1 = LOFF + pos[rid][mi];
+        const dstY  = LOFF + pos[nextRid][Math.floor(mi / 2)];
+        
+        if (mi + 1 < ms.length) {
+          const srcY2 = LOFF + pos[rid][mi + 1];
+          body += drawYConn(x, srcY1, x, srcY2, x + COL_W, dstY, 'right');
+        } else {
+          body += drawElbowConn(x, srcY1, x + COL_W, dstY, 'right');
+        }
+      }
     }
   });
 
-  const finalRid   = allRoundIds[allRoundIds.length - 1];
-  const finalMatch = allMatches[finalRid][0];
-  const finalX     = (allRoundIds.length - 1) * COL_W;
-  const finalY     = LOFF + pos[finalRid][0];
-  const champY     = finalY + mh + CHAMP_GAP;
-
-  if (finalMatch?.winner_team_id) {
-    const n = finalMatch.winner_team_id === finalMatch.team_a
-      ? (finalMatch.team_a_name || formatTeamSvg(finalMatch.team_a))
-      : (finalMatch.team_b_name || formatTeamSvg(finalMatch.team_b));
-    body += svgEl('rect', { x:finalX, y:champY, width:MATCH_W, height:CHAMP_H, rx:CHAMP_H/2, ry:CHAMP_H/2, fill:C.goldChampBg, stroke:C.goldChampBorder, 'stroke-width':1.5 });
-    body += svgEl('text', { x:finalX+MATCH_W/2, y:champY+CHAMP_H/2+6, fill:C.goldAccent, 'font-size':15, 'font-weight':'700', 'font-family':'Inter,sans-serif', 'text-anchor':'middle' }, `🏆 ${escH(n)}`);
-  }
-
-  const svgW = allRoundIds.length * COL_W + 40;
-  const svgH = champY + CHAMP_H + BOT_PAD;
+  const svgW = allRoundIds.length * COL_W + 60;
+  const svgH = maxY + BOT_PAD;
   const svg  = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="display:block;overflow:visible;">${body}</svg>`;
   const wrap = document.createElement('div');
   wrap.className = 'bracket-svg-wrapper';
   wrap.innerHTML = svg;
   container.appendChild(wrap);
 }
-
-
