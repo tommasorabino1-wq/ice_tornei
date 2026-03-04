@@ -1689,13 +1689,6 @@ function capitalizeFirst(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// ===============================
-// HELPER: Capitalize first letter
-// ===============================
-function capitalizeFirst(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
 
 
 

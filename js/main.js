@@ -93,7 +93,7 @@ function renderTournaments(tournaments) {
   container.innerHTML = "";
 
   if (tournaments.length === 0) {
-    container.innerHTML = "<p class='placeholder' style='grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);'>Nessun torneo trovato per questo sport.</p>";
+    container.innerHTML = "<p class='placeholder'>Nessun torneo trovato per questo sport.</p>";
     return;
   }
 
