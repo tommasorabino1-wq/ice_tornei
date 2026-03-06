@@ -2908,7 +2908,7 @@ body {
 ========================= */
 .match-main {
   display: grid;
-  grid-template-columns: auto 1fr auto 1fr auto;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 6px;
   width: 100%;
@@ -2917,30 +2917,29 @@ body {
 .match-team {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   flex: 1;
   min-width: 0;
 }
 
 .match-team-a {
-  grid-column: 1 / 3;
+  grid-column: 1;
   justify-content: flex-start;
   text-align: left;
 }
 
 .match-team-b {
-  grid-column: 4 / 6;
+  grid-column: 3;
   justify-content: flex-end;
   text-align: right;
 }
 
 .match-team .team-name {
   display: block;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-main);
   line-height: 1.3;
-  word-break: break-word;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2957,30 +2956,30 @@ body {
    SCORE BLOCK
 ========================= */
 .match-score-block {
-  grid-column: 3;
+  grid-column: 2;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   justify-content: center;
   flex-shrink: 0;
-  padding: 4px 8px;
+  padding: 3px 6px;
   background: rgba(56, 189, 248, 0.08);
   border: 1px solid rgba(56, 189, 248, 0.15);
   border-radius: 8px;
 }
 
 .match-score-block .score {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--text-main);
-  min-width: 20px;
+  min-width: 16px;
   text-align: center;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 
 .match-score-block .score-separator {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.3);
   line-height: 1;
@@ -3144,9 +3143,9 @@ body {
 ========================= */
 .team-logo-match,
 .team-logo-match-fallback {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
   flex-shrink: 0;
 }
 
@@ -3161,7 +3160,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 14px;
 }
 
 /* =========================
@@ -4314,15 +4313,21 @@ body {
   }
 
   .match-team .team-name {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .match-score-block .score {
-    font-size: 22px;
+    font-size: 20px;
+    min-width: 22px;
   }
 
   .match-score-block .score-separator {
-    font-size: 16px;
+    font-size: 15px;
+  }
+
+  .match-score-block {
+    padding: 4px 10px;
+    gap: 4px;
   }
 
   .meta-item {
@@ -4405,12 +4410,12 @@ body {
 
   .team-logo-match,
   .team-logo-match-fallback {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
   }
 
   .team-logo-match-fallback {
-    font-size: 24px;
+    font-size: 18px;
   }
 
   .bracket-team {
@@ -4464,6 +4469,57 @@ body {
     font-size: 13px;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /* =========================================================
@@ -4584,20 +4640,21 @@ body {
   }
 
   .match-team .team-name {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .match-score-block {
-    padding: 6px 12px;
+    padding: 5px 12px;
+    gap: 5px;
   }
 
   .match-score-block .score {
-    font-size: 24px;
-    min-width: 28px;
+    font-size: 22px;
+    min-width: 26px;
   }
 
   .match-score-block .score-separator {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .match-card-footer {
@@ -4697,12 +4754,12 @@ body {
 
   .team-logo-match,
   .team-logo-match-fallback {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
   }
 
   .team-logo-match-fallback {
-    font-size: 28px;
+    font-size: 22px;
   }
 
   .bracket-team {
