@@ -929,6 +929,7 @@ body {
   font-weight:700;
   margin:0;
   white-space:nowrap;
+  max-width: 100%;
 }
 
 .main-title-box{
@@ -942,6 +943,7 @@ body {
   box-shadow:0 4px 14px rgba(0,0,0,0.35);
   margin-top:18px;
   margin-bottom:18px;
+  max-width: 100%;
 }
 
 
