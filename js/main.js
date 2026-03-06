@@ -429,3 +429,17 @@ container.addEventListener("click", e => {
   const tournamentId = card.dataset.id;
   window.location.href = `tournament.html?tournament_id=${tournamentId}`;
 });
+
+
+
+// ===============================
+// FAQ ACCORDION
+// ===============================
+document.querySelectorAll(".faq-question").forEach(btn => {
+  btn.addEventListener("click", () => {
+
+    const item = btn.parentElement;
+    item.classList.toggle("active");
+
+  });
+});

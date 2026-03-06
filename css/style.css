@@ -676,6 +676,152 @@ body {
 }
 
 
+
+
+/* =========================
+   HOW IT WORKS
+========================= */
+
+.how-it-works {
+  margin-top: 48px;
+}
+
+.how-it-works h2 {
+  font-size: 20px;
+  margin-bottom: 18px;
+}
+
+.how-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.how-step {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.how-step h3 {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.how-step p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.how-icon {
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
+
+/* =========================
+   SPORTS SECTION
+========================= */
+
+.sports-section {
+  margin-top: 48px;
+}
+
+.sports-section h2 {
+  font-size: 20px;
+  margin-bottom: 18px;
+}
+
+.sports-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.sport-box {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.sport-box:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+  transform: translateY(-2px);
+}
+
+.sport-box h3 {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.sport-box p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+
+/* =========================
+   FAQ
+========================= */
+
+.faq-section {
+  margin-top: 48px;
+}
+
+.faq-section h2 {
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--border);
+}
+
+.faq-question {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 14px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.faq-question:hover {
+  color: var(--brand);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+}
+
+.faq-answer p {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding-bottom: 14px;
+  line-height: 1.6;
+}
+
+.faq-item.active .faq-answer {
+  max-height: 200px;
+}
+
+
+
+
+
 /* =========================================================
    RESPONSIVE — TABLET (min-width: 768px)
 ========================================================= */
@@ -768,7 +914,71 @@ body {
     right: 20px;
     max-width: 360px;
   }
+
+  /* HOW IT WORKS */
+
+  .how-it-works h2 {
+    font-size: 24px;
+  }
+
+  .how-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+
+  .how-step {
+    padding: 18px;
+  }
+
+  .how-step h3 {
+    font-size: 17px;
+  }
+
+  .how-step p {
+    font-size: 14px;
+  }
+
+
+  /* SPORTS */
+
+  .sports-section h2 {
+    font-size: 24px;
+  }
+
+  .sports-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+
+  .sport-box {
+    padding: 18px;
+  }
+
+  .sport-box h3 {
+    font-size: 17px;
+  }
+
+  .sport-box p {
+    font-size: 14px;
+  }
+
+
+  /* FAQ */
+
+  .faq-section h2 {
+    font-size: 24px;
+  }
+
+  .faq-question {
+    font-size: 15px;
+  }
+
+  .faq-answer p {
+    font-size: 14px;
+  }
 }
+
+
 
 
 /* =========================================================
@@ -842,6 +1052,53 @@ body {
   .toast {
     font-size: 15px;
     padding: 16px 24px;
+  }
+
+
+  /* HOW IT WORKS */
+
+  .how-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .how-step {
+    padding: 22px;
+  }
+
+  .how-step h3 {
+    font-size: 18px;
+  }
+
+  .how-step p {
+    font-size: 14px;
+  }
+
+
+  /* SPORTS */
+
+  .sports-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .sport-box {
+    padding: 22px;
+  }
+
+  .sport-box h3 {
+    font-size: 18px;
+  }
+
+  .sport-box p {
+    font-size: 14px;
+  }
+
+
+  /* FAQ */
+
+  .faq-section {
+    max-width: 800px;
   }
 }
 
