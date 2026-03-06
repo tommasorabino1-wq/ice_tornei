@@ -856,8 +856,26 @@ body {
 ========================= */
 
 .section-divider {
-  margin: 32px 0;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  margin: 40px 0;
+  padding-top: 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.404);
+}
+
+
+/* =========================
+   SECTION HEADER
+========================= */
+
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-size: 24px;
+  font-weight: 700;
 }
 
 
@@ -1023,6 +1041,21 @@ body {
   .faq-answer p {
     font-size: 14px;
   }
+
+  .section-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .section-header h2 {
+    font-size: 28px;
+  }
+
+  .section-header .sport-filter-inline {
+    align-self: flex-start;
+  }
+
 }
 
 
@@ -1152,6 +1185,11 @@ body {
   .faq-section {
     max-width: 800px;
   }
+
+  .section-header h2 {
+    font-size: 32px;
+  }
+
 }
 
 
