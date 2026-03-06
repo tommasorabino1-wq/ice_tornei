@@ -437,25 +437,35 @@ body {
 }
 
 /* =========================
-   INTRO TEXT IMPROVED
+   INTRO BOX
 ========================= */
 
-.intro-text {
-  font-size: 14px;
-  line-height: 1.7;
-  color: rgba(255,255,255,0.78);
-  max-width: 720px;
+.intro-box {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+
+  padding: 16px;
+  margin-top: 8px;
+
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+
+  max-width: 720px;
+
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.82);
 }
 
-.intro-text strong {
+.intro-box strong {
   color: var(--brand);
   font-weight: 600;
 }
 
-.intro-text p {
+.intro-box p {
   margin: 0;
 }
 
@@ -846,8 +856,7 @@ body {
 ========================= */
 
 .section-divider {
-  margin-top: 40px;
-  padding-top: 40px;
+  margin: 32px 0;
   border-top: 1px solid rgba(255,255,255,0.06);
 }
 
@@ -906,6 +915,11 @@ body {
   }
 
   .intro-text {
+    font-size: 15px;
+  }
+
+  .intro-box {
+    padding: 20px;
     font-size: 15px;
   }
 
@@ -1043,6 +1057,11 @@ body {
   }
 
   .intro-text {
+    font-size: 16px;
+  }
+
+  .intro-box {
+    padding: 24px;
     font-size: 16px;
   }
 
