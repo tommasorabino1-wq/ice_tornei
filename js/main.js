@@ -555,19 +555,3 @@ ScrollTrigger.create({
 
 
 
-// ===============================
-// HERO BACKGROUND SLIDER
-// ===============================
-
-const heroImages = document.querySelectorAll(".hero-bg");
-let heroIndex = 0;
-function rotateHero(){
-  heroImages.forEach(img => img.style.opacity = 0);
-  heroImages[heroIndex].style.opacity = 1;
-  heroIndex++;
-  if(heroIndex >= heroImages.length){
-    heroIndex = 0;
-  }
-}
-rotateHero();
-setInterval(rotateHero,6000);

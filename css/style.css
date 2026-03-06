@@ -427,8 +427,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 18px;
+  margin-bottom: 26px;
 }
 
 .page-header h1 {
@@ -893,9 +893,10 @@ body {
 
 .main-title {
   text-align: center;
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 700;
   margin-bottom: 24px;
+  margin-top: 18px;
   width: 100%;
 }
 
@@ -1071,55 +1072,7 @@ section > .section-title {
 
 
 
-/* =========================
-   HERO BACKGROUND
-========================= */
 
-.hero{
-  position:relative;
-  overflow:hidden;
-  padding-top:40px;
-  padding-bottom:40px;
-}
-
-.hero-background{
-  position:absolute;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  z-index:0;
-  overflow:hidden;
-}
-
-.hero-bg{
-  position:absolute;
-  width:100%;
-  height:100%;
-  background-size:cover;
-  background-position:center;
-  opacity:0;
-  transform:scale(1.1);
-  filter:blur(2px) brightness(0.35);
-  transition:opacity 2s ease;
-}
-
-.hero-bg-1{
-  background-image:url("../assets/hero-padel.jpg");
-}
-
-.hero-bg-2{
-  background-image:url("../assets/hero-beach.jpg");
-}
-
-.hero-bg-3{
-  background-image:url("../assets/hero-calcio.jpg");
-}
-
-.hero > *:not(.hero-background){
-  position:relative;
-  z-index:2;
-}
 
 
 
