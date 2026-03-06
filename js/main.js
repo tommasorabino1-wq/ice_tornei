@@ -573,3 +573,26 @@ ScrollTrigger.create({
 
 
 
+// ===============================
+// SPORTS TAPE SLIDER
+// ===============================
+
+const sportsTrack = document.querySelector(".sports-track");
+
+if (sportsTrack) {
+
+  // duplichiamo le card per creare loop infinito
+  sportsTrack.innerHTML += sportsTrack.innerHTML;
+
+  gsap.to(sportsTrack, {
+
+    x: "-50%",
+    duration: 20,
+    ease: "none",
+    repeat: -1
+
+  });
+
+}
+
+
