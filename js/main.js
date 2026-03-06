@@ -508,19 +508,37 @@ function animateCards() {
 // ===============================
 // SCROLL REVEAL SECTIONS
 // ===============================
+
 gsap.registerPlugin(ScrollTrigger);
-gsap.utils.toArray(".reveal-section").forEach(section => {
-  gsap.to(section, {
-    opacity: 1,
-    y: 0,
-    duration: 0.8,
-    ease: "power2.out",
-    scrollTrigger: {
-      trigger: section,
-      start: "top 85%"
+
+gsap.utils.toArray(".reveal-section").forEach((section) => {
+
+  gsap.fromTo(
+    section,
+    {
+      opacity: 0,
+      y: 40
+    },
+    {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: "power2.out",
+
+      scrollTrigger: {
+        trigger: section,
+        start: "top 85%",
+        toggleActions: "play none none none",
+        once: true
+      }
     }
-  });
+  );
+
 });
+
+
+
+
 
 
 // ===============================

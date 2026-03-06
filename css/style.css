@@ -926,24 +926,42 @@ body {
    MAIN TITLE
 ========================= */
 
-.main-title{
+.main-title {
   text-align:center;
-  font-size:34px;
+  font-size:40px;
   font-weight:700;
   margin:0;
   white-space:nowrap;
 }
 
 .main-title-box{
-  display:inline-block;
-  padding:10px 26px;
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  padding:12px 30px;
   border-radius:12px;
   background:rgba(56,189,248,0.06);
   border:1px solid rgba(56,189,248,0.30);
   box-shadow:0 4px 14px rgba(0,0,0,0.35);
-  margin-top: 18px;
-  margin-bottom: 18px;
+  margin-top:18px;
+  margin-bottom:18px;
 }
+
+
+/* =========================
+   MAIN SUBTITLE
+========================= */
+
+.main-subtitle{
+  font-size:16px;
+  color:var(--text-muted);
+  text-align:center;
+  margin-top:12px;
+  line-height:1.4;
+  max-width:420px;
+}
+
+
 
 /* =========================
    TYPING SPORT
@@ -1064,6 +1082,10 @@ section > .section-title {
 .reveal-section {
   opacity: 0;
   transform: translateY(40px);
+}
+
+.reveal-section {
+  will-change: transform, opacity;
 }
 
 
