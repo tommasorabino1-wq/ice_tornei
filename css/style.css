@@ -478,6 +478,23 @@ body {
   margin-bottom: 24px;
 }
 
+/* =============================================
+   INTRO TEXT (nuovo)
+============================================= */
+.intro-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 1rem 0 2rem 0;
+  max-width: 800px;
+}
+
+.intro-text strong {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+}
+
+
 
 /* =========================
    SPORT FILTER INLINE (HOMEPAGE)
