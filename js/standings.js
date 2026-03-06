@@ -1,4 +1,20 @@
 // ===============================
+// HAMBURGER MENU TOGGLE
+// ===============================
+const menuToggle = document.querySelector(".mobile-menu-toggle");
+const mainNavEl = document.querySelector(".main-nav");
+
+if (menuToggle && mainNavEl) {
+  menuToggle.addEventListener("click", () => {
+    menuToggle.classList.toggle("active");
+    mainNavEl.classList.toggle("active");
+
+    const expanded = menuToggle.getAttribute("aria-expanded") === "true";
+    menuToggle.setAttribute("aria-expanded", String(!expanded));
+  });
+}
+
+// ===============================
 // STANDINGS JS (READ-ONLY VERSION)
 // ===============================
 
@@ -13,8 +29,6 @@ const API_URLS = {
   getBracket: "https://getbracket-dzvezz2yhq-uc.a.run.app",
   getTeamsLogosMap: "https://getteamslogosmap-dzvezz2yhq-uc.a.run.app"
 };
-
-
 
 // ===============================
 // GLOBAL STATE
@@ -101,7 +115,6 @@ function formatHasFinals(formatType) {
 // ===============================
 async function loadStandingsPage(tournamentId) {
   try {
-    // Carica tornei
     const tournamentsRes = await fetch(API_URLS.getTournaments);
     if (!tournamentsRes.ok) throw new Error(`HTTP error! status: ${tournamentsRes.ok}`);
     const tournaments = await tournamentsRes.json();
@@ -119,15 +132,13 @@ async function loadStandingsPage(tournamentId) {
     TOURNAMENT_MATCH_FORMAT_FINALS = String(t?.match_format_finals || '').toLowerCase();
     TOURNAMENT_HAS_3X4 = t?.['3_4_posto'] === true;
 
-    // ✅ NUOVO: Carica loghi squadre
     try {
       const logosRes = await fetch(`${API_URLS.getTeamsLogosMap}?tournament_id=${encodeURIComponent(tournamentId)}`);
       if (logosRes.ok) {
         teamsLogosMap = await logosRes.json();
-        console.log('✅ Logos loaded:', Object.keys(teamsLogosMap).length);
       }
     } catch (err) {
-      console.error('⚠️ Failed to load logos:', err);
+      console.error('Failed to load logos:', err);
       teamsLogosMap = {};
     }
 
@@ -319,7 +330,7 @@ function loadMatches(tournamentId) {
 }
 
 // ===============================
-// RENDER MATCHES BY ROUND (READ-ONLY)
+// RENDER MATCHES BY ROUND
 // ===============================
 function renderMatchesByRound(roundId) {
   const container = document.getElementById("matches-list");
@@ -350,7 +361,6 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
   const isPlayed = match.played === true || String(match.played).toUpperCase() === "TRUE";
   if (isPlayed) card.classList.add("played");
 
-  // Gestione TBD per match futuri
   const teamAName = match.team_a_name || (match.team_a ? formatTeam(match.team_a) : "TBD");
   const teamBName = match.team_b_name || (match.team_b ? formatTeam(match.team_b) : "TBD");
   const isTbd = !match.team_a || !match.team_b;
@@ -388,7 +398,6 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
   const setsDetail = match.sets_detail || null;
   const showSetsDetail = isSetBased && isPlayed && setsDetail;
 
-  // Label per tipo match
   let metaInfo;
   if (isFinals) {
     if (match.is_third_place_match) {
@@ -400,7 +409,6 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
     metaInfo = `<span class="meta-item meta-group">Girone ${escapeHTML(match.group_id || "?")}</span>`;
   }
 
-  // ✅ NUOVO: Loghi squadre
   const logoA = teamsLogosMap[match.team_a];
   const logoB = teamsLogosMap[match.team_b];
 
@@ -517,8 +525,6 @@ function loadStandings(tournamentId) {
       fadeOutSkeleton(skeleton);
       ALL_STANDINGS = Array.isArray(data) ? data : [];
       renderStandings(data);
-      
-      // ✅ NUOVO: Gestione podium in base ai casi
       handlePodiumRendering();
     })
     .catch(err => {
@@ -526,8 +532,6 @@ function loadStandings(tournamentId) {
       standingsEl.innerHTML = "<p class='error'>Errore caricamento classifica</p>";
     });
 }
-
-
 
 // ===============================
 // HELPERS
@@ -592,12 +596,10 @@ function renderStandings(data) {
           </thead>
           <tbody>
             ${teams.map(team => {
-              // ✅ NUOVO: Logo o icona fallback
               const teamLogo = teamsLogosMap[team.team_id];
               const logoHTML = teamLogo
                 ? `<img src="${escapeHTML(teamLogo)}" alt="" class="team-logo-mini">`
                 : `<span class="team-logo-mini-fallback">👥</span>`;
-
               return `
               <tr>
                 <td class="team-cell">
@@ -633,12 +635,10 @@ function renderStandings(data) {
           </thead>
           <tbody>
             ${teams.map(team => {
-              // ✅ NUOVO: Logo o icona fallback
               const teamLogo = teamsLogosMap[team.team_id];
               const logoHTML = teamLogo
                 ? `<img src="${escapeHTML(teamLogo)}" alt="" class="team-logo-mini">`
                 : `<span class="team-logo-mini-fallback">👥</span>`;
-
               return `
               <tr>
                 <td class="team-cell">
@@ -665,8 +665,6 @@ function renderStandings(data) {
     standingsEl.appendChild(group);
   });
 }
-
-
 
 // ===============================
 // FORMAT DIFF
@@ -741,7 +739,6 @@ function renderFinalsMatchesByRound(roundId, bracket) {
 
   container.innerHTML = "";
 
-  // Match normali del round
   const matchesInRound = bracket.rounds?.[roundId] || [];
   const roundLabel = getRoundLabel(matchesInRound.length);
   const isSetBased = matchesInRound[0]?.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_FINALS);
@@ -762,7 +759,6 @@ function renderFinalsMatchesByRound(roundId, bracket) {
     container.appendChild(roundBox);
   }
 
-  // Mostra finale 3/4 se esiste e siamo nel round finale
   if (bracket.thirdPlaceMatch) {
     const maxRound = Math.max(...Object.keys(bracket.rounds).map(Number));
     if (Number(roundId) === maxRound) {
@@ -794,33 +790,26 @@ function loadFinalsBracket(tournamentId) {
     });
 }
 
-
 // ===============================
 // APPLY LAYOUT BY STATUS
-// Versione semplificata basata su status backend
 // ===============================
 function applyLayoutByStatus() {
   const finalsSection = document.getElementById("finals-container");
   const podiumWrapper = document.getElementById("podium-subsection-wrapper");
-  
-  // Reset: nascondi tutto
+
   finalsSection.classList.add("hidden");
   if (podiumWrapper) podiumWrapper.classList.add("hidden");
-  
+
   const hasFinals = formatHasFinals(TOURNAMENT_FORMAT);
-  
-  // ✅ FINALS: mostra se in final_phase o finished (e se il formato lo prevede)
+
   if (hasFinals && (TOURNAMENT_STATUS === "final_phase" || TOURNAMENT_STATUS === "finished")) {
     finalsSection.classList.remove("hidden");
-    
-    // ✅ PODIUM: mostra solo se torneo finito (dentro finals)
+
     if (TOURNAMENT_STATUS === "finished" && podiumWrapper) {
       podiumWrapper.classList.remove("hidden");
     }
   }
 }
-
-
 
 // ===============================
 // ROUND LABEL
@@ -848,7 +837,6 @@ function renderFinalsBracket(bracket) {
   const finalsSkeleton = document.querySelector(".finals-section .finals-skeleton");
   if (finalsSkeleton) finalsSkeleton.classList.add("hidden");
 
-  // I round del bracket principale (esclude il match 3/4 che è separato)
   const rounds = Object.keys(bracket.rounds)
     .map(Number)
     .sort((a, b) => a - b);
@@ -878,50 +866,41 @@ function renderBracketVisual(bracket, container) {
   renderBracketSVG(bracket, container);
 }
 
-
-
 // ===============================
 // HANDLE PODIUM RENDERING
-// Versione semplificata
 // ===============================
 function handlePodiumRendering() {
-  // Mostra podium solo se torneo finito e ci sono standings
   if (TOURNAMENT_STATUS === "finished" && ALL_STANDINGS.length > 0) {
     callPodiumRenderer();
   }
 }
 
-
-
-
 // ===============================
 // CALL PODIUM RENDERER
-// Invariata
 // ===============================
 function callPodiumRenderer() {
   const container = document.getElementById("podium-svg-container");
   const skeleton = document.getElementById("podium-skeleton");
-  
+
   if (!container) return;
-  
+
   if (skeleton) {
     fadeOutSkeleton(skeleton);
   }
-  
+
   const isSetBased = ALL_STANDINGS[0]?.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_GIRONI);
   const sport = ALL_STANDINGS[0]?.sport || TOURNAMENT_SPORT;
-  
+
   const podiumData = {
     standings: ALL_STANDINGS,
     isSetBased: isSetBased,
     sport: sport,
     teamsLogosMap: teamsLogosMap
   };
-  
+
   if (typeof window.renderPodiumSVG === 'function') {
     window.renderPodiumSVG(podiumData, container);
   } else {
-    console.warn('⚠️ podium-svg-renderer.js non caricato');
+    console.warn('podium-svg-renderer.js non caricato');
   }
 }
-

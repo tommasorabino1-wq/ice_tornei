@@ -1,65 +1,144 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+  <!-- ========================================
+       META TAG BASE
+  ========================================= -->
   <meta charset="UTF-8">
-  <title>ICE | Standings</title>
-  <meta name="description" content="ICE Tournament - Classifiche ufficiali dei tornei ICE. Consulta gironi, punti e risultati aggiornati.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="icon" href="assets/logo.png">
+  <!-- ========================================
+       SEO: Title e Description
+  ========================================= -->
+  <title>Classifiche e Risultati Tornei | ICE Tournament Torino</title>
+  <meta name="description" content="Classifiche live, risultati e tabelloni dei tornei ICE. Segui gironi, fasi finali e podio dei tornei di padel, beach volley e calcetto a Torino.">
+  <meta name="keywords" content="classifica tornei padel, risultati tornei torino, tabellone beach volley, gironi calcetto, tornei sportivi classifica">
+
+  <!-- ========================================
+       CANONICAL URL
+  ========================================= -->
+  <link rel="canonical" href="https://tornei-ice.it/standings.html">
+
+  <!-- ========================================
+       OPEN GRAPH (Facebook, WhatsApp, LinkedIn)
+  ========================================= -->
+  <meta property="og:title" content="Classifiche e Risultati | ICE Tournament Torino">
+  <meta property="og:description" content="Classifiche live, risultati e tabelloni dei tornei di padel, beach volley e calcetto a Torino.">
+  <meta property="og:image" content="https://tornei-ice.it/assets/og-image.png">
+  <meta property="og:url" content="https://tornei-ice.it/standings.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="it_IT">
+
+  <!-- ========================================
+       TWITTER CARD
+  ========================================= -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Classifiche Tornei | ICE Tournament Torino">
+  <meta name="twitter:description" content="Segui classifiche, risultati e tabelloni dei tornei ICE a Torino">
+  <meta name="twitter:image" content="https://tornei-ice.it/assets/twitter-image.png">
+
+  <!-- ========================================
+       FAVICON
+  ========================================= -->
+  <link rel="icon" type="image/png" href="assets/logo.png">
   <link rel="apple-touch-icon" href="assets/logo.png">
 
-  <!-- Google Font -->
+  <!-- ========================================
+       FONTS & CSS (con preconnect per performance)
+  ========================================= -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/style.css">
+
+  <!-- ========================================
+       STRUCTURED DATA (Schema.org)
+  ========================================= -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Classifiche e Risultati Tornei - ICE Tournament",
+    "description": "Classifiche live, risultati e tabelloni dei tornei ICE di padel, beach volley e calcetto a Torino.",
+    "url": "https://tornei-ice.it/standings.html",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "ICE Tournament",
+      "url": "https://tornei-ice.it"
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://tornei-ice.it/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Classifiche",
+          "item": "https://tornei-ice.it/standings.html"
+        }
+      ]
+    }
+  }
+  </script>
 </head>
 
 <body>
 
-
-  <!-- HEADER + NAV UNIFICATI -->
-  <header class="main-header">
+  <!-- ========================================
+       HEADER + NAV (semantico)
+  ========================================= -->
+  <header class="main-header" role="banner">
     <div class="main-header-container">
 
       <!-- BRAND (LOGO) -->
       <div class="brand">
-        <a href="index.html">
-          <img src="assets/logo.png" alt="ICE logo">
+        <a href="index.html" aria-label="Homepage ICE Tournament">
+          <img src="assets/logo.png" alt="Logo ICE Tournament - Tornei sportivi Torino" width="120" height="120">
         </a>
       </div>
 
+      <!-- HAMBURGER BUTTON (visible only on mobile) -->
+      <button class="mobile-menu-toggle" aria-label="Apri menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
       <!-- NAVIGATION -->
-      <nav class="main-nav">
+      <nav class="main-nav" role="navigation" aria-label="Navigazione principale">
         <a href="index.html">Tornei</a>
-        <a href="standings.html" class="active">Classifica</a>
+        <a href="standings.html" class="active" aria-current="page">Classifica</a>
         <a href="tournament.html">Regolamento</a>
       </nav>
 
     </div>
   </header>
 
-  <!-- CONTENUTO -->
-  <main class="container">
+  <!-- ========================================
+       MAIN CONTENT (semantico)
+  ========================================= -->
+  <main class="container" role="main">
 
     <!-- =========================
         SELEZIONE TORNEO
-        (visibile se NON c'è tournament_id)
     ========================== -->
     <section id="standings-select-section">
 
-      <!-- PAGE HEADER + FILTRO TORNEO -->
       <div class="page-header">
-        
-        <!-- TOURNAMENT FILTER (INLINE) -->
         <div class="sport-filter-inline">
           <label for="standings-tournament-select">Torneo</label>
-          <select id="standings-tournament-select">
+          <select id="standings-tournament-select" aria-label="Seleziona un torneo per vederne la classifica">
             <option value="">Seleziona un torneo</option>
           </select>
         </div>
       </div>
 
-      <!-- PLACEHOLDER MESSAGE -->
       <div class="standings-placeholder">
         <div class="standings-placeholder-icon">📊</div>
         <h3>Seleziona un torneo</h3>
@@ -70,11 +149,9 @@
 
     <!-- =========================
         STANDINGS TORNEO SPECIFICO
-        (visibile se c'è tournament_id)
     ========================== -->
     <section id="standings-specific-section" class="hidden">
 
-      <!-- HEADER STANDINGS -->
       <header class="standings-header">
         <h1 id="standings-tournament-title">Classifica</h1>
         <p id="standings-tournament-subtitle" class="standings-subtitle"></p>
@@ -82,10 +159,7 @@
 
       <section class="standings-layout">
 
-        <!-- =====================
-            FINALS SECTION
-            Visibile nei casi A e B
-        ====================== -->
+        <!-- FINALS SECTION -->
         <section
           id="finals-container"
           class="finals-section hidden"
@@ -96,58 +170,45 @@
             Fasi Finali
           </h3>
 
-          <!-- Skeleton Finals -->
           <div class="standings-skeleton finals-skeleton" id="finals-skeleton">
             <div class="skeleton-match"></div>
             <div class="skeleton-match"></div>
           </div>
 
-          <!-- ✅ SUBSECTION 0: PODIO (nuovo, prima delle altre) -->
+          <!-- PODIO -->
           <div class="finals-subsection" id="podium-subsection-wrapper">
             <h4 class="finals-subsection-title">Classifica Finale</h4>
-            
             <div class="finals-podium-fullwidth">
-              <!-- Skeleton Podium -->
               <div class="standings-skeleton podium-skeleton" id="podium-skeleton">
                 <div class="skeleton-podium"></div>
               </div>
-
-              <!-- SVG Podium Container -->
               <div id="podium-svg-container"></div>
             </div>
           </div>
 
-          <!-- SUBSECTION 1: Risultati Fasi Finali -->
+          <!-- RISULTATI FINALI -->
           <div class="finals-subsection">
             <h4 class="finals-subsection-title">Risultati Partite</h4>
-            
             <div class="finals-matches-fullwidth">
-              <!-- Filter Finals -->
               <div class="round-filter-box">
                 <label for="finals-round-filter">Seleziona Round</label>
                 <select id="finals-round-filter"></select>
               </div>
-
               <div id="finals-bracket-content"></div>
             </div>
           </div>
 
-          <!-- SUBSECTION 2: Tabellone full-width -->
+          <!-- TABELLONE -->
           <div class="finals-subsection">
             <h4 class="finals-subsection-title">Tabellone</h4>
-            
             <div class="finals-bracket-column">
               <div id="finals-bracket-visual"></div>
             </div>
           </div>
 
         </section>
-        
-        
-        <!-- =====================
-            GIRONI SECTION
-            Visibile in tutti i casi
-        ====================== -->
+
+        <!-- GIRONI SECTION -->
         <section class="gironi-section">
 
           <h3 class="gironi-section-title">
@@ -155,18 +216,13 @@
             Fase a Gironi
           </h3>
 
-          <!-- =====================
-              SUBSECTION 1: RISULTATI PARTITE
-          ====================== -->
+          <!-- RISULTATI PARTITE -->
           <div class="gironi-subsection">
             <h4 class="gironi-subsection-title">Risultati Partite</h4>
-            
             <section
               id="matches-container"
               class="standings-results-box-fullwidth loading"
               aria-label="Match gironi">
-
-              <!-- Skeleton Matches -->
               <div class="standings-skeleton" id="matches-skeleton">
                 <h3 class="skeleton skeleton-title"></h3>
                 <div class="matches-scroll">
@@ -174,36 +230,23 @@
                   <div class="skeleton-match"></div>
                 </div>
               </div>
-
-              <!-- Real Matches -->
               <div class="standings-content">
                 <div class="round-filter-box">
                   <label for="round-filter">Seleziona Giornata</label>
                   <select id="round-filter"></select>
                 </div>
-
-                <div
-                  id="matches-list"
-                  class="matches-scroll"
-                  aria-live="polite">
-                </div>
+                <div id="matches-list" class="matches-scroll" aria-live="polite"></div>
               </div>
-
             </section>
           </div>
 
-          <!-- =====================
-              SUBSECTION 2: CLASSIFICA GIRONI
-          ====================== -->
+          <!-- CLASSIFICA GIRONI -->
           <div class="gironi-subsection">
             <h4 class="gironi-subsection-title">Classifica Gironi</h4>
-            
             <section
               id="standings-container"
               class="standings-table-box-fullwidth"
               aria-label="Classifiche gironi">
-
-              <!-- Skeleton Standings -->
               <div class="standings-skeleton" id="standings-skeleton">
                 <h3 class="skeleton skeleton-title"></h3>
                 <div class="standings-group skeleton">
@@ -212,13 +255,7 @@
                   <div class="skeleton-line short"></div>
                 </div>
               </div>
-
-              <!-- Real Standings -->
-              <div
-                id="standings"
-                class="standings-content hidden">
-              </div>
-
+              <div id="standings" class="standings-content hidden"></div>
             </section>
           </div>
 
@@ -230,54 +267,53 @@
 
   </main>
 
-  <!-- FOOTER -->
-  <footer class="site-footer">
+  <!-- ========================================
+       FOOTER (semantico)
+  ========================================= -->
+  <footer class="site-footer" role="contentinfo">
     <div class="footer-container">
 
-      <!-- BRAND TOP -->
       <div class="footer-brand">
-        <img src="assets/logo.png" alt="ICE logo">
+        <img src="assets/logo.png" alt="Logo ICE Tournament" width="80" height="80">
         <p>La tua piattaforma per tornei sportivi</p>
       </div>
 
-      <!-- CONTENT -->
       <div class="footer-content">
-        
-        <!-- CONTATTI -->
+
         <div class="footer-section footer-contacts">
-          <h4>Contatti</h4>
-          <p>📞 +39 339 616 0901</p>
-          <p>✉️ tornei.ice.torino@gmail.com</p>
+          <h2>Contatti</h2>
+          <p><a href="tel:+393396160901" aria-label="Chiama ICE Tournament">📞 +39 339 616 0901</a></p>
+          <p><a href="mailto:tornei.ice.torino@gmail.com" aria-label="Email ICE Tournament">✉️ tornei.ice.torino@gmail.com</a></p>
         </div>
 
-        <!-- NAVIGA -->
         <div class="footer-section footer-nav">
-          <h4>Naviga</h4>
+          <h2>Naviga</h2>
           <a href="index.html">Homepage</a>
+          <a href="standings.html">Classifiche</a>
           <a href="tournament.html">Regolamento</a>
         </div>
 
-        <!-- LEGAL -->
         <div class="footer-section footer-legal">
-          <h4>Legal</h4>
+          <h2>Legal</h2>
           <a href="#">Privacy Policy</a>
           <a href="#">Termini e condizioni</a>
         </div>
 
       </div>
 
-      <!-- BOTTOM -->
       <div class="footer-bottom">
-        © 2026 ICE Tournament. Tutti i diritti riservati.
+        <p>&copy; 2026 ICE Tournament. Tutti i diritti riservati.</p>
       </div>
 
     </div>
   </footer>
 
-
-  <script src="js/bracket-svg-renderer.js"></script>
-  <script src="js/podium-svg-renderer.js"></script>
-  <script src="js/standings.js"></script>
+  <!-- ========================================
+       JAVASCRIPT (defer per performance)
+  ========================================= -->
+  <script src="js/bracket-svg-renderer.js" defer></script>
+  <script src="js/podium-svg-renderer.js" defer></script>
+  <script src="js/standings.js" defer></script>
 
 </body>
 </html>
