@@ -880,6 +880,83 @@ body {
 
 
 
+/* =========================
+   MAIN TITLE
+========================= */
+
+.main-title {
+  text-align: center;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+/* =========================
+   TYPING TITLE
+========================= */
+
+.typed-sport {
+  color: var(--brand);
+  font-weight: 700;
+}
+
+/* cursore typing */
+
+.typed-cursor {
+  color: var(--brand);
+  font-weight: 700;
+}
+
+/* =========================
+   SECTION TITLES
+========================= */
+
+.section-title {
+
+  display: inline-block;
+
+  text-align: center;
+
+  padding: 10px 24px;
+
+  border-radius: 12px;
+
+  border: 1px solid rgba(56,189,248,0.35);
+
+  background: rgba(56,189,248,0.08);
+
+  color: var(--text-main);
+
+  font-weight: 700;
+
+  letter-spacing: 0.02em;
+
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+
+}
+
+
+
+/* centra il titolo dentro la sezione */
+
+.section-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+
+
+/* titoli sezione non dentro header */
+
+section > .section-title {
+  display: block;
+  width: fit-content;
+  margin: 0 auto 32px auto;
+}
+
+
 
 
 /* =========================================================
@@ -1056,6 +1133,15 @@ body {
     align-self: flex-start;
   }
 
+
+  .main-title{
+    font-size:40px;
+  }
+
+  .section-title{
+    font-size:22px;
+  }
+
 }
 
 
@@ -1188,6 +1274,14 @@ body {
 
   .section-header h2 {
     font-size: 32px;
+  }
+
+  .main-title{
+    font-size:46px;
+  }
+
+  .section-title{
+    font-size:24px;
   }
 
 }

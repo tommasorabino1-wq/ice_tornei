@@ -455,3 +455,37 @@ document.querySelectorAll(".faq-question").forEach(btn => {
   });
 
 });
+
+
+// ===============================
+// HERO TYPING ANIMATION
+// ===============================
+
+document.addEventListener("DOMContentLoaded", function () {
+
+  if (document.querySelector(".typed-sport")) {
+
+    new Typed(".typed-sport", {
+
+      strings: [
+        "Padel",
+        "Beach Volley",
+        "Calcio"
+      ],
+
+      typeSpeed: 70,
+      backSpeed: 45,
+      backDelay: 1400,
+
+      startDelay: 400,
+
+      loop: true,
+
+      showCursor: true,
+      cursorChar: "|"
+
+    });
+
+  }
+
+});
