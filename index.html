@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <!-- ========================================
-       META TAG BASE (obbligatori)
+       META TAG BASE
   ========================================= -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,7 +20,7 @@
   <link rel="canonical" href="https://tuosito.com/">
   
   <!-- ========================================
-       OPEN GRAPH (Facebook, WhatsApp, LinkedIn)
+       OPEN GRAPH
   ========================================= -->
   <meta property="og:title" content="ICE Tournament - Tornei Sportivi a Torino">
   <meta property="og:description" content="La piattaforma per tornei di padel, beach volley e calcetto. Iscriviti online, segui le classifiche live e gioca!">
@@ -44,7 +44,7 @@
   <link rel="apple-touch-icon" href="assets/logo.png">
 
   <!-- ========================================
-       FONTS & CSS (con preconnect per performance)
+       FONTS & CSS
   ========================================= -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -83,7 +83,7 @@
 <body>
 
   <!-- ========================================
-       HEADER + NAV (semantico)
+       HEADER + NAV
   ========================================= -->
   <header class="main-header" role="banner">
     <div class="main-header-container">
@@ -91,9 +91,16 @@
       <!-- BRAND (LOGO) -->
       <div class="brand">
         <a href="index.html" aria-label="Homepage ICE Tournament">
-          <img src="assets/logo.png" alt="Logo ICE Tournament - Tornei sportivi Torino" width="120" height="40">
+          <img src="assets/logo.png" alt="Logo ICE Tournament" width="120" height="40">
         </a>
       </div>
+
+      <!-- HAMBURGER BUTTON (visible only on mobile) -->
+      <button class="mobile-menu-toggle" aria-label="Apri menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
 
       <!-- NAVIGATION -->
       <nav class="main-nav" role="navigation" aria-label="Navigazione principale">
@@ -106,21 +113,19 @@
   </header>
 
   <!-- ========================================
-       MAIN CONTENT (semantico)
+       MAIN CONTENT
   ========================================= -->
   <main class="container" role="main">
     
-    <!-- H1 SEO-optimized (sostituisce h2) -->
     <header class="page-header">
       <h1>Tornei Padel, Beach Volley e Calcetto a Torino</h1>
       
-      <!-- Intro text SEO (nuovo) -->
       <p class="intro-text">
         Scopri i migliori <strong>tornei sportivi a Torino</strong>: iscriviti online ai tornei di <strong>padel</strong>, 
         <strong>beach volley</strong> e <strong>calcetto</strong>. Classifiche live, gestione semplice e community attiva.
       </p>
       
-      <!-- SPORT FILTER (INLINE) -->
+      <!-- SPORT FILTER -->
       <div class="sport-filter-inline">
         <label for="sport-filter">Filtra per sport</label>
         <select id="sport-filter" class="filter-sport" aria-label="Filtra tornei per sport">
@@ -136,21 +141,18 @@
     <!-- Tournament List -->
     <section id="tournaments" class="tournament-list" aria-label="Lista tornei disponibili">
       
-      <!-- SKELETON CARD 1 -->
       <article class="tournament-card skeleton" aria-hidden="true">
         <div class="skeleton-title"></div>
         <div class="skeleton-line"></div>
         <div class="skeleton-line short"></div>
       </article>
 
-      <!-- SKELETON CARD 2 -->
       <article class="tournament-card skeleton" aria-hidden="true">
         <div class="skeleton-title"></div>
         <div class="skeleton-line"></div>
         <div class="skeleton-line short"></div>
       </article>
 
-      <!-- SKELETON CARD 3 -->
       <article class="tournament-card skeleton" aria-hidden="true">
         <div class="skeleton-title"></div>
         <div class="skeleton-line"></div>
@@ -162,28 +164,24 @@
   </main>
 
   <!-- ========================================
-       FOOTER (semantico)
+       FOOTER
   ========================================= -->
   <footer class="site-footer" role="contentinfo">
     <div class="footer-container">
 
-      <!-- BRAND TOP -->
       <div class="footer-brand">
         <img src="assets/logo.png" alt="Logo ICE Tournament" width="80" height="26">
         <p>La tua piattaforma per tornei sportivi</p>
       </div>
 
-      <!-- CONTENT -->
       <div class="footer-content">
         
-        <!-- CONTATTI -->
         <div class="footer-section footer-contacts">
           <h2>Contatti</h2>
           <p><a href="tel:+393396160901" aria-label="Chiama ICE Tournament">📞 +39 339 616 0901</a></p>
           <p><a href="mailto:tornei.ice.torino@gmail.com" aria-label="Email ICE Tournament">✉️ tornei.ice.torino@gmail.com</a></p>
         </div>
 
-        <!-- NAVIGA -->
         <div class="footer-section footer-nav">
           <h2>Naviga</h2>
           <a href="index.html">Homepage</a>
@@ -191,7 +189,6 @@
           <a href="tournament.html">Regolamento</a>
         </div>
 
-        <!-- LEGAL -->
         <div class="footer-section footer-legal">
           <h2>Legal</h2>
           <a href="#">Privacy Policy</a>
@@ -200,7 +197,6 @@
 
       </div>
 
-      <!-- BOTTOM -->
       <div class="footer-bottom">
         <p>&copy; 2026 ICE Tournament. Tutti i diritti riservati.</p>
       </div>
@@ -209,7 +205,7 @@
   </footer>
 
   <!-- ========================================
-       JAVASCRIPT (defer per performance)
+       JAVASCRIPT
   ========================================= -->
   <script src="js/main.js" defer></script>
   

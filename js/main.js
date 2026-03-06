@@ -1,4 +1,20 @@
 // ===============================
+// HAMBURGER MENU TOGGLE
+// ===============================
+const menuToggle = document.querySelector(".mobile-menu-toggle");
+const mainNav = document.querySelector(".main-nav");
+
+if (menuToggle && mainNav) {
+  menuToggle.addEventListener("click", () => {
+    menuToggle.classList.toggle("active");
+    mainNav.classList.toggle("active");
+
+    const expanded = menuToggle.getAttribute("aria-expanded") === "true";
+    menuToggle.setAttribute("aria-expanded", String(!expanded));
+  });
+}
+
+// ===============================
 // HOMEPAGE - TORNEI (ICE PLATFORM)
 // ===============================
 
@@ -110,8 +126,6 @@ function renderTournaments(tournaments) {
     const statusLabel = buildStatusLabel(t.status);
     const iscrizioniAperte = t.status === "open";
 
-    // === STESSA IDENTICA LOGICA DELLA PAGINA TORNEO ===
-
     const row1 = `${t.sport} · ${t.location} · ${t.date}`;
     const row2 = buildParticipantsInfoText(t);
     const row3 = buildPriceInfoText(t);
@@ -161,15 +175,13 @@ function renderTournaments(tournaments) {
 }
 
 
-
-
 // ===============================
 // BUILD STATUS LABEL
 // ===============================
 function buildStatusLabel(status) {
   const labels = {
     open: "ISCRIZIONI APERTE",
-    wip: "IN DEFINIZIONE",        // ✅ NUOVO
+    wip: "IN DEFINIZIONE",
     live: "IN CORSO",
     final_phase: "FASE FINALE",
     full: "COMPLETO",
@@ -180,7 +192,7 @@ function buildStatusLabel(status) {
 }
 
 // ===============================
-// BUILD PARTICIPANTS INFO (gender, age, expertise)
+// BUILD PARTICIPANTS INFO
 // ===============================
 function buildParticipantsInfoText(t) {
   const parts = [];
@@ -210,20 +222,14 @@ function buildParticipantsInfoText(t) {
   return parts.join(" · ");
 }
 
-
-
 // ===============================
-// BUILD PRICE INFO (price, court_price, referee_price)
+// BUILD PRICE INFO
 // ===============================
 function buildPriceInfoText(t) {
   const price = t.price || 0;
 
   const courtPrice = String(t.court_price || "non_compreso").toLowerCase();
   const refereePrice = String(t.referee_price || "na").toLowerCase();
-
-  // ===============================
-  // CAMPI
-  // ===============================
 
   let courtText = "";
 
@@ -242,23 +248,15 @@ function buildPriceInfoText(t) {
       courtText = "Campi non inclusi";
   }
 
-  // ===============================
-  // ARBITRO
-  // ===============================
-
   let refereeText = "";
 
   if (refereePrice === "na") {
-    refereeText = ""; // non menzioniamo
+    refereeText = "";
   } else if (refereePrice === "non_compreso") {
     refereeText = "Arbitro non incluso";
   } else {
     refereeText = "Arbitro incluso";
   }
-
-  // ===============================
-  // COMPOSIZIONE FINALE
-  // ===============================
 
   const parts = [courtText];
 
@@ -268,9 +266,6 @@ function buildPriceInfoText(t) {
 
   return `€${price} a squadra · ${parts.join(", ")}`;
 }
-
-
-
 
 // ===============================
 // BUILD AWARD INFO
@@ -295,10 +290,8 @@ function buildAwardInfoText(t) {
   return "Montepremi garantito";
 }
 
-
-
 // ===============================
-// BUILD FORMAT INFO (format_type, guaranteed_match)
+// BUILD FORMAT INFO
 // ===============================
 function buildFormatInfoText(t) {
   const formatMap = {
@@ -318,7 +311,6 @@ function buildFormatInfoText(t) {
   return formatText;
 }
 
-
 // ===============================
 // BUILD TIME RANGE INFO
 // ===============================
@@ -331,7 +323,6 @@ function buildTimeRangeInfoText(t) {
 
   return timeMap[t.time_range] || "Durata da definire";
 }
-
 
 // ===============================
 // BUILD COURT SCHEDULING MODE
@@ -348,7 +339,6 @@ function buildCourtSchedulingModeText(t) {
   return fixedMap[fixed] || "A scelta per tutte le partite";
 }
 
-
 // ===============================
 // BUILD COURT DAYS & HOURS RANGE
 // ===============================
@@ -358,10 +348,6 @@ function buildCourtDaysHoursRangeText(t) {
   const hoursRaw = String(t.available_hours || "").toLowerCase().trim();
 
   const parts = [];
-
-  // =====================================================
-  // GIORNI
-  // =====================================================
 
   const dayLabels = {
     lun: "Lunedì",
@@ -375,8 +361,6 @@ function buildCourtDaysHoursRangeText(t) {
   };
 
   if (daysRaw.includes("-")) {
-
-    // Range (es. lun-ven, sab-dom, ven-dom, lun-dom)
     const [start, end] = daysRaw.split("-");
 
     if (daysRaw === "lun-dom") {
@@ -396,17 +380,10 @@ function buildCourtDaysHoursRangeText(t) {
     }
 
   } else if (dayLabels[daysRaw]) {
-
-    // Giorno singolo
     parts.push(dayLabels[daysRaw]);
   }
 
-  // =====================================================
-  // ORARI (DINAMICI)
-  // =====================================================
-
   if (hoursRaw && hoursRaw.includes("-")) {
-
     const [startHour, endHour] = hoursRaw.split("-");
 
     const formatHour = (h) => {
@@ -425,10 +402,6 @@ function buildCourtDaysHoursRangeText(t) {
 
   return parts.join(" · ");
 }
-
-
-
-
 
 // ===============================
 // ESCAPE HTML
