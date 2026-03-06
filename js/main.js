@@ -521,3 +521,53 @@ gsap.utils.toArray(".reveal-section").forEach(section => {
     }
   });
 });
+
+
+// ===============================
+// HERO COUNTER ANIMATION
+// ===============================
+
+const statNumbers = document.querySelectorAll(".stat-number");
+function animateStats(){
+  statNumbers.forEach(el => {
+  const target = Number(el.dataset.target);
+    gsap.fromTo(el,
+    { innerText: 0 },
+      {
+      innerText: target,
+      duration: 1.2,
+      ease: "power1.out",
+      snap:{ innerText:1 },
+      onUpdate:function(){
+        el.innerText = "+" + Math.floor(el.innerText);
+        }
+      }
+    );
+  });
+}
+
+ScrollTrigger.create({
+  trigger: ".hero-stats",
+  start: "top 85%",
+  onEnter: animateStats,
+  once:true
+});
+
+
+
+// ===============================
+// HERO BACKGROUND SLIDER
+// ===============================
+
+const heroImages = document.querySelectorAll(".hero-bg");
+let heroIndex = 0;
+function rotateHero(){
+  heroImages.forEach(img => img.style.opacity = 0);
+  heroImages[heroIndex].style.opacity = 1;
+  heroIndex++;
+  if(heroIndex >= heroImages.length){
+    heroIndex = 0;
+  }
+}
+rotateHero();
+setInterval(rotateHero,6000);
