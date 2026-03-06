@@ -1,32 +1,110 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+  <!-- ========================================
+       META TAG BASE
+  ========================================= -->
   <meta charset="UTF-8">
-  <title>ICE | Regolamento Tornei</title>
-  <meta name="description" content="ICE Tournament - La tua piattaforma per tornei di padel e calcio a Torino. Clicca, iscriviti e gioca facilmente.">
-  <link rel="icon" href="assets/logo.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- ========================================
+       SEO: Title e Description
+  ========================================= -->
+  <title>Regolamento e Iscrizione Tornei | ICE Tournament Torino</title>
+  <meta name="description" content="Consulta il regolamento dei tornei ICE, scopri le regole specifiche di ogni torneo e iscriviti online. Padel, beach volley e calcetto a Torino.">
+  <meta name="keywords" content="regolamento tornei padel, iscrizione tornei torino, regole beach volley, tornei calcetto regolamento, tornei sportivi torino">
+
+  <!-- ========================================
+       CANONICAL URL
+  ========================================= -->
+  <link rel="canonical" href="https://tornei-ice.it/tournament.html">
+
+  <!-- ========================================
+       OPEN GRAPH (Facebook, WhatsApp, LinkedIn)
+  ========================================= -->
+  <meta property="og:title" content="Regolamento e Iscrizione Tornei | ICE Tournament">
+  <meta property="og:description" content="Consulta il regolamento, iscriviti ai tornei di padel, beach volley e calcetto a Torino. Regole chiare, iscrizione semplice.">
+  <meta property="og:image" content="https://tornei-ice.it/assets/og-image.png">
+  <meta property="og:url" content="https://tornei-ice.it/tournament.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="it_IT">
+
+  <!-- ========================================
+       TWITTER CARD
+  ========================================= -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Regolamento Tornei | ICE Tournament Torino">
+  <meta name="twitter:description" content="Regolamento, dettagli e iscrizione ai tornei di padel, beach volley e calcetto a Torino">
+  <meta name="twitter:image" content="https://tornei-ice.it/assets/twitter-image.png">
+
+  <!-- ========================================
+       FAVICON
+  ========================================= -->
+  <link rel="icon" type="image/png" href="assets/logo.png">
   <link rel="apple-touch-icon" href="assets/logo.png">
 
-  <!-- Google Font -->
+  <!-- ========================================
+       FONTS & CSS (con preconnect per performance)
+  ========================================= -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/style.css">
+
+  <!-- ========================================
+       STRUCTURED DATA (Schema.org)
+       WebPage per la pagina regolamento
+  ========================================= -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Regolamento e Iscrizione Tornei - ICE Tournament",
+    "description": "Consulta il regolamento dei tornei ICE di padel, beach volley e calcetto a Torino. Iscriviti online.",
+    "url": "https://tornei-ice.it/tournament.html",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "ICE Tournament",
+      "url": "https://tornei-ice.it"
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://tornei-ice.it/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Regolamento Tornei",
+          "item": "https://tornei-ice.it/tournament.html"
+        }
+      ]
+    }
+  }
+  </script>
 </head>
 
 <body>
 
-  <!-- HEADER + NAV UNIFICATI -->
+  <!-- ========================================
+       HEADER + NAV (semantico)
+  ========================================= -->
   <header class="main-header" role="banner">
     <div class="main-header-container">
 
       <!-- BRAND (LOGO) -->
       <div class="brand">
         <a href="index.html" aria-label="Homepage ICE Tournament">
-          <img src="assets/logo.png" alt="ICE logo" width="120" height="40">
+          <img src="assets/logo.png" alt="Logo ICE Tournament - Tornei sportivi Torino" width="120" height="120">
         </a>
       </div>
 
-      <!-- HAMBURGER BUTTON -->
+      <!-- HAMBURGER BUTTON (visible only on mobile) -->
       <button class="mobile-menu-toggle" aria-label="Apri menu" aria-expanded="false">
         <span></span>
         <span></span>
@@ -37,17 +115,19 @@
       <nav class="main-nav" role="navigation" aria-label="Navigazione principale">
         <a href="index.html">Tornei</a>
         <a href="standings.html">Classifica</a>
-        <a href="tournament.html" class="active">Regolamento</a>
+        <a href="tournament.html" class="active" aria-current="page">Regolamento</a>
       </nav>
 
     </div>
   </header>
 
-  <!-- CONTENUTO -->
-  <main class="container">
+  <!-- ========================================
+       MAIN CONTENT (semantico)
+  ========================================= -->
+  <main class="container" role="main">
 
     <!-- =========================
-        MESSAGGIO STAMPATO IN "TOURNAMENTS" GENERICO
+        REGOLAMENTO GENERICO
         (visibile se NON c'è id)
     ========================== -->
     <section id="generic-regulation-section">
@@ -58,12 +138,11 @@
         <!-- TOURNAMENT FILTER (INLINE) -->
         <div class="sport-filter-inline">
           <label for="tournament-select">Torneo</label>
-          <select id="tournament-select">
+          <select id="tournament-select" aria-label="Seleziona un torneo per vederne il regolamento">
             <option value="">Seleziona un torneo</option>
           </select>
         </div>
       </div>
-
 
       <!-- SEZIONE 1: MESSAGGIO SELEZIONE TORNEO -->
       <div class="generic-section-box select-tournament-box">
@@ -74,8 +153,6 @@
           il regolamento specifico e il form di iscrizione.
         </p>
       </div>
-
-
 
       <!-- SEZIONE 2: PERCHÉ SCEGLIERE TORNEI ICE -->
       <div class="generic-section-box">
@@ -164,7 +241,7 @@
         <div class="skeleton-line short"></div>
       </section>
 
-      <!-- TEAMS LIST SKELETON (NEW) -->
+      <!-- TEAMS LIST SKELETON -->
       <section class="tournament-teams-block">
         <div class="teams-block-header">
           <div class="skeleton-line" style="width: 220px;"></div>
@@ -186,7 +263,6 @@
     </section>
 
 
-
     <!-- =========================
         TORNEO SPECIFICO – CONTENUTO
     ========================== -->
@@ -201,7 +277,7 @@
         <p id="tournament-subtitle" class="tournament-subtitle"></p>
       </section>
 
-      <!-- 2. INFO TORNEO (FULL WIDTH) -->
+      <!-- 2. INFO TORNEO -->
       <section class="tournament-info-block">
         <h3>Informazioni torneo</h3>
 
@@ -210,7 +286,7 @@
         </div>
       </section>
 
-      <!-- 3. ISCRIZIONE (FULL WIDTH) -->
+      <!-- 3. ISCRIZIONE -->
       <section class="tournament-registration-block">
         <h3>Iscrizione</h3>
         <p id="subscribe-message"></p>
@@ -232,7 +308,7 @@
             <input type="tel" name="phone" required>
           </label>
 
-          <!-- CAMPI AGGIUNTIVI (popolati da JS, incluse le note) -->
+          <!-- CAMPI AGGIUNTIVI (popolati da JS) -->
           <div id="extra-fields-container"></div>
 
           <!-- CHECKBOX ACCETTAZIONE REGOLAMENTO -->
@@ -256,7 +332,7 @@
         </form>
       </section>
 
-      <!-- 4. REGOLAMENTO SPECIFICO (FULL WIDTH) -->
+      <!-- 4. REGOLAMENTO SPECIFICO -->
       <section class="tournament-specific-rules-block">
         <h3 class="rules-subtitle">Regole specifiche per questo torneo</h3>
         
@@ -265,7 +341,7 @@
         </div>
       </section>
 
-      <!-- 5. SQUADRE ISCRITTE (FULL WIDTH) -->
+      <!-- 5. SQUADRE ISCRITTE -->
       <section id="tournament-teams-section" class="tournament-teams-block hidden">
         <div class="teams-block-header">
           <h3 class="teams-block-title">Squadre iscritte</h3>
@@ -282,13 +358,15 @@
 
   </main>
 
-  <!-- FOOTER -->
-  <footer class="site-footer">
+  <!-- ========================================
+       FOOTER (semantico)
+  ========================================= -->
+  <footer class="site-footer" role="contentinfo">
     <div class="footer-container">
 
       <!-- BRAND TOP -->
       <div class="footer-brand">
-        <img src="assets/logo.png" alt="ICE logo">
+        <img src="assets/logo.png" alt="Logo ICE Tournament" width="80" height="80">
         <p>La tua piattaforma per tornei sportivi</p>
       </div>
 
@@ -297,21 +375,22 @@
         
         <!-- CONTATTI -->
         <div class="footer-section footer-contacts">
-          <h4>Contatti</h4>
-          <p>📞 +39 339 616 0901</p>
-          <p>✉️ tornei.ice.torino@gmail.com</p>
+          <h2>Contatti</h2>
+          <p><a href="tel:+393396160901" aria-label="Chiama ICE Tournament">📞 +39 339 616 0901</a></p>
+          <p><a href="mailto:tornei.ice.torino@gmail.com" aria-label="Email ICE Tournament">✉️ tornei.ice.torino@gmail.com</a></p>
         </div>
 
         <!-- NAVIGA -->
         <div class="footer-section footer-nav">
-          <h4>Naviga</h4>
+          <h2>Naviga</h2>
           <a href="index.html">Homepage</a>
+          <a href="standings.html">Classifiche</a>
           <a href="tournament.html">Regolamento</a>
         </div>
 
         <!-- LEGAL -->
         <div class="footer-section footer-legal">
-          <h4>Legal</h4>
+          <h2>Legal</h2>
           <a href="#">Privacy Policy</a>
           <a href="#">Termini e condizioni</a>
         </div>
@@ -320,13 +399,16 @@
 
       <!-- BOTTOM -->
       <div class="footer-bottom">
-        © 2026 ICE Tournament. Tutti i diritti riservati.
+        <p>&copy; 2026 ICE Tournament. Tutti i diritti riservati.</p>
       </div>
 
     </div>
   </footer>
 
-  <script src="js/tournament.js"></script>
+  <!-- ========================================
+       JAVASCRIPT (defer per performance)
+  ========================================= -->
+  <script src="js/tournament.js" defer></script>
 
 </body>
 </html>
