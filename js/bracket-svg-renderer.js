@@ -4,18 +4,18 @@
 // ===============================
 
 // ── Layout constants (mobile-first, compatte) ─────────────────────
-const MATCH_W         = 160;
-const MATCH_H         = 36;
+const MATCH_W         = 120;
+const MATCH_H         = 26;
 const MATCH_GAP       = 4;
-const ROUND_GAP       = 44;
+const ROUND_GAP       = 32;
 const COL_W           = MATCH_W + ROUND_GAP;
-const LABEL_H         = 26;
-const LABEL_MB        = 12;
-const TOP_PAD         = 12;
-const BOT_PAD         = 24;
-const THIRD_GAP_V     = 36;
-const THIRD_LABEL_GAP = 12;
-const CONN_OFFSET     = 18;
+const LABEL_H         = 20;
+const LABEL_MB        = 9;
+const TOP_PAD         = 9;
+const BOT_PAD         = 18;
+const THIRD_GAP_V     = 26;
+const THIRD_LABEL_GAP = 9;
+const CONN_OFFSET     = 12;
 
 function matchH() { return MATCH_H * 2 + MATCH_GAP; }
 
@@ -136,7 +136,7 @@ function drawMatch(x, y, match, flip) {
       x:scoreX, 
       y:rowY+MATCH_H/2+4, 
       fill:sC, 
-      'font-size':14, 
+      'font-size':11, 
       'font-weight':isWin?'800':'500', 
       'font-family':'Inter,sans-serif', 
       'text-anchor':scoreAnchor 
@@ -166,7 +166,7 @@ function drawLabel(x, y, text) {
   });
   o += svgEl('text', { 
     x:x+MATCH_W/2, y:y+LABEL_H/2+5, 
-    fill:C.labelText, 'font-size':10, 'font-weight':'700', 
+    fill:C.labelText, 'font-size':8, 'font-weight':'700', 
     'font-family':'Inter,sans-serif', 'text-anchor':'middle', 
     'letter-spacing':'0.05em' 
   }, escH(text.toUpperCase()));
