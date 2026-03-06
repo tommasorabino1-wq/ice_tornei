@@ -2,6 +2,24 @@
 // TOURNAMENT PAGE LOGIC (ICE)
 // ===============================
 
+
+// ===============================
+// 0. HAMBURGER MENU TOGGLE
+// ===============================
+const menuToggle = document.querySelector(".mobile-menu-toggle");
+const mainNav = document.querySelector(".main-nav");
+
+if (menuToggle && mainNav) {
+  menuToggle.addEventListener("click", () => {
+    menuToggle.classList.toggle("active");
+    mainNav.classList.toggle("active");
+
+    const expanded = menuToggle.getAttribute("aria-expanded") === "true";
+    menuToggle.setAttribute("aria-expanded", String(!expanded));
+  });
+}
+
+
 // ===============================
 // 1. PARAMETRI URL
 // ===============================
