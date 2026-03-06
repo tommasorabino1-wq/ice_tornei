@@ -426,7 +426,7 @@ body {
 .page-header {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -889,23 +889,54 @@ body {
   font-size: 32px;
   font-weight: 700;
   margin-bottom: 24px;
+  width: 100%;
 }
 
 /* =========================
-   TYPING TITLE
+   TYPING SPORT
 ========================= */
 
 .typed-sport {
   color: var(--brand);
   font-weight: 700;
-}
 
-/* cursore typing */
+  text-shadow:
+    0 0 6px rgba(56,189,248,0.6),
+    0 0 12px rgba(56,189,248,0.4);
+
+  transition: text-shadow 0.3s ease;
+}
 
 .typed-cursor {
   color: var(--brand);
-  font-weight: 700;
 }
+
+
+@keyframes sportGlow {
+
+0%{
+text-shadow:
+0 0 2px rgba(56,189,248,0.4);
+}
+
+50%{
+text-shadow:
+0 0 12px rgba(56,189,248,0.9),
+0 0 24px rgba(56,189,248,0.6);
+}
+
+100%{
+text-shadow:
+0 0 6px rgba(56,189,248,0.6);
+}
+
+}
+
+.typed-sport.glow {
+animation: sportGlow 0.8s ease;
+}
+
+
 
 /* =========================
    SECTION TITLES
@@ -954,6 +985,27 @@ section > .section-title {
   display: block;
   width: fit-content;
   margin: 0 auto 32px auto;
+}
+
+
+
+
+
+/* =========================
+   TOURNAMENT CARD ANIMATION
+========================= */
+
+.tournament-card {
+  opacity: 0;
+  transform: translateY(30px) scale(0.96);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+
+.tournament-card.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 

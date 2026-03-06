@@ -172,6 +172,9 @@ function renderTournaments(tournaments) {
 
     container.appendChild(card);
   });
+
+  animateCards();
+  
 }
 
 
@@ -462,30 +465,41 @@ document.querySelectorAll(".faq-question").forEach(btn => {
 // ===============================
 
 document.addEventListener("DOMContentLoaded", function () {
-
   if (document.querySelector(".typed-sport")) {
-
     new Typed(".typed-sport", {
-
       strings: [
         "Padel",
         "Beach Volley",
         "Calcio"
       ],
-
       typeSpeed: 70,
       backSpeed: 45,
       backDelay: 1400,
-
       startDelay: 400,
-
       loop: true,
-
       showCursor: true,
-      cursorChar: "|"
-
+      cursorChar: "|",
+      onStringTyped: () => {
+        const el = document.querySelector(".typed-sport");
+        el.classList.remove("glow");
+        void el.offsetWidth;
+        el.classList.add("glow");
+      }
     });
-
   }
-
 });
+
+
+
+// ===============================
+// CARD STAGGER ANIMATION
+// ===============================
+
+function animateCards() {
+  const cards = document.querySelectorAll(".tournament-card");
+  cards.forEach((card, index) => {
+    setTimeout(() => {
+      card.classList.add("visible");
+    }, index * 120);
+  });
+}
