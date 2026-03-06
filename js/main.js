@@ -174,7 +174,7 @@ function renderTournaments(tournaments) {
   });
 
   animateCards();
-  
+
 }
 
 
@@ -503,3 +503,21 @@ function animateCards() {
     }, index * 120);
   });
 }
+
+
+// ===============================
+// SCROLL REVEAL SECTIONS
+// ===============================
+gsap.registerPlugin(ScrollTrigger);
+gsap.utils.toArray(".reveal-section").forEach(section => {
+  gsap.to(section, {
+    opacity: 1,
+    y: 0,
+    duration: 0.8,
+    ease: "power2.out",
+    scrollTrigger: {
+      trigger: section,
+      start: "top 85%"
+    }
+  });
+});
