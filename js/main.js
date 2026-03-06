@@ -511,28 +511,24 @@ function animateCards() {
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Prima forza un refresh delle posizioni
+ScrollTrigger.refresh();
+
 gsap.utils.toArray(".reveal-section").forEach((section) => {
 
-  gsap.fromTo(
-    section,
-    {
-      opacity: 0,
-      y: 40
-    },
-    {
-      opacity: 1,
-      y: 0,
-      duration: 0.8,
-      ease: "power2.out",
-
-      scrollTrigger: {
-        trigger: section,
-        start: "top 85%",
-        toggleActions: "play none none none",
-        once: true
-      }
+  ScrollTrigger.create({
+    trigger: section,
+    start: "top 85%",
+    once: true,
+    onEnter: () => {
+      gsap.to(section, {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: "power2.out"
+      });
     }
-  );
+  });
 
 });
 
