@@ -101,7 +101,7 @@ function drawMatch(x, y, match, flip) {
     const sC   = isWin ? C.winAccent : (isTbd ? C.textTbd : C.textScore);
     const fw   = isWin ? '700' : (isTbd ? '400' : '500');
     const fi   = isTbd ? 'italic' : 'normal';
-    const fs   = isTbd ? 11 : 12;
+    const fs   = isTbd ? 9 : 10;
 
     const nameX    = flip ? x + MATCH_W - (isWin ? 12 : 10) : x + (isWin ? 12 : 10);
     const scoreX   = flip ? x + 12 : x + MATCH_W - 12;
