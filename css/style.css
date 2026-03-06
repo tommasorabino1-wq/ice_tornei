@@ -436,20 +436,28 @@ body {
   line-height: 1.2;
 }
 
-/* INTRO TEXT */
+/* =========================
+   INTRO TEXT IMPROVED
+========================= */
+
 .intro-text {
   font-size: 14px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.75);
-  margin: 0;
-  max-width: 600px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.78);
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .intro-text strong {
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--brand);
   font-weight: 600;
 }
 
+.intro-text p {
+  margin: 0;
+}
 
 /* =========================
    SPORT FILTER INLINE
@@ -768,15 +776,16 @@ body {
 
 
 /* =========================
-   FAQ
+   FAQ IMPROVED
 ========================= */
 
 .faq-section {
   margin-top: 48px;
+  max-width: 800px;
 }
 
 .faq-section h2 {
-  font-size: 20px;
+  font-size: 22px;
   margin-bottom: 16px;
 }
 
@@ -786,19 +795,32 @@ body {
 
 .faq-question {
   width: 100%;
-  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+
   background: none;
   border: none;
   padding: 14px 0;
+
   font-size: 14px;
   font-weight: 600;
   color: var(--text-main);
+
   cursor: pointer;
-  transition: color 0.2s ease;
 }
 
-.faq-question:hover {
-  color: var(--brand);
+.faq-question span {
+  text-align: left;
+}
+
+.faq-arrow {
+  transition: transform 0.25s ease;
+}
+
+.faq-item.active .faq-arrow {
+  transform: rotate(180deg);
 }
 
 .faq-answer {
@@ -816,6 +838,17 @@ body {
 
 .faq-item.active .faq-answer {
   max-height: 200px;
+}
+
+
+/* =========================
+   SECTION DIVIDER
+========================= */
+
+.section-divider {
+  margin-top: 40px;
+  padding-top: 40px;
+  border-top: 1px solid rgba(255,255,255,0.06);
 }
 
 
