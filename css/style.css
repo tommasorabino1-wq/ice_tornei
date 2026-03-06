@@ -815,7 +815,6 @@ body {
 
 .sport-box:hover {
   border-color: rgba(56,189,248,0.35);
-  transform: translateY(-3px);
 }
 
 
@@ -890,7 +889,7 @@ body {
 ========================= */
 
 .section-divider {
-  margin: 60px 0;
+  margin: 25px 0;
   padding: 36px 28px;
   background: rgba(56,189,248,0.04);
   border: 1px solid rgba(56,189,248,0.18);

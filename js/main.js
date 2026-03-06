@@ -553,7 +553,7 @@ function animateStats(){
     { innerText: 0 },
       {
       innerText: target,
-      duration: 1.2,
+      duration: 2,
       ease: "power1.out",
       snap:{ innerText:1 },
       onUpdate:function(){
