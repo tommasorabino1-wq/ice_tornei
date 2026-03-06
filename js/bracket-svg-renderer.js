@@ -1,55 +1,44 @@
 // ===============================
-// SVG BRACKET RENDERER v3
-// Redesign: colori sobri, linee a gomito chiare, spacing generoso
+// SVG BRACKET RENDERER v4
+// Mobile-first: dimensioni compatte, scrollabile
 // ===============================
 
-// ── Layout constants ──────────────────────────────────────────────
-const MATCH_W         = 280;   // ✅ Larghezza aumentata per nomi più grandi
-const MATCH_H         = 56;    // ✅ Altezza aumentata
-const MATCH_GAP       = 8;     // ✅ Più spazio tra squadre dello stesso match
-const ROUND_GAP       = 80;    // ✅ Più spazio tra colonne
+// ── Layout constants (mobile-first, compatte) ─────────────────────
+const MATCH_W         = 160;
+const MATCH_H         = 36;
+const MATCH_GAP       = 4;
+const ROUND_GAP       = 44;
 const COL_W           = MATCH_W + ROUND_GAP;
-const LABEL_H         = 40;    // ✅ Label più grandi
-const LABEL_MB        = 20;    // ✅ Più margine sotto label
-const TOP_PAD         = 20;
-const BOT_PAD         = 40;
-const THIRD_GAP_V     = 60;    // ✅ Più spazio tra sezioni
-const THIRD_LABEL_GAP = 20;
-const CONN_OFFSET     = 30;    // ✅ Distanza orizzontale gomito connettori
+const LABEL_H         = 26;
+const LABEL_MB        = 12;
+const TOP_PAD         = 12;
+const BOT_PAD         = 24;
+const THIRD_GAP_V     = 36;
+const THIRD_LABEL_GAP = 12;
+const CONN_OFFSET     = 18;
 
 function matchH() { return MATCH_H * 2 + MATCH_GAP; }
 
-// ── Palette SEMPLIFICATA ──────────────────────────────────────────
+// ── Palette ───────────────────────────────────────────────────────
 const C = {
-  // Card base
   cardBg:             'rgba(22, 29, 39, 0.95)',
   cardBgAlt:          'rgba(22, 29, 39, 0.95)',
   cardBorder:         'rgba(255, 255, 255, 0.12)',
   cardBorderTbd:      'rgba(255, 255, 255, 0.06)',
-  
-  // Testo
   text:               '#d1d5db',
   textWin:            '#ffffff',
   textLose:           '#9ca3af',
   textTbd:            '#6b7280',
   textScore:          'rgba(255, 255, 255, 0.35)',
-  
-  // Vincitore (tenue)
   winBg:              'rgba(56, 189, 248, 0.08)',
   winBorder:          'rgba(56, 189, 248, 0.35)',
   winBar:             'rgba(56, 189, 248, 0.6)',
   winAccent:          '#38bdf8',
-  
-  // Perdente (molto tenue)
   loseBg:             'rgba(255, 255, 255, 0.02)',
   loseBorder:         'rgba(255, 255, 255, 0.08)',
-  
-  // Label
   labelText:          '#e5e7eb',
   labelBg:            'rgba(255, 255, 255, 0.06)',
   labelBorder:        'rgba(255, 255, 255, 0.15)',
-  
-  // Connettori
   connColor:          'rgba(156, 163, 175, 0.35)',
 };
 
@@ -86,7 +75,6 @@ function roundLabel(count) {
 }
 
 // ── Disegna una card match ────────────────────────────────────────
-// flip: true → nomi/score specchiati (lato sinistro bracket)
 function drawMatch(x, y, match, flip) {
   const mh     = matchH();
   const played = match.played === true || String(match.played||'').toUpperCase() === 'TRUE';
@@ -102,40 +90,39 @@ function drawMatch(x, y, match, flip) {
   const sA     = played && match.score_a !== null && match.score_a !== '' ? String(match.score_a) : '−';
   const sB     = played && match.score_b !== null && match.score_b !== '' ? String(match.score_b) : '−';
 
-  const barW = 5;
+  const barW = 3;
   let o = '';
 
   const drawRow = (rowY, name, score, isTbd, isWin, isLose, isAlt) => {
     const bg   = isWin ? C.winBg : (isLose ? C.loseBg : (isTbd ? 'rgba(255,255,255,0.015)' : (isAlt ? C.cardBgAlt : C.cardBg)));
     const brd  = isWin ? C.winBorder : (isLose ? C.loseBorder : (isTbd ? C.cardBorderTbd : C.cardBorder));
-    const dash = isTbd ? {'stroke-dasharray':'4 4'} : {};
+    const dash = isTbd ? {'stroke-dasharray':'3 3'} : {};
     const nC   = isWin ? C.textWin : (isLose ? C.textLose : (isTbd ? C.textTbd : C.text));
     const sC   = isWin ? C.winAccent : (isTbd ? C.textTbd : C.textScore);
     const fw   = isWin ? '700' : (isTbd ? '400' : '500');
     const fi   = isTbd ? 'italic' : 'normal';
-    const fs   = isTbd ? 17 : 20; // ✅ Font più grande
+    const fs   = isTbd ? 11 : 12;
 
-    // flip=true: nome a destra, score a sinistra
-    const nameX    = flip ? x + MATCH_W - (isWin ? 18 : 16) : x + (isWin ? 18 : 16);
-    const scoreX   = flip ? x + 18 : x + MATCH_W - 18;
+    const nameX    = flip ? x + MATCH_W - (isWin ? 12 : 10) : x + (isWin ? 12 : 10);
+    const scoreX   = flip ? x + 12 : x + MATCH_W - 12;
     const nameAnchor  = flip ? 'end' : 'start';
     const scoreAnchor = flip ? 'start' : 'end';
 
     let r = '';
-    r += svgEl('rect', { x, y:rowY, width:MATCH_W, height:MATCH_H, rx:8, ry:8, fill:bg, stroke:brd, 'stroke-width':1, ...dash });
+    r += svgEl('rect', { x, y:rowY, width:MATCH_W, height:MATCH_H, rx:5, ry:5, fill:bg, stroke:brd, 'stroke-width':1, ...dash });
     
     if (isWin) {
       const barX = flip ? x + MATCH_W - barW : x;
-      r += svgEl('rect', { x:barX, y:rowY, width:barW, height:MATCH_H, rx:2, fill:C.winBar });
+      r += svgEl('rect', { x:barX, y:rowY, width:barW, height:MATCH_H, rx:1, fill:C.winBar });
     }
     
     const clipId = `c${Math.round(x*10)}-${Math.round(rowY*10)}`;
-    const clipXs = flip ? x + 45 : x + 10;
-    const clipW  = MATCH_W - 65;
+    const clipXs = flip ? x + 30 : x + 6;
+    const clipW  = MATCH_W - 42;
     r += `<defs><clipPath id="${clipId}"><rect x="${clipXs}" y="${rowY}" width="${clipW}" height="${MATCH_H}"/></clipPath></defs>`;
     r += svgEl('text', { 
       x:nameX, 
-      y:rowY+MATCH_H/2+7, 
+      y:rowY+MATCH_H/2+4, 
       fill:nC, 
       'font-size':fs, 
       'font-weight':fw, 
@@ -147,9 +134,9 @@ function drawMatch(x, y, match, flip) {
     
     r += svgEl('text', { 
       x:scoreX, 
-      y:rowY+MATCH_H/2+7, 
+      y:rowY+MATCH_H/2+4, 
       fill:sC, 
-      'font-size':22, // ✅ Score più grande
+      'font-size':14, 
       'font-weight':isWin?'800':'500', 
       'font-family':'Inter,sans-serif', 
       'text-anchor':scoreAnchor 
@@ -160,12 +147,11 @@ function drawMatch(x, y, match, flip) {
 
   const yA = y, yB = y + MATCH_H + MATCH_GAP;
   o += drawRow(yA, teamA, sA, aTbd, aWin, aLose, false);
-  o += svgEl('rect', { x, y:yA+MATCH_H, width:MATCH_W, height:MATCH_GAP, fill:'rgba(22, 29, 39, 0.95)', });
+  o += svgEl('rect', { x, y:yA+MATCH_H, width:MATCH_W, height:MATCH_GAP, fill:'rgba(22, 29, 39, 0.95)' });
   o += drawRow(yB, teamB, sB, bTbd, bWin, bLose, true);
   
-  // Border esterno
   const borderColor = (aWin || bWin) ? C.winBorder : C.cardBorder;
-  o += svgEl('rect', { x, y:yA, width:MATCH_W, height:mh, rx:8, ry:8, fill:'none', stroke:borderColor, 'stroke-width':1, 'pointer-events':'none' });
+  o += svgEl('rect', { x, y:yA, width:MATCH_W, height:mh, rx:5, ry:5, fill:'none', stroke:borderColor, 'stroke-width':1, 'pointer-events':'none' });
   
   return o;
 }
@@ -174,101 +160,69 @@ function drawMatch(x, y, match, flip) {
 function drawLabel(x, y, text) {
   let o = '';
   o += svgEl('rect', { 
-    x, 
-    y, 
-    width:MATCH_W, 
-    height:LABEL_H, 
-    rx:LABEL_H/2, 
-    ry:LABEL_H/2, 
-    fill:C.labelBg, 
-    stroke:C.labelBorder, 
-    'stroke-width':1 
+    x, y, width:MATCH_W, height:LABEL_H, 
+    rx:LABEL_H/2, ry:LABEL_H/2, 
+    fill:C.labelBg, stroke:C.labelBorder, 'stroke-width':1 
   });
   o += svgEl('text', { 
-    x:x+MATCH_W/2, 
-    y:y+LABEL_H/2+7, 
-    fill:C.labelText, 
-    'font-size':16, // ✅ Font label più grande
-    'font-weight':'700', 
-    'font-family':'Inter,sans-serif', 
-    'text-anchor':'middle', 
+    x:x+MATCH_W/2, y:y+LABEL_H/2+5, 
+    fill:C.labelText, 'font-size':10, 'font-weight':'700', 
+    'font-family':'Inter,sans-serif', 'text-anchor':'middle', 
     'letter-spacing':'0.05em' 
   }, escH(text.toUpperCase()));
   return o;
 }
 
 // ── Connettore a gomito ───────────────────────────────────────────
-// Gomito: orizz → vert → orizz
-// dir='right': esce da destra di src, entra da sinistra di dst
-// dir='left':  esce da sinistra di src, entra da destra di dst
 function drawElbowConn(srcX, srcY, dstX, dstY, dir) {
   const mh = matchH();
-  
-  // Punto medio di ogni match (centro verticale)
   const srcMidY = srcY + mh / 2;
   const dstMidY = dstY + mh / 2;
   
-  let x1, x2, x3, x4;
+  let x1, x4;
   
   if (dir === 'right') {
-    // Esce da destra
-    x1 = srcX + MATCH_W;              // Bordo destro src
-    x2 = x1 + CONN_OFFSET;             // Gomito orizzontale
-    x3 = dstX - CONN_OFFSET;           // Gomito orizzontale dst
-    x4 = dstX;                         // Bordo sinistro dst
+    x1 = srcX + MATCH_W;
+    x4 = dstX;
   } else {
-    // Esce da sinistra
-    x1 = srcX;                         // Bordo sinistro src
-    x2 = x1 - CONN_OFFSET;             // Gomito orizzontale
-    x3 = dstX + MATCH_W + CONN_OFFSET; // Gomito orizzontale dst
-    x4 = dstX + MATCH_W;               // Bordo destro dst
+    x1 = srcX;
+    x4 = dstX + MATCH_W;
   }
   
-  // Path: orizz → vert → orizz
-  const d = `M ${x1} ${srcMidY} H ${x2} V ${dstMidY} H ${x4}`;
+  const xMid = dir === 'right' ? x1 + CONN_OFFSET : x1 - CONN_OFFSET;
+  const d = `M ${x1} ${srcMidY} H ${xMid} V ${dstMidY} H ${x4}`;
   
   return svgEl('path', { 
-    d, 
-    fill:'none', 
-    stroke:C.connColor, 
-    'stroke-width':2, // ✅ Linea più spessa
-    'stroke-linecap':'round', 
-    'stroke-linejoin':'round' 
+    d, fill:'none', stroke:C.connColor, 'stroke-width':1.5, 
+    'stroke-linecap':'round', 'stroke-linejoin':'round' 
   });
 }
 
-// ── Connettore a Y (per collegare 2 match allo stesso successivo) ─
+// ── Connettore a Y ────────────────────────────────────────────────
 function drawYConn(srcX1, srcY1, srcX2, srcY2, dstX, dstY, dir) {
   const mh = matchH();
   const src1MidY = srcY1 + mh / 2;
   const src2MidY = srcY2 + mh / 2;
   const dstMidY  = dstY + mh / 2;
   
-  let x1, x2, xMid, x3, x4;
+  let xMid, x4;
   
   if (dir === 'right') {
-    x1 = srcX1 + MATCH_W;
-    x2 = srcX2 + MATCH_W;
-    xMid = x1 + CONN_OFFSET;
-    x3 = dstX - CONN_OFFSET;
+    xMid = srcX1 + MATCH_W + CONN_OFFSET;
     x4 = dstX;
   } else {
-    x1 = srcX1;
-    x2 = srcX2;
-    xMid = x1 - CONN_OFFSET;
-    x3 = dstX + MATCH_W + CONN_OFFSET;
+    xMid = srcX1 - CONN_OFFSET;
     x4 = dstX + MATCH_W;
   }
   
-  // Due rami che si uniscono
   const d1 = `M ${dir === 'right' ? srcX1 + MATCH_W : srcX1} ${src1MidY} H ${xMid}`;
   const d2 = `M ${dir === 'right' ? srcX2 + MATCH_W : srcX2} ${src2MidY} H ${xMid}`;
   const d3 = `M ${xMid} ${src1MidY} V ${dstMidY} H ${x4}`;
   
   let o = '';
-  o += svgEl('path', { d:d1, fill:'none', stroke:C.connColor, 'stroke-width':2, 'stroke-linecap':'round' });
-  o += svgEl('path', { d:d2, fill:'none', stroke:C.connColor, 'stroke-width':2, 'stroke-linecap':'round' });
-  o += svgEl('path', { d:d3, fill:'none', stroke:C.connColor, 'stroke-width':2, 'stroke-linecap':'round', 'stroke-linejoin':'round' });
+  o += svgEl('path', { d:d1, fill:'none', stroke:C.connColor, 'stroke-width':1.5, 'stroke-linecap':'round' });
+  o += svgEl('path', { d:d2, fill:'none', stroke:C.connColor, 'stroke-width':1.5, 'stroke-linecap':'round' });
+  o += svgEl('path', { d:d3, fill:'none', stroke:C.connColor, 'stroke-width':1.5, 'stroke-linecap':'round', 'stroke-linejoin':'round' });
   
   return o;
 }
@@ -276,7 +230,7 @@ function drawYConn(srcX1, srcY1, srcX2, srcY2, dstX, dstY, dir) {
 // ── Calcola posizioni Y per un lato ──────────────────────────────
 function computeSidePositions(roundIds, matchesByRound) {
   const mh = matchH();
-  const BASE = mh + 40; // ✅ Più spazio verticale
+  const BASE = mh + 24;
   const firstCount = matchesByRound[roundIds[0]].length;
   const totalH = firstCount * BASE - (BASE - mh);
   const pos = {};
@@ -313,12 +267,10 @@ function renderBracketSVG(bracket, container) {
   const finalRound = allRoundIds[numRounds - 1];
   const sideRounds = allRoundIds.slice(0, numRounds - 1);
 
-  // Se non ci sono round laterali (solo finale) → layout lineare
   if (sideRounds.length === 0) {
     return renderLinearSVG(bracket, container);
   }
 
-  // ── Dividi match di ogni round laterale in sx e dx ───────────────
   const leftMs  = {}, rightMs = {};
   sideRounds.forEach(rid => {
     const ms   = allMatches[rid];
@@ -329,7 +281,6 @@ function renderBracketSVG(bracket, container) {
 
   const { pos: leftPos, totalH } = computeSidePositions(sideRounds, leftMs);
 
-  // ── Indici colonne ────────────────────────────────────────────────
   const n          = sideRounds.length;
   const finalColI  = n;
   const totalCols  = n * 2 + 1;
@@ -344,22 +295,20 @@ function renderBracketSVG(bracket, container) {
     thirdMatchY = thirdLabelY + LABEL_H + THIRD_LABEL_GAP;
   }
 
-  const svgW = totalCols * COL_W + 60;
+  const svgW = totalCols * COL_W + 40;
   const svgH = hasThird ? thirdMatchY + mh + BOT_PAD : finalMatchY + mh + BOT_PAD;
 
   let body = '';
 
-  // ── CONNETTORI ───────────────────────────────────────────────────
+  // Connettori
   sideRounds.forEach((rid, ri) => {
     const isInner = ri === n - 1;
     
-    // Lato sinistro
     for (let mi = 0; mi < leftMs[rid].length; mi += 2) {
       const srcX1 = colX(ri);
       const srcY1 = LOFF + leftPos[rid][mi];
       
       if (isInner) {
-        // Ultima coppia: connetti direttamente alla finale
         if (mi + 1 < leftMs[rid].length) {
           const srcY2 = LOFF + leftPos[rid][mi + 1];
           body += drawYConn(srcX1, srcY1, srcX1, srcY2, colX(finalColI), finalMatchY, 'right');
@@ -367,10 +316,8 @@ function renderBracketSVG(bracket, container) {
           body += drawElbowConn(srcX1, srcY1, colX(finalColI), finalMatchY, 'right');
         }
       } else {
-        // Round intermedi: connetti al round successivo
         const nextRid = sideRounds[ri + 1];
         const dstY    = LOFF + leftPos[nextRid][Math.floor(mi / 2)];
-        
         if (mi + 1 < leftMs[rid].length) {
           const srcY2 = LOFF + leftPos[rid][mi + 1];
           body += drawYConn(srcX1, srcY1, srcX1, srcY2, colX(ri + 1), dstY, 'right');
@@ -380,7 +327,6 @@ function renderBracketSVG(bracket, container) {
       }
     }
     
-    // Lato destro (simmetrico)
     const dxColI = finalColI + (n - ri);
     for (let mi = 0; mi < rightMs[rid].length; mi += 2) {
       const srcX1 = colX(dxColI);
@@ -397,7 +343,6 @@ function renderBracketSVG(bracket, container) {
         const nextRid  = sideRounds[ri + 1];
         const nextColI = finalColI + (n - ri - 1);
         const dstY     = LOFF + leftPos[nextRid][Math.floor(mi / 2)];
-        
         if (mi + 1 < rightMs[rid].length) {
           const srcY2 = LOFF + leftPos[rid][mi + 1];
           body += drawYConn(srcX1, srcY1, srcX1, srcY2, colX(nextColI), dstY, 'left');
@@ -408,23 +353,19 @@ function renderBracketSVG(bracket, container) {
     }
   });
 
-  // Connettore 3/4 posto (linea tratteggiata che scende dalla finale)
+  // Connettore 3/4 posto
   if (hasThird) {
     const thirdX  = colX(finalColI);
     const thirdCX = thirdX + MATCH_W / 2;
     const finalEndY = finalMatchY + mh;
     const d = `M ${thirdCX} ${finalEndY} V ${thirdMatchY}`;
     body += svgEl('path', { 
-      d, 
-      fill:'none', 
-      stroke:C.connColor, 
-      'stroke-width':2, 
-      'stroke-linecap':'round', 
-      'stroke-dasharray':'6 4' 
+      d, fill:'none', stroke:C.connColor, 'stroke-width':1.5, 
+      'stroke-linecap':'round', 'stroke-dasharray':'5 3' 
     });
   }
 
-  // ── LABEL ────────────────────────────────────────────────────────
+  // Label
   sideRounds.forEach((rid, ri) => {
     const count = allMatches[rid].length;
     body += drawLabel(colX(ri), TOP_PAD, roundLabel(count));
@@ -432,14 +373,14 @@ function renderBracketSVG(bracket, container) {
   });
   body += drawLabel(colX(finalColI), TOP_PAD, 'Finale');
 
-  // ── CARD MATCH ───────────────────────────────────────────────────
+  // Card match
   sideRounds.forEach((rid, ri) => {
     const dxColI = finalColI + (n - ri);
     leftMs[rid].forEach((m, mi) => {
-      body += drawMatch(colX(ri), LOFF + leftPos[rid][mi], m, true);  // sx: flip
+      body += drawMatch(colX(ri), LOFF + leftPos[rid][mi], m, true);
     });
     rightMs[rid].forEach((m, mi) => {
-      body += drawMatch(colX(dxColI), LOFF + leftPos[rid][mi], m, false); // dx: no flip
+      body += drawMatch(colX(dxColI), LOFF + leftPos[rid][mi], m, false);
     });
   });
 
@@ -447,7 +388,7 @@ function renderBracketSVG(bracket, container) {
   const finalMatch = allMatches[finalRound][0];
   body += drawMatch(colX(finalColI), finalMatchY, finalMatch, false);
 
-  // ── 3°/4° POSTO ──────────────────────────────────────────────────
+  // 3/4 posto
   if (hasThird) {
     const tx = colX(finalColI);
     const tm = bracket.thirdPlaceMatch;
@@ -455,7 +396,7 @@ function renderBracketSVG(bracket, container) {
     body += drawMatch(tx, thirdMatchY, tm, false);
   }
 
-  // ── Assembla ─────────────────────────────────────────────────────
+  // Assembla
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="display:block;overflow:visible;">${body}</svg>`;
   const wrap = document.createElement('div');
   wrap.className = 'bracket-svg-wrapper';
@@ -463,14 +404,14 @@ function renderBracketSVG(bracket, container) {
   container.appendChild(wrap);
 }
 
-// ── Fallback lineare (solo finale, o 1 round) ─────────────────────
+// ── Fallback lineare ──────────────────────────────────────────────
 function renderLinearSVG(bracket, container) {
   const allRoundIds = Object.keys(bracket.rounds).map(Number).sort((a,b)=>a-b);
   const allMatches  = bracket.rounds;
   const mh          = matchH();
   const hasThird    = !!bracket.thirdPlaceMatch;
   const LOFF        = TOP_PAD + LABEL_H + LABEL_MB;
-  const BASE        = mh + 40;
+  const BASE        = mh + 24;
 
   const firstCount = allMatches[allRoundIds[0]].length;
   const totalH     = Math.max(firstCount * BASE - (BASE - mh), mh);
@@ -478,7 +419,6 @@ function renderLinearSVG(bracket, container) {
   let body = '';
   let maxY = 0;
 
-  // Posizioni per ogni round
   const pos = {};
   allRoundIds.forEach((rid, ri) => {
     const ms = allMatches[rid];
@@ -501,13 +441,11 @@ function renderLinearSVG(bracket, container) {
       maxY = Math.max(maxY, y + mh);
     });
 
-    // Connettori verso round successivo
     if (ri < allRoundIds.length - 1) {
       const nextRid = allRoundIds[ri + 1];
       for (let mi = 0; mi < ms.length; mi += 2) {
         const srcY1 = LOFF + pos[rid][mi];
         const dstY  = LOFF + pos[nextRid][Math.floor(mi / 2)];
-        
         if (mi + 1 < ms.length) {
           const srcY2 = LOFF + pos[rid][mi + 1];
           body += drawYConn(x, srcY1, x, srcY2, x + COL_W, dstY, 'right');
@@ -518,7 +456,7 @@ function renderLinearSVG(bracket, container) {
     }
   });
 
-  const svgW = allRoundIds.length * COL_W + 60;
+  const svgW = allRoundIds.length * COL_W + 40;
   const svgH = maxY + BOT_PAD;
   const svg  = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="display:block;overflow:visible;">${body}</svg>`;
   const wrap = document.createElement('div');
