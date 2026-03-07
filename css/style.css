@@ -925,7 +925,7 @@ body {
 
 .main-title {
   text-align:center;
-  font-size:28px;
+  font-size:38px;
   font-weight:700;
   margin:0;
 }
@@ -938,11 +938,14 @@ body {
   max-width:100%;
   width:fit-content;
 
-  padding:12px 30px;
-  border-radius:12px;
+  padding:18px 36px;
+  border-radius:14px;
+
   background:rgba(56,189,248,0.06);
   border:1px solid rgba(56,189,248,0.30);
-  box-shadow:0 4px 14px rgba(0,0,0,0.35);
+
+  box-shadow:0 8px 24px rgba(0,0,0,0.35);
+
   margin-top:18px;
   margin-bottom:18px;
 }
@@ -953,7 +956,7 @@ body {
 ========================= */
 
 .main-subtitle{
-  font-size:38px;
+  font-size:28px;
   color:var(--text-muted);
   text-align:center;
   margin-top:12px;
