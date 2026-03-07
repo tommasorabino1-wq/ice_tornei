@@ -506,39 +506,31 @@ function animateCards() {
 
 
 // ===============================
-// SCROLL REVEAL (Apple style)
+// SCROLL REVEAL (section only)
 // ===============================
 
 gsap.registerPlugin(ScrollTrigger);
 
 gsap.utils.toArray(".reveal-section").forEach(section => {
 
-  const elements = section.querySelectorAll(
-    ".section-title, .section-header, .how-step, .faq-item, .tournament-card"
-  );
-
-  const tl = gsap.timeline({
-    scrollTrigger: {
-      trigger: section,
-      start: "top 70%",
-      once: true
+  gsap.fromTo(
+    section,
+    {
+      opacity: 0,
+      y: 40
+    },
+    {
+      opacity: 1,
+      y: 0,
+      duration: 0.7,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: section,
+        start: "top 80%",
+        once: true
+      }
     }
-  });
-
-  tl.to(section, {
-    opacity: 1,
-    y: 0,
-    duration: 0.6,
-    ease: "power2.out"
-  });
-
-  tl.from(elements, {
-    opacity: 0,
-    y: 30,
-    duration: 0.6,
-    stagger: 0.15,
-    ease: "power2.out"
-  }, "-=0.2");
+  );
 
 });
 
