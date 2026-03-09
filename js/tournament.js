@@ -2922,6 +2922,7 @@ function applyTournamentState(tournament) {
 
   const registrationBlock = document.querySelector(".tournament-registration-block");
   const capacityBlock = document.querySelector(".tournament-capacity-block");
+  const teamsBlock = document.getElementById("tournament-teams-section");
 
   form.style.display = "none";
   form.classList.remove("skeleton");
@@ -2942,6 +2943,7 @@ function applyTournamentState(tournament) {
 
     registrationBlock.style.display = "block";
     capacityBlock.style.display = "block";
+    teamsBlock.style.display = "block";
 
     return;
   }
@@ -2965,6 +2967,7 @@ function applyTournamentState(tournament) {
 
     registrationBlock.style.display = "block";
     capacityBlock.style.display = "none";
+    teamsBlock.style.display = "block";
 
     return;
   }
@@ -2988,6 +2991,7 @@ function applyTournamentState(tournament) {
 
     registrationBlock.style.display = "block";
     capacityBlock.style.display = "block";
+    teamsBlock.style.display = "block";
 
     return;
   }
@@ -3011,6 +3015,7 @@ function applyTournamentState(tournament) {
 
     registrationBlock.style.display = "block";
     capacityBlock.style.display = "none";
+    teamsBlock.style.display = "none";
 
     return;
   }
@@ -3034,6 +3039,7 @@ function applyTournamentState(tournament) {
 
     registrationBlock.style.display = "block";
     capacityBlock.style.display = "none";
+    teamsBlock.style.display = "none";
 
     return;
   }
@@ -3057,6 +3063,7 @@ function applyTournamentState(tournament) {
 
     registrationBlock.style.display = "block";
     capacityBlock.style.display = "none";
+    teamsBlock.style.display = "none";
 
     return;
   }
