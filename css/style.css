@@ -97,6 +97,11 @@
 }
 
 
+html {
+  scroll-behavior: smooth;
+}
+
+
 
 
 
@@ -839,14 +844,19 @@ body {
 .sport-box {
   min-width:240px;
   max-width:240px;
+
   background-color: var(--surface-card);
   border: 1px solid var(--border);
+
   border-radius: var(--radius);
   padding:18px;
+
   box-shadow: var(--shadow-md);
+
   display:flex;
   flex-direction:column;
   gap:6px;
+
   transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
@@ -856,8 +866,9 @@ body {
 
   box-shadow:
     var(--shadow-md),
-    0 0 16px var(--brand-glow-soft);
+    0 0 16px var(--brand-glow);
 }
+
 
 
 /* =========================
@@ -1200,6 +1211,73 @@ section > .section-title {
   box-shadow:
     var(--shadow-md),
     0 0 14px var(--brand-glow-soft);
+}
+
+
+/* =========================
+   HERO CTA
+========================= */
+
+.hero-cta {
+  margin-top: 10px;
+  display:flex;
+  justify-content:center;
+}
+
+.hero-button {
+  font-size:14px;
+  padding:12px 22px;
+  border-radius:8px;
+  box-shadow:
+    var(--shadow-md),
+    0 0 12px var(--brand-glow);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.hero-button:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 18px var(--brand-glow);
+}
+
+
+/* =========================
+   HERO SCROLL INDICATOR
+========================= */
+
+.hero-scroll-indicator {
+  margin-top: 12px;
+  display:flex;
+  justify-content:center;
+}
+
+.scroll-arrow {
+  color: var(--brand);
+  opacity:0.8;
+  animation: heroArrowBounce 1.6s ease-in-out infinite;
+  transition: opacity 0.2s ease;
+}
+
+.hero-scroll-indicator:hover .scroll-arrow {
+  opacity:1;
+}
+
+
+/* ANIMATION */
+
+@keyframes heroArrowBounce {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 
 

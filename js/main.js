@@ -579,16 +579,33 @@ const sportsTrack = document.querySelector(".sports-track");
 
 if (sportsTrack) {
 
-  // duplichiamo le card per creare loop infinito
   sportsTrack.innerHTML += sportsTrack.innerHTML;
 
-  gsap.to(sportsTrack, {
+  const sliderAnimation = gsap.to(sportsTrack, {
 
     x: "-50%",
     duration: 20,
     ease: "none",
     repeat: -1
 
+  });
+
+  // pausa hover desktop
+  sportsTrack.addEventListener("mouseenter", () => {
+    sliderAnimation.pause();
+  });
+
+  sportsTrack.addEventListener("mouseleave", () => {
+    sliderAnimation.resume();
+  });
+
+  // pausa touch mobile
+  sportsTrack.addEventListener("touchstart", () => {
+    sliderAnimation.pause();
+  });
+
+  sportsTrack.addEventListener("touchend", () => {
+    sliderAnimation.resume();
   });
 
 }
