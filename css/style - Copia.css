@@ -6,39 +6,33 @@
    DESIGN SYSTEM
 ========================= */
 :root {
+  --bg-main: #0b0f14;
+  --bg-secondary: #121820;
+  --bg-card: #161d27;
 
-  --bg-main: #f5efe6;
-  --bg-secondary: #efe6d8;
-  --bg-card: #ffffff;
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
 
-  --text-main: #2f2a24;
-  --text-muted: #7a6f64;
+  --brand: #38bdf8;
+  --brand-hover: #2ea8e6;
+  --state-open: #22c55e;
+  --state-wip: #f59e0b;
+  --state-full: #ef4444;
+  --state-live: #f59e0b;
+  --state-final: #8b5cf6;
+  --state-finished: #6b7280;
 
-  --brand: #b08a5a;
-  --brand-hover: #9a764a;
-
-  --state-open: #3b7a57;
-  --state-wip: #c58a2b;
-  --state-full: #c44949;
-  --state-live: #d49b2b;
-  --state-final: #7c5aa6;
-  --state-finished: #8a8175;
-
-  --surface: rgba(255,255,255,0.9);
-  --surface-hover: rgba(255,255,255,0.95);
-
+  --surface: rgba(22, 29, 39, 0.95);
+  --surface-hover: rgba(26, 33, 43, 0.95);
   --primary: var(--brand);
-  --primary-light: rgba(176,138,90,0.2);
-
-  --skeleton-bg: #e9e1d6;
-
+  --primary-light: rgba(56, 189, 248, 0.2);
+  --skeleton-bg: #1f2933;
   --text: var(--text-main);
   --background: var(--bg-main);
 
-  --border: #e1d8cc;
-
+  --border: #3f4a55;
   --radius: 6px;
-  --shadow: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 
   --font: 'Inter', sans-serif;
 }
@@ -118,14 +112,14 @@ body {
   font-size: 15px;
   font-weight: 600;
   white-space: nowrap;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   transition: color 0.2s ease;
 }
 
 .main-nav a:hover,
 .main-nav a.active {
   color: var(--text-main);
-  background-color: var(--primary-light);
+  background-color: rgba(56, 189, 248, 0.06);
 }
 
 /* Hamburger button */
@@ -273,38 +267,38 @@ body {
 }
 
 .badge.open {
-  background-color: rgba(59, 122, 87, 0.15);
+  background-color: rgba(34, 197, 94, 0.15);
   color: var(--state-open);
 }
 
 .badge.wip {
-  background-color: rgba(197, 138, 43, 0.15);
+  background-color: rgba(245, 158, 11, 0.15);
   color: var(--state-wip);
 }
 
 .badge.full {
-  background-color: rgba(196, 73, 73, 0.15);
+  background-color: rgba(239, 68, 68, 0.15);
   color: var(--state-full);
 }
 
 .badge.live {
-  background-color: rgba(212, 155, 43, 0.15);
+  background-color: rgba(245, 158, 11, 0.15);
   color: var(--state-live);
 }
 
 .badge.finished {
-  background-color: rgba(138, 129, 117, 0.18);
+  background-color: rgba(107, 114, 128, 0.18);
   color: var(--state-finished);
 }
 
 .badge.final_phase {
-  background-color: rgba(124, 90, 166, 0.15);
+  background-color: rgba(139, 92, 246, 0.15);
   color: var(--state-final);
 }
 
 .badge.needs_attention {
-  background: var(--brand);
-  color: #fff;
+  background: #4f44ef;
+  color: white;
 }
 
 
@@ -334,7 +328,7 @@ body {
 
 .btn.primary {
   background-color: var(--brand);
-  color: #fff;
+  color: #000;
 }
 
 .btn.primary:hover {
@@ -372,8 +366,8 @@ body {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  border: 2px solid rgba(0,0,0,0.15);
-  border-top-color: var(--brand);
+  border: 2px solid rgba(0, 0, 0, 0.25);
+  border-top-color: #000;
   animation: btn-spin 0.8s linear infinite;
 }
 
@@ -402,7 +396,7 @@ body {
 }
 
 .error {
-  color: var(--state-full);
+  color: #ef4444;
   font-size: 13px;
 }
 
@@ -413,10 +407,9 @@ body {
   right: 16px;
   left: 16px;
   background-color: var(--brand);
-  color: #fff;
+  color: #000;
   padding: 14px 20px;
   border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.05);
   font-size: 14px;
   font-weight: 700;
   box-shadow: var(--shadow);
@@ -499,7 +492,7 @@ body {
 
   font-size: 14px;
   line-height: 1.7;
-  color: var(--text-main);
+  color: rgba(255,255,255,0.82);
 }
 
 .intro-box strong {
@@ -520,13 +513,13 @@ body {
   gap: 8px;
   padding: 6px 10px;
   border-radius: 6px;
-  background-color: rgba(176,138,90,0.06);
-  border: 1px solid rgba(176,138,90,0.18);
+  background-color: rgba(22, 29, 39, 0.4);
+  border: 1px solid rgba(56, 189, 248, 0.12);
   transition: border-color 0.2s ease;
 }
 
 .sport-filter-inline:hover {
-  border-color: rgba(176,138,90,0.35);
+  border-color: rgba(56, 189, 248, 0.25);
 }
 
 .sport-filter-inline label {
@@ -534,7 +527,7 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-muted);
+  color: rgba(156, 163, 175, 0.8);
   white-space: nowrap;
   margin: 0;
 }
@@ -553,12 +546,12 @@ body {
 }
 
 .sport-filter-inline select:hover {
-  background-color: rgba(176,138,90,0.08);
+  background-color: rgba(56, 189, 248, 0.08);
 }
 
 .sport-filter-inline select:focus {
   outline: none;
-  background-color: rgba(176,138,90,0.12);
+  background-color: rgba(56, 189, 248, 0.12);
 }
 
 .sport-filter-inline option {
@@ -601,10 +594,10 @@ body {
 
 .tournament-card:hover {
   transform: translateY(-6px) scale(1.01);
-  border-color: var(--brand);
+  border-color: rgba(56,189,248,0.55);
   box-shadow:
-    0 12px 28px rgba(0,0,0,0.12),
-    0 0 0 1px rgba(176,138,90,0.25);
+    0 12px 28px rgba(0,0,0,0.55),
+    0 0 12px rgba(56,189,248,0.15);
 }
 
 .tournament-card:hover h3{
@@ -715,7 +708,7 @@ body {
 
 .skeleton-title,
 .skeleton-line {
-  background: linear-gradient(90deg, #e9e1d6 25%, #f3ece3 37%, #e9e1d6 63%);
+  background: linear-gradient(90deg, #1f2933 25%, #2a3441 37%, #1f2933 63%);
   background-size: 400% 100%;
   animation: skeleton-shimmer 1.4s ease infinite;
   border-radius: 4px;
@@ -821,7 +814,7 @@ body {
 }
 
 .sport-box:hover {
-  border-color: rgba(176,138,90,0.35);
+  border-color: rgba(56,189,248,0.35);
 }
 
 
@@ -898,10 +891,10 @@ body {
 .section-divider {
   margin: 35px 0;
   padding: 36px 28px;
-  background: rgba(176,138,90,0.04);
-  border: 1px solid rgba(176,138,90,0.18);
+  background: rgba(56,189,248,0.04);
+  border: 1px solid rgba(56,189,248,0.18);
   border-radius: 14px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35);
 }
 
 
@@ -948,9 +941,10 @@ body {
   padding:18px 36px;
   border-radius:14px;
 
-  background:rgba(176,138,90,0.06);
-  border:1px solid rgba(176,138,90,0.30);
-  box-shadow:0 8px 24px rgba(0,0,0,0.10);
+  background:rgba(56,189,248,0.06);
+  border:1px solid rgba(56,189,248,0.30);
+
+  box-shadow:0 8px 24px rgba(0,0,0,0.35);
 
   margin-top:18px;
   margin-bottom:18px;
@@ -981,8 +975,8 @@ body {
   font-weight: 700;
 
   text-shadow:
-    0 0 6px rgba(176,138,90,0.6),
-    0 0 12px rgba(176,138,90,0.4);
+    0 0 6px rgba(56,189,248,0.6),
+    0 0 12px rgba(56,189,248,0.4);
 
   transition: text-shadow 0.3s ease;
 }
@@ -996,18 +990,18 @@ body {
 
 0%{
 text-shadow:
-0 0 2px rgba(176,138,90,0.4);
+0 0 2px rgba(56,189,248,0.4);
 }
 
 50%{
 text-shadow:
-0 0 12px rgba(176,138,90,0.9),
-0 0 24px rgba(176,138,90,0.6);
+0 0 12px rgba(56,189,248,0.9),
+0 0 24px rgba(56,189,248,0.6);
 }
 
 100%{
 text-shadow:
-0 0 6px rgba(176,138,90,0.6);
+0 0 6px rgba(56,189,248,0.6);
 }
 
 }
@@ -1027,13 +1021,13 @@ animation: sportGlow 0.8s ease;
   display: inline-block;
   padding: 6px 16px;
   border-radius: 10px;
-  border: 1px solid rgba(176,138,90,0.30);
-  background: rgba(176,138,90,0.06);
+  border: 1px solid rgba(56,189,248,0.30);
+  background: rgba(56,189,248,0.06);
   color: var(--text-main);
   font-weight: 600;
   font-size: 16px;
   letter-spacing: 0.02em;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
 }
 
 
@@ -1115,8 +1109,8 @@ section > .section-title {
   align-items:center;
   padding:8px 14px;
   border-radius:8px;
-  background:rgba(176,138,90,0.06);
-  border:1px solid rgba(176,138,90,0.18);
+  background:rgba(56,189,248,0.06);
+  border:1px solid rgba(56,189,248,0.18);
   min-width:90px;
 }
 
@@ -1141,7 +1135,7 @@ section > .section-title {
 
 .hero-stat:hover{
   transform:translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
 }
 
 
