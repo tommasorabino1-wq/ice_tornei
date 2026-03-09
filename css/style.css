@@ -945,7 +945,7 @@ body {
 
 .faq-answer p {
   font-size: 13px;
-  color: var(--text-soft);
+  color: var(--text-main);
   padding: 14px 16px;
   line-height: 1.6;
 
@@ -960,6 +960,10 @@ body {
 
 .faq-question:hover {
   color: var(--brand);
+}
+
+.faq-item:last-child {
+  border-bottom: none;
 }
 
 
@@ -1035,7 +1039,7 @@ body {
 
 .main-subtitle {
   font-size:16px;
-  color:var(--text-soft);
+  color:var(--text-main);
   text-align:center;
   margin-top:12px;
   line-height:1.4;
@@ -1200,7 +1204,7 @@ section > .section-title {
 
 .stat-label {
   font-size:13px;
-  color:var(--text-muted);
+  color:var(--text-main);
   margin-top:1px;
   letter-spacing:0.02em;
 }
