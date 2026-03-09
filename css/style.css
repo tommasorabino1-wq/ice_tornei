@@ -1281,7 +1281,7 @@ section > .section-title {
 }
 
 #tournaments {
-  scroll-margin-top: 240px;
+  scroll-margin-top: 280px;
 }
 
 
@@ -1822,7 +1822,7 @@ section > .section-title {
   border: 1px solid var(--border);
   background-color: var(--bg-main);
   color: var(--text-main);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   transition:
     border-color 0.2s ease,
@@ -5983,7 +5983,7 @@ section > .section-title {
 }
 
 .required-asterisk {
-  color: #00f15d;
+  color: var(--brand);
   font-weight: 700;
   margin-left: 4px;
 }
