@@ -19,27 +19,41 @@ const CONN_OFFSET     = 12;
 
 function matchH() { return MATCH_H * 2 + MATCH_GAP; }
 
-// ── Palette ───────────────────────────────────────────────────────
+// ── Palette LIGHT (Design System) ─────────────────────────────────
 const C = {
-  cardBg:             'rgba(22, 29, 39, 0.95)',
-  cardBgAlt:          'rgba(22, 29, 39, 0.95)',
-  cardBorder:         'rgba(255, 255, 255, 0.12)',
-  cardBorderTbd:      'rgba(255, 255, 255, 0.06)',
-  text:               '#d1d5db',
-  textWin:            '#ffffff',
-  textLose:           '#9ca3af',
-  textTbd:            '#6b7280',
-  textScore:          'rgba(255, 255, 255, 0.35)',
-  winBg:              'rgba(56, 189, 248, 0.08)',
-  winBorder:          'rgba(56, 189, 248, 0.35)',
-  winBar:             'rgba(56, 189, 248, 0.6)',
-  winAccent:          '#38bdf8',
-  loseBg:             'rgba(255, 255, 255, 0.02)',
-  loseBorder:         'rgba(255, 255, 255, 0.08)',
-  labelText:          '#e5e7eb',
-  labelBg:            'rgba(255, 255, 255, 0.06)',
-  labelBorder:        'rgba(255, 255, 255, 0.15)',
-  connColor:          'rgba(156, 163, 175, 0.35)',
+
+  // card
+  cardBg:        '#ffffff',
+  cardBgAlt:     '#faf6f1',
+
+  cardBorder:    '#e6ded3',
+  cardBorderTbd: '#eee6db',
+
+  // testo
+  text:          '#2f2a24',
+  textWin:       '#1f1b16',
+  textLose:      '#8a8175',
+  textTbd:       '#b0a79b',
+
+  textScore:     '#8a8175',
+
+  // winner styling
+  winBg:         'rgba(176,138,90,0.08)',
+  winBorder:     '#b08a5a',
+  winBar:        '#b08a5a',
+  winAccent:     '#9a764a',
+
+  // loser
+  loseBg:        '#faf6f1',
+  loseBorder:    '#e6ded3',
+
+  // label round
+  labelText:     '#6b6258',
+  labelBg:       '#f5efe6',
+  labelBorder:   '#e6ded3',
+
+  // connector lines
+  connColor:     '#d6cec2'
 };
 
 // ── SVG helpers ───────────────────────────────────────────────────
@@ -103,9 +117,10 @@ function drawMatch(x, y, match, flip) {
     const fi   = isTbd ? 'italic' : 'normal';
     const fs   = isTbd ? 9 : 10;
 
-    const nameX    = flip ? x + MATCH_W - (isWin ? 12 : 10) : x + (isWin ? 12 : 10);
-    const scoreX   = flip ? x + 12 : x + MATCH_W - 12;
-    const nameAnchor  = flip ? 'end' : 'start';
+    const nameX = x + MATCH_W / 2;
+    const scoreX = flip ? x + 10 : x + MATCH_W - 10;
+
+    const nameAnchor = 'middle';
     const scoreAnchor = flip ? 'start' : 'end';
 
     let r = '';
@@ -147,7 +162,7 @@ function drawMatch(x, y, match, flip) {
 
   const yA = y, yB = y + MATCH_H + MATCH_GAP;
   o += drawRow(yA, teamA, sA, aTbd, aWin, aLose, false);
-  o += svgEl('rect', { x, y:yA+MATCH_H, width:MATCH_W, height:MATCH_GAP, fill:'rgba(22, 29, 39, 0.95)' });
+  o += svgEl('rect', { x, y:yA+MATCH_H, width:MATCH_W, height:MATCH_GAP, fill:'#ffffff' });
   o += drawRow(yB, teamB, sB, bTbd, bWin, bLose, true);
   
   const borderColor = (aWin || bWin) ? C.winBorder : C.cardBorder;
