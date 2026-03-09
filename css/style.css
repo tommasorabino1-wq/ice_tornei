@@ -3,19 +3,42 @@
 ========================= */
 
 /* =========================
-   DESIGN SYSTEM
+   DESIGN SYSTEM 2.0
 ========================= */
 :root {
 
+  /* =========================
+     BACKGROUNDS
+  ========================= */
+
   --bg-main: #f5efe6;
   --bg-secondary: #efe6d8;
-  --bg-card: #ffffff;
+
+  /* surfaces */
+  --surface-card: #ffffff;
+  --surface-soft: #faf6f1;
+
+  /* =========================
+     TEXT
+  ========================= */
 
   --text-main: #2f2a24;
-  --text-muted: #7a6f64;
+  --text-muted: #6b6258;
+  --text-soft: #8a8175;
+
+  /* =========================
+     BRAND
+  ========================= */
 
   --brand: #b08a5a;
   --brand-hover: #9a764a;
+  --brand-soft: rgba(176,138,90,0.08);
+  --brand-soft-border: rgba(176,138,90,0.20);
+  --brand-glow: rgba(176,138,90,0.35);
+
+  /* =========================
+     STATES
+  ========================= */
 
   --state-open: #3b7a57;
   --state-wip: #c58a2b;
@@ -24,24 +47,56 @@
   --state-final: #7c5aa6;
   --state-finished: #8a8175;
 
-  --surface: rgba(255,255,255,0.9);
-  --surface-hover: rgba(255,255,255,0.95);
+  /* =========================
+     BORDERS
+  ========================= */
 
-  --primary: var(--brand);
-  --primary-light: rgba(176,138,90,0.2);
+  --border: #e1d8cc;
+  --border-soft: #eee6db;
+
+  /* =========================
+     UI ELEMENTS
+  ========================= */
+
+  --surface: rgba(255,255,255,0.9);
+  --surface-hover: rgba(255,255,255,0.96);
+
+  /* =========================
+     EFFECTS
+  ========================= */
+
+  --shadow-sm: 0 2px 6px rgba(0,0,0,0.05);
+  --shadow-md: 0 6px 18px rgba(0,0,0,0.08);
+  --shadow-lg: 0 10px 28px rgba(0,0,0,0.12);
+
+  /* =========================
+     SKELETON
+  ========================= */
 
   --skeleton-bg: #e9e1d6;
+
+  /* =========================
+     LEGACY SUPPORT
+     (per non rompere il CSS)
+  ========================= */
+
+  --bg-card: var(--surface-card);
+
+  --primary: var(--brand);
+  --primary-light: var(--brand-soft);
 
   --text: var(--text-main);
   --background: var(--bg-main);
 
-  --border: #e1d8cc;
-
   --radius: 6px;
-  --shadow: 0 4px 12px rgba(0,0,0,0.08);
+
+  --shadow: var(--shadow-md);
 
   --font: 'Inter', sans-serif;
 }
+
+
+
 
 
 /* =========================
@@ -419,7 +474,7 @@ body {
   border: 1px solid rgba(0,0,0,0.05);
   font-size: 14px;
   font-weight: 700;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-md);
   z-index: 999;
   text-align: center;
 }
@@ -483,10 +538,10 @@ body {
 ========================= */
 
 .intro-box {
-  background-color: var(--bg-card);
+  background-color: var(--surface-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-md);
 
   padding: 16px;
   margin-top: 8px;
@@ -520,13 +575,13 @@ body {
   gap: 8px;
   padding: 6px 10px;
   border-radius: 6px;
-  background-color: rgba(176,138,90,0.06);
-  border: 1px solid rgba(176,138,90,0.18);
+  background-color: var(--brand-soft);
+  border: 1px solid var(--brand-soft-border);
   transition: border-color 0.2s ease;
 }
 
 .sport-filter-inline:hover {
-  border-color: rgba(176,138,90,0.35);
+  border-color: var(--brand);
 }
 
 .sport-filter-inline label {
@@ -553,12 +608,12 @@ body {
 }
 
 .sport-filter-inline select:hover {
-  background-color: rgba(176,138,90,0.08);
+  background-color: var(--brand-soft);
 }
 
 .sport-filter-inline select:focus {
   outline: none;
-  background-color: rgba(176,138,90,0.12);
+  background-color: var(--brand-soft);
 }
 
 .sport-filter-inline option {
@@ -585,11 +640,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  background-color: var(--bg-card);
+  background-color: var(--surface-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 14px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-md);
   text-decoration: none;
   color: inherit;
   cursor: pointer;
@@ -603,8 +658,8 @@ body {
   transform: translateY(-6px) scale(1.01);
   border-color: var(--brand);
   box-shadow:
-    0 12px 28px rgba(0,0,0,0.12),
-    0 0 0 1px rgba(176,138,90,0.25);
+    var(--shadow-lg),
+    0 0 0 1px var(--brand-soft-border);
 }
 
 .tournament-card:hover h3{
@@ -623,7 +678,7 @@ body {
 
 .tournament-card.finished:hover {
   transform: none;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-md);
   border-color: var(--border);
 }
 
@@ -709,7 +764,7 @@ body {
 
 .tournament-card.skeleton:hover {
   transform: none;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-md);
   border-color: var(--border);
 }
 
@@ -765,11 +820,11 @@ body {
 }
 
 .how-step {
-  background-color: var(--bg-card);
+  background-color: var(--surface-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-md);
 }
 
 .how-step h3 {
@@ -809,11 +864,11 @@ body {
 .sport-box {
   min-width:220px;
   max-width:220px;
-  background-color: var(--bg-card);
+  background-color: var(--surface-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding:14px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-md);
   display:flex;
   flex-direction:column;
   gap:6px;
@@ -821,7 +876,7 @@ body {
 }
 
 .sport-box:hover {
-  border-color: rgba(176,138,90,0.35);
+  border-color: var(--brand);
 }
 
 
@@ -881,7 +936,7 @@ body {
 
 .faq-answer p {
   font-size: 13px;
-  color: var(--text-muted);
+  color: var(--text-soft);
   padding-bottom: 14px;
   line-height: 1.6;
 }
@@ -898,8 +953,8 @@ body {
 .section-divider {
   margin: 35px 0;
   padding: 36px 28px;
-  background: rgba(176,138,90,0.04);
-  border: 1px solid rgba(176,138,90,0.18);
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-soft-border);
   border-radius: 14px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
@@ -948,9 +1003,9 @@ body {
   padding:18px 36px;
   border-radius:14px;
 
-  background:rgba(176,138,90,0.06);
-  border:1px solid rgba(176,138,90,0.30);
-  box-shadow:0 8px 24px rgba(0,0,0,0.10);
+  background:var(--brand-soft);
+  border:1px solid var(--brand-soft-border);
+  box-shadow:var(--shadow-lg);
 
   margin-top:18px;
   margin-bottom:18px;
@@ -961,9 +1016,9 @@ body {
    MAIN SUBTITLE
 ========================= */
 
-.main-subtitle{
+.main-subtitle {
   font-size:16px;
-  color:var(--text-muted);
+  color:var(--text-soft);
   text-align:center;
   margin-top:12px;
   line-height:1.4;
@@ -1027,13 +1082,13 @@ animation: sportGlow 0.8s ease;
   display: inline-block;
   padding: 6px 16px;
   border-radius: 10px;
-  border: 1px solid rgba(176,138,90,0.30);
-  background: rgba(176,138,90,0.06);
+  border: 1px solid var(--brand-soft-border);
+  background: var(--brand-soft);
   color: var(--text-main);
   font-weight: 600;
   font-size: 16px;
   letter-spacing: 0.02em;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 
@@ -1115,8 +1170,8 @@ section > .section-title {
   align-items:center;
   padding:8px 14px;
   border-radius:8px;
-  background:rgba(176,138,90,0.06);
-  border:1px solid rgba(176,138,90,0.18);
+  background:var(--brand-soft);
+  border:1px solid var(--brand-soft-border);
   min-width:90px;
 }
 
@@ -1141,7 +1196,7 @@ section > .section-title {
 
 .hero-stat:hover{
   transform:translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+  box-shadow: var(--shadow-md);
 }
 
 
