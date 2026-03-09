@@ -2705,7 +2705,123 @@ function handleFormSubmit(tournament) {
 
 
 
+// ===============================
+// FORM STEP SYSTEM
+// ===============================
 
+let currentStep = 1;
+
+const panels = document.querySelectorAll(".form-step-panel");
+const steps = document.querySelectorAll(".form-step");
+const progressFill = document.querySelector(".form-progress-fill");
+
+const nextBtn = document.querySelector(".step-next");
+const prevBtn = document.querySelector(".step-prev");
+
+function updateStepUI() {
+
+  panels.forEach(panel => {
+    panel.classList.remove("active");
+  });
+
+  document
+    .querySelector(`.form-step-panel[data-step="${currentStep}"]`)
+    .classList.add("active");
+
+  steps.forEach(step => {
+    step.classList.remove("active");
+  });
+
+  document
+    .querySelector(`.form-step[data-step="${currentStep}"]`)
+    .classList.add("active");
+
+  progressFill.style.width = ((currentStep - 1) / 2) * 100 + "%";
+
+  if (currentStep === 1) {
+    prevBtn.style.visibility = "hidden";
+  } else {
+    prevBtn.style.visibility = "visible";
+  }
+
+  if (currentStep === 3) {
+    nextBtn.style.display = "none";
+  } else {
+    nextBtn.style.display = "inline-flex";
+  }
+
+  window.scrollTo({
+    top: document.querySelector("#registration-form").offsetTop - 200,
+    behavior: "smooth"
+  });
+
+}
+
+
+// ===============================
+// NEXT STEP
+// ===============================
+
+nextBtn.addEventListener("click", () => {
+
+  const currentPanel =
+    document.querySelector(`.form-step-panel[data-step="${currentStep}"]`);
+
+  const requiredFields =
+    currentPanel.querySelectorAll("[required]");
+
+  let valid = true;
+
+  requiredFields.forEach(field => {
+
+    if (field.type === "checkbox") {
+
+      if (!field.checked) {
+        valid = false;
+      }
+
+    } else {
+
+      if (!field.value.trim()) {
+        valid = false;
+      }
+
+    }
+
+  });
+
+  if (!valid) {
+    showToast("Compila tutti i campi obbligatori ⚠️");
+    return;
+  }
+
+  if (currentStep < 3) {
+    currentStep++;
+    updateStepUI();
+  }
+
+});
+
+
+// ===============================
+// PREVIOUS STEP
+// ===============================
+
+prevBtn.addEventListener("click", () => {
+
+  if (currentStep > 1) {
+    currentStep--;
+    updateStepUI();
+  }
+
+});
+
+
+// ===============================
+// INIT
+// ===============================
+
+updateStepUI();
 
 
 
