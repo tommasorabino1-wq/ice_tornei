@@ -167,16 +167,24 @@ function renderGenericRegulation(tournaments) {
 // 7. INFO-BOX TORNEO
 // ===============================
 function renderTournament(tournament) {
+
   genericSection.classList.add("hidden");
   tournamentSection.classList.remove("hidden");
 
   // Header
   document.getElementById("tournament-name").textContent = tournament.name;
+
   document.getElementById("tournament-subtitle").textContent =
     `${tournament.location} · ${tournament.date} · ${tournament.sport}`;
 
-  // ✅ Info torneo (nuova versione con righe)
+  // ✅ Info torneo
   renderTournamentInfoRows(tournament);
+
+  // ✅ AGGIORNA PROGRESS BAR POSTI
+  updateTournamentCapacity(
+    tournament.teams_current,
+    tournament.teams_max
+  );
 
   // ✅ Regola specifica campi
   renderSpecificCourtRule(tournament);
@@ -191,6 +199,7 @@ function renderTournament(tournament) {
 
   // Load + render teams list block
   loadAndRenderTeamsList(tournament);
+
 }
 
 
@@ -2827,87 +2836,231 @@ updateStepUI();
 
 
 
+// ===============================
+// TOURNAMENT CAPACITY BAR
+// ===============================
+function updateTournamentCapacity(current, max) {
+
+  const fill = document.getElementById("capacity-fill");
+  const currentText = document.getElementById("capacity-current");
+  const maxText = document.getElementById("capacity-max");
+  const capacityBlock = document.querySelector(".tournament-capacity");
+
+  if (!fill || !currentText || !maxText || !capacityBlock) return;
+
+  const currentTeams = Number(current) || 0;
+  const maxTeams = Number(max) || 0;
+
+  if (maxTeams === 0) return;
+
+  const percentage = Math.min((currentTeams / maxTeams) * 100, 100);
+
+  fill.style.width = percentage + "%";
+
+  currentText.textContent = currentTeams;
+  maxText.textContent = maxTeams;
+
+  const remaining = maxTeams - currentTeams;
+
+  // ===============================
+  // MESSAGGIO DINAMICO SCARSITÀ
+  // ===============================
+
+  let warning = capacityBlock.querySelector(".capacity-warning");
+
+  if (!warning) {
+    warning = document.createElement("div");
+    warning.className = "capacity-warning";
+    capacityBlock.appendChild(warning);
+  }
+
+  // ===============================
+  // STILI DINAMICI
+  // ===============================
+
+  if (remaining <= 0) {
+
+    fill.style.background = "linear-gradient(90deg,#ff3b3b,#c40000)";
+    warning.textContent = "🚫 Torneo completo";
+
+  }
+
+  else if (remaining <= 3) {
+
+    fill.style.background = "linear-gradient(90deg,#ff6b6b,#ff3b3b)";
+    warning.textContent = `⚠️ Restano solo ${remaining} posti`;
+
+  }
+
+  else if (remaining <= 6) {
+
+    warning.textContent = `🔥 Restano ${remaining} posti`;
+
+  }
+
+  else {
+
+    warning.textContent = "";
+
+  }
+
+}
+
+
+
+
+
+
+
+
 
 
 // ===============================
 // 28. STATO TORNEO (UI)
 // ===============================
 function applyTournamentState(tournament) {
+
   const registrationBlock = document.querySelector(".tournament-registration-block");
-  
+  const capacityBlock = document.querySelector(".tournament-capacity-block");
+
   form.style.display = "none";
   form.classList.remove("skeleton");
   badge.className = "badge";
 
+  // ===============================
+  // OPEN
+  // ===============================
   if (tournament.status === "open") {
+
     badge.textContent = "ISCRIZIONI APERTE";
     badge.classList.add("open");
-    subscribeMessage.textContent = "Le iscrizioni sono aperte. Compila il form per iscrivere la tua squadra.";
+
+    subscribeMessage.textContent =
+      "Le iscrizioni sono aperte. Compila il form per iscrivere la tua squadra.";
+
     form.style.display = "flex";
+
     registrationBlock.style.display = "block";
+    capacityBlock.style.display = "block";
+
     return;
   }
 
-  // ✅ NUOVO: Status WIP
+
+  // ===============================
+  // WIP
+  // ===============================
   if (tournament.status === "wip") {
+
     badge.textContent = "IN DEFINIZIONE";
     badge.classList.add("wip");
+
     subscribeMessage.innerHTML = `
       <span class="registration-closed-icon">⏳</span>
       <strong>Iscrizioni chiuse</strong><br>
       Il torneo è in fase di definizione. I gironi saranno comunicati a breve.
     `;
+
     form.style.display = "none";
+
     registrationBlock.style.display = "block";
+    capacityBlock.style.display = "none";
+
     return;
   }
 
+
+  // ===============================
+  // FULL
+  // ===============================
   if (tournament.status === "full") {
+
     badge.textContent = "COMPLETO";
     badge.classList.add("full");
+
     subscribeMessage.innerHTML = `
       <span class="registration-closed-icon">🚫</span>
       <strong>Torneo al completo</strong><br>
-      Il numero massimo di squadre è stato raggiunto. Non è più possibile effettuare nuove iscrizioni.
+      Il numero massimo di squadre è stato raggiunto.
     `;
+
     form.style.display = "none";
+
     registrationBlock.style.display = "block";
+    capacityBlock.style.display = "block";
+
     return;
   }
 
+
+  // ===============================
+  // FINAL PHASE
+  // ===============================
   if (tournament.status === "final_phase") {
+
     badge.textContent = "FASE FINALE";
     badge.classList.add("final_phase");
+
     subscribeMessage.innerHTML = `
       <span class="registration-closed-icon">🏆</span>
       <strong>Fase finale in corso</strong><br>
-      Il torneo è entrato nella fase finale. Le iscrizioni sono chiuse.
+      Il torneo è entrato nella fase finale.
     `;
+
     form.style.display = "none";
+
     registrationBlock.style.display = "block";
+    capacityBlock.style.display = "none";
+
     return;
   }
 
+
+  // ===============================
+  // LIVE
+  // ===============================
   if (tournament.status === "live") {
+
     badge.textContent = "IN CORSO";
     badge.classList.add("live");
+
     subscribeMessage.innerHTML = `
       <span class="registration-closed-icon">⚽</span>
       <strong>Torneo in corso</strong><br>
-      Le partite sono già iniziate. Le iscrizioni sono chiuse.
+      Le partite sono già iniziate.
     `;
+
     form.style.display = "none";
+
     registrationBlock.style.display = "block";
+    capacityBlock.style.display = "none";
+
     return;
   }
 
+
+  // ===============================
+  // FINISHED
+  // ===============================
   if (tournament.status === "finished") {
+
     badge.textContent = "CONCLUSO";
     badge.classList.add("finished");
-    // Nascondi completamente il blocco iscrizione per tornei conclusi
-    registrationBlock.style.display = "none";
+
+    subscribeMessage.innerHTML = `
+      <span class="registration-closed-icon">🏁</span>
+      <strong>Torneo concluso</strong><br>
+      Il torneo è terminato. Consulta la classifica finale.
+    `;
+
+    form.style.display = "none";
+
+    registrationBlock.style.display = "block";
+    capacityBlock.style.display = "none";
+
     return;
   }
+
 }
 
 

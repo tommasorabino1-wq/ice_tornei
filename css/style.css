@@ -774,6 +774,8 @@ body {
   filter: blur(0);
   transform: scale(1);
   transition: opacity 0.35s ease, filter 0.35s ease, transform 0.35s ease;
+  background-color: #e9e1d6;
+  border: 1px solid var(--brand-soft-border);
 }
 
 .tournament-card.skeleton.fade-out {
@@ -785,12 +787,17 @@ body {
 .tournament-card.skeleton:hover {
   transform: none;
   box-shadow: var(--shadow-md);
-  border-color: var(--border);
+  border-color: var(--brand-soft-border);
 }
 
 .skeleton-title,
 .skeleton-line {
-  background: linear-gradient(90deg, #e9e1d6 25%, #f3ece3 37%, #e9e1d6 63%);
+  background: linear-gradient(
+    90deg,
+    rgba(176, 138, 90, 0.10) 25%,
+    rgba(176, 138, 90, 0.22) 37%,
+    rgba(176, 138, 90, 0.10) 63%
+  );
   background-size: 400% 100%;
   animation: skeleton-shimmer 1.4s ease infinite;
   border-radius: 4px;
@@ -2291,6 +2298,77 @@ section > .section-title {
 
 
 
+/* =========================
+   TOURNAMENT CAPACITY BLOCK
+========================= */
+
+.tournament-capacity-block {
+  margin-top:18px;
+  padding:18px;
+  border-radius:var(--radius);
+  background:var(--surface-card); /* bianco panna come altre sezioni */
+  border:1px solid var(--border);
+  margin-bottom: 18px;
+}
+
+
+/* Card interna */
+.tournament-capacity {
+  padding:14px;
+  border-radius:var(--radius);
+  background:var(--surface-soft);
+  border:1px solid var(--brand-soft-border);
+}
+
+
+/* Titolo */
+.capacity-header {
+  font-size:15px;
+  font-weight:700;
+  color:var(--text-main);
+  margin-bottom:10px;
+}
+
+
+/* Barra */
+.capacity-bar {
+  height:10px;
+  background:var(--border-soft);
+  border-radius:999px;
+  overflow:hidden;
+}
+
+
+/* Riempimento barra */
+.capacity-fill {
+  height:100%;
+  width:0%;
+  background:linear-gradient(
+    90deg,
+    var(--brand),
+    var(--brand-hover)
+  );
+  transition:width .5s ease;
+}
+
+
+/* Testo */
+.capacity-text {
+  font-size:14px;
+  font-weight:500;
+  color:var(--text-main);
+  margin-top:8px;
+}
+
+
+.capacity-warning{
+  font-size:13px;
+  font-weight:600;
+  margin-top:6px;
+  color:var(--brand);
+}
+
+
 
 /* =========================
    TOURNAMENT TEAMS LIST
@@ -2414,21 +2492,30 @@ section > .section-title {
 ========================= */
 .team-chip--skeleton {
   pointer-events: none;
-  border-color: rgba(255, 255, 255, 0.06);
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: #e9e1d6;
+  border: 1px solid var(--brand-soft-border);
 }
 
 .team-chip--skeleton .team-chip-index,
 .team-chip--skeleton .team-chip-name {
   color: transparent;
   border: none;
-  background: linear-gradient(90deg, #1f2933 25%, #2a3441 37%, #1f2933 63%);
+
+  background: linear-gradient(
+    90deg,
+    rgba(176, 138, 90, 0.10) 25%,
+    rgba(176, 138, 90, 0.22) 37%,
+    rgba(176, 138, 90, 0.10) 63%
+  );
+
   background-size: 400% 100%;
   animation: skeleton-shimmer 1.4s ease infinite;
 }
 
 .team-chip--skeleton .team-chip-index {
   width: 20px;
+  height: 20px;
+  border-radius: 50%;
 }
 
 .team-chip--skeleton .team-chip-name {
@@ -2620,6 +2707,19 @@ section > .section-title {
   opacity: 0;
   filter: blur(4px);
   transform: scale(0.98);
+}
+
+.tournament-skeleton .tournament-teams-block {
+  background-color: #e9e1d6;
+  border: 1px solid var(--brand-soft-border);
+}
+
+.tournament-skeleton .tournament-info-skeleton {
+  background-color: #e9e1d6;
+  border: 1px solid var(--brand-soft-border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 20px;
 }
 
 
@@ -3007,13 +3107,21 @@ section > .section-title {
 /* =========================
    SKELETON LINES (fallback if not in Part 1)
 ========================= */
+
 .skeleton-line {
   height: 10px;
-  background: linear-gradient(90deg, #1f2933 25%, #2a3441 37%, #1f2933 63%);
-  background-size: 400% 100%;
-  animation: skeleton-shimmer 1.4s ease infinite;
   border-radius: 4px;
   margin-bottom: 6px;
+
+  background: linear-gradient(
+    90deg,
+    rgba(176, 138, 90, 0.10) 25%,
+    rgba(176, 138, 90, 0.22) 37%,
+    rgba(176, 138, 90, 0.10) 63%
+  );
+
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
 }
 
 .skeleton-line.short {
@@ -3022,13 +3130,19 @@ section > .section-title {
 
 .skeleton-title {
   height: 16px;
-  background: linear-gradient(90deg, #1f2933 25%, #2a3441 37%, #1f2933 63%);
-  background-size: 400% 100%;
-  animation: skeleton-shimmer 1.4s ease infinite;
   border-radius: 4px;
   margin-bottom: 12px;
-}
 
+  background: linear-gradient(
+    90deg,
+    rgba(176, 138, 90, 0.10) 25%,
+    rgba(176, 138, 90, 0.22) 37%,
+    rgba(176, 138, 90, 0.10) 63%
+  );
+
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
 
 
 
