@@ -4396,6 +4396,7 @@ section > .section-title {
   background-color: var(--bg-main);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  position: relative;
   padding: 12px;
   margin-bottom: 12px;
 
@@ -4406,6 +4407,45 @@ section > .section-title {
 .standings-group:last-child {
   margin-bottom: 0;
 }
+
+.standings-group::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 28px;
+  height: 100%;
+  pointer-events: none;
+
+  background: linear-gradient(
+    to right,
+    rgba(255,255,255,0),
+    var(--bg-main)
+  );
+}
+
+
+@media (max-width: 768px) {
+
+  .standings-group::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 28px;
+    height: 100%;
+    pointer-events: none;
+
+    background: linear-gradient(
+      to right,
+      rgba(255,255,255,0),
+      var(--bg-main)
+    );
+  }
+
+}
+
+
 
 .standings-title {
   font-size: 14px;
