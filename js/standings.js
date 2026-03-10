@@ -426,7 +426,7 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
     if (showSetsDetail) {
       infoPanelContent = `
         <div class="match-details-sets">
-          <span class="detail-icon">🎾</span>
+          <span class="detail-icon">🎯</span>
           ${formatSetsDetail(setsDetail)}
         </div>
       `;
