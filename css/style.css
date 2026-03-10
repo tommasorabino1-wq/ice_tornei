@@ -4408,7 +4408,8 @@ section > .section-title {
   margin-bottom: 0;
 }
 
-.standings-group::after {
+/* fade attivo */
+.standings-group.fade-right::after {
   content: "";
   position: absolute;
   top: 0;
@@ -4443,6 +4444,39 @@ section > .section-title {
     );
   }
 
+}
+
+
+.standings-group::-webkit-scrollbar {
+  height: 8px;
+}
+
+.standings-group::-webkit-scrollbar-track {
+  background: var(--bg-main);
+  border-radius: 6px;
+}
+
+.standings-group::-webkit-scrollbar-thumb {
+  background: var(--brand);
+  border-radius: 6px;
+}
+
+.standings-group::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-hover);
+}
+
+.standings-group {
+  scrollbar-color: var(--brand) var(--bg-main);
+  scrollbar-width: thin;
+}
+
+
+.standings-table td:first-child,
+.standings-table th:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--bg-main);
+  z-index: 2;
 }
 
 
