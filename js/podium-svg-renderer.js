@@ -12,7 +12,7 @@
   const PLACE_W = 195;
   const PLACE_GAP = 22;
 
-  const MEDAL_SIZE = 70;
+  const MEDAL_SIZE = 90;
   const LOGO_SIZE = 60;
 
   const BAR_HEIGHT_1ST = 200;
@@ -159,7 +159,7 @@
       {
         x: x,
         y: y + 10,
-        "font-size": 36,
+        "font-size": 46,
         "text-anchor": "middle"
       },
       emoji
@@ -266,14 +266,14 @@
         x: cx,
         y: nameY,
         fill: P.textBright,
-        "font-size": 18,
+        "font-size": 24,
         "font-weight": "700",
         "text-anchor": "middle"
       },
       esc(team.team_name)
     );
 
-    const medalY = barY - MEDAL_SIZE / 2 - 18;
+    const medalY = barY - MEDAL_SIZE / 2 - 28;
 
     o += medal(cx, medalY, placeN);
 
@@ -318,7 +318,7 @@
         x: lx + w / 2,
         y: y + LABEL_H / 2 - 6,
         fill: P.brand,
-        "font-size": 13,
+        "font-size": 18,
         "font-weight": "800",
         "text-anchor": "middle",
         "letter-spacing": "0.12em"
@@ -332,7 +332,7 @@
         x: lx + w / 2,
         y: y + LABEL_H / 2 + 18,
         fill: P.text,
-        "font-size": 16,
+        "font-size": 24,
         "font-weight": "700",
         "text-anchor": "middle"
       },

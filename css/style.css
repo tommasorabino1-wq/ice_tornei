@@ -4729,6 +4729,36 @@ section > .section-title {
 }
 
 
+.bracket-container::-webkit-scrollbar,
+.bracket-svg-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.bracket-container::-webkit-scrollbar-track,
+.bracket-svg-wrapper::-webkit-scrollbar-track {
+  background: var(--bg-main);
+  border-radius: 6px;
+}
+
+.bracket-container::-webkit-scrollbar-thumb,
+.bracket-svg-wrapper::-webkit-scrollbar-thumb {
+  background: var(--brand);
+  border-radius: 6px;
+}
+
+.bracket-container::-webkit-scrollbar-thumb:hover,
+.bracket-svg-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-hover);
+}
+
+/* Firefox */
+.bracket-container,
+.bracket-svg-wrapper {
+  scrollbar-color: var(--brand) var(--bg-main);
+  scrollbar-width: thin;
+}
+
+
 
 
 
