@@ -548,34 +548,6 @@ function showToast(message) {
   setTimeout(() => { toast.remove(); }, 2500);
 }
 
-function initStandingsScrollFade() {
-
-  const groups = document.querySelectorAll(".standings-group");
-
-  groups.forEach(group => {
-
-    function updateFade() {
-
-      const maxScroll = group.scrollWidth - group.clientWidth;
-
-      if (group.scrollLeft < maxScroll - 5) {
-        group.classList.add("fade-right");
-      } else {
-        group.classList.remove("fade-right");
-      }
-
-    }
-
-    group.addEventListener("scroll", updateFade);
-
-    // controllo iniziale
-    updateFade();
-  });
-
-}
-
-
-
 // ===============================
 // RENDER STANDINGS (DYNAMIC)
 // ===============================
@@ -692,8 +664,6 @@ function renderStandings(data) {
 
     standingsEl.appendChild(group);
   });
-
-  initStandingsScrollFade();
 }
 
 // ===============================

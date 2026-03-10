@@ -4408,43 +4408,6 @@ section > .section-title {
   margin-bottom: 0;
 }
 
-/* fade attivo */
-.standings-group.fade-right::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 28px;
-  height: 100%;
-  pointer-events: none;
-
-  background: linear-gradient(
-    to right,
-    rgba(255,255,255,0),
-    var(--bg-main)
-  );
-}
-
-
-@media (max-width: 768px) {
-
-  .standings-group::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 28px;
-    height: 100%;
-    pointer-events: none;
-
-    background: linear-gradient(
-      to right,
-      rgba(255,255,255,0),
-      var(--bg-main)
-    );
-  }
-
-}
 
 
 .standings-group::-webkit-scrollbar {
@@ -4468,15 +4431,6 @@ section > .section-title {
 .standings-group {
   scrollbar-color: var(--brand) var(--bg-main);
   scrollbar-width: thin;
-}
-
-
-.standings-table td:first-child,
-.standings-table th:first-child {
-  position: sticky;
-  left: 0;
-  background: var(--bg-main);
-  z-index: 2;
 }
 
 
