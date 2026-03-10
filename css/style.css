@@ -4398,7 +4398,9 @@ section > .section-title {
   border-radius: var(--radius);
   padding: 12px;
   margin-bottom: 12px;
+
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .standings-group:last-child {
@@ -4420,7 +4422,8 @@ section > .section-title {
    STANDINGS TABLE
 ========================= */
 .standings-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 12px;
 }
@@ -4556,19 +4559,7 @@ section > .section-title {
   font-size: 11px;
 }
 
-@media (max-width: 768px) {
-  .standings-table-set th:nth-child(n+9),
-  .standings-table-set td:nth-child(n+9) {
-    display: none;
-  }
-}
 
-@media (max-width: 480px) {
-  .standings-table-set th:nth-child(n+6),
-  .standings-table-set td:nth-child(n+6) {
-    display: none;
-  }
-}
 
 /* =========================
    FINALS SECTION
