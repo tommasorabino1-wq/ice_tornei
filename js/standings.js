@@ -420,6 +420,47 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
     ? `<img src="${escapeHTML(logoB)}" alt="" class="team-logo-match">`
     : `<span class="team-logo-match-fallback">👥</span>`;
 
+  // Pannello info: se giocata mostra set details (se presenti), altrimenti campo/giorno/ora
+  let infoPanelContent;
+  if (isPlayed) {
+    if (showSetsDetail) {
+      infoPanelContent = `
+        <div class="match-details-sets">
+          <span class="detail-icon">🎾</span>
+          ${formatSetsDetail(setsDetail)}
+        </div>
+      `;
+    } else if (hasDetails) {
+      infoPanelContent = `
+        <div class="match-details-grid">
+          ${court !== "none" ? `<div class="match-detail-item"><span class="detail-icon">🥅</span><span class="detail-value">${escapeHTML(court)}</span></div>` : ''}
+          ${day !== "none" ? `<div class="match-detail-item"><span class="detail-icon">📅</span><span class="detail-value">${escapeHTML(day)}</span></div>` : ''}
+          ${hour !== "none" ? `<div class="match-detail-item"><span class="detail-icon">🕐</span><span class="detail-value">${escapeHTML(hour)}</span></div>` : ''}
+        </div>
+      `;
+    } else {
+      infoPanelContent = `
+        <div class="match-details-pending">
+          <span class="pending-icon">📋</span>
+          <span class="pending-text">Nessun dettaglio aggiuntivo disponibile</span>
+        </div>
+      `;
+    }
+  } else {
+    infoPanelContent = hasDetails ? `
+      <div class="match-details-grid">
+        ${court !== "none" ? `<div class="match-detail-item"><span class="detail-icon">🥅</span><span class="detail-value">${escapeHTML(court)}</span></div>` : ''}
+        ${day !== "none" ? `<div class="match-detail-item"><span class="detail-icon">📅</span><span class="detail-value">${escapeHTML(day)}</span></div>` : ''}
+        ${hour !== "none" ? `<div class="match-detail-item"><span class="detail-icon">🕐</span><span class="detail-value">${escapeHTML(hour)}</span></div>` : ''}
+      </div>
+    ` : `
+      <div class="match-details-pending">
+        <span class="pending-icon">⏳</span>
+        <span class="pending-text">Campo, giorno e orario ancora da definire</span>
+      </div>
+    `;
+  }
+
   card.innerHTML = `
     <div class="match-card-inner">
       <div class="match-main">
@@ -438,8 +479,6 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
         </div>
       </div>
 
-      ${showSetsDetail ? `<div class="match-sets-detail">${formatSetsDetail(setsDetail)}</div>` : ''}
-
       ${isDraw && winnerTeamId && isFinals ? `
         <div class="match-tiebreaker">
           <span class="tiebreaker-icon">⚡</span>
@@ -454,24 +493,12 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
             <span class="toggle-icon">+</span>
             <span class="toggle-text">Info</span>
           </button>
-          ${isPlayed ? `<div class="match-status-badge played">✓</div>` : ''}
         </div>
       </div>
     </div>
 
     <div id="${collapseId}" class="match-details-panel" hidden>
-      ${hasDetails ? `
-        <div class="match-details-grid">
-          ${court !== "none" ? `<div class="match-detail-item"><span class="detail-icon">🥅</span><span class="detail-value">${escapeHTML(court)}</span></div>` : ''}
-          ${day !== "none" ? `<div class="match-detail-item"><span class="detail-icon">📅</span><span class="detail-value">${escapeHTML(day)}</span></div>` : ''}
-          ${hour !== "none" ? `<div class="match-detail-item"><span class="detail-icon">🕐</span><span class="detail-value">${escapeHTML(hour)}</span></div>` : ''}
-        </div>
-      ` : `
-        <div class="match-details-pending">
-          <span class="pending-icon">⏳</span>
-          <span class="pending-text">Campo, giorno e orario ancora da definire</span>
-        </div>
-      `}
+      ${infoPanelContent}
     </div>
   `;
 
@@ -485,6 +512,10 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
 
   return card;
 }
+
+
+
+
 
 // ===============================
 // FORMAT SETS DETAIL
