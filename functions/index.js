@@ -328,6 +328,8 @@ async function sendTeamInfoRequestEmails(tournamentId) {
     const teamSizeMin = Number(tournament.team_size_min || 2);
     const teamSizeMax = Number(tournament.team_size_max || 2);
     const sport = tournament.sport || "Sport";
+    const individualOrTeam = tournament.individual_or_team || 'team';
+    const certificateRequired = tournament.certificate_required === true;
 
     // 2) Recupera subscriptions
     const subscriptionsSnapshot = await db.collection('subscriptions')
@@ -340,8 +342,7 @@ async function sendTeamInfoRequestEmails(tournamentId) {
     }
 
     // 3) Configurazione mailer
-    // ✅ QUESTO È IL TUO TEAM INFO MAILER SCRIPT
-    const mailerUrl = "https://script.google.com/macros/s/AKfycbxdjD_ZCaaCwx3yKXWd6wbuyMAPG7KXE65Y9sTdLISDBu5AwL1tDMbKYpOMozinnmKH/exec";
+    const mailerUrl = "https://script.google.com/macros/s/AKfycbwaIhZ_BUn0vgvIVuoeOj4yxfnaB9ZrHl6ODan9J3vDpdTWgsxCUxmyeR8mrNq6Nlhs/exec";
     const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
     // 4) Invia email a ogni squadra
@@ -351,7 +352,6 @@ async function sendTeamInfoRequestEmails(tournamentId) {
       const teamName = subscription.team_name;
       const teamId = subscription.team_id;
 
-      // ✅ PAYLOAD CORRETTO (senza google_form_url)
       const payload = {
         token: mailerToken,
         to: email,
@@ -361,7 +361,9 @@ async function sendTeamInfoRequestEmails(tournamentId) {
         tournament_name: tournamentName,
         team_size_min: teamSizeMin,
         team_size_max: teamSizeMax,
-        sport: sport
+        sport: sport,
+        individual_or_team: individualOrTeam,
+        certificate_required: certificateRequired
       };
 
       try {
@@ -643,18 +645,22 @@ exports.submitSubscription = onRequest(async (req, res) => {
     }
 
     const tournament = tournamentDoc.data();
-    
+
     if (tournament.status !== 'open') {
       return res.status(403).send('REGISTRATIONS_CLOSED');
     }
-    
+
     const fixedCourtDaysHours = String(tournament.fixed_court_days_hours || 'false').toLowerCase();
     const needsPreferences = fixedCourtDaysHours !== 'fixed_all';
+
+    const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
+    const certificateRequired = tournament.certificate_required === true;
+    const teamSizeMax = Number(tournament.team_size_max || 2);
 
     const normalizedTeamName = team_name.trim().toLowerCase();
     const teamId = `${tournament_id}_${normalizedTeamName}`;
 
-    // Verifica duplicati in subscriptions
+    // Verifica duplicati
     const duplicateTeamCheck = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .where('team_id', '==', teamId)
@@ -699,7 +705,7 @@ exports.submitSubscription = onRequest(async (req, res) => {
       if (preferred_days) subscriptionData.preferred_days = preferred_days.trim();
       if (preferred_hours) subscriptionData.preferred_hours = preferred_hours.trim();
     }
-    
+
     if (additional_notes && additional_notes.trim()) {
       subscriptionData.additional_notes = additional_notes.trim();
     }
@@ -709,8 +715,6 @@ exports.submitSubscription = onRequest(async (req, res) => {
     // ===============================
     // 2) Crea documento teams
     // ===============================
-    const teamSizeMax = Number(tournament.team_size_max || 2);
-
     const teamData = {
       team_id: teamId,
       tournament_id,
@@ -718,15 +722,25 @@ exports.submitSubscription = onRequest(async (req, res) => {
       team_logo: null
     };
 
-    // ✅ MODIFICATO: solo name_player_ e certificato_player_
-    for (let i = 1; i <= teamSizeMax; i++) {
-      teamData[`name_player_${i}`] = null;
-      teamData[`certificato_player_${i}`] = null;
+    if (isIndividual) {
+      // Torneo individuale: player_name_1 pre-popolato con team_name
+      teamData['name_player_1'] = team_name;
+      if (certificateRequired) {
+        teamData['certificato_player_1'] = null;
+      }
+    } else {
+      // Torneo a squadre: slot vuoti per tutti i giocatori
+      for (let i = 1; i <= teamSizeMax; i++) {
+        teamData[`name_player_${i}`] = null;
+        if (certificateRequired) {
+          teamData[`certificato_player_${i}`] = null;
+        }
+      }
     }
 
     await db.collection('teams').doc(teamId).set(teamData);
 
-    console.log(`✅ Team ${teamId} created with ${teamSizeMax} empty player slots`);
+    console.log(`✅ Team ${teamId} created (individual: ${isIndividual}, certificate_required: ${certificateRequired})`);
 
     res.status(200).send('SUBSCRIPTION_SAVED');
 
@@ -737,9 +751,9 @@ exports.submitSubscription = onRequest(async (req, res) => {
 });
 
 
+
 // ===============================
 // POST: SUBMIT TEAM INFO
-// ✅ CON LOGGING DETTAGLIATO PER DEBUG
 // ===============================
 exports.submitTeamInfo = onRequest(async (req, res) => {
   setCORS(res);
@@ -751,10 +765,10 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
 
   try {
     console.log('📥 submitTeamInfo called');
-    
-    const { 
-      team_id, 
-      tournament_id, 
+
+    const {
+      team_id,
+      tournament_id,
       players,
       logo_base64,
       logo_filename
@@ -769,19 +783,12 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
 
     // Validazione
     if (!team_id || !tournament_id || !players) {
-      console.error('❌ Validation failed: missing required fields', {
-        has_team_id: !!team_id,
-        has_tournament_id: !!tournament_id,
-        has_players: !!players
-      });
+      console.error('❌ Validation failed: missing required fields');
       return res.status(400).send('INVALID_DATA');
     }
 
     if (!Array.isArray(players) || players.length === 0) {
-      console.error('❌ Validation failed: invalid players array', {
-        is_array: Array.isArray(players),
-        length: players ? players.length : 0
-      });
+      console.error('❌ Validation failed: invalid players array');
       return res.status(400).send('INVALID_PLAYERS');
     }
 
@@ -799,10 +806,7 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
 
     // Verifica tournament match
     if (teamData.tournament_id !== tournament_id) {
-      console.error('❌ Tournament mismatch', {
-        expected: teamData.tournament_id,
-        received: tournament_id
-      });
+      console.error('❌ Tournament mismatch');
       return res.status(403).send('TOURNAMENT_MISMATCH');
     }
 
@@ -812,7 +816,7 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
       return res.status(409).send('ALREADY_COMPLETED');
     }
 
-    // Recupera tournament per validazione
+    // Recupera tournament
     const tournamentDoc = await db.collection('tournaments').doc(tournament_id).get();
     if (!tournamentDoc.exists) {
       console.error('❌ Tournament not found:', tournament_id);
@@ -821,10 +825,14 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
 
     const tournament = tournamentDoc.data();
     const teamSizeMax = Number(tournament.team_size_max || 2);
+    const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
+    const certificateRequired = tournament.certificate_required === true;
 
     console.log('📋 Tournament info:', {
       name: tournament.name,
-      team_size_max: teamSizeMax
+      team_size_max: teamSizeMax,
+      is_individual: isIndividual,
+      certificate_required: certificateRequired
     });
 
     // Prepara update object
@@ -839,33 +847,23 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
     if (logo_base64 && logo_filename) {
       try {
         console.log('📤 Uploading logo:', logo_filename);
-        
+
         const bucket = admin.storage().bucket('ice-tournaments-ba14a.firebasestorage.app');
         const logoPath = `teams/${team_id}/logo_${Date.now()}_${logo_filename}`;
         const logoFile = bucket.file(logoPath);
-
         const logoBuffer = Buffer.from(logo_base64, 'base64');
 
-        // Determina content type
         let contentType = 'image/png';
-        if (logo_filename.match(/\.(jpg|jpeg)$/i)) {
-          contentType = 'image/jpeg';
-        } else if (logo_filename.match(/\.svg$/i)) {
-          contentType = 'image/svg+xml';
-        }
+        if (logo_filename.match(/\.(jpg|jpeg)$/i)) contentType = 'image/jpeg';
+        else if (logo_filename.match(/\.svg$/i)) contentType = 'image/svg+xml';
 
-        await logoFile.save(logoBuffer, {
-          metadata: { contentType },
-          public: true
-        });
+        await logoFile.save(logoBuffer, { metadata: { contentType }, public: true });
 
         const logoUrl = `https://storage.googleapis.com/${bucket.name}/${logoPath}`;
         updateData.team_logo = logoUrl;
-
         console.log(`✅ Logo uploaded: ${logoUrl}`);
       } catch (err) {
         console.error('❌ Logo upload error:', err.message);
-        // Non bloccare il processo
       }
     }
 
@@ -880,45 +878,41 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
 
       console.log(`👤 Processing player ${playerIndex}:`, player.name);
 
-      // Nome giocatore
-      if (player.name && player.name.trim()) {
-        updateData[`name_player_${playerIndex}`] = player.name.trim();
-        console.log(`✅ Player ${playerIndex} name saved`);
-      }
-
-      // Certificato giocatore
-      if (player.certificate_base64 && player.certificate_filename) {
-        try {
-          console.log(`📤 Uploading certificate for player ${playerIndex}:`, player.certificate_filename);
-          
-          const certPath = `teams/${team_id}/certificates/player_${playerIndex}_${Date.now()}_${player.certificate_filename}`;
-          const certFile = bucket.file(certPath);
-
-          const certBuffer = Buffer.from(player.certificate_base64, 'base64');
-
-          // Determina content type
-          let contentType = 'application/pdf';
-          if (player.certificate_filename.match(/\.(jpg|jpeg)$/i)) {
-            contentType = 'image/jpeg';
-          } else if (player.certificate_filename.match(/\.png$/i)) {
-            contentType = 'image/png';
-          }
-
-          await certFile.save(certBuffer, {
-            metadata: { contentType },
-            public: true
-          });
-
-          const certUrl = `https://storage.googleapis.com/${bucket.name}/${certPath}`;
-          updateData[`certificato_player_${playerIndex}`] = certUrl;
-
-          console.log(`✅ Certificate uploaded for player ${playerIndex}`);
-        } catch (err) {
-          console.error(`❌ Certificate upload error for player ${playerIndex}:`, err.message);
-          // Non bloccare il processo
+      // Nome giocatore: saltato per tornei individuali (già pre-popolato in submitSubscription)
+      if (!isIndividual) {
+        if (player.name && player.name.trim()) {
+          updateData[`name_player_${playerIndex}`] = player.name.trim();
+          console.log(`✅ Player ${playerIndex} name saved`);
         }
       } else {
-        console.log(`⚠️ Player ${playerIndex} missing certificate data`);
+        console.log(`ℹ️ Individual tournament - skipping name update for player ${playerIndex}`);
+      }
+
+      // Certificato: processato solo se certificate_required = true
+      if (certificateRequired) {
+        if (player.certificate_base64 && player.certificate_filename) {
+          try {
+            console.log(`📤 Uploading certificate for player ${playerIndex}:`, player.certificate_filename);
+
+            const certPath = `teams/${team_id}/certificates/player_${playerIndex}_${Date.now()}_${player.certificate_filename}`;
+            const certFile = bucket.file(certPath);
+            const certBuffer = Buffer.from(player.certificate_base64, 'base64');
+
+            let contentType = 'application/pdf';
+            if (player.certificate_filename.match(/\.(jpg|jpeg)$/i)) contentType = 'image/jpeg';
+            else if (player.certificate_filename.match(/\.png$/i)) contentType = 'image/png';
+
+            await certFile.save(certBuffer, { metadata: { contentType }, public: true });
+
+            const certUrl = `https://storage.googleapis.com/${bucket.name}/${certPath}`;
+            updateData[`certificato_player_${playerIndex}`] = certUrl;
+            console.log(`✅ Certificate uploaded for player ${playerIndex}`);
+          } catch (err) {
+            console.error(`❌ Certificate upload error for player ${playerIndex}:`, err.message);
+          }
+        } else {
+          console.warn(`⚠️ Player ${playerIndex} missing certificate data (certificate_required = true)`);
+        }
       }
     }
 
@@ -927,7 +921,6 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
     // ===============================
     console.log('💾 Updating Firestore...');
     await db.collection('teams').doc(team_id).update(updateData);
-
     console.log(`✅ Team info completed for ${team_id}`);
 
     res.status(200).send('INFO_SAVED');
@@ -976,6 +969,7 @@ exports.onSubscriptionCreated = onDocumentCreated(
       const tournament = tournamentDoc.data();
       const amount = tournament.price;
       const tournamentName = tournament.name;
+      const individualOrTeam = tournament.individual_or_team || 'team';
 
       if (!amount) {
         console.error(`Prezzo non definito per tournament ${tournamentId}`);
@@ -988,7 +982,7 @@ exports.onSubscriptionCreated = onDocumentCreated(
         paypalLink: `https://paypal.me/TommasoRabino/${amount}`,
       };
 
-      const mailerUrl = "https://script.google.com/macros/s/AKfycbxvueWNImSA3zhX7MczpoXOsPR0ikSrOBlWVcsX342ZL-BiU6d3FZrWD5dVx05rtJNqdA/exec";
+      const mailerUrl = "https://script.google.com/macros/s/AKfycbxj1xcAw-p7l_VKlRLTooLOY9x6EuTtyLPRcY5rAK4KKyNI6R6AP0HjnLD90YN9vF8JIg/exec";
       const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
       const payload = {
@@ -998,7 +992,8 @@ exports.onSubscriptionCreated = onDocumentCreated(
         tournament_name: tournamentName,
         amount: amount,
         iban: paymentConfig.iban,
-        paypalLink: paymentConfig.paypalLink
+        paypalLink: paymentConfig.paypalLink,
+        individual_or_team: individualOrTeam
       };
 
       const response = await axios.post(mailerUrl, payload, {
@@ -1066,7 +1061,7 @@ exports.getTeamInfo = onRequest(async (req, res) => {
 
     // Verifica che non abbia già completato il form
     if (teamData.info_completed === true) {
-      return res.status(409).json({ 
+      return res.status(409).json({
         error: 'ALREADY_COMPLETED',
         message: 'Hai già completato la registrazione per questo torneo.'
       });
@@ -1079,20 +1074,24 @@ exports.getTeamInfo = onRequest(async (req, res) => {
     }
 
     const tournamentData = tournamentDoc.data();
+    const isIndividual = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
 
-    // Ritorna solo i dati necessari
+    // Costruisci risposta
     const response = {
       team: {
         team_id: teamData.team_id,
         team_name: teamData.team_name,
-        tournament_id: teamData.tournament_id
+        tournament_id: teamData.tournament_id,
+        ...(isIndividual && { name_player_1: teamData.name_player_1 || teamData.team_name })
       },
       tournament: {
         tournament_id: tournamentData.tournament_id || tournamentId,
         name: tournamentData.name,
         sport: tournamentData.sport || 'Sport',
         team_size_min: Number(tournamentData.team_size_min || 2),
-        team_size_max: Number(tournamentData.team_size_max || 2)
+        team_size_max: Number(tournamentData.team_size_max || 2),
+        individual_or_team: tournamentData.individual_or_team || 'team',
+        certificate_required: tournamentData.certificate_required === true
       }
     };
 
@@ -1103,7 +1102,6 @@ exports.getTeamInfo = onRequest(async (req, res) => {
     res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
-
 
 
 
@@ -1219,19 +1217,44 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
     }
 
     const teamName = afterData.team_name;
+    const tournamentId = afterData.tournament_id;
+
+    // Recupera individual_or_team dal torneo
+    let isIndividual = false;
+    try {
+      const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
+      if (tournamentDoc.exists) {
+        const tournamentData = tournamentDoc.data();
+        isIndividual = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
+      }
+    } catch (err) {
+      console.warn('⚠️ Could not fetch tournament data, defaulting to team prompt:', err.message);
+    }
+
+    // Costruisci prompt in base al tipo di torneo
+    let prompt;
+    if (isIndividual) {
+      const initials = teamName
+        .trim()
+        .split(/\s+/)
+        .map(word => word[0]?.toUpperCase() || '')
+        .join('');
+      prompt = `Minimal flat vector avatar with the initials "${initials}" in bold letters, simple geometric background shape, bold contrasting colors, centered, no additional text, white background`;
+      console.log(`🎨 Individual tournament — using initials prompt: "${initials}"`);
+    } else {
+      prompt = `Minimal flat vector emblem inspired by the name "${teamName}", simple geometric shapes, bold colors, centered symbol, no text, white background`;
+      console.log(`🎨 Team tournament — using name prompt: "${teamName}"`);
+    }
 
     const openai = new OpenAI({
       apiKey: OPENAI_API_KEY.value()
     });
 
     try {
-
-      console.log(`🎨 Generating logo for ${teamName}`);
-
       const result = await openai.images.generate({
         model: "gpt-image-1-mini",
         size: "1024x1024",
-        prompt: `Minimal flat vector emblem inspired by the name "${teamName}", simple geometric shapes, bold colors, centered symbol, no text, white background`
+        prompt
       });
 
       const base64Image = result.data[0].b64_json;
@@ -1247,9 +1270,7 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
       console.log("📦 Image resized to 128px");
 
       const bucket = admin.storage().bucket("ice-tournaments-ba14a.firebasestorage.app");
-
       const logoPath = `teams/${teamId}/generated_logo.png`;
-
       const file = bucket.file(logoPath);
 
       await file.save(resizedImage, {
@@ -1261,7 +1282,6 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
       });
 
       const logoUrl = `https://storage.googleapis.com/${bucket.name}/${logoPath}`;
-
       console.log(`✅ Logo uploaded: ${logoUrl}`);
 
       await db.collection("teams").doc(teamId).update({

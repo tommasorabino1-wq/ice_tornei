@@ -4,7 +4,7 @@ const db = admin.firestore();
 // ===============================
 // HELPER: Round-robin per N pari
 // ===============================
-function buildRoundRobinPairsEven(teamIds) {
+function buildRoundRobinPairsEven(teamIds, isDouble = false) {
   const n = teamIds.length;
   if (n % 2 !== 0) {
     throw new Error("teams_per_group must be even");
@@ -30,35 +30,50 @@ function buildRoundRobinPairsEven(teamIds) {
     rot = [rot[rot.length - 1], ...rot.slice(0, rot.length - 1)];
   }
 
+  if (isDouble) {
+    const returnRounds = rounds.map(pairs =>
+      pairs.map(([a, b]) => [b, a])
+    );
+    return [...rounds, ...returnRounds];
+  }
+
   return rounds;
 }
 
 // ===============================
 // HELPER: Assegna home/away
 // ===============================
-function assignHomeAwayGreedy(roundPairs) {
+function assignHomeAwayGreedy(roundPairs, isDouble = false) {
+  const firstLegCount = isDouble ? roundPairs.length / 2 : roundPairs.length;
   const lastWasHome = {};
   const out = [];
 
   for (let r = 0; r < roundPairs.length; r++) {
     const pairs = roundPairs[r];
     const matches = [];
+    const isReturnLeg = isDouble && r >= firstLegCount;
 
     for (let i = 0; i < pairs.length; i++) {
       const [a, b] = pairs[i];
 
-      const v1 = (lastWasHome[a] === true ? 1 : 0) + (lastWasHome[b] === false ? 1 : 0);
-      const v2 = (lastWasHome[b] === true ? 1 : 0) + (lastWasHome[a] === false ? 1 : 0);
-
       let home, away;
-      if (v2 < v1) {
-        home = b; away = a;
-      } else if (v1 < v2) {
-        home = a; away = b;
+
+      if (isReturnLeg) {
+        home = b;
+        away = a;
       } else {
-        const flip = ((r + i) % 2 === 0);
-        home = flip ? a : b;
-        away = flip ? b : a;
+        const v1 = (lastWasHome[a] === true ? 1 : 0) + (lastWasHome[b] === false ? 1 : 0);
+        const v2 = (lastWasHome[b] === true ? 1 : 0) + (lastWasHome[a] === false ? 1 : 0);
+
+        if (v2 < v1) {
+          home = b; away = a;
+        } else if (v1 < v2) {
+          home = a; away = b;
+        } else {
+          const flip = ((r + i) % 2 === 0);
+          home = flip ? a : b;
+          away = flip ? b : a;
+        }
       }
 
       matches.push({ home, away });
@@ -86,7 +101,7 @@ function calculateGroupConfig(totalTeams, preferredTeamsPerGroup) {
   }
 
   const possibleSizes = [4, 6, 8, 10, 12];
-  
+
   for (const size of possibleSizes) {
     if (totalTeams % size === 0 && totalTeams >= size) {
       return {
@@ -111,27 +126,148 @@ function calculateGroupConfig(totalTeams, preferredTeamsPerGroup) {
 // ===============================
 function normalizeSport(sport) {
   const s = String(sport || '').toLowerCase().trim();
-  
-  if (s.includes('calcio') || s.includes('football') || s.includes('soccer')) {
-    return 'calcio';
-  }
-  if (s.includes('padel')) {
-    return 'padel';
-  }
-  if (s.includes('beach') || s.includes('volley')) {
-    return 'beach_volley';
-  }
-  
-  // Default a calcio se non riconosciuto
+
+  if (s.includes('calcio') || s.includes('football') || s.includes('soccer')) return 'calcio';
+  if (s.includes('padel')) return 'padel';
+  if (s.includes('beach') || s.includes('volley')) return 'beach_volley';
+  if (s.includes('scacchi') || s.includes('chess')) return 'scacchi';
+
   return 'calcio';
 }
 
 // ===============================
-// HELPER: Determina se il format è a set
+// HELPER: Profilo match (sport + format)
+// Determina le caratteristiche del match in base a sport e formato.
+// isSetBased: true se il formato prevede set (es. 1su1, 2su3)
+// hasGoals: true se il formato prevede gol (calcio)
+// hasGames: true se il formato prevede game (padel/beach a tempo)
+// hasScorers: true se ha senso tracciare i marcatori (solo calcio)
+// isChess: true se lo sport è scacchi
 // ===============================
-function isSetBasedFormat(matchFormat) {
-  const setFormats = ['1su1', '2su3', '3su5'];
-  return setFormats.includes(String(matchFormat || '').toLowerCase());
+function getMatchProfile(sport, matchFormat) {
+  const fmt = String(matchFormat || '').toLowerCase();
+  const isSetBased = fmt.includes('su');
+  const isChess = sport === 'scacchi';
+  const hasGoals = sport === 'calcio';
+  const hasGames = (sport === 'padel' || sport === 'beach_volley') && !isSetBased;
+  const hasScorers = sport === 'calcio';
+
+  return { isSetBased, isChess, hasGoals, hasGames, hasScorers };
+}
+
+// ===============================
+// HELPER: Costruisce documento match
+// ===============================
+function buildMatchData(matchId, tournamentId, groupId, roundNumber, teamA, teamB, teamAName, teamBName, sport, matchFormat, profile) {
+  const base = {
+    match_id: matchId,
+    tournament_id: tournamentId,
+    group_id: groupId,
+    round_id: roundNumber,
+    team_a: teamA,
+    team_b: teamB,
+    team_a_name: teamAName,
+    team_b_name: teamBName,
+    score_a: null,
+    score_b: null,
+    played: false,
+    court: 'none',
+    day: 'none',
+    hour: 'none',
+    sport: sport,
+    match_format: matchFormat,
+    is_set_based: profile.isSetBased,
+  };
+
+  // Campi set (padel/beach set-based)
+  if (profile.isSetBased) {
+    base.sets_detail = null;  // Es: "6-4,3-6,7-5"
+    base.games_a = null;
+    base.games_b = null;
+  }
+
+  // Campi game (padel/beach a tempo)
+  if (profile.hasGames) {
+    base.games_a = null;
+    base.games_b = null;
+  }
+
+  // Campi marcatori (solo calcio)
+  if (profile.hasScorers) {
+    base.scorers_a = null;  // Es: "Mario Rossi, Luigi Bianchi"
+    base.scorers_b = null;
+  }
+
+  return base;
+}
+
+// ===============================
+// HELPER: Costruisce documento standing iniziale
+// ===============================
+function buildStandingData(standingId, teamId, tournamentId, groupId, teamName, sport, matchFormat, profile) {
+  const base = {
+    standing_id: standingId,
+    team_id: teamId,
+    tournament_id: tournamentId,
+    group_id: groupId,
+    team_name: teamName,
+    matches_played: 0,
+    points: 0,
+    wins: 0,
+    losses: 0,
+    rank_level: 1,
+    rank_group: 'INIT',
+    sport: sport,
+    match_format: matchFormat,
+    is_set_based: profile.isSetBased,
+  };
+
+  // Pareggio: esiste in calcio e scacchi, non nei format a set
+  if (!profile.isSetBased) {
+    base.draws = 0;
+  }
+
+  // Gol: solo calcio
+  if (profile.hasGoals) {
+    base.goals_for = 0;
+    base.goals_against = 0;
+    base.goal_diff = 0;
+    base.h2h_points = 0;
+    base.h2h_goal_diff = 0;
+    base.h2h_goals_for = 0;
+  }
+
+  // Game: padel/beach a tempo
+  if (profile.hasGames) {
+    base.games_for = 0;
+    base.games_against = 0;
+    base.game_diff = 0;
+    base.h2h_points = 0;
+    base.h2h_game_diff = 0;
+    base.h2h_games_for = 0;
+  }
+
+  // Set + game: padel/beach set-based
+  if (profile.isSetBased) {
+    base.sets_for = 0;
+    base.sets_against = 0;
+    base.set_diff = 0;
+    base.games_for = 0;
+    base.games_against = 0;
+    base.game_diff = 0;
+    base.h2h_points = 0;
+    base.h2h_set_diff = 0;
+    base.h2h_sets_for = 0;
+    base.h2h_game_diff = 0;
+    base.h2h_games_for = 0;
+  }
+
+  // Scacchi: solo punti e h2h punti, niente gol/set/game
+  if (profile.isChess) {
+    base.h2h_points = 0;
+  }
+
+  return base;
 }
 
 // ===============================
@@ -150,13 +286,13 @@ async function generateMatchesIfReady(tournamentId) {
 
     const tournament = tournamentDoc.data();
     const preferredTeamsPerGroup = Number(tournament.teams_per_group) || 0;
-    
-    // Estrai sport e format
+    const isDouble = String(tournament.format_type || '').toLowerCase().startsWith('double_');
+
     const sport = normalizeSport(tournament.sport);
     const matchFormatGironi = String(tournament.match_format_gironi || '').toLowerCase();
-    const isSetBased = isSetBasedFormat(matchFormatGironi);
-    
-    console.log(`🏆 Sport: ${sport}, Format Gironi: ${matchFormatGironi}, Set-based: ${isSetBased}`);
+    const profile = getMatchProfile(sport, matchFormatGironi);
+
+    console.log(`🏆 Sport: ${sport}, Format: ${matchFormatGironi}, isDouble: ${isDouble}, Profile:`, profile);
 
     // 2) Verifica se match già esistono
     const matchesSnapshot = await db.collection('matches')
@@ -194,10 +330,10 @@ async function generateMatchesIfReady(tournamentId) {
     const { teamsPerGroup, numGroups } = groupConfig;
     console.log(`📊 Group config: ${numGroups} groups × ${teamsPerGroup} teams each`);
 
-    // 5) Estrai team_id e team_name da subscriptions
+    // 5) Estrai team_id e team_name da subscriptions + shuffle
     const teamIds = [];
     const teamNamesMap = {};
-    
+
     subscriptionsSnapshot.docs.forEach(doc => {
       const data = doc.data();
       teamIds.push(data.team_id);
@@ -206,7 +342,6 @@ async function generateMatchesIfReady(tournamentId) {
 
     console.log(`📝 Team IDs before shuffle: ${teamIds.join(', ')}`);
 
-    // Shuffle
     for (let i = teamIds.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [teamIds[i], teamIds[j]] = [teamIds[j], teamIds[i]];
@@ -214,7 +349,7 @@ async function generateMatchesIfReady(tournamentId) {
 
     console.log(`🔀 Team IDs after shuffle: ${teamIds.join(', ')}`);
 
-    // 6) Genera match per ogni gruppo + traccia assegnazione gruppi
+    // 6) Genera match per ogni gruppo
     const batch = db.batch();
     let globalMatchCounter = 1;
     const teamGroupAssignment = {};
@@ -229,59 +364,32 @@ async function generateMatchesIfReady(tournamentId) {
 
       console.log(`🏟️ Generating matches for ${groupId}: ${groupTeams.join(', ')}`);
 
-      const pairsByRound = buildRoundRobinPairsEven(groupTeams);
-      const rounds = assignHomeAwayGreedy(pairsByRound);
+      const pairsByRound = buildRoundRobinPairsEven(groupTeams, isDouble);
+      const rounds = assignHomeAwayGreedy(pairsByRound, isDouble);
 
       rounds.forEach(rObj => {
         const roundNumber = rObj.roundNumber;
 
         rObj.matches.forEach(m => {
           const matchId = `${tournamentId}_${groupId}_R${String(roundNumber).padStart(2, '0')}_M${String(globalMatchCounter).padStart(3, '0')}`;
-          
           const matchRef = db.collection('matches').doc(matchId);
-          
-          // Costruisci oggetto match con campi appropriati per sport/format
-          const matchData = {
-            match_id: matchId,
-            tournament_id: tournamentId,
-            group_id: groupId,
-            round_id: roundNumber,
-            team_a: m.home,
-            team_b: m.away,
-            team_a_name: teamNamesMap[m.home] || m.home,
-            team_b_name: teamNamesMap[m.away] || m.away,
-            
-            // Risultato principale
-            score_a: null,            // Gol (calcio/tempo) o Set vinti (set-based)
-            score_b: null,
-            played: false,
-            
-            // Logistica
-            court: 'none',
-            day: 'none',
-            hour: 'none',
-            
-            // Campi per format a set (padel/beach)
-            sets_detail: null,        // Es: "6-4,3-6,7-5"
-            games_a: null,            // Totale game vinti da A
-            games_b: null,            // Totale game vinti da B
-            
-            // Metadata
-            sport: sport,
-            match_format: matchFormatGironi,
-            is_set_based: isSetBased
-          };
-          
+
+          const matchData = buildMatchData(
+            matchId, tournamentId, groupId, roundNumber,
+            m.home, m.away,
+            teamNamesMap[m.home] || m.home,
+            teamNamesMap[m.away] || m.away,
+            sport, matchFormatGironi, profile
+          );
+
           batch.set(matchRef, matchData);
-
           console.log(`   ✓ Match ${matchId}: ${teamNamesMap[m.home]} vs ${teamNamesMap[m.away]}`);
-
           globalMatchCounter++;
         });
       });
     }
 
-    // 7) Genera standings iniziali (tutti a 0)
+    // 7) Genera standings iniziali
     console.log(`📊 Generating initial standings...`);
 
     teamIds.forEach(teamId => {
@@ -290,65 +398,23 @@ async function generateMatchesIfReady(tournamentId) {
       const standingId = `standings_${teamId}`;
       const standingRef = db.collection('standings').doc(standingId);
 
-      const standingData = {
-        standing_id: standingId,
-        team_id: teamId,
-        tournament_id: tournamentId,
-        group_id: groupId,
-        team_name: teamName,
-        
-        // Stats generali
-        matches_played: 0,
-        points: 0,
-        wins: 0,
-        draws: 0,                   // Solo per format a tempo
-        losses: 0,
-        
-        // Stats per CALCIO e format a TEMPO (gol/game)
-        goals_for: 0,               // Gol (calcio) o Game (padel/beach tempo)
-        goals_against: 0,
-        goal_diff: 0,
-        
-        // Stats per format a SET (padel/beach)
-        sets_for: 0,                // Set vinti totali
-        sets_against: 0,            // Set persi totali
-        set_diff: 0,                // Differenza set
-        games_for: 0,               // Game vinti totali (attraverso tutti i set)
-        games_against: 0,           // Game persi totali
-        game_diff: 0,               // Differenza game
-        
-        // H2H
-        h2h_points: 0,
-        h2h_goal_diff: 0,           // Usato anche per game/set diff in H2H
-        h2h_goals_for: 0,
-        h2h_set_diff: 0,            // Per format a set
-        h2h_sets_for: 0,            // Per format a set
-        h2h_game_diff: 0,           // Per format a set
-        h2h_games_for: 0,           // Per format a set
-        
-        // Ranking
-        rank_level: 1,
-        rank_group: 'INIT',
-        
-        // Metadata
-        sport: sport,
-        match_format: matchFormatGironi,
-        is_set_based: isSetBased
-      };
+      const standingData = buildStandingData(
+        standingId, teamId, tournamentId, groupId, teamName,
+        sport, matchFormatGironi, profile
+      );
 
       batch.set(standingRef, standingData);
-
       console.log(`   ✓ Standing ${standingId}: ${teamName} (${groupId})`);
     });
 
-    // 8) Aggiorna teams_current e teams_per_group nel torneo
+    // 8) Aggiorna torneo
     const tournamentRef = db.collection('tournaments').doc(tournamentId);
     batch.update(tournamentRef, {
       teams_current: totalTeams,
       teams_per_group: teamsPerGroup
     });
 
-    // 9) Commit batch
+    // 9) Commit
     console.log(`💾 Committing ${globalMatchCounter - 1} matches + ${teamIds.length} standings...`);
     await batch.commit();
     console.log(`✅ [SUCCESS] Generated ${globalMatchCounter - 1} matches and ${teamIds.length} standings for ${tournamentId}`);
@@ -359,6 +425,5 @@ async function generateMatchesIfReady(tournamentId) {
     throw error;
   }
 }
-
 
 module.exports = { generateMatchesIfReady };

@@ -125,10 +125,11 @@ function renderTournaments(tournaments) {
 
     const statusLabel = buildStatusLabel(t.status);
     const iscrizioniAperte = t.status === "open";
+    const isIndividual = String(t.individual_or_team || 'team').toLowerCase() === 'individual';  
 
     const row1 = `${t.sport} · ${t.location} · ${t.date}`;
     const row2 = buildParticipantsInfoText(t);
-    const row3 = buildPriceInfoText(t);
+    const row3 = buildPriceInfoText(t, isIndividual);  
     const row4 = buildAwardInfoText(t);
     const row5 = buildFormatInfoText(t);
     const row6 = buildTimeRangeInfoText(t);
@@ -225,11 +226,13 @@ function buildParticipantsInfoText(t) {
   return parts.join(" · ");
 }
 
+
 // ===============================
 // BUILD PRICE INFO
 // ===============================
-function buildPriceInfoText(t) {
+function buildPriceInfoText(t, isIndividual = false) {
   const price = t.price || 0;
+  const perLabel = isIndividual ? "a giocatore" : "a squadra";
 
   const courtPrice = String(t.court_price || "non_compreso").toLowerCase();
   const refereePrice = String(t.referee_price || "na").toLowerCase();
@@ -267,7 +270,7 @@ function buildPriceInfoText(t) {
     parts.push(refereeText);
   }
 
-  return `€${price} a squadra · ${parts.join(", ")}`;
+  return `€${price} ${perLabel} · ${parts.join(", ")}`;
 }
 
 // ===============================
@@ -470,7 +473,8 @@ document.addEventListener("DOMContentLoaded", function () {
       strings: [
         "Padel",
         "Beach Volley",
-        "Calcio"
+        "Calcio",
+        "Scacchi"
       ],
       typeSpeed: 70,
       backSpeed: 45,

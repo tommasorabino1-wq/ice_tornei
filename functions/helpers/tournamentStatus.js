@@ -27,7 +27,7 @@ async function updateTournamentStatus(tournamentId) {
     // - wip (chiusura iscrizioni + richiesta info)
     // - final_phase (inizio fase finale)
     // - finished (torneo concluso)
-    const manualStatuses = ['open', 'wip', 'final_phase', 'finished'];
+    const manualStatuses = ['open', 'wip', 'full', 'final_phase', 'finished'];
     
     if (manualStatuses.includes(currentStatus)) {
       console.log(`ℹ️ Status "${currentStatus}" is manual - no automatic update`);

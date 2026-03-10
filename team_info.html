@@ -2,8 +2,8 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>ICE | Completa Registrazione Squadra</title>
-  <meta name="description" content="Completa la registrazione della tua squadra per il torneo ICE">
+  <title>ICE | Completa Registrazione</title>
+  <meta name="description" content="Completa la registrazione per il torneo ICE">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -50,7 +50,7 @@
       <div class="state-icon success-icon">✅</div>
       <h2 class="state-title">Informazioni inviate con successo!</h2>
       <p class="state-message">
-        Grazie per aver completato la registrazione. 
+        Grazie per aver completato la registrazione.
         Procederemo a breve con la creazione dei gironi.
       </p>
       <a href="index.html" class="btn primary">Torna alla home</a>
@@ -60,7 +60,7 @@
     <div id="content" class="hidden">
 
       <div class="page-header">
-        <h2>Completa Registrazione Squadra</h2>
+        <h2 id="page-title">Completa Registrazione</h2>
       </div>
 
       <!-- INFO BOX -->
@@ -70,8 +70,8 @@
           <span><strong>Torneo:</strong> <span id="tournament-name">-</span></span>
         </div>
         <div class="info-row">
-          <span class="info-icon">👥</span>
-          <span><strong>Squadra:</strong> <span id="team-name">-</span></span>
+          <span class="info-icon" id="team-icon">👥</span>
+          <span><strong id="team-label">Squadra</strong>: <span id="team-name">-</span></span>
         </div>
         <div class="info-row">
           <span class="info-icon">⚽</span>
@@ -89,9 +89,9 @@
         <div class="form-section">
           <h3 class="section-title">
             <span class="section-icon">🖼️</span>
-            Logo Squadra <span class="optional-label">(Facoltativo)</span>
+            <span id="logo-section-title">Logo Squadra</span> <span class="optional-label">(Facoltativo)</span>
           </h3>
-          <p class="section-description">
+          <p class="section-description" id="logo-section-description">
             Carica il logo della tua squadra (PNG, JPG, SVG - max 5MB)
           </p>
           <label class="file-upload-btn">

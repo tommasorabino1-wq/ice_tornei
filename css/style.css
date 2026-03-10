@@ -6018,6 +6018,38 @@ section > .section-title {
 }
 
 
+/* Banner intro contestuale nel form */
+.form-intro-banner {
+  background: var(--surface-soft);
+  border: 1px solid var(--brand-soft-border);
+  border-radius: 12px;
+
+  padding: 18px 22px;
+  margin-bottom: 28px;
+
+  font-size: 15px;
+  line-height: 1.6;
+
+  color: var(--text-muted);
+}
+
+.form-intro-banner strong {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+/* Input disabilitato (nome giocatore pre-compilato per tornei individuali) */
+.input-disabled {
+  background: var(--bg-secondary);
+  color: var(--text-soft);
+
+  border: 1px solid var(--border);
+
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+
 
 /* ===================================
    DESKTOP ADAPTATION

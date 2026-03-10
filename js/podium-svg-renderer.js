@@ -13,7 +13,7 @@
   const PLACE_GAP = 22;
 
   const MEDAL_SIZE = 90;
-  const LOGO_SIZE = 60;
+  const LOGO_SIZE = 90;
 
   const BAR_HEIGHT_1ST = 200;
   const BAR_HEIGHT_2ND = 160;
@@ -313,7 +313,7 @@
       {
         x: lx + 40,
         y: y + LABEL_H / 2 + 7,
-        "font-size": 24
+        "font-size": 30
       },
       "🏆"
     );
