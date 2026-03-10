@@ -81,6 +81,12 @@
       .replace(/>/g, "&gt;");
   }
 
+  function shortenName(name, max = 18) {
+    if (!name) return "";
+    if (name.length <= max) return name;
+    return name.slice(0, max - 1) + "…";
+  }
+
   // ─────────────────────────────
   // Gradients
   // ─────────────────────────────
@@ -268,11 +274,9 @@
         fill: P.textBright,
         "font-size": 24,
         "font-weight": "700",
-        "text-anchor": "middle",
-        "textLength": PLACE_W * 0.85,
-        "lengthAdjust": "spacingAndGlyphs"
+        "text-anchor": "middle"
       },
-      esc(team.team_name)
+      esc(shortenName(team.team_name))
     );
 
     const medalY = barY - MEDAL_SIZE / 2 - 28;
@@ -336,11 +340,9 @@
         fill: P.text,
         "font-size": 24,
         "font-weight": "700",
-        "text-anchor": "middle",
-        "textLength": w * 0.75,
-        "lengthAdjust": "spacingAndGlyphs"
+        "text-anchor": "middle"
       },
-      esc(name)
+      esc(shortenName(name, 26))
     );
 
     return o;
