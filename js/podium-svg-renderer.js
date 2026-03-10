@@ -268,7 +268,9 @@
         fill: P.textBright,
         "font-size": 24,
         "font-weight": "700",
-        "text-anchor": "middle"
+        "text-anchor": "middle",
+        "textLength": PLACE_W * 0.85,
+        "lengthAdjust": "spacingAndGlyphs"
       },
       esc(team.team_name)
     );
@@ -334,7 +336,9 @@
         fill: P.text,
         "font-size": 24,
         "font-weight": "700",
-        "text-anchor": "middle"
+        "text-anchor": "middle",
+        "textLength": w * 0.75,
+        "lengthAdjust": "spacingAndGlyphs"
       },
       esc(name)
     );
