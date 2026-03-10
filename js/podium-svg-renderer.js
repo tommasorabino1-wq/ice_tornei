@@ -19,7 +19,7 @@
   const BAR_HEIGHT_2ND = 160;
   const BAR_HEIGHT_3RD = 130;
 
-  const LABEL_H = 55;
+  const LABEL_H = 70;
   const BOT_PAD = 65;
 
   // ─────────────────────────────
@@ -281,7 +281,7 @@
   }
 
   // ─────────────────────────────
-  // Champion label
+  // Champion label 
   // ─────────────────────────────
 
   function championLabel(x, y, width, name) {
@@ -316,7 +316,7 @@
       "text",
       {
         x: lx + w / 2,
-        y: y + LABEL_H / 2 - 6,
+        y: y + LABEL_H / 2 - 10,
         fill: P.brand,
         "font-size": 18,
         "font-weight": "800",
@@ -330,7 +330,7 @@
       "text",
       {
         x: lx + w / 2,
-        y: y + LABEL_H / 2 + 18,
+        y: y + LABEL_H / 2 + 28,
         fill: P.text,
         "font-size": 24,
         "font-weight": "700",
@@ -399,7 +399,7 @@
 
     const champ = top3[0]?.team_name || "TBD";
 
-    body += championLabel(0, baseY + 25, PODIUM_W, champ);
+    body += championLabel(0, baseY + 55, PODIUM_W, champ);
 
     const svg = `<svg xmlns="http://www.w3.org/2000/svg"
 width="${PODIUM_W}"
