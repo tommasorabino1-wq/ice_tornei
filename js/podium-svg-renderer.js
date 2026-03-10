@@ -19,7 +19,7 @@
   const BAR_HEIGHT_2ND = 160;
   const BAR_HEIGHT_3RD = 130;
 
-  const LABEL_H = 70;
+  const LABEL_H = 80;
   const BOT_PAD = 65;
 
   // ─────────────────────────────
@@ -316,12 +316,12 @@
       "text",
       {
         x: lx + w / 2,
-        y: y + LABEL_H / 2 - 10,
+        y: y + LABEL_H / 2 - 6,
         fill: P.brand,
         "font-size": 18,
         "font-weight": "800",
         "text-anchor": "middle",
-        "letter-spacing": "0.12em"
+        "letter-spacing": "0.18em"
       },
       "CAMPIONE"
     );
@@ -330,7 +330,7 @@
       "text",
       {
         x: lx + w / 2,
-        y: y + LABEL_H / 2 + 28,
+        y: y + LABEL_H / 2 + 24,
         fill: P.text,
         "font-size": 24,
         "font-weight": "700",
