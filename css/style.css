@@ -1792,10 +1792,11 @@ section > .section-title {
 /* =========================
    TOURNAMENT INFO ROWS
 ========================= */
+
 .tournament-info-rows {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
 }
 
@@ -1803,9 +1804,20 @@ section > .section-title {
   display: flex;
   align-items: flex-start;
   gap: 8px;
+
   font-size: 13px;
   color: var(--text-main);
-  line-height: 1.6;
+  line-height: 1.5;
+
+  background: var(--surface-soft);
+  border: 1px solid var(--brand-soft-border);
+  border-radius: 6px;
+
+  padding: 6px 8px;
+
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease;
 }
 
 .tournament-info-rows .info-row-icon {
@@ -1813,11 +1825,13 @@ section > .section-title {
   width: 18px;
   text-align: center;
   font-size: 14px;
+  color: var(--brand);
 }
 
 .tournament-info-rows .info-row span:last-child {
   flex: 1;
 }
+
 
 
 /* =========================
