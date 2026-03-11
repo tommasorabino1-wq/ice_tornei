@@ -1,32 +1,30 @@
 const admin = require('firebase-admin');
 const db = admin.firestore();
 
-// ===============================
-// HELPER: Normalizza sport
-// ===============================
-function normalizeSport(sport) {
-  const s = String(sport || '').toLowerCase().trim();
-  
-  if (s.includes('calcio') || s.includes('football') || s.includes('soccer')) {
-    return 'calcio';
-  }
-  if (s.includes('padel')) {
-    return 'padel';
-  }
-  if (s.includes('beach') || s.includes('volley')) {
-    return 'beach_volley';
-  }
-  
-  return 'calcio';
-}
+
 
 // ===============================
-// HELPER: Determina se il format è a set
+// HELPER: Match profile (sport + format)
 // ===============================
-function isSetBasedFormat(matchFormat) {
-  const setFormats = ['1su1', '2su3', '3su5'];
-  return setFormats.includes(String(matchFormat || '').toLowerCase());
+function getMatchProfile(sport, matchFormat) {
+  const s = String(sport || '').toLowerCase().trim();
+  const f = String(matchFormat || '').toLowerCase().trim();
+
+  const isChess    = s.includes('scacchi') || s.includes('chess');
+  const isSetBased = f.includes('su'); // 1su1, 2su3, 3su5
+  const isCalcio   = !isChess && (s.includes('calcio') || s.includes('football') || s.includes('soccer'));
+  const isPadel    = s.includes('padel');
+  const isBeach    = s.includes('beach') || s.includes('volley');
+
+  let normalizedSport = 'calcio';
+  if (isChess)      normalizedSport = 'scacchi';
+  else if (isPadel) normalizedSport = 'padel';
+  else if (isBeach) normalizedSport = 'beach_volley';
+
+  return { isChess, isSetBased, isCalcio, isPadel, isBeach, normalizedSport };
 }
+
+
 
 // ===============================
 // HELPER: Parse sets_detail string
@@ -69,10 +67,12 @@ function calculateGamesFromSets(setsDetail) {
   return { gamesA, gamesB };
 }
 
+
+
 // ===============================
 // HELPER: H2H per format a TEMPO
 // ===============================
-function buildH2HStatsTempo(teamIds, matches, winPoints) {
+function buildH2HStatsTempo(teamIds, matches, winPoints, drawPoints = 1) {
   const set = new Set(teamIds);
   const h2h = {};
 
@@ -104,13 +104,15 @@ function buildH2HStatsTempo(teamIds, matches, winPoints) {
     } else if (sa < sb) {
       h2h[b].h2h_points += winPoints;
     } else {
-      h2h[a].h2h_points += 1;
-      h2h[b].h2h_points += 1;
+      h2h[a].h2h_points += drawPoints;
+      h2h[b].h2h_points += drawPoints;
     }
   });
 
   return h2h;
 }
+
+
 
 // ===============================
 // HELPER: H2H per format a SET
@@ -204,6 +206,17 @@ function sameTupleSet(a, b) {
     a.games_for === b.games_for
   );
 }
+
+// ===============================
+// HELPER: Confronta due giocatori per ex-aequo (SCACCHI)
+// ===============================
+function sameTupleChess(a, b) {
+  return (
+    a.points     === b.points &&
+    a.h2h_points === b.h2h_points
+  );
+}
+
 
 // ===============================
 // HELPER: Ranking con H2H (TEMPO)
@@ -355,34 +368,103 @@ function rankGroupTeamsSet(teamsStats, groupMatches, winPoints) {
   return finalOrdered;
 }
 
+
+
+// ===============================
+// HELPER: Ranking con H2H (SCACCHI)
+// ===============================
+function rankGroupTeamsChess(teamsStats, groupMatches, winPoints) {
+  const buckets = {};
+  teamsStats.forEach(t => {
+    const p = t.points;
+    if (!buckets[p]) buckets[p] = [];
+    buckets[p].push(t);
+  });
+
+  const pointsDesc = Object.keys(buckets).map(Number).sort((a, b) => b - a);
+  const finalOrdered = [];
+
+  pointsDesc.forEach(p => {
+    const bucket = buckets[p];
+
+    if (bucket.length === 1) {
+      const t = bucket[0];
+      t.h2h_points = 0;
+      finalOrdered.push(t);
+      return;
+    }
+
+    // H2H: solo punti negli scontri diretti tra i pari punti
+    const ids = bucket.map(x => x.team_id);
+    const h2hMap = buildH2HStatsTempo(ids, groupMatches, winPoints, 0.5);
+    // Riusiamo buildH2HStatsTempo: per scacchi conta solo h2h_points
+
+    bucket.forEach(t => {
+      const h = h2hMap[t.team_id] || { h2h_points: 0 };
+      t.h2h_points = h.h2h_points;
+    });
+
+    // Ordina: H2H points → alfabetico (parità residua → stesso rank)
+    bucket.sort((a, b) =>
+      b.h2h_points - a.h2h_points ||
+      String(a.team_id).localeCompare(String(b.team_id))
+    );
+
+    finalOrdered.push(...bucket);
+  });
+
+  // Assegna rank_level
+  let rank = 1;
+  let i = 0;
+  while (i < finalOrdered.length) {
+    const base = finalOrdered[i];
+    base.rank_level = rank;
+
+    let j = i + 1;
+    while (j < finalOrdered.length && sameTupleChess(base, finalOrdered[j])) {
+      finalOrdered[j].rank_level = rank;
+      j++;
+    }
+
+    rank += (j - i);
+    i = j;
+  }
+
+  return finalOrdered;
+}
+
+
+
+
 // ===============================
 // HELPER: Parse point_system
 // ===============================
-function parsePointSystem(pointSystem, isSetBased) {
-  // Default per format a set: 2-0 (no pareggi)
-  // Default per format a tempo: 3-1-0
+function parsePointSystem(pointSystem, isSetBased, isChess) {
   const defaultPointsTempo = { win: 3, draw: 1, loss: 0 };
-  const defaultPointsSet = { win: 2, draw: 0, loss: 0 };
-  
-  const defaultPoints = isSetBased ? defaultPointsSet : defaultPointsTempo;
-  
+  const defaultPointsSet   = { win: 2, draw: 0, loss: 0 };
+  const defaultPointsChess = { win: 1, draw: 0.5, loss: 0 };
+
+  const defaultPoints = isChess ? defaultPointsChess : (isSetBased ? defaultPointsSet : defaultPointsTempo);
+
   if (!pointSystem || typeof pointSystem !== 'string') {
     return defaultPoints;
   }
 
-  const parts = pointSystem.split('-').map(p => parseInt(p.trim(), 10));
-  
+  const parts = pointSystem.split('-').map(p => parseFloat(p.trim()));
+
   if (parts.length < 2 || parts.some(isNaN)) {
     console.log(`⚠️ Invalid point_system "${pointSystem}", using default`);
     return defaultPoints;
   }
 
   return {
-    win: parts[0],
-    draw: parts[1] || 0,
-    loss: parts[2] || 0
+    win:  parts[0],
+    draw: parts[1] ?? 0,
+    loss: parts[2] ?? 0
   };
 }
+
+
 
 // ===============================
 // MAIN: Genera Standings
@@ -402,13 +484,15 @@ async function generateStandingsBackend(tournamentId) {
     const tournament = tournamentDoc.data();
     
     // Determina sport e format
-    const sport = normalizeSport(tournament.sport);
+    const profile           = getMatchProfile(tournament.sport, tournament.match_format_gironi);
+    const sport             = profile.normalizedSport;
     const matchFormatGironi = String(tournament.match_format_gironi || '').toLowerCase();
-    const isSetBased = isSetBasedFormat(matchFormatGironi);
-    
-    const pointSystem = parsePointSystem(tournament.point_system, isSetBased);
-    
-    console.log(`🏆 Sport: ${sport}, Format: ${matchFormatGironi}, Set-based: ${isSetBased}`);
+    const isSetBased        = profile.isSetBased;
+    const isChess           = profile.isChess;
+
+    const pointSystem = parsePointSystem(tournament.point_system, isSetBased, isChess);
+
+    console.log(`🏆 Sport: ${sport}, Format: ${matchFormatGironi}, Set-based: ${isSetBased}, Chess: ${isChess}`);
     console.log(`⚙️ Point system: Win=${pointSystem.win}, Draw=${pointSystem.draw}, Loss=${pointSystem.loss}`);
 
     // 1) Recupera match
@@ -475,12 +559,12 @@ async function generateStandingsBackend(tournamentId) {
         wins: 0,
         draws: 0,
         losses: 0,
-        
+
         // Stats per format a TEMPO (gol/game)
         goals_for: 0,
         goals_against: 0,
         goal_diff: 0,
-        
+
         // Stats per format a SET
         sets_for: 0,
         sets_against: 0,
@@ -488,7 +572,7 @@ async function generateStandingsBackend(tournamentId) {
         games_for: 0,
         games_against: 0,
         game_diff: 0,
-        
+
         // H2H (inizializzati a 0, calcolati dopo)
         h2h_points: 0,
         h2h_goal_diff: 0,
@@ -497,13 +581,15 @@ async function generateStandingsBackend(tournamentId) {
         h2h_sets_for: 0,
         h2h_game_diff: 0,
         h2h_games_for: 0,
-        
+
         rank_level: 0,
-        
+
         // Metadata
         sport: sport,
-        match_format: matchFormatGironi,
-        is_set_based: isSetBased
+        match_format_gironi: matchFormatGironi,
+        is_set_based: isSetBased,
+        is_chess: isChess,
+        individual_or_team: tournament.individual_or_team || 'team'
       };
 
       // Calcola statistiche dai match giocati
@@ -513,33 +599,50 @@ async function generateStandingsBackend(tournamentId) {
 
         stats.matches_played++;
 
-        if (isSetBased) {
+        if (isChess) {
+          // === FORMAT SCACCHI ===
+          // Niente gol né set — solo punti con decimali
+          const scoreFor     = m.team_a === teamId ? Number(m.score_a) || 0 : Number(m.score_b) || 0;
+          const scoreAgainst = m.team_a === teamId ? Number(m.score_b) || 0 : Number(m.score_a) || 0;
+
+          if (scoreFor > scoreAgainst) {
+            stats.wins++;
+            stats.points += pointSystem.win;
+          } else if (scoreFor === scoreAgainst) {
+            stats.draws++;
+            stats.points += pointSystem.draw; // 0.5
+          } else {
+            stats.losses++;
+            stats.points += pointSystem.loss;
+          }
+
+        } else if (isSetBased) {
           // === FORMAT A SET ===
-          const setsFor = m.team_a === teamId ? Number(m.score_a) || 0 : Number(m.score_b) || 0;
+          const setsFor     = m.team_a === teamId ? Number(m.score_a) || 0 : Number(m.score_b) || 0;
           const setsAgainst = m.team_a === teamId ? Number(m.score_b) || 0 : Number(m.score_a) || 0;
-          
-          stats.sets_for += setsFor;
+
+          stats.sets_for     += setsFor;
           stats.sets_against += setsAgainst;
-          stats.set_diff += (setsFor - setsAgainst);
-          
+          stats.set_diff     += (setsFor - setsAgainst);
+
           // Game totali (da games_a/games_b o calcolati da sets_detail)
           let gamesA = Number(m.games_a) || 0;
           let gamesB = Number(m.games_b) || 0;
-          
+
           if (gamesA === 0 && gamesB === 0 && m.sets_detail) {
             const calculated = calculateGamesFromSets(m.sets_detail);
             gamesA = calculated.gamesA;
             gamesB = calculated.gamesB;
           }
-          
-          const gamesFor = m.team_a === teamId ? gamesA : gamesB;
+
+          const gamesFor     = m.team_a === teamId ? gamesA : gamesB;
           const gamesAgainst = m.team_a === teamId ? gamesB : gamesA;
-          
-          stats.games_for += gamesFor;
+
+          stats.games_for     += gamesFor;
           stats.games_against += gamesAgainst;
-          stats.game_diff += (gamesFor - gamesAgainst);
-          
-          // Punti (no pareggi)
+          stats.game_diff     += (gamesFor - gamesAgainst);
+
+          // Punti (no pareggi nei format a set)
           if (setsFor > setsAgainst) {
             stats.wins++;
             stats.points += pointSystem.win;
@@ -547,16 +650,15 @@ async function generateStandingsBackend(tournamentId) {
             stats.losses++;
             stats.points += pointSystem.loss;
           }
-          // No else: in format a set non ci sono pareggi
-          
+
         } else {
           // === FORMAT A TEMPO ===
           const gf = m.team_a === teamId ? Number(m.score_a) || 0 : Number(m.score_b) || 0;
           const ga = m.team_a === teamId ? Number(m.score_b) || 0 : Number(m.score_a) || 0;
 
-          stats.goals_for += gf;
+          stats.goals_for     += gf;
           stats.goals_against += ga;
-          stats.goal_diff += (gf - ga);
+          stats.goal_diff     += (gf - ga);
 
           if (gf > ga) {
             stats.wins++;
@@ -619,14 +721,21 @@ async function generateStandingsBackend(tournamentId) {
 
       // Calcola ranking con H2H
       const groupMatches = matches.filter(m => m.group_id === groupId);
-      const ordered = isSetBased 
-        ? rankGroupTeamsSet(groupTeams, groupMatches, pointSystem.win)
-        : rankGroupTeamsTempo(groupTeams, groupMatches, pointSystem.win);
+      const ordered = isChess
+        ? rankGroupTeamsChess(groupTeams, groupMatches, pointSystem.win)
+        : isSetBased
+          ? rankGroupTeamsSet(groupTeams, groupMatches, pointSystem.win)
+          : rankGroupTeamsTempo(groupTeams, groupMatches, pointSystem.win);
 
       ordered.forEach(t => {
         // Crea rank_group key per debug/tracciabilità
         let rankGroupKey;
-        if (isSetBased) {
+        if (isChess) {
+          rankGroupKey = [
+            t.points,
+            `H${t.h2h_points}`
+          ].join('|');
+        } else if (isSetBased) {
           rankGroupKey = [
             t.points,
             `H${t.h2h_points}`,

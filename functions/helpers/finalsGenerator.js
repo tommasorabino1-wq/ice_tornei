@@ -1,24 +1,34 @@
 const admin = require('firebase-admin');
 const db = admin.firestore();
 
-// ===============================
-// HELPER: Normalizza sport
-// ===============================
-function normalizeSport(sport) {
-  const s = String(sport || '').toLowerCase().trim();
-  if (s.includes('calcio') || s.includes('football') || s.includes('soccer')) return 'calcio';
-  if (s.includes('padel')) return 'padel';
-  if (s.includes('beach') || s.includes('volley')) return 'beach_volley';
-  return 'calcio';
-}
+
 
 // ===============================
-// HELPER: Determina se il format è a set
+// HELPER: Match profile (sport + format)
 // ===============================
-function isSetBasedFormat(matchFormat) {
-  const setFormats = ['1su1', '2su3', '3su5'];
-  return setFormats.includes(String(matchFormat || '').toLowerCase());
+function getMatchProfile(sport, matchFormat) {
+  const s = String(sport || '').toLowerCase().trim();
+  const f = String(matchFormat || '').toLowerCase().trim();
+
+  const isChess    = s.includes('scacchi') || s.includes('chess');
+  const isSetBased = f.includes('su'); // 1su1, 2su3, 3su5
+  const isCalcio   = !isChess && (s.includes('calcio') || s.includes('football') || s.includes('soccer'));
+  const isPadel    = s.includes('padel');
+  const isBeach    = s.includes('beach') || s.includes('volley');
+
+  let normalizedSport = 'calcio';
+  if (isChess)      normalizedSport = 'scacchi';
+  else if (isPadel) normalizedSport = 'padel';
+  else if (isBeach) normalizedSport = 'beach_volley';
+
+  const hasGoals   = isCalcio;
+  const hasGames   = (isPadel || isBeach) && !isSetBased;
+  const hasScorers = isCalcio;
+
+  return { isChess, isSetBased, isCalcio, isPadel, isBeach, normalizedSport, hasGoals, hasGames, hasScorers };
 }
+
+
 
 // ===============================
 // HELPER: Check if format has finals
@@ -51,12 +61,16 @@ function checkIntraGroupTies(byGroup, standingsIsSetBased) {
 // ===============================
 // HELPER: Controlla parità cross-girone
 // ===============================
-function checkCrossGroupTie(sorted, need, standingsIsSetBased) {
+function checkCrossGroupTie(sorted, need, standingsIsSetBased, standingsIsChess) {
   if (need <= 0 || sorted.length <= need) return;
   const A = sorted[need - 1];
   const B = sorted[need];
   let same;
-  if (standingsIsSetBased) {
+
+  if (standingsIsChess) {
+    // Scacchi: parità solo su punti totali → sorteggio manuale, non bloccante
+    same = A.points === B.points;
+  } else if (standingsIsSetBased) {
     same =
       A.points === B.points &&
       A.set_diff === B.set_diff &&
@@ -69,6 +83,7 @@ function checkCrossGroupTie(sorted, need, standingsIsSetBased) {
       A.goal_diff === B.goal_diff &&
       A.goals_for === B.goals_for;
   }
+
   if (same) {
     console.error(`❌ Ambiguity in cross-group selection at position ${need}`);
     throw new Error('E4');
@@ -78,7 +93,14 @@ function checkCrossGroupTie(sorted, need, standingsIsSetBased) {
 // ===============================
 // HELPER: Ordina squadre per criteri cross-girone
 // ===============================
-function sortCrossGroup(teams, standingsIsSetBased) {
+function sortCrossGroup(teams, standingsIsSetBased, standingsIsChess) {
+  if (standingsIsChess) {
+    // Scacchi: solo punti totali, parità residua → stesso rank (sorteggio manuale)
+    return [...teams].sort((a, b) =>
+      b.points - a.points ||
+      String(a.team_id).localeCompare(String(b.team_id))
+    );
+  }
   if (standingsIsSetBased) {
     return [...teams].sort((a, b) =>
       b.points - a.points ||
@@ -88,21 +110,20 @@ function sortCrossGroup(teams, standingsIsSetBased) {
       b.games_for - a.games_for ||
       String(a.team_id).localeCompare(String(b.team_id))
     );
-  } else {
-    return [...teams].sort((a, b) =>
-      b.points - a.points ||
-      b.goal_diff - a.goal_diff ||
-      b.goals_for - a.goals_for ||
-      String(a.team_id).localeCompare(String(b.team_id))
-    );
   }
+  return [...teams].sort((a, b) =>
+    b.points - a.points ||
+    b.goal_diff - a.goal_diff ||
+    b.goals_for - a.goals_for ||
+    String(a.team_id).localeCompare(String(b.team_id))
+  );
 }
 
 // ===============================
 // HELPER: Crea documento vuoto per un match futuro
 // ===============================
-function createEmptyMatchDoc(matchId, tournamentId, roundId, sport, matchFormatFinals, isSetBased) {
-  return {
+function createEmptyMatchDoc(matchId, tournamentId, roundId, sport, matchFormatFinals, profile) {
+  const base = {
     match_id: matchId,
     tournament_id: tournamentId,
     round_id: roundId,
@@ -117,16 +138,36 @@ function createEmptyMatchDoc(matchId, tournamentId, roundId, sport, matchFormatF
     court: 'none',
     day: 'none',
     hour: 'none',
-    sets_detail: null,
-    games_a: null,
-    games_b: null,
     sport,
     match_format: matchFormatFinals,
-    is_set_based: isSetBased,
-    // Metadati per ricostruire il bracket
-    source_matches: [],   // popolato dopo: [{match_id, role: 'winner'|'loser'}]
+    is_set_based: profile.isSetBased,
+    is_chess: profile.isChess,
+    source_matches: [],
   };
+
+  // Campi set (padel/beach set-based)
+  if (profile.isSetBased) {
+    base.sets_detail = null;
+    base.games_a = null;
+    base.games_b = null;
+  }
+
+  // Campi game (padel/beach a tempo)
+  if (profile.hasGames) {
+    base.games_a = null;
+    base.games_b = null;
+  }
+
+  // Campi marcatori (solo calcio)
+  if (profile.hasScorers) {
+    base.scorers_a = null;
+    base.scorers_b = null;
+  }
+
+  return base;
 }
+
+
 
 // ===============================
 // HELPER: Calcola numero di round necessari
@@ -168,11 +209,13 @@ async function generateFinalsIfReady(tournamentId) {
       throw new Error('E_FORMAT_NO_FINALS');
     }
 
-    const sport = normalizeSport(tournament.sport);
+    const profile        = getMatchProfile(tournament.sport, tournament.match_format_finals);
+    const sport          = profile.normalizedSport;
     const matchFormatFinals = String(tournament.match_format_finals || '').toLowerCase();
-    const isSetBased = isSetBasedFormat(matchFormatFinals);
+    const isSetBased     = profile.isSetBased;
+    const isChess        = profile.isChess;
 
-    console.log(`🏆 Sport: ${sport}, Format Finals: ${matchFormatFinals}, Set-based: ${isSetBased}, 3/4 posto: ${has3x4}`);
+    console.log(`🏆 Sport: ${sport}, Format Finals: ${matchFormatFinals}, Set-based: ${isSetBased}, Chess: ${isChess}, 3/4 posto: ${has3x4}`);
 
     // Verifica che non esistano già finals
     const existingFinals = await db.collection('finals')
@@ -197,6 +240,7 @@ async function generateFinalsIfReady(tournamentId) {
 
     const standings = standingsSnapshot.docs.map(doc => doc.data());
     const standingsIsSetBased = standings[0]?.is_set_based || false;
+    const standingsIsChess    = standings[0]?.is_chess || false;
 
     // Mappa team_id -> team_name
     const teamNamesMap = {};
@@ -237,8 +281,8 @@ async function generateFinalsIfReady(tournamentId) {
     while (remainingSlots > 0) {
       const rankTeams = byRankGlobal[currentRank] || [];
       if (rankTeams.length === 0) break;
-      const sorted = sortCrossGroup(rankTeams, standingsIsSetBased);
-      checkCrossGroupTie(sorted, remainingSlots, standingsIsSetBased);
+      const sorted = sortCrossGroup(rankTeams, standingsIsSetBased, standingsIsChess);
+      checkCrossGroupTie(sorted, remainingSlots, standingsIsSetBased, standingsIsChess);
       const toTake = Math.min(remainingSlots, sorted.length);
       qualified = qualified.concat(sorted.slice(0, toTake));
       remainingSlots -= toTake;
@@ -271,29 +315,12 @@ async function generateFinalsIfReady(tournamentId) {
       roundMatchIds[1].push(matchId);
 
       const finalRef = db.collection('finals').doc(matchId);
-      batch.set(finalRef, {
-        match_id: matchId,
-        tournament_id: tournamentId,
-        round_id: 1,
-        team_a: teamA,
-        team_b: teamB,
-        team_a_name: teamNamesMap[teamA] || teamA,
-        team_b_name: teamNamesMap[teamB] || teamB,
-        score_a: null,
-        score_b: null,
-        winner_team_id: null,
-        played: false,
-        court: 'none',
-        day: 'none',
-        hour: 'none',
-        sets_detail: null,
-        games_a: null,
-        games_b: null,
-        sport,
-        match_format: matchFormatFinals,
-        is_set_based: isSetBased,
-        source_matches: [],
-      });
+      const doc = createEmptyMatchDoc(matchId, tournamentId, 1, sport, matchFormatFinals, profile);
+      doc.team_a       = teamA;
+      doc.team_b       = teamB;
+      doc.team_a_name  = teamNamesMap[teamA] || teamA;
+      doc.team_b_name  = teamNamesMap[teamB] || teamB;
+      batch.set(finalRef, doc);
 
       console.log(`   ✓ R1_M${matchIndex}: ${teamNamesMap[teamA]} vs ${teamNamesMap[teamB]}`);
       matchIndex++;
@@ -312,7 +339,7 @@ async function generateFinalsIfReady(tournamentId) {
         roundMatchIds[round].push(matchId);
 
         const finalRef = db.collection('finals').doc(matchId);
-        const doc = createEmptyMatchDoc(matchId, tournamentId, round, sport, matchFormatFinals, isSetBased);
+        const doc = createEmptyMatchDoc(matchId, tournamentId, round, sport, matchFormatFinals, profile);
         doc.source_matches = [
           { match_id: srcA, role: 'winner' },
           { match_id: srcB, role: 'winner' },
@@ -337,7 +364,7 @@ async function generateFinalsIfReady(tournamentId) {
         const matchId = `${tournamentId}_FINAL_3X4`;
 
         const finalRef = db.collection('finals').doc(matchId);
-        const doc = createEmptyMatchDoc(matchId, tournamentId, numRounds, sport, matchFormatFinals, isSetBased);
+        const doc = createEmptyMatchDoc(matchId, tournamentId, numRounds, sport, matchFormatFinals, profile);
         doc.source_matches = [
           { match_id: srcA, role: 'loser' },
           { match_id: srcB, role: 'loser' },
