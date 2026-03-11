@@ -849,21 +849,12 @@ body {
   align-items: stretch;
   cursor: grab;
   user-select: none;
-  animation: sports-scroll 30s linear infinite;
   will-change: transform;
+  /* nessuna animation CSS */
 }
 
 .sports-track:active {
   cursor: grabbing;
-}
-
-.sports-track.paused {
-  animation-play-state: paused;
-}
-
-@keyframes sports-scroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
 }
 
 .sport-box {
@@ -885,7 +876,6 @@ body {
   transform: translateY(-4px);
   box-shadow: var(--shadow-md), 0 0 16px var(--brand-glow);
 }
-
 
 /* =========================
    FAQ IMPROVED
