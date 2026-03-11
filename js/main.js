@@ -647,13 +647,12 @@ if (sportsTrack) {
 
     isDragging = true;
 
-    pauseSlider();
+    sliderAnimation.pause();
+    gsap.killTweensOf(sportsTrack);
 
     startX = x;
     lastMoveX = x;
     trackStartX = getTranslateX();
-
-    sportsTrack.style.cursor = "grabbing";
 
   }
 
