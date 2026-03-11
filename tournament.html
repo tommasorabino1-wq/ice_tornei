@@ -10,8 +10,8 @@
   <!-- ========================================
        SEO: Title e Description
   ========================================= -->
-  <title>Regolamento e Iscrizione Tornei | ICE Tournament Torino</title>
-  <meta name="description" content="Consulta il regolamento dei tornei ICE, scopri le regole specifiche di ogni torneo e iscriviti online. Padel, beach volley e calcetto a Torino.">
+  <title>Regolamento e Iscrizione Tornei | Tornei ICE Torino</title>
+  <meta name="description" content="Consulta il regolamento dei tornei ICE, scopri le regole specifiche di ogni torneo e iscriviti online. Padel, beach volley, calcetto e scacchi a Torino.">
   <meta name="keywords" content="regolamento tornei padel, iscrizione tornei torino, regole beach volley, tornei calcetto regolamento, tornei sportivi torino">
 
   <!-- ========================================
@@ -22,8 +22,8 @@
   <!-- ========================================
        OPEN GRAPH (Facebook, WhatsApp, LinkedIn)
   ========================================= -->
-  <meta property="og:title" content="Regolamento e Iscrizione Tornei | ICE Tournament">
-  <meta property="og:description" content="Consulta il regolamento, iscriviti ai tornei di padel, beach volley e calcetto a Torino. Regole chiare, iscrizione semplice.">
+  <meta property="og:title" content="Regolamento e Iscrizione Tornei | Tornei ICE">
+  <meta property="og:description" content="Consulta il regolamento, iscriviti ai tornei di padel, beach volley, calcetto e scacchi a Torino. Regole chiare, iscrizione semplice.">
   <meta property="og:image" content="https://tornei-ice.it/assets/og-image.png">
   <meta property="og:url" content="https://tornei-ice.it/tournament.html">
   <meta property="og:type" content="website">
@@ -33,8 +33,8 @@
        TWITTER CARD
   ========================================= -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Regolamento Tornei | ICE Tournament Torino">
-  <meta name="twitter:description" content="Regolamento, dettagli e iscrizione ai tornei di padel, beach volley e calcetto a Torino">
+  <meta name="twitter:title" content="Regolamento Tornei | Tornei ICE Torino">
+  <meta name="twitter:description" content="Regolamento, dettagli e iscrizione ai tornei di padel, beach volley, calcetto e scacchi a Torino">
   <meta name="twitter:image" content="https://tornei-ice.it/assets/twitter-image.png">
 
   <!-- ========================================
@@ -60,12 +60,12 @@
   {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "name": "Regolamento e Iscrizione Tornei - ICE Tournament",
+    "name": "Regolamento e Iscrizione Tornei - Tornei ICE",
     "description": "Consulta il regolamento dei tornei ICE di padel, beach volley e calcetto a Torino. Iscriviti online.",
     "url": "https://tornei-ice.it/tournament.html",
     "isPartOf": {
       "@type": "WebSite",
-      "name": "ICE Tournament",
+      "name": "Tornei ICE",
       "url": "https://tornei-ice.it"
     },
     "breadcrumb": {
@@ -99,8 +99,8 @@
 
       <!-- BRAND (LOGO) -->
       <div class="brand">
-        <a href="index.html" aria-label="Homepage ICE Tournament">
-          <img src="assets/logo.png" alt="Logo ICE Tournament - Tornei sportivi Torino" width="120" height="120">
+        <a href="index.html" aria-label="Homepage Tornei ICE">
+          <img src="assets/logo.png" alt="Logo Tornei ICE - Tornei sportivi Torino" width="120" height="120">
         </a>
       </div>
 
@@ -303,7 +303,7 @@
           <div class="capacity-text">
             <span id="capacity-current">0</span> /
             <span id="capacity-max">0</span>
-            squadre iscritte
+            <span id="capacity-entity-label">squadre iscritte</span>
           </div>
 
         </div>
@@ -325,7 +325,7 @@
 
               <div class="form-step active" data-step="1">
                 <span class="step-number">1</span>
-                <span class="step-label">Dati squadra</span>
+                <span class="step-label" id="form-step1-label">Dati squadra</span>
               </div>
 
               <div class="form-step" data-step="2">
@@ -351,7 +351,7 @@
           <div class="form-step-panel active" data-step="1">
 
             <label>
-              <span class="form-field-title">Nome squadra <span class="required-asterisk">*</span></span>
+              <span class="form-field-title" id="team-name-label">Nome squadra <span class="required-asterisk">*</span></span>
               <input type="text" name="team_name" required>
             </label>
 
@@ -448,12 +448,12 @@
 
         <div class="teams-block-header">
 
-          <h3 class="teams-block-title">
+          <h3 class="teams-block-title" id="teams-block-title">
             Squadre iscritte
           </h3>
 
           <div class="teams-block-count">
-            <span class="meta-icon">👥</span>
+            <span class="meta-icon" id="teams-block-icon">👥</span>
             <span id="teams-list-count">0 / 0</span>
           </div>
 
@@ -475,7 +475,7 @@
 
       <!-- BRAND TOP -->
       <div class="footer-brand">
-        <img src="assets/logo.png" alt="Logo ICE Tournament" width="80" height="80">
+        <img src="assets/logo.png" alt="Logo Tornei ICE" width="80" height="80">
         <p>La tua piattaforma per tornei sportivi</p>
       </div>
 
@@ -485,8 +485,8 @@
         <!-- CONTATTI -->
         <div class="footer-section footer-contacts">
           <h2>Contatti</h2>
-          <p><a href="tel:+393396160901" aria-label="Chiama ICE Tournament">📞 +39 339 616 0901</a></p>
-          <p><a href="mailto:tornei.ice.torino@gmail.com" aria-label="Email ICE Tournament">✉️ tornei.ice.torino@gmail.com</a></p>
+          <p><a href="tel:+393396160901" aria-label="Chiama Tornei ICE">📞 +39 339 616 0901</a></p>
+          <p><a href="mailto:tornei.ice.torino@gmail.com" aria-label="Email Tornei ICE">✉️ tornei.ice.torino@gmail.com</a></p>
         </div>
 
         <!-- NAVIGA -->
@@ -508,7 +508,7 @@
 
       <!-- BOTTOM -->
       <div class="footer-bottom">
-        <p>&copy; 2026 ICE Tournament. Tutti i diritti riservati.</p>
+        <p>&copy; 2026 Tornei ICE. Tutti i diritti riservati.</p>
       </div>
 
     </div>

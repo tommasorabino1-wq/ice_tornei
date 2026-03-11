@@ -171,6 +171,36 @@ function renderTournament(tournament) {
   genericSection.classList.add("hidden");
   tournamentSection.classList.remove("hidden");
 
+  const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
+
+  // ✅ Aggiorna elementi dinamici individual/team
+  const capacityEntityLabel = document.getElementById("capacity-entity-label");
+  if (capacityEntityLabel) {
+    capacityEntityLabel.textContent = isIndividual ? "giocatori iscritti" : "squadre iscritte";
+  }
+
+  const teamsBlockTitle = document.getElementById("teams-block-title");
+  if (teamsBlockTitle) {
+    teamsBlockTitle.textContent = isIndividual ? "Giocatori iscritti" : "Squadre iscritte";
+  }
+
+  const teamsBlockIcon = document.getElementById("teams-block-icon");
+  if (teamsBlockIcon) {
+    teamsBlockIcon.textContent = isIndividual ? "👤" : "👥";
+  }
+
+  const formStep1Label = document.getElementById("form-step1-label");
+  if (formStep1Label) {
+    formStep1Label.textContent = isIndividual ? "Dati giocatore" : "Dati squadra";
+  }
+
+  const teamNameLabel = document.getElementById("team-name-label");
+  if (teamNameLabel) {
+    teamNameLabel.innerHTML = isIndividual
+      ? 'Nome e Cognome <span class="required-asterisk">*</span>'
+      : 'Nome squadra <span class="required-asterisk">*</span>';
+  }
+
   // Header
   document.getElementById("tournament-name").textContent = tournament.name;
 
@@ -199,7 +229,6 @@ function renderTournament(tournament) {
 
   // Load + render teams list block
   loadAndRenderTeamsList(tournament);
-
 }
 
 
