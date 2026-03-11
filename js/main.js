@@ -575,81 +575,51 @@ ScrollTrigger.create({
 
 
 
+
+
+
 // ===============================
-// SPORTS TAPE SLIDER
-// CSS autoplay + frecce manuali
+// SPORTS SLIDER — frecce only
 // ===============================
 
-const sportsTrack = document.getElementById("sports-track");
-const sportsNav   = document.getElementById("sports-nav");
-const prevBtn     = document.getElementById("sports-prev");
-const nextBtn     = document.getElementById("sports-next");
+const sportsTrack  = document.getElementById("sports-track");
+const sportsSlider = document.getElementById("sports-slider");
+const sportsPrev   = document.getElementById("sports-prev");
+const sportsNext   = document.getElementById("sports-next");
 
-if (sportsTrack) {
+if (sportsTrack && sportsSlider && sportsPrev && sportsNext) {
 
-  // Duplica per loop seamless
-  sportsTrack.innerHTML += sportsTrack.innerHTML;
+  const CARD_WIDTH = 240 + 18; // card + gap
+  let currentIndex = 0;
 
-  const CARD_WIDTH  = 240 + 18; // min-width + gap
-  const ITEM_COUNT  = sportsTrack.children.length / 2; // originali (prima della duplica)
-
-  let isManual      = false;
-  let manualIndex   = 0;        // indice corrente in modalità manuale
-
-  // ===============================
-  // MOSTRA FRECCE SOLO SE OVERFLOW
-  // ===============================
-  function checkOverflow() {
-    const slider = sportsTrack.closest(".sports-slider");
-    if (!slider) return;
-    const hasOverflow = sportsTrack.scrollWidth / 2 > slider.clientWidth;
-    if (sportsNav) sportsNav.style.display = hasOverflow ? "flex" : "none";
+  function getMaxIndex() {
+    const cards       = sportsTrack.querySelectorAll(".sport-box");
+    const visibleCards = Math.floor(sportsSlider.clientWidth / CARD_WIDTH);
+    return Math.max(0, cards.length - visibleCards);
   }
 
-  requestAnimationFrame(checkOverflow);
-  window.addEventListener("resize", checkOverflow);
-
-  // ===============================
-  // ENTRA IN MODALITÀ MANUALE
-  // Legge la posizione CSS corrente e
-  // la converte in un indice card
-  // ===============================
-  function enterManual() {
-    if (isManual) return;
-    isManual = true;
-
-    // Legge translateX attuale dell'animazione CSS in corso
-    const matrix = new DOMMatrixReadOnly(
-      window.getComputedStyle(sportsTrack).transform
-    );
-    const currentX = matrix.m41;
-
-    // Calcola l'indice più vicino alla posizione corrente
-    manualIndex = Math.round(-currentX / CARD_WIDTH);
-
-    // Applica subito senza transizione per non saltare
-    sportsTrack.classList.add("manual");
-    sportsTrack.style.transform = `translateX(${-manualIndex * CARD_WIDTH}px)`;
+  function updateButtons() {
+    const max = getMaxIndex();
+    sportsPrev.style.opacity = currentIndex <= 0   ? "0.3" : "1";
+    sportsNext.style.opacity = currentIndex >= max ? "0.3" : "1";
+    sportsPrev.style.pointerEvents = currentIndex <= 0   ? "none" : "auto";
+    sportsNext.style.pointerEvents = currentIndex >= max ? "none" : "auto";
   }
 
-  // ===============================
-  // NAVIGA
-  // ===============================
-  function navigate(direction) {
-    enterManual();
-
-    manualIndex += direction;
-
-    // Wrap: se supera il numero di item originali, torna a 0
-    // (il doppio dei nodi garantisce che non si veda mai il bordo)
-    if (manualIndex < 0) manualIndex = ITEM_COUNT - 1;
-    if (manualIndex >= ITEM_COUNT) manualIndex = 0;
-
-    sportsTrack.style.transform = `translateX(${-manualIndex * CARD_WIDTH}px)`;
+  function goTo(index) {
+    const max = getMaxIndex();
+    currentIndex = Math.max(0, Math.min(index, max));
+    sportsTrack.style.transform = `translateX(${-currentIndex * CARD_WIDTH}px)`;
+    updateButtons();
   }
 
-  if (prevBtn) prevBtn.addEventListener("click", () => navigate(-1));
-  if (nextBtn) nextBtn.addEventListener("click", () => navigate(+1));
+  sportsPrev.addEventListener("click", () => goTo(currentIndex - 1));
+  sportsNext.addEventListener("click", () => goTo(currentIndex + 1));
+
+  window.addEventListener("resize", () => goTo(currentIndex));
+
+  // Init
+  updateButtons();
 
 }
 
