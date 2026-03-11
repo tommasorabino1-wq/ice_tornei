@@ -579,8 +579,7 @@ ScrollTrigger.create({
 
 
 // ===============================
-// SPORTS SLIDER
-// CSS autoplay + frecce + resume
+// SPORTS SLIDER — frecce only
 // ===============================
 
 const sportsTrackInner = document.getElementById("sports-track-inner");
@@ -590,104 +589,36 @@ const sportsNext       = document.getElementById("sports-next");
 
 if (sportsTrackInner && sportsSlider && sportsPrev && sportsNext) {
 
-  const CARD_WIDTH = 240 + 18; // card + gap
-  let currentIndex = 0;
-  let isManual     = false;
-  let resumeTimer  = null;
+  const CARD_WIDTH  = 240 + 18;
+  const TOTAL_CARDS = sportsTrackInner.querySelectorAll(".sport-box").length;
+  let currentIndex  = 0;
 
-  // Duplica le card per il loop infinito (solo usate durante autoplay)
-  sportsTrackInner.innerHTML += sportsTrackInner.innerHTML;
-
-  // Numero di card originali (prima della duplica)
-  const TOTAL_CARDS = sportsTrackInner.querySelectorAll(".sport-box").length / 2;
-
-  // ===============================
-  // AUTOPLAY
-  // ===============================
-  function startAutoplay() {
-    isManual = false;
-    currentIndex = 0;
-    sportsTrackInner.style.transform = "";
-    sportsTrackInner.classList.remove("is-manual");
-    sportsTrackInner.classList.add("is-playing");
-    updateButtons();
-  }
-
-  // ===============================
-  // MANUALE
-  // Legge la posizione visiva corrente
-  // dall'animazione CSS e la congela
-  // ===============================
-  function enterManual() {
-    if (isManual) return;
-    isManual = true;
-
-    // Legge translateX attuale (mid-animation)
-    const matrix = new DOMMatrixReadOnly(
-      window.getComputedStyle(sportsTrackInner).transform
-    );
-    const frozenX = matrix.m41;
-
-    // Calcola l'indice più vicino alla posizione congelata
-    currentIndex = Math.round(-frozenX / CARD_WIDTH);
-    currentIndex = Math.max(0, Math.min(currentIndex, TOTAL_CARDS - 1));
-
-    // Passa a modalità manuale senza salto visivo
-    sportsTrackInner.classList.remove("is-playing");
-    sportsTrackInner.classList.add("is-manual");
-    sportsTrackInner.style.transform = `translateX(${-currentIndex * CARD_WIDTH}px)`;
-
-    updateButtons();
-  }
-
-  // ===============================
-  // NAVIGAZIONE
-  // ===============================
-  function goTo(index) {
-    currentIndex = Math.max(0, Math.min(index, TOTAL_CARDS - 1));
-    sportsTrackInner.style.transform = `translateX(${-currentIndex * CARD_WIDTH}px)`;
-    updateButtons();
-
-    // Ripristina autoplay dopo 15 secondi
-    clearTimeout(resumeTimer);
-    resumeTimer = setTimeout(startAutoplay, 15000);
-  }
-
-  // ===============================
-  // STATO FRECCE
-  // ===============================
   function updateButtons() {
-    if (!isManual) {
-      // Durante autoplay le frecce sono sempre attive
-      sportsPrev.style.opacity      = "1";
-      sportsNext.style.opacity      = "1";
-      sportsPrev.style.pointerEvents = "auto";
-      sportsNext.style.pointerEvents = "auto";
-      return;
-    }
+    const trackWidth  = TOTAL_CARDS * CARD_WIDTH - 18;
+    const sliderWidth = sportsSlider.clientWidth;
+    const maxIndex    = Math.ceil((trackWidth - sliderWidth) / CARD_WIDTH);
 
-    sportsPrev.style.opacity       = currentIndex <= 0                ? "0.3" : "1";
-    sportsNext.style.opacity       = currentIndex >= TOTAL_CARDS - 1  ? "0.3" : "1";
-    sportsPrev.style.pointerEvents = currentIndex <= 0                ? "none" : "auto";
-    sportsNext.style.pointerEvents = currentIndex >= TOTAL_CARDS - 1  ? "none" : "auto";
+    sportsPrev.style.opacity       = currentIndex <= 0          ? "0.3" : "1";
+    sportsNext.style.opacity       = currentIndex >= maxIndex   ? "0.3" : "1";
+    sportsPrev.style.pointerEvents = currentIndex <= 0          ? "none" : "auto";
+    sportsNext.style.pointerEvents = currentIndex >= maxIndex   ? "none" : "auto";
   }
 
-  // ===============================
-  // CLICK FRECCE
-  // ===============================
-  sportsPrev.addEventListener("click", () => {
-    enterManual();
-    goTo(currentIndex - 1);
-  });
+  function goTo(index) {
+    const trackWidth  = TOTAL_CARDS * CARD_WIDTH - 18;
+    const sliderWidth = sportsSlider.clientWidth;
+    const maxIndex    = Math.ceil((trackWidth - sliderWidth) / CARD_WIDTH);
 
-  sportsNext.addEventListener("click", () => {
-    enterManual();
-    goTo(currentIndex + 1);
-  });
+    currentIndex = Math.max(0, Math.min(index, maxIndex));
+    sportsTrackInner.style.transform = `translateX(${-currentIndex * CARD_WIDTH}px)`;
+    updateButtons();
+  }
 
-  // ===============================
-  // INIT
-  // ===============================
-  startAutoplay();
+  sportsPrev.addEventListener("click", () => goTo(currentIndex - 1));
+  sportsNext.addEventListener("click", () => goTo(currentIndex + 1));
+
+  window.addEventListener("resize", () => goTo(currentIndex));
+
+  goTo(0);
 
 }
