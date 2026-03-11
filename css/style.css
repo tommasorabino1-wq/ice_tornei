@@ -885,14 +885,36 @@ body {
   touch-action: pan-y;
 }
 
+/* Il track esterno non si muove mai */
 .sports-track {
+  display: block;
+  overflow: hidden;
+}
+
+/* Il track interno è quello che scorre */
+.sports-track-inner {
   display: flex;
   gap: 18px;
   width: max-content;
   align-items: stretch;
-  transform: translateX(0);
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
+}
+
+/* Stato: autoplay attivo */
+.sports-track-inner.is-playing {
+  animation: sports-scroll 28s linear infinite;
+  transition: none;
+}
+
+/* Stato: manuale (frecce) */
+.sports-track-inner.is-manual {
+  animation: none;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes sports-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
 
 .sport-box {
