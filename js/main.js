@@ -577,40 +577,153 @@ ScrollTrigger.create({
 
 // ===============================
 // SPORTS TAPE SLIDER
+// autoplay + drag + smart resume
 // ===============================
 
 const sportsTrack = document.querySelector(".sports-track");
 
 if (sportsTrack) {
 
+  // duplica elementi per effetto infinito
   sportsTrack.innerHTML += sportsTrack.innerHTML;
 
-  const sliderAnimation = gsap.to(sportsTrack, {
+  let resumeTimeout;
 
+  const sliderAnimation = gsap.to(sportsTrack, {
     x: "-50%",
     duration: 20,
     ease: "none",
     repeat: -1
-
   });
 
-  // pausa hover desktop
-  sportsTrack.addEventListener("mouseenter", () => {
+  // ===============================
+  // PAUSE / RESUME
+  // ===============================
+
+  function pauseSlider() {
     sliderAnimation.pause();
+    clearTimeout(resumeTimeout);
+  }
+
+  function scheduleResume() {
+    clearTimeout(resumeTimeout);
+
+    resumeTimeout = setTimeout(() => {
+      sliderAnimation.resume();
+    }, 15000);
+  }
+
+  // ===============================
+  // DESKTOP HOVER
+  // ===============================
+
+  sportsTrack.addEventListener("mouseenter", pauseSlider);
+
+  sportsTrack.addEventListener("mouseleave", scheduleResume);
+
+  // ===============================
+  // DRAG / SWIPE (con inertia soft)
+  // ===============================
+
+  let isDragging = false;
+  let startX = 0;
+  let currentX = 0;
+  let trackStartX = 0;
+  let lastMoveX = 0;
+  let velocity = 0;
+
+  const cardWidth = 258; 
+  // 240px card + 18px gap (dal tuo CSS)
+
+  function getTranslateX() {
+    const matrix = new DOMMatrixReadOnly(
+      window.getComputedStyle(sportsTrack).transform
+    );
+    return matrix.m41;
+  }
+
+  function startDrag(x) {
+
+    isDragging = true;
+
+    pauseSlider();
+
+    startX = x;
+    lastMoveX = x;
+    trackStartX = getTranslateX();
+
+    sportsTrack.style.cursor = "grabbing";
+
+  }
+
+  function drag(x) {
+
+    if (!isDragging) return;
+
+    const delta = x - startX;
+
+    velocity = x - lastMoveX;
+    lastMoveX = x;
+
+    gsap.set(sportsTrack, {
+      x: trackStartX + delta
+    });
+
+  }
+
+  function endDrag() {
+
+    if (!isDragging) return;
+
+    isDragging = false;
+
+    sportsTrack.style.cursor = "grab";
+
+    let current = getTranslateX();
+
+    // inertia molto leggera
+    current += velocity * 6;
+
+    // snap alla card più vicina
+    const snapped = Math.round(current / cardWidth) * cardWidth;
+
+    gsap.to(sportsTrack, {
+      x: snapped,
+      duration: 0.4,
+      ease: "power2.out"
+    });
+
+    scheduleResume();
+
+  }
+
+  // ===============================
+  // MOUSE EVENTS
+  // ===============================
+
+  sportsTrack.addEventListener("mousedown", e => {
+    startDrag(e.clientX);
   });
 
-  sportsTrack.addEventListener("mouseleave", () => {
-    sliderAnimation.resume();
+  window.addEventListener("mousemove", e => {
+    drag(e.clientX);
   });
 
-  // pausa touch mobile
-  sportsTrack.addEventListener("touchstart", () => {
-    sliderAnimation.pause();
+  window.addEventListener("mouseup", endDrag);
+
+  // ===============================
+  // TOUCH EVENTS
+  // ===============================
+
+  sportsTrack.addEventListener("touchstart", e => {
+    startDrag(e.touches[0].clientX);
   });
 
-  sportsTrack.addEventListener("touchend", () => {
-    sliderAnimation.resume();
+  window.addEventListener("touchmove", e => {
+    drag(e.touches[0].clientX);
   });
+
+  window.addEventListener("touchend", endDrag);
 
 }
 

@@ -839,6 +839,7 @@ body {
   position:relative;
   margin-top:18px;
   padding-top:8px;
+  touch-action: pan-y;
 }
 
 .sports-track {
@@ -846,7 +847,15 @@ body {
   gap:18px;
   width:max-content;
   align-items:stretch;
+  cursor: grab;
+  user-select: none;
 }
+
+.sports-track:active {
+  cursor: grabbing;
+}
+
+
 
 .sport-box {
   min-width:240px;
@@ -3181,7 +3190,7 @@ section > .section-title {
   background: var(--surface-soft);
   border: 1px solid var(--brand-soft-border);
   border-radius: var(--radius);
-  padding: 14px;
+  padding: 13px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -3192,7 +3201,7 @@ section > .section-title {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.45;
   color: var(--text-main);
 }
