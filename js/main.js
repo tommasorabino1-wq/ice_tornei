@@ -621,4 +621,29 @@ if (sportsTrackInner && sportsSlider && sportsPrev && sportsNext) {
 
   goTo(0);
 
+  // ===============================
+  // SWIPE TOUCH (mobile)
+  // ===============================
+  let touchStartX = 0;
+  let touchDeltaX = 0;
+
+  sportsTrackInner.addEventListener("touchstart", e => {
+    touchStartX = e.touches[0].clientX;
+    touchDeltaX = 0;
+  }, { passive: true });
+
+  sportsTrackInner.addEventListener("touchmove", e => {
+    touchDeltaX = e.touches[0].clientX - touchStartX;
+  }, { passive: true });
+
+  sportsTrackInner.addEventListener("touchend", () => {
+    const THRESHOLD = 40; // px minimi per considerare uno swipe
+    if (touchDeltaX < -THRESHOLD) {
+      goTo(currentIndex + 1); // swipe sinistra → avanti
+    } else if (touchDeltaX > THRESHOLD) {
+      goTo(currentIndex - 1); // swipe destra → indietro
+    }
+    touchDeltaX = 0;
+  });
+
 }
