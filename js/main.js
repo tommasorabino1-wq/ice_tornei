@@ -577,161 +577,144 @@ ScrollTrigger.create({
 
 // ===============================
 // SPORTS TAPE SLIDER
-// autoplay + drag + smart resume
+// CSS animation + drag to scrub
 // ===============================
 
 const sportsTrack = document.querySelector(".sports-track");
 
 if (sportsTrack) {
 
-  // duplica elementi per effetto infinito
+  // Duplica elementi per loop infinito
   sportsTrack.innerHTML += sportsTrack.innerHTML;
 
-  let resumeTimeout;
-
-  const sliderAnimation = gsap.to(sportsTrack, {
-    x: "-50%",
-    duration: 20,
-    ease: "none",
-    repeat: -1,
-    overwrite: "auto"
-  });
+  // Calcola larghezza metà traccia (= larghezza originale)
+  // usata per normalizzare la posizione durante il drag
+  function getHalfWidth() {
+    return sportsTrack.scrollWidth / 2;
+  }
 
   // ===============================
-  // PAUSE / RESUME
+  // PAUSE / RESUME (hover desktop)
   // ===============================
+
+  let resumeTimer = null;
 
   function pauseSlider() {
-    sliderAnimation.pause();
-    clearTimeout(resumeTimeout);
+    sportsTrack.classList.add("paused");
+    clearTimeout(resumeTimer);
   }
 
-  function scheduleResume() {
-    clearTimeout(resumeTimeout);
-
-    resumeTimeout = setTimeout(() => {
-      sliderAnimation.resume();
-    }, 15000);
+  function resumeSlider() {
+    sportsTrack.classList.remove("paused");
   }
 
-  // ===============================
-  // DESKTOP HOVER
-  // ===============================
+  function scheduleResume(delay = 15000) {
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(resumeSlider, delay);
+  }
 
   sportsTrack.addEventListener("mouseenter", pauseSlider);
-
-  sportsTrack.addEventListener("mouseleave", scheduleResume);
+  sportsTrack.addEventListener("mouseleave", resumeSlider);
 
   // ===============================
-  // DRAG / SWIPE (con inertia soft)
+  // DRAG / SWIPE
   // ===============================
 
-  let isDragging = false;
-  let startX = 0;
-  let currentX = 0;
-  let trackStartX = 0;
-  let lastMoveX = 0;
-  let velocity = 0;
+  let isDragging   = false;
+  let dragStartX   = 0;
+  let dragStartPos = 0;   // translateX al momento del touchstart
+  let currentPos   = 0;   // translateX corrente durante drag
+  let lastX        = 0;
+  let velocity     = 0;
 
-  const cardWidth = 258; 
-  // 240px card + 18px gap (dal tuo CSS)
-
-  function getTranslateX() {
-    const matrix = new DOMMatrixReadOnly(
-      window.getComputedStyle(sportsTrack).transform
-    );
+  // Legge il translateX attuale (anche durante animazione CSS)
+  function getCurrentTranslateX() {
+    const style = window.getComputedStyle(sportsTrack);
+    const matrix = new DOMMatrixReadOnly(style.transform);
     return matrix.m41;
   }
 
-  function startDrag(x) {
-
-    isDragging = true;
-
-    sliderAnimation.pause();
-    gsap.killTweensOf(sportsTrack);
-
-    startX = x;
-    lastMoveX = x;
-    trackStartX = getTranslateX();
-
+  // Applica una posizione manuale (interrompe CSS animation)
+  function applyManualPosition(x) {
+    sportsTrack.style.transform = `translateX(${x}px)`;
   }
 
-  function drag(x) {
+  // Normalizza la posizione nel range [-halfWidth, 0]
+  // così il loop rimane sempre coerente
+  function normalizePosition(x) {
+    const half = getHalfWidth();
+    // Porta x nel range [-half, 0]
+    let normalized = ((x % -half) - half) % -half;
+    if (normalized > 0) normalized -= half;
+    return normalized;
+  }
 
+  function startDrag(clientX) {
+    isDragging = true;
+    pauseSlider();
+
+    // Congela la posizione visiva corrente e disattiva CSS animation
+    dragStartPos = getCurrentTranslateX();
+    sportsTrack.style.animation = "none";
+    applyManualPosition(dragStartPos);
+
+    dragStartX = clientX;
+    lastX      = clientX;
+    velocity   = 0;
+  }
+
+  function onDrag(clientX) {
     if (!isDragging) return;
 
-    const delta = x - startX;
+    velocity   = clientX - lastX;
+    lastX      = clientX;
 
-    velocity = x - lastMoveX;
-    lastMoveX = x;
+    const delta = clientX - dragStartX;
+    currentPos  = dragStartPos + delta;
 
-    gsap.set(sportsTrack, {
-      x: trackStartX + delta
-    });
-
+    applyManualPosition(currentPos);
   }
 
   function endDrag() {
-
     if (!isDragging) return;
-
     isDragging = false;
 
-    sportsTrack.style.cursor = "grab";
+    // Applica inertia leggera
+    let finalPos = currentPos + velocity * 5;
 
-    let current = getTranslateX();
+    // Normalizza nel range del loop
+    finalPos = normalizePosition(finalPos);
 
-    // inertia molto leggera
-    current += velocity * 6;
+    // Snap fluido alla posizione finale
+    sportsTrack.style.transition = "transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+    applyManualPosition(finalPos);
 
-    // snap alla card più vicina
-    const snapped = Math.round(current / cardWidth) * cardWidth;
+    // Dopo lo snap: ripristina CSS animation dal punto corretto
+    setTimeout(() => {
+      sportsTrack.style.transition = "";
 
-    gsap.to(sportsTrack, {
-      x: snapped,
-      duration: 0.4,
-      ease: "power2.out",
-      onComplete: () => {
-        
-        const totalWidth = sportsTrack.scrollWidth / 2;
-        const progress = Math.abs(snapped % totalWidth) / totalWidth;
+      const half        = getHalfWidth();
+      const progress    = Math.abs(finalPos) / half;        // 0..1
+      const duration    = 30;                               // secondi (= CSS animation duration)
+      const elapsed     = progress * duration;
+      const delay       = -elapsed;                         // trick per partire da metà
 
-        sliderAnimation.progress(progress);
+      sportsTrack.style.transform  = "";
+      sportsTrack.style.animation  = `sports-scroll ${duration}s linear ${delay}s infinite`;
 
-      }
-    });
-
-    scheduleResume();
-
+      scheduleResume(0); // rimuove classe paused (non serve più ma per sicurezza)
+    }, 420);
   }
 
-  // ===============================
-  // MOUSE EVENTS
-  // ===============================
+  // Mouse
+  sportsTrack.addEventListener("mousedown",  e => startDrag(e.clientX));
+  window.addEventListener("mousemove",       e => { if (isDragging) onDrag(e.clientX); });
+  window.addEventListener("mouseup",         endDrag);
 
-  sportsTrack.addEventListener("mousedown", e => {
-    startDrag(e.clientX);
-  });
-
-  window.addEventListener("mousemove", e => {
-    drag(e.clientX);
-  });
-
-  window.addEventListener("mouseup", endDrag);
-
-  // ===============================
-  // TOUCH EVENTS
-  // ===============================
-
-  sportsTrack.addEventListener("touchstart", e => {
-    startDrag(e.touches[0].clientX);
-  });
-
-  window.addEventListener("touchmove", e => {
-    drag(e.touches[0].clientX);
-  });
-
-  window.addEventListener("touchend", endDrag);
+  // Touch
+  sportsTrack.addEventListener("touchstart", e => startDrag(e.touches[0].clientX), { passive: true });
+  window.addEventListener("touchmove",       e => { if (isDragging) onDrag(e.touches[0].clientX); }, { passive: true });
+  window.addEventListener("touchend",        endDrag);
 
 }
 
