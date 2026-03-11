@@ -3156,52 +3156,63 @@ section > .section-title {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 28px 32px;
+  padding: 18px;
   margin-top: 24px;
   box-shadow: var(--shadow-sm);
 }
 
 .tournament-final-summary-block h3 {
-  margin: 0 0 16px 0;
-  font-size: 1.1rem;
-  font-weight: 500;
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text-main);
 }
 
 .final-summary-intro {
-  font-size: 0.92rem;
+  font-size: 13px;
   color: var(--text-muted);
-  margin-bottom: 18px;
+  margin-bottom: 12px;
   font-style: italic;
+  line-height: 1.5;
 }
 
+/* BOX INTERNO */
 .final-summary-rows {
+  background: var(--surface-soft);
+  border: 1px solid var(--brand-soft-border);
+  border-radius: var(--radius);
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
+/* singola riga */
 .final-summary-row {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.97rem;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.45;
   color: var(--text-main);
 }
 
-/* parole in grassetto nel riepilogo */
+/* parole in grassetto */
 .final-summary-row strong {
   color: var(--brand);
-  font-weight: 700;
+  font-weight: 600;
 }
 
+/* icona */
 .final-summary-icon {
-  font-size: 1.2rem;
+  font-size: 15px;
   flex-shrink: 0;
-  width: 28px;
+  width: 20px;
   text-align: center;
+  margin-top: 1px;
 }
 
+/* hover leggerissimo */
 .tournament-final-summary-block:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-1px);
