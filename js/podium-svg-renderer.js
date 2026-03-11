@@ -44,9 +44,9 @@
     bronzeGlow: "rgba(164,113,72,0.2)",
 
     // podio
-    bar1st: "rgba(176,138,90,0.08)",
-    bar2nd: "rgba(0,0,0,0.03)",
-    bar3rd: "rgba(164,113,72,0.06)",
+    bar1st: "#efe6d8",
+    bar2nd: "#efe6d8",
+    bar3rd: "#efe6d8",
 
     barBorder: "#e1d8cc",
 
@@ -260,11 +260,16 @@
 
     o += podiumBar(x, barY, PLACE_W, height, placeN);
 
-    const logoY = barY + height / 2 - 15;
+    // centro verticale della colonna
+    const centerY = barY + height / 2;
+
+    // logo leggermente sopra il centro
+    const logoY = centerY - 20;
 
     o += teamLogo(cx, logoY, logo);
 
-    const nameY = logoY + LOGO_SIZE / 2 + 35;
+    // nome molto vicino sotto il logo
+    const nameY = logoY + LOGO_SIZE / 2 + 8;
 
     o += svgEl(
       "text",
@@ -274,7 +279,8 @@
         fill: P.textBright,
         "font-size": 24,
         "font-weight": "700",
-        "text-anchor": "middle"
+        "text-anchor": "middle",
+        "dominant-baseline": "middle"
       },
       esc(shortenName(team.team_name))
     );

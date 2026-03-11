@@ -572,7 +572,7 @@ function renderSpecificCourtRule(tournament) {
   }
 
   // REGOLA 12: Comunicazioni ufficiali (sempre mostrata)
-  rules.push(buildCommunicationsRule(ruleNumber));
+  rules.push(buildCommunicationsRule(tournament, ruleNumber));
   ruleNumber++;
   
   // REGOLA 13: Rimborsi e spostamenti (sempre mostrata)
