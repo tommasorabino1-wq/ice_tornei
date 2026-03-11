@@ -834,11 +834,54 @@ body {
    SPORTS SLIDER
 ========================= */
 
+.sports-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.sports-section-header .section-title {
+  margin-bottom: 0;
+}
+
+.sports-nav {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sports-nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sports-nav-btn:hover {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  transform: scale(1.08);
+}
+
+.sports-nav-btn:active {
+  transform: scale(0.95);
+}
+
 .sports-slider {
   overflow: hidden;
   position: relative;
-  margin-top: 18px;
-  padding-top: 8px;
   touch-action: pan-y;
 }
 
@@ -847,14 +890,18 @@ body {
   gap: 18px;
   width: max-content;
   align-items: stretch;
-  cursor: grab;
-  user-select: none;
+  animation: sports-scroll 28s linear infinite;
   will-change: transform;
-  /* nessuna animation CSS */
 }
 
-.sports-track:active {
-  cursor: grabbing;
+.sports-track.manual {
+  animation: none;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes sports-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
 
 .sport-box {
@@ -869,6 +916,7 @@ body {
   flex-direction: column;
   gap: 6px;
   transition: border-color 0.2s ease, transform 0.2s ease;
+  user-select: none;
 }
 
 .sport-box:hover {
@@ -876,6 +924,9 @@ body {
   transform: translateY(-4px);
   box-shadow: var(--shadow-md), 0 0 16px var(--brand-glow);
 }
+
+
+
 
 /* =========================
    FAQ IMPROVED

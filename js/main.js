@@ -577,145 +577,79 @@ ScrollTrigger.create({
 
 // ===============================
 // SPORTS TAPE SLIDER
-// rAF-based, zero glitch
+// CSS autoplay + frecce manuali
 // ===============================
 
-const sportsTrack = document.querySelector(".sports-track");
+const sportsTrack = document.getElementById("sports-track");
+const sportsNav   = document.getElementById("sports-nav");
+const prevBtn     = document.getElementById("sports-prev");
+const nextBtn     = document.getElementById("sports-next");
 
 if (sportsTrack) {
 
-  // Duplica per loop infinito
+  // Duplica per loop seamless
   sportsTrack.innerHTML += sportsTrack.innerHTML;
 
-  const SPEED       = 0.5;   // px per frame (~30px/sec a 60fps)
-  let pos           = 0;     // posizione corrente in px
-  let halfWidth     = 0;     // larghezza metà traccia (= contenuto originale)
-  let isPaused      = false;
-  let rafId         = null;
+  const CARD_WIDTH  = 240 + 18; // min-width + gap
+  const ITEM_COUNT  = sportsTrack.children.length / 2; // originali (prima della duplica)
 
-  // Drag state
-  let isDragging    = false;
-  let dragStartX    = 0;
-  let dragStartPos  = 0;
-  let lastDragX     = 0;
-  let dragVelocity  = 0;
-  let resumeTimer   = null;
+  let isManual      = false;
+  let manualIndex   = 0;        // indice corrente in modalità manuale
 
   // ===============================
-  // MISURA (dopo render)
+  // MOSTRA FRECCE SOLO SE OVERFLOW
   // ===============================
-  function measure() {
-    halfWidth = sportsTrack.scrollWidth / 2;
+  function checkOverflow() {
+    const slider = sportsTrack.closest(".sports-slider");
+    if (!slider) return;
+    const hasOverflow = sportsTrack.scrollWidth / 2 > slider.clientWidth;
+    if (sportsNav) sportsNav.style.display = hasOverflow ? "flex" : "none";
+  }
+
+  requestAnimationFrame(checkOverflow);
+  window.addEventListener("resize", checkOverflow);
+
+  // ===============================
+  // ENTRA IN MODALITÀ MANUALE
+  // Legge la posizione CSS corrente e
+  // la converte in un indice card
+  // ===============================
+  function enterManual() {
+    if (isManual) return;
+    isManual = true;
+
+    // Legge translateX attuale dell'animazione CSS in corso
+    const matrix = new DOMMatrixReadOnly(
+      window.getComputedStyle(sportsTrack).transform
+    );
+    const currentX = matrix.m41;
+
+    // Calcola l'indice più vicino alla posizione corrente
+    manualIndex = Math.round(-currentX / CARD_WIDTH);
+
+    // Applica subito senza transizione per non saltare
+    sportsTrack.classList.add("manual");
+    sportsTrack.style.transform = `translateX(${-manualIndex * CARD_WIDTH}px)`;
   }
 
   // ===============================
-  // TICK
+  // NAVIGA
   // ===============================
-  function tick() {
-    rafId = requestAnimationFrame(tick);
+  function navigate(direction) {
+    enterManual();
 
-    if (isDragging || isPaused) return;
+    manualIndex += direction;
 
-    pos -= SPEED;
+    // Wrap: se supera il numero di item originali, torna a 0
+    // (il doppio dei nodi garantisce che non si veda mai il bordo)
+    if (manualIndex < 0) manualIndex = ITEM_COUNT - 1;
+    if (manualIndex >= ITEM_COUNT) manualIndex = 0;
 
-    // Reset seamless: quando ha scorso metà, torna a 0
-    if (Math.abs(pos) >= halfWidth) {
-      pos = 0;
-    }
-
-    sportsTrack.style.transform = `translateX(${pos}px)`;
+    sportsTrack.style.transform = `translateX(${-manualIndex * CARD_WIDTH}px)`;
   }
 
-  // ===============================
-  // PAUSE / RESUME
-  // ===============================
-  function pause() {
-    isPaused = true;
-    clearTimeout(resumeTimer);
-  }
-
-  function resume(delay = 0) {
-    clearTimeout(resumeTimer);
-    resumeTimer = setTimeout(() => { isPaused = false; }, delay);
-  }
-
-  // ===============================
-  // DRAG
-  // ===============================
-  function startDrag(clientX) {
-    isDragging   = true;
-    dragStartX   = clientX;
-    dragStartPos = pos;
-    lastDragX    = clientX;
-    dragVelocity = 0;
-    pause();
-  }
-
-  function onDrag(clientX) {
-    if (!isDragging) return;
-    dragVelocity = clientX - lastDragX;
-    lastDragX    = clientX;
-    pos = dragStartPos + (clientX - dragStartX);
-    sportsTrack.style.transform = `translateX(${pos}px)`;
-  }
-
-  function endDrag() {
-    if (!isDragging) return;
-    isDragging = false;
-
-    // Inertia leggera
-    pos += dragVelocity * 4;
-
-    // Normalizza nel range [-halfWidth, 0]
-    pos = ((pos % halfWidth) + halfWidth) % halfWidth;
-    // Porta nel range negativo (scorre verso sinistra)
-    if (pos > 0) pos -= halfWidth;
-
-    sportsTrack.style.transform = `translateX(${pos}px)`;
-
-    resume(15000);
-  }
-
-  // ===============================
-  // HOVER (desktop)
-  // ===============================
-  sportsTrack.addEventListener("mouseenter", () => pause());
-  sportsTrack.addEventListener("mouseleave", () => resume(0));
-
-  // ===============================
-  // MOUSE EVENTS
-  // ===============================
-  sportsTrack.addEventListener("mousedown", e => {
-    e.preventDefault();
-    startDrag(e.clientX);
-  });
-  window.addEventListener("mousemove", e => onDrag(e.clientX));
-  window.addEventListener("mouseup",   endDrag);
-
-  // ===============================
-  // TOUCH EVENTS
-  // ===============================
-  sportsTrack.addEventListener("touchstart", e => {
-    startDrag(e.touches[0].clientX);
-  }, { passive: true });
-
-  window.addEventListener("touchmove", e => {
-    onDrag(e.touches[0].clientX);
-  }, { passive: true });
-
-  window.addEventListener("touchend", endDrag);
-
-  // ===============================
-  // INIT
-  // ===============================
-  // Aspetta che il DOM sia painted per misurare correttamente
-  requestAnimationFrame(() => {
-    measure();
-    tick();
-  });
-
-  // Rimisura se la finestra cambia dimensione
-  window.addEventListener("resize", measure);
+  if (prevBtn) prevBtn.addEventListener("click", () => navigate(-1));
+  if (nextBtn) nextBtn.addEventListener("click", () => navigate(+1));
 
 }
 
