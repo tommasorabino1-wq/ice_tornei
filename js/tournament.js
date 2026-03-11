@@ -229,6 +229,9 @@ function renderTournament(tournament) {
 
   // Load + render teams list block
   loadAndRenderTeamsList(tournament);
+
+  // Riepilogo definitivo (se iscrizioni chiuse e dati compilati)
+  renderFinalSummary(tournament);
 }
 
 
@@ -3393,7 +3396,123 @@ function escapeHTML(str) {
 
 
 
+// ===============================
+// RIEPILOGO DEFINITIVO TORNEO
+// ===============================
+function renderFinalSummary(tournament) {
+  const block   = document.getElementById("tournament-final-summary-block");
+  const content = document.getElementById("tournament-final-summary-content");
+  if (!block || !content) return;
 
+  const isIndividual   = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
+  const formatType     = String(tournament.format_type || '').toLowerCase();
+  const hasFinals      = formatType.includes('finals');
+  const hasAward       = tournament.award === true || String(tournament.award).toUpperCase() === 'TRUE';
+
+  const teamsCurrent   = Number(tournament.teams_current)   || 0;
+  const teamsPerGroup  = Number(tournament.teams_per_group) || 0;
+  const teamsInFinal   = Number(tournament.teams_in_final)  || 0;
+  const awardAmountPerc = String(tournament.award_amount_perc || 'NA');
+  const price          = Number(tournament.price)           || 0;
+
+  // =====================================================
+  // CONTROLLO: dati minimi necessari
+  // =====================================================
+  if (teamsCurrent === 0 || teamsPerGroup === 0) {
+    block.classList.add('hidden');
+    return;
+  }
+
+  // =====================================================
+  // CONTROLLO: se format_type prevede finali,
+  // teams_in_final deve essere > 0
+  // =====================================================
+  if (hasFinals && teamsInFinal === 0) {
+    block.classList.add('hidden');
+    return;
+  }
+
+  block.classList.remove('hidden');
+
+  // =====================================================
+  // ETICHETTE individual / team
+  // =====================================================
+  const entitySingular = isIndividual ? 'giocatore'  : 'squadra';
+  const entityPlural   = isIndividual ? 'giocatori'  : 'squadre';
+  const entityPerGroup = isIndividual ? 'giocatori per girone' : 'squadre per girone';
+
+  // =====================================================
+  // CALCOLI
+  // =====================================================
+  const numGroups = Math.floor(teamsCurrent / teamsPerGroup);
+
+  // =====================================================
+  // COSTRUZIONE ITEMS
+  // =====================================================
+  const items = [];
+
+  // Partecipanti totali
+  items.push(`
+    <div class="final-summary-row">
+      <span class="final-summary-icon">👥</span>
+      <span><strong>${capitalizeFirst(entityPlural)} partecipanti:</strong> ${teamsCurrent}</span>
+    </div>
+  `);
+
+  // Gironi
+  items.push(`
+    <div class="final-summary-row">
+      <span class="final-summary-icon">📋</span>
+      <span><strong>Gironi:</strong> ${numGroups} ${numGroups !== 1 ? 'gironi' : 'girone'} da ${teamsPerGroup} ${entityPerGroup}</span>
+    </div>
+  `);
+
+  // Qualificati alle fasi finali (solo se hasFinals)
+  if (hasFinals) {
+    items.push(`
+      <div class="final-summary-row">
+        <span class="final-summary-icon">🏆</span>
+        <span><strong>${capitalizeFirst(entityPlural)} qualificati alle fasi finali:</strong> ${teamsInFinal}</span>
+      </div>
+    `);
+  }
+
+  // Montepremi definitivo (solo se award = true)
+  if (hasAward) {
+    let awardText = '';
+
+    if (
+      awardAmountPerc !== 'NA' &&
+      !isNaN(Number(awardAmountPerc)) &&
+      price > 0 &&
+      teamsCurrent > 0
+    ) {
+      const totalPrize = Math.round(teamsCurrent * price * Number(awardAmountPerc) / 100);
+      awardText = `<strong>€${totalPrize}</strong>`;
+    } else {
+      awardText = 'sarà comunicato a breve';
+    }
+
+    items.push(`
+      <div class="final-summary-row">
+        <span class="final-summary-icon">💰</span>
+        <span><strong>Montepremi definitivo:</strong> ${awardText}</span>
+      </div>
+    `);
+  }
+
+  // =====================================================
+  // OUTPUT
+  // =====================================================
+  content.innerHTML = `
+    <div class="final-summary-intro">
+      Le iscrizioni sono chiuse. Di seguito la struttura definitiva del torneo.
+    </div>
+    <div class="final-summary-rows">
+      ${items.join('')}
+    </div>
+  `;
+}
 
 
 
