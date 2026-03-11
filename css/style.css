@@ -1091,13 +1091,20 @@ body {
 
 
 
+
 /* =========================
    TYPING SPORT
 ========================= */
 
+.main-typed-line {
+  font-size: 1.7rem;
+  font-weight: 700;
+  min-height: 1.3em;
+  margin: 2px 0 6px 0;
+  line-height: 1.3;
+}
+
 .typed-sport {
-  display: inline-block;
-  min-width: 7ch; /* spazio minimo per evitare micro-shift sul cursore */
   color: var(--brand);
   font-weight: 700;
   text-shadow:
@@ -1108,17 +1115,7 @@ body {
 
 .typed-cursor {
   color: var(--brand);
-}
-
-.main-title-location {
-  display: inline-block;
-}
-
-.main-typed-line {
-  font-size: 1.25rem;
-  font-weight: 600;
-  min-height: 2em;
-  margin: 4px 0 12px 0;
+  font-weight: 300;
 }
 
 
