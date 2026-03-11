@@ -485,9 +485,7 @@ document.addEventListener("DOMContentLoaded", function () {
       cursorChar: "|",
       onStringTyped: () => {
         const el = document.querySelector(".typed-sport");
-        el.classList.remove("glow");
         void el.offsetWidth;
-        el.classList.add("glow");
       }
     });
   }
