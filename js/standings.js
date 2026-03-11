@@ -36,6 +36,7 @@ const API_URLS = {
 let TOURNAMENT_STATUS = null;
 let TOURNAMENT_FORMAT = null;
 let TOURNAMENT_SPORT = null;
+let TOURNAMENT_IS_INDIVIDUAL = false;
 let TOURNAMENT_MATCH_FORMAT_GIRONI = null;
 let TOURNAMENT_MATCH_FORMAT_FINALS = null;
 let TOURNAMENT_HAS_3X4 = false;
@@ -47,6 +48,7 @@ let FINALS_MATCHES = [];
 let FINALS_SELECTED_ROUND_ID = null;
 let teamsLogosMap = {};
 
+
 // ===============================
 // ELEMENTI DOM
 // ===============================
@@ -54,33 +56,41 @@ const standingsSelectSection = document.getElementById("standings-select-section
 const standingsSpecificSection = document.getElementById("standings-specific-section");
 const standingsTournamentSelect = document.getElementById("standings-tournament-select");
 
-// ===============================
-// HELPER: Normalizza sport
-// ===============================
-function normalizeSport(sport) {
-  const s = String(sport || '').toLowerCase().trim();
-  if (s.includes('calcio') || s.includes('football') || s.includes('soccer')) return 'calcio';
-  if (s.includes('padel')) return 'padel';
-  if (s.includes('beach') || s.includes('volley')) return 'beach_volley';
-  return 'calcio';
-}
 
 // ===============================
-// HELPER: Determina se il format è a set
+// HELPER: Match profile (sport + format)
 // ===============================
-function isSetBasedFormat(matchFormat) {
-  const setFormats = ['1su1', '2su3', '3su5'];
-  return setFormats.includes(String(matchFormat || '').toLowerCase());
+function getMatchProfile(sport, matchFormat) {
+  const s = String(sport || '').toLowerCase().trim();
+  const f = String(matchFormat || '').toLowerCase().trim();
+
+  const isChess     = s.includes('scacchi') || s.includes('chess');
+  const isSetBased  = f.includes('su'); // 1su1, 2su3, 3su5
+  const isCalcio    = !isChess && (s.includes('calcio') || s.includes('football') || s.includes('soccer'));
+  const isPadel     = s.includes('padel');
+  const isBeach     = s.includes('beach') || s.includes('volley');
+
+  // sport normalizzato (compatibilità con codice esistente)
+  let normalizedSport = 'calcio';
+  if (isChess)      normalizedSport = 'scacchi';
+  else if (isPadel) normalizedSport = 'padel';
+  else if (isBeach) normalizedSport = 'beach_volley';
+
+  return { isChess, isSetBased, isCalcio, isPadel, isBeach, normalizedSport };
 }
+
 
 // ===============================
 // HELPER: Ottieni label per lo sport
 // ===============================
-function getSportLabels(sport, isSetBased) {
-  if (sport === 'calcio') {
+function getSportLabels(profile) {
+  if (profile.isChess) {
+    return { scoreLabel: 'Punti', forLabel: 'Pts', drawLabel: 'Patta' };
+  }
+  if (profile.isCalcio) {
     return { scoreLabel: 'Gol', forLabel: 'GF', againstLabel: 'GS', diffLabel: 'Diff' };
   }
-  if (isSetBased) {
+  if (profile.isSetBased) {
     return {
       scoreLabel: 'Set',
       forLabel: 'SF',
@@ -91,8 +101,11 @@ function getSportLabels(sport, isSetBased) {
       gamesDiffLabel: 'DG'
     };
   }
+  // padel / beach volley game-based
   return { scoreLabel: 'Game', forLabel: 'GmF', againstLabel: 'GmS', diffLabel: 'Diff' };
 }
+
+
 
 // ===============================
 // SKELETON HELPERS
@@ -127,10 +140,20 @@ async function loadStandingsPage(tournamentId) {
 
     TOURNAMENT_STATUS = t?.status || null;
     TOURNAMENT_FORMAT = t?.format_type || null;
-    TOURNAMENT_SPORT = normalizeSport(t?.sport);
+    TOURNAMENT_SPORT = getMatchProfile(t?.sport, t?.match_format_gironi).normalizedSport;
+    TOURNAMENT_IS_INDIVIDUAL = String(t?.individual_or_team || '').toLowerCase() === 'individual';
     TOURNAMENT_MATCH_FORMAT_GIRONI = String(t?.match_format_gironi || '').toLowerCase();
     TOURNAMENT_MATCH_FORMAT_FINALS = String(t?.match_format_finals || '').toLowerCase();
     TOURNAMENT_HAS_3X4 = t?.['3_4_posto'] === true;
+
+    const tournamentProfile = getMatchProfile(t?.sport, t?.match_format_gironi);
+    const gironiIcon = document.getElementById("gironi-section-icon");
+    if (gironiIcon) {
+      if (tournamentProfile.isChess)      gironiIcon.textContent = '♟️';
+      else if (tournamentProfile.isBeach) gironiIcon.textContent = '🏐';
+      else if (tournamentProfile.isPadel) gironiIcon.textContent = '🎾';
+      else                                gironiIcon.textContent = '⚽';
+    }
 
     try {
       const logosRes = await fetch(`${API_URLS.getTeamsLogosMap}?tournament_id=${encodeURIComponent(tournamentId)}`);
@@ -254,6 +277,11 @@ function loadTournamentSelect() {
 function showTournamentNotStarted(tournament) {
   hideSkeletons();
   const specificSection = document.getElementById("standings-specific-section");
+
+  const isIndividual = String(tournament.individual_or_team || '').toLowerCase() === 'individual';
+  const entityIcon  = isIndividual ? '👤' : '👥';
+  const entityLabel = isIndividual ? 'giocatori iscritti' : 'squadre iscritte';
+
   specificSection.innerHTML = `
     <div class="standings-not-started">
       <div class="standings-not-started-icon">🏁</div>
@@ -269,13 +297,14 @@ function showTournamentNotStarted(tournament) {
       </div>
       <div class="standings-not-started-info">
         <div class="info-item"><span class="info-icon">📍</span><span>${escapeHTML(tournament.location)}</span></div>
-        <div class="info-item"><span class="info-icon">👥</span><span>${tournament.teams_current} / ${tournament.teams_max} squadre iscritte</span></div>
+        <div class="info-item"><span class="info-icon">${entityIcon}</span><span>${tournament.teams_current} / ${tournament.teams_max} ${entityLabel}</span></div>
         <div class="info-item"><span class="info-icon">🏐</span><span>${escapeHTML(tournament.sport)}</span></div>
       </div>
     </div>
   `;
   specificSection.classList.remove("hidden");
 }
+
 
 // ===============================
 // TOURNAMENT NOT FOUND
@@ -318,7 +347,7 @@ function loadMatches(tournamentId) {
         ...new Set(ALL_MATCHES.map(m => Number(m.round_id)).filter(Boolean))
       ].sort((a, b) => a - b);
 
-      renderRoundFilter(AVAILABLE_ROUNDS);
+      renderRoundFilter(AVAILABLE_ROUNDS, getMatchProfile(TOURNAMENT_SPORT, TOURNAMENT_MATCH_FORMAT_GIRONI));
       renderMatchesByRound(AVAILABLE_ROUNDS[0]);
 
       document.querySelector(".standings-results-box-fullwidth")?.classList.remove("loading");
@@ -343,17 +372,19 @@ function renderMatchesByRound(roundId) {
     return;
   }
 
-  const isSetBased = matches[0]?.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_GIRONI);
+  const profile = getMatchProfile(TOURNAMENT_SPORT, TOURNAMENT_MATCH_FORMAT_GIRONI);
   matches.forEach(match => {
-    const card = renderMatchCard(match, isSetBased, false);
+    const card = renderMatchCard(match, profile.isSetBased, false, TOURNAMENT_IS_INDIVIDUAL);
     container.appendChild(card);
   });
 }
 
+
+
 // ===============================
 // RENDER MATCH CARD (UNIFIED)
 // ===============================
-function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
+function renderMatchCard(match, isSetBased, isFinals, isIndividual = false, roundLabel = null) {
   const card = document.createElement("div");
   card.className = "match-card";
   if (isFinals) card.classList.add("finals");
@@ -398,6 +429,8 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
   const setsDetail = match.sets_detail || null;
   const showSetsDetail = isSetBased && isPlayed && setsDetail;
 
+  const fallbackIcon = isIndividual ? '👤' : '👥';
+
   let metaInfo;
   if (isFinals) {
     if (match.is_third_place_match) {
@@ -414,11 +447,11 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
 
   const logoAHTML = logoA
     ? `<img src="${escapeHTML(logoA)}" alt="" class="team-logo-match">`
-    : `<span class="team-logo-match-fallback">👥</span>`;
+    : `<span class="team-logo-match-fallback">${fallbackIcon}</span>`;
 
   const logoBHTML = logoB
     ? `<img src="${escapeHTML(logoB)}" alt="" class="team-logo-match">`
-    : `<span class="team-logo-match-fallback">👥</span>`;
+    : `<span class="team-logo-match-fallback">${fallbackIcon}</span>`;
 
   // Pannello info: se giocata mostra set details (se presenti), altrimenti campo/giorno/ora
   let infoPanelContent;
@@ -516,7 +549,6 @@ function renderMatchCard(match, isSetBased, isFinals, roundLabel = null) {
 
 
 
-
 // ===============================
 // FORMAT SETS DETAIL
 // ===============================
@@ -590,9 +622,13 @@ function renderStandings(data) {
     return;
   }
 
-  const isSetBased = data[0]?.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_GIRONI);
-  const sport = data[0]?.sport || TOURNAMENT_SPORT;
-  const labels = getSportLabels(sport, isSetBased);
+  const sport       = data[0]?.sport || TOURNAMENT_SPORT;
+  const matchFormat = data[0]?.match_format_gironi || TOURNAMENT_MATCH_FORMAT_GIRONI;
+  const profile     = getMatchProfile(sport, matchFormat);
+  const labels      = getSportLabels(profile);
+  const isIndividual = TOURNAMENT_IS_INDIVIDUAL;
+  const fallbackIcon = isIndividual ? '👤' : '👥';
+  const entityLabel  = isIndividual ? 'Giocatore' : 'Squadra';
 
   const groupsMap = {};
   data.forEach(row => {
@@ -614,28 +650,57 @@ function renderStandings(data) {
     const group = document.createElement("div");
     group.className = "standings-group";
 
-    if (isSetBased) {
+    const logoHTML = (team) => {
+      const logo = teamsLogosMap[team.team_id];
+      return logo
+        ? `<img src="${escapeHTML(logo)}" alt="" class="team-logo-mini">`
+        : `<span class="team-logo-mini-fallback">${fallbackIcon}</span>`;
+    };
+
+    if (profile.isChess) {
+      group.innerHTML = `
+        <h3 class="standings-title">Girone ${escapeHTML(groupId)}</h3>
+        <table class="standings-table standings-table-chess">
+          <thead>
+            <tr>
+              <th>${entityLabel}</th><th>Pts</th><th>PG</th><th>V</th><th>Patta</th><th>P</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${teams.map(team => `
+              <tr>
+                <td class="team-cell">
+                  <span class="rank-badge">${team.rank_level}</span>
+                  ${logoHTML(team)}
+                  <span class="team-name-text">${escapeHTML(team.team_name || "")}</span>
+                </td>
+                <td>${formatChessPoints(team.points)}</td>
+                <td>${Number(team.matches_played) || 0}</td>
+                <td>${Number(team.wins) || 0}</td>
+                <td>${Number(team.draws) || 0}</td>
+                <td>${Number(team.losses) || 0}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    } else if (profile.isSetBased) {
       group.innerHTML = `
         <h3 class="standings-title">Girone ${escapeHTML(groupId)}</h3>
         <table class="standings-table standings-table-set">
           <thead>
             <tr>
-              <th>Squadra</th><th>Pts</th><th>PG</th><th>V</th><th>P</th>
+              <th>${entityLabel}</th><th>Pts</th><th>PG</th><th>V</th><th>P</th>
               <th>${labels.forLabel}</th><th>${labels.againstLabel}</th><th>${labels.diffLabel}</th>
               <th>${labels.gamesForLabel}</th><th>${labels.gamesAgainstLabel}</th><th>${labels.gamesDiffLabel}</th>
             </tr>
           </thead>
           <tbody>
-            ${teams.map(team => {
-              const teamLogo = teamsLogosMap[team.team_id];
-              const logoHTML = teamLogo
-                ? `<img src="${escapeHTML(teamLogo)}" alt="" class="team-logo-mini">`
-                : `<span class="team-logo-mini-fallback">👥</span>`;
-              return `
+            ${teams.map(team => `
               <tr>
                 <td class="team-cell">
                   <span class="rank-badge">${team.rank_level}</span>
-                  ${logoHTML}
+                  ${logoHTML(team)}
                   <span class="team-name-text">${escapeHTML(team.team_name || "")}</span>
                 </td>
                 <td>${Number(team.points) || 0}</td>
@@ -649,8 +714,7 @@ function renderStandings(data) {
                 <td>${Number(team.games_against) || 0}</td>
                 <td>${formatDiff(team.game_diff)}</td>
               </tr>
-            `;
-            }).join("")}
+            `).join("")}
           </tbody>
         </table>
       `;
@@ -660,21 +724,16 @@ function renderStandings(data) {
         <table class="standings-table">
           <thead>
             <tr>
-              <th>Squadra</th><th>Pts</th><th>PG</th><th>V</th><th>N</th><th>P</th>
+              <th>${entityLabel}</th><th>Pts</th><th>PG</th><th>V</th><th>N</th><th>P</th>
               <th>${labels.forLabel}</th><th>${labels.againstLabel}</th><th>${labels.diffLabel}</th>
             </tr>
           </thead>
           <tbody>
-            ${teams.map(team => {
-              const teamLogo = teamsLogosMap[team.team_id];
-              const logoHTML = teamLogo
-                ? `<img src="${escapeHTML(teamLogo)}" alt="" class="team-logo-mini">`
-                : `<span class="team-logo-mini-fallback">👥</span>`;
-              return `
+            ${teams.map(team => `
               <tr>
                 <td class="team-cell">
                   <span class="rank-badge">${team.rank_level}</span>
-                  ${logoHTML}
+                  ${logoHTML(team)}
                   <span class="team-name-text">${escapeHTML(team.team_name || "")}</span>
                 </td>
                 <td>${Number(team.points) || 0}</td>
@@ -686,8 +745,7 @@ function renderStandings(data) {
                 <td>${Number(team.goals_against) || 0}</td>
                 <td>${formatDiff(team.goal_diff)}</td>
               </tr>
-            `;
-            }).join("")}
+            `).join("")}
           </tbody>
         </table>
       `;
@@ -696,6 +754,20 @@ function renderStandings(data) {
     standingsEl.appendChild(group);
   });
 }
+
+
+
+
+// ===============================
+// FORMAT CHESS POINTS
+// ===============================
+function formatChessPoints(val) {
+  const n = Number(val);
+  if (isNaN(n)) return '0';
+  // Mostra decimale solo se necessario (es. 1.5, 0.5 — non 1.0, 2.0)
+  return n % 1 === 0 ? String(n) : n.toFixed(1);
+}
+
 
 // ===============================
 // FORMAT DIFF
@@ -715,15 +787,21 @@ function escapeHTML(str) {
     .replace(/'/g, "&#039;");
 }
 
-function renderRoundFilter(rounds) {
+function renderRoundFilter(rounds, profile) {
   const select = document.getElementById("round-filter");
   if (!select || !Array.isArray(rounds)) return;
+
+  const isChess = profile?.isChess || false;
+  const roundWord = isChess ? 'Turno' : 'Giornata';
+
+  const label = document.getElementById("round-filter-label");
+  if (label) label.textContent = `Seleziona ${roundWord}`;
 
   select.innerHTML = "";
   rounds.forEach((round, index) => {
     const option = document.createElement("option");
     option.value = round;
-    option.textContent = `Giornata ${round}`;
+    option.textContent = `${roundWord} ${round}`;
     if (index === 0) option.selected = true;
     select.appendChild(option);
   });
@@ -772,7 +850,7 @@ function renderFinalsMatchesByRound(roundId, bracket) {
 
   const matchesInRound = bracket.rounds?.[roundId] || [];
   const roundLabel = getRoundLabel(matchesInRound.length);
-  const isSetBased = matchesInRound[0]?.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_FINALS);
+  const profile = getMatchProfile(TOURNAMENT_SPORT, TOURNAMENT_MATCH_FORMAT_FINALS);
 
   if (matchesInRound.length === 0 && !bracket.thirdPlaceMatch) {
     container.innerHTML = "<p class='placeholder'>Nessun match per questa fase</p>";
@@ -784,7 +862,7 @@ function renderFinalsMatchesByRound(roundId, bracket) {
     roundBox.className = "finals-round";
     roundBox.innerHTML = `<h3>${escapeHTML(roundLabel)}</h3>`;
     matchesInRound.forEach(match => {
-      const card = renderMatchCard(match, isSetBased, true, roundLabel);
+      const card = renderMatchCard(match, profile.isSetBased, true, TOURNAMENT_IS_INDIVIDUAL, roundLabel);
       roundBox.appendChild(card);
     });
     container.appendChild(roundBox);
@@ -796,13 +874,13 @@ function renderFinalsMatchesByRound(roundId, bracket) {
       const thirdBox = document.createElement("div");
       thirdBox.className = "finals-round finals-third-place";
       thirdBox.innerHTML = `<h3>Finale 3°/4° Posto</h3>`;
-      const isSetBased3x4 = bracket.thirdPlaceMatch.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_FINALS);
-      const card = renderMatchCard(bracket.thirdPlaceMatch, isSetBased3x4, true, "Finale 3°/4° Posto");
+      const card = renderMatchCard(bracket.thirdPlaceMatch, profile.isSetBased, true, TOURNAMENT_IS_INDIVIDUAL, "Finale 3°/4° Posto");
       thirdBox.appendChild(card);
       container.appendChild(thirdBox);
     }
   }
 }
+
 
 function loadFinalsBracket(tournamentId) {
   const url = `${API_URLS.getBracket}?tournament_id=${encodeURIComponent(tournamentId)}`;
@@ -919,13 +997,16 @@ function callPodiumRenderer() {
     fadeOutSkeleton(skeleton);
   }
 
-  const isSetBased = ALL_STANDINGS[0]?.is_set_based || isSetBasedFormat(TOURNAMENT_MATCH_FORMAT_GIRONI);
-  const sport = ALL_STANDINGS[0]?.sport || TOURNAMENT_SPORT;
+  const sport       = ALL_STANDINGS[0]?.sport || TOURNAMENT_SPORT;
+  const matchFormat = ALL_STANDINGS[0]?.match_format_gironi || TOURNAMENT_MATCH_FORMAT_GIRONI;
+  const profile     = getMatchProfile(sport, matchFormat);
 
   const podiumData = {
     standings: ALL_STANDINGS,
-    isSetBased: isSetBased,
-    sport: sport,
+    isSetBased: profile.isSetBased,
+    isChess: profile.isChess,
+    isIndividual: TOURNAMENT_IS_INDIVIDUAL,
+    sport: profile.normalizedSport,
     teamsLogosMap: teamsLogosMap
   };
 
