@@ -593,7 +593,8 @@ if (sportsTrack) {
     x: "-50%",
     duration: 20,
     ease: "none",
-    repeat: -1
+    repeat: -1,
+    overwrite: "auto"
   });
 
   // ===============================
@@ -690,7 +691,15 @@ if (sportsTrack) {
     gsap.to(sportsTrack, {
       x: snapped,
       duration: 0.4,
-      ease: "power2.out"
+      ease: "power2.out",
+      onComplete: () => {
+        
+        const totalWidth = sportsTrack.scrollWidth / 2;
+        const progress = Math.abs(snapped % totalWidth) / totalWidth;
+
+        sliderAnimation.progress(progress);
+
+      }
     });
 
     scheduleResume();
