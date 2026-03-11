@@ -737,6 +737,9 @@ body {
   font-size: 13px;
   color: var(--text-main);
   line-height: 1.5;
+
+  border-left: 2px solid var(--brand-glow);
+  padding-left: 10px;
 }
 
 .card-info-row .row-icon {
