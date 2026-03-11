@@ -1096,19 +1096,32 @@ body {
 ========================= */
 
 .typed-sport {
+  display: inline-block;
+  min-width: 7ch; /* spazio minimo per evitare micro-shift sul cursore */
   color: var(--brand);
   font-weight: 700;
-
   text-shadow:
     0 0 4px var(--brand-glow-soft),
     0 0 12px var(--brand-glow);
-
   transition: text-shadow 0.3s ease;
 }
 
 .typed-cursor {
   color: var(--brand);
 }
+
+.main-title-location {
+  display: inline-block;
+}
+
+.main-typed-line {
+  font-size: 1.25rem;
+  font-weight: 600;
+  min-height: 2em;
+  margin: 4px 0 12px 0;
+}
+
+
 
 
 @keyframes sportGlow {
