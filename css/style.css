@@ -738,8 +738,22 @@ body {
   color: var(--text-main);
   line-height: 1.5;
 
-  border-left: 2px solid var(--brand-glow);
-  padding-left: 10px;
+  background: var(--surface-soft);
+  border: 1px solid var(--brand-soft-border);
+  border-radius: 6px;
+
+  padding: 6px 8px;
+
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+/* effetto hover molto leggero */
+.tournament-card:hover .card-info-row {
+  border-color: var(--brand-soft-border);
+  background: var(--brand-soft);
 }
 
 .card-info-row .row-icon {
@@ -747,6 +761,7 @@ body {
   width: 18px;
   text-align: center;
   font-size: 14px;
+  color: var(--brand);
 }
 
 .card-info-row span:last-child {
