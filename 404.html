@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+
+<meta charset="UTF-8">
+<title>Pagina non trovata | Tornei ICE</title>
+
+<meta name="robots" content="noindex">
+
+</head>
+
+<body>
+
+<h1>Pagina non trovata</h1>
+
+<p>La pagina che stai cercando non esiste.</p>
+
+<a href="/">Vai alla homepage</a>
+
+<a href="/classifica">Vai alle classifiche</a>
+
+<script>
+
+const path = window.location.pathname.toLowerCase();
+
+if (path.includes("standings")) {
+  window.location.replace("/classifica");
+}
+
+if (path.includes("tournament")) {
+  window.location.replace("/regolamento");
+}
+
+</script>
+
+</body>
+</html>
