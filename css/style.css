@@ -6234,3 +6234,82 @@ section > .section-title {
   }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ===================================
+   PARTE 6 - PAGINA 404
+   =================================== */
+
+
+.error-wrapper{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  padding:32px;
+}
+
+.error-card{
+
+  text-align:center;
+  max-width:480px;
+
+  background:var(--surface-card);
+  border:1px solid var(--border);
+  border-radius:14px;
+
+  padding:40px 32px;
+
+  box-shadow:0 8px 22px rgba(0,0,0,0.05);
+
+}
+
+.error-icon{
+  font-size:48px;
+  margin-bottom:16px;
+}
+
+.error-title{
+  font-size:24px;
+  font-weight:700;
+  margin-bottom:10px;
+}
+
+.error-text{
+  color:var(--text-muted);
+  font-size:15px;
+  line-height:1.5;
+  margin-bottom:28px;
+}
+
+.error-actions{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
