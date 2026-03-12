@@ -146,7 +146,7 @@ function renderGenericRegulation(tournaments) {
   // Redirect su torneo
   tournamentSelect.onchange = function () {
     if (!this.value) return;
-    window.location.href = `tournament.html?tournament_id=${this.value}`;
+    window.location.href = `/regolamento?tournament_id=${this.value}`;
   };
 }
 

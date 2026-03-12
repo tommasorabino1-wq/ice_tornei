@@ -262,7 +262,7 @@ function loadTournamentSelect() {
 
       standingsTournamentSelect.onchange = function () {
         if (!this.value) return;
-        window.location.href = `standings.html?tournament_id=${this.value}`;
+        window.location.href = `/classifica?tournament_id=${this.value}`;
       };
     })
     .catch(err => {
@@ -292,8 +292,8 @@ function showTournamentNotStarted(tournament) {
         Classifiche, risultati e tabellone saranno disponibili non appena verranno disputate le prime partite.
       </p>
       <div class="standings-not-started-actions">
-        <a href="tournament.html?tournament_id=${tournament.tournament_id}" class="btn secondary">📋 Vai al regolamento</a>
-        <a href="standings.html" class="btn secondary">← Torna alla selezione</a>
+        <a href="/regolamento?tournament_id=${tournament.tournament_id}" class="btn secondary">
+        <a href="/classifica" class="btn secondary">← Torna alla selezione</a>
       </div>
       <div class="standings-not-started-info">
         <div class="info-item"><span class="info-icon">📍</span><span>${escapeHTML(tournament.location)}</span></div>
@@ -317,7 +317,7 @@ function showTournamentNotFound() {
       <div class="standings-not-found-icon">❓</div>
       <h3>Torneo non trovato</h3>
       <p>Il torneo richiesto non esiste o è stato rimosso.</p>
-      <a href="standings.html" class="btn secondary">← Torna alla selezione tornei</a>
+      <a href="/classifica" class="btn secondary">← Torna alla selezione tornei</a>
     </div>
   `;
   specificSection.classList.remove("hidden");
