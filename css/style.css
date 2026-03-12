@@ -560,6 +560,7 @@ body {
 
 .tournament-status-row{
   margin-top:10px;
+  margin-bottom: 3px;
   text-align:center;
   display:inline-block;
 }
