@@ -293,7 +293,11 @@ function showTournamentNotStarted(tournament) {
       </p>
       <div class="standings-not-started-actions">
         <a href="/regolamento?tournament_id=${tournament.tournament_id}" class="btn secondary">
-        <a href="/classifica" class="btn secondary">← Torna alla selezione</a>
+          Vai al regolamento
+        </a>
+        <a href="/classifica" class="btn secondary">
+          ← Torna alla selezione
+        </a>
       </div>
       <div class="standings-not-started-info">
         <div class="info-item"><span class="info-icon">📍</span><span>${escapeHTML(tournament.location)}</span></div>
