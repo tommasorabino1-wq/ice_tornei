@@ -503,7 +503,7 @@ body {
   font-weight:700;
   line-height:1.2;
   color:var(--text-main);
-  margin:20px 0 24px 0;
+  margin:20px 0 12px 0;
 }
 
 
@@ -556,6 +556,12 @@ body {
   color:var(--text-muted);
   margin-top:8px;
   letter-spacing:0.2px;
+}
+
+.tournament-status-row{
+  margin-top:10px;
+  text-align:center;
+  display:inline-block;
 }
 
 
