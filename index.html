@@ -146,13 +146,13 @@
         </a>
       </div>
 
-      <button class="mobile-menu-toggle" aria-label="Apri menu" aria-expanded="false">
+      <button class="mobile-menu-toggle" aria-label="Apri menu di navigazione" aria-expanded="false" aria-controls="main-navigation">
         <span></span>
         <span></span>
         <span></span>
       </button>
 
-      <nav class="main-nav" role="navigation" aria-label="Navigazione principale">
+      <nav id="main-navigation" class="main-nav" aria-label="Navigazione principale">
         <a href="/" class="active" aria-current="page">Tornei</a>
         <a href="/classifica">Classifiche</a>
         <a href="/regolamento">Regolamento</a>
@@ -200,14 +200,14 @@
       </div>
 
       <div class="hero-scroll-indicator">
-        <a href="#tournaments">
+        <a href="#tournaments" aria-label="Vai alla sezione tornei disponibili">
           <svg class="scroll-arrow" width="26" height="26" viewBox="0 0 24 24">
             <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
           </svg>
         </a>
       </div>
 
-      <div class="intro-box">
+      <section class="intro-box">
 
         <h2 class="intro-title">
           Tornei ICE 🏆 Chi Siamo
@@ -225,7 +225,7 @@
         <p>
           Iscriviti al torneo che preferisci, scendi in campo e segui risultati, calendario e classifiche direttamente online.
         </p>
-      </div>
+      </section>
       
     </header>
 
@@ -283,41 +283,41 @@
         <div class="sports-slider" id="sports-slider">
           <div class="sports-track-inner" id="sports-track-inner">
 
-            <div class="sport-box">
+            <article class="sport-box">
               <h3>🥎 Tornei di Padel</h3>
               <p>
                 Iscriviti ai nostri tornei di padel organizzati nei migliori centri sportivi di Torino e provincia.
                 Gironi all'italiana, tornei giornalieri e competizioni con partite garantite
                 per tutti i livelli di gioco.
               </p>
-            </div>
+            </article>
 
-            <div class="sport-box">
+            <article class="sport-box">
               <h3>⚽ Tornei di Calcio</h3>
               <p>
                 Tornei di calcetto (calcio a 5), calcio a 7 e calciotto per squadre amatoriali
                 e competitive organizzati nei migliori campi sportivi di Torino.
                 Forma la tua squadra e scendi in campo.
               </p>
-            </div>
+            </article>
 
-            <div class="sport-box">
+            <article class="sport-box">
               <h3>🏐 Tornei di Beach Volley</h3>
               <p>
                 Tornei di beach volley su campi in sabbia presso centri sportivi attrezzati.
                 L'occasione perfetta per competere e divertirsi all'aperto durante
                 tutta la stagione.
               </p>
-            </div>
+            </article>
 
-            <div class="sport-box">
+            <article class="sport-box">
               <h3>♟️ Tornei di Scacchi</h3>
               <p>
                 Tornei individuali con gironi all'italiana e fase finale. Scacchiere e cronometri
                 forniti dall'organizzazione, location dedicate. Aperto a tutti i livelli,
                 dai principianti ai giocatori con ranking ELO.
               </p>
-            </div>
+            </article>
 
           </div>
         </div>
@@ -333,7 +333,7 @@
       <h2 class="section-title">FAQ</h2>
 
       <div class="faq-item">
-        <button class="faq-question">
+        <button class="faq-question" aria-expanded="false">
           <span>Come ci si iscrive a un torneo?</span>
           <svg class="faq-arrow" width="16" height="16" viewBox="0 0 24 24">
             <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
@@ -347,7 +347,7 @@
       </div>
 
       <div class="faq-item">
-        <button class="faq-question">
+        <button class="faq-question" aria-expanded="false">
           <span>Quanto costa partecipare a un torneo?</span>
           <svg class="faq-arrow" width="16" height="16" viewBox="0 0 24 24">
             <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
@@ -361,7 +361,7 @@
       </div>
 
       <div class="faq-item">
-        <button class="faq-question">
+        <button class="faq-question" aria-expanded="false">
           <span>Serve un livello minimo per partecipare?</span>
           <svg class="faq-arrow" width="16" height="16" viewBox="0 0 24 24">
             <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
@@ -375,7 +375,7 @@
       </div>
 
       <div class="faq-item">
-        <button class="faq-question">
+        <button class="faq-question" aria-expanded="false">
           <span>Quante partite sono garantite?</span>
           <svg class="faq-arrow" width="16" height="16" viewBox="0 0 24 24">
             <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
@@ -389,7 +389,7 @@
       </div>
 
       <div class="faq-item">
-        <button class="faq-question">
+        <button class="faq-question" aria-expanded="false">
           <span>Dove si svolgono i tornei?</span>
           <svg class="faq-arrow" width="16" height="16" viewBox="0 0 24 24">
             <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
