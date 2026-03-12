@@ -565,7 +565,9 @@ body {
   display:inline-block;
 }
 
-
+.tournament-status-row .badge{
+  display:inline-block;
+}
 
 
 
