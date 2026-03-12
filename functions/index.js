@@ -342,7 +342,7 @@ async function sendTeamInfoRequestEmails(tournamentId) {
     }
 
     // 3) Configurazione mailer
-    const mailerUrl = "https://script.google.com/macros/s/AKfycbwaIhZ_BUn0vgvIVuoeOj4yxfnaB9ZrHl6ODan9J3vDpdTWgsxCUxmyeR8mrNq6Nlhs/exec";
+    const mailerUrl = "https://script.google.com/macros/s/AKfycbyt5UdChl1gjka1jcqTqdpZXMZyNKKIvwVGmm6gkPutOsGe8qw5qip04RCLUajjSgve/exec";
     const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
     // 4) Invia email a ogni squadra
@@ -982,7 +982,7 @@ exports.onSubscriptionCreated = onDocumentCreated(
         paypalLink: `https://paypal.me/TommasoRabino/${amount}`,
       };
 
-      const mailerUrl = "https://script.google.com/macros/s/AKfycbxj1xcAw-p7l_VKlRLTooLOY9x6EuTtyLPRcY5rAK4KKyNI6R6AP0HjnLD90YN9vF8JIg/exec";
+      const mailerUrl = "https://script.google.com/macros/s/AKfycbxByIqXZ2jKlLbAEV5lCXRpGksnCu5i3Pa6nMMWzEgD0vkzF0ROz8hpzYbiLxfGMmx_aw/exec";
       const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
       const payload = {
