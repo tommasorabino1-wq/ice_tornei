@@ -498,6 +498,14 @@ body {
 }
 
 
+.page-title{
+  font-size:28px;
+  font-weight:700;
+  line-height:1.2;
+  color:var(--text-main);
+  margin:20px 0 24px 0;
+}
+
 
 
 
