@@ -507,6 +507,18 @@ body {
 }
 
 
+.page-title-box{
+  display:inline-block;
+  padding:10px 20px;
+  border-radius:999px;
+  background:var(--surface-soft);
+  border:1px solid var(--border);
+  box-shadow:var(--shadow-sm);
+  margin:10px auto 24px auto;
+  text-align:center;
+}
+
+
 
 
 
