@@ -205,8 +205,17 @@ async function loadStandingsPage(tournamentId) {
 function renderStandingsHeader(tournament) {
   const titleEl = document.getElementById("standings-tournament-title");
   const subtitleEl = document.getElementById("standings-tournament-subtitle");
+
   if (titleEl) titleEl.textContent = `Classifica ${tournament.name}`;
   if (subtitleEl) subtitleEl.textContent = `${tournament.location} · ${tournament.date} · ${tournament.sport}`;
+
+  // ===============================
+  // BREADCRUMB UPDATE
+  // ===============================
+  const breadcrumb = document.getElementById("breadcrumb-tournament");
+  if (breadcrumb) {
+    breadcrumb.textContent = tournament.name + " · Classifica";
+  }
 }
 
 function hideSkeletons() {
