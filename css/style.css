@@ -481,7 +481,7 @@ body {
 .page-header h1 { font-size: 24px; line-height: 1.2; }
 
 .page-title {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1.2;
   color: var(--text-main);
@@ -548,7 +548,7 @@ section > .section-title {
 }
 
 .tournament-title {
-  font-size: 22px;
+  font-size: 19px;
   font-weight: 700;
   line-height: 1.2;
   color: var(--text-main);
@@ -556,7 +556,7 @@ section > .section-title {
 }
 
 .tournament-subtitle {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
   margin-top: 8px;
   letter-spacing: 0.2px;
