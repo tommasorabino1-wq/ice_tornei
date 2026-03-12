@@ -3160,10 +3160,14 @@ function applyTournamentState(tournament) {
   const registrationBlock = document.querySelector(".tournament-registration-block");
   const capacityBlock = document.querySelector(".tournament-capacity-block");
   const teamsBlock = document.getElementById("tournament-teams-section");
+  const headerCta = document.getElementById("tournament-header-cta");
 
   form.style.display = "none";
   form.classList.remove("skeleton");
   badge.className = "badge";
+
+  // Nascondi CTA di default
+  if (headerCta) headerCta.classList.add("hidden");
 
   if (tournament.status === "open") {
     badge.textContent = "ISCRIZIONI APERTE";
@@ -3173,6 +3177,7 @@ function applyTournamentState(tournament) {
     registrationBlock.style.display = "block";
     capacityBlock.style.display = "block";
     teamsBlock.style.display = "block";
+    if (headerCta) headerCta.classList.remove("hidden");
     return;
   }
 

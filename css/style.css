@@ -571,6 +571,16 @@ section > .section-title {
 
 .tournament-status-row .badge { display: inline-block; }
 
+/* Tournament header CTA */
+.tournament-header-cta {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+
+
+
 
 /* =========================
    12. SECTION DIVIDER
@@ -1436,6 +1446,7 @@ section > .section-title {
   gap: 0;
   margin-top: 8px;
   counter-reset: form-field;
+  scroll-margin-top: 80px;
 }
 
 #registration-form label {
