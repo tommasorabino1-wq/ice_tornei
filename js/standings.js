@@ -206,7 +206,7 @@ function renderStandingsHeader(tournament) {
   const titleEl = document.getElementById("standings-tournament-title");
   const subtitleEl = document.getElementById("standings-tournament-subtitle");
 
-  if (titleEl) titleEl.textContent = `Classifica ${tournament.name}`;
+  if (titleEl) titleEl.textContent = tournament.name;
   if (subtitleEl) subtitleEl.textContent = `${tournament.location} · ${tournament.date} · ${tournament.sport}`;
 
   // ===============================
