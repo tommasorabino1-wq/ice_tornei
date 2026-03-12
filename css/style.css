@@ -578,6 +578,12 @@ section > .section-title {
   justify-content: center;
 }
 
+.tournament-header-scroll {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+
 
 
 
