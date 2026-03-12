@@ -123,35 +123,38 @@
     </div>
   </header>
 
-  <!-- ========================================
-       MAIN CONTENT (semantico)
-  ========================================= -->
-  <main class="container" role="main">
+    <!-- ========================================
+        MAIN CONTENT (semantico)
+    ========================================= -->
+    <main class="container" role="main">
 
-    <!-- BREADCRUMB -->
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a>
-      <span class="breadcrumb-separator">›</span>
-      <span id="breadcrumb-tournament">Regolamento</span>
-    </nav>
+      <!-- BREADCRUMB -->
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span class="breadcrumb-separator">›</span>
+        <span id="breadcrumb-tournament">Regolamento</span>
+      </nav>
 
-    <!-- =========================
-        REGOLAMENTO GENERICO
-        (visibile se NON c'è id)
-    ========================== -->
-    <section id="generic-regulation-section">
+      <!-- PAGE TITLE -->
+      <h1 class="page-title">Regolamento Tornei ICE</h1>
 
-      <!-- PAGE HEADER + FILTRO TORNEO -->
-      <div class="page-header">
-        
-        <!-- TOURNAMENT FILTER (INLINE) -->
-        <div class="sport-filter-inline">
-          <label for="tournament-select">Torneo</label>
-          <select id="tournament-select" aria-label="Seleziona un torneo per vederne il regolamento">
-            <option value="">Seleziona un torneo</option>
-          </select>
+      <!-- =========================
+          REGOLAMENTO GENERICO
+          (visibile se NON c'è id)
+      ========================== -->
+      <section id="generic-regulation-section">
+
+        <!-- PAGE HEADER + FILTRO TORNEO -->
+        <div class="page-header">
+          
+          <!-- TOURNAMENT FILTER (INLINE) -->
+          <div class="sport-filter-inline">
+            <label for="tournament-select">Torneo</label>
+            <select id="tournament-select" aria-label="Seleziona un torneo per vederne il regolamento">
+              <option value="">Seleziona un torneo</option>
+            </select>
+          </div>
         </div>
-      </div>
 
       <!-- SEZIONE 1: MESSAGGIO SELEZIONE TORNEO -->
       <div class="generic-section-box select-tournament-box">
@@ -280,7 +283,7 @@
       <!-- 1. HEADER TORNEO -->
       <section class="tournament-header">
         <div class="tournament-title-row">
-          <h1 id="tournament-name"></h1>
+          <h2 id="tournament-name"></h2>
           <span id="tournament-status-badge" class="badge"></span>
         </div>
         <p id="tournament-subtitle" class="tournament-subtitle"></p>
