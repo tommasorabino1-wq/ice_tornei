@@ -25,7 +25,7 @@
   <meta property="og:title" content="Classifiche e Risultati | Tornei ICE Torino">
   <meta property="og:description" content="Classifiche live, risultati e tabelloni dei tornei di padel, beach volley, calcetto e scacchi a Torino.">
   <meta property="og:image" content="https://tornei-ice.it/assets/og-image.png">
-  <meta property="og:url" content="https://tornei-ice.it/standings.html">
+  <meta property="og:url" content="https://tornei-ice.it/classifica">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="it_IT">
 
@@ -50,7 +50,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 
   <!-- ========================================
        STRUCTURED DATA (Schema.org)
@@ -61,7 +61,7 @@
     "@type": "WebPage",
     "name": "Classifiche e Risultati Tornei - Tornei ICE",
     "description": "Classifiche live, risultati e tabelloni dei tornei ICE di padel, beach volley e calcetto a Torino.",
-    "url": "https://tornei-ice.it/standings.html",
+    "url": "https://tornei-ice.it/classifica",
     "isPartOf": {
       "@type": "WebSite",
       "name": "Tornei ICE",
@@ -80,7 +80,7 @@
           "@type": "ListItem",
           "position": 2,
           "name": "Classifiche",
-          "item": "https://tornei-ice.it/standings.html"
+          "item": "https://tornei-ice.it/classifica"
         }
       ]
     }
@@ -99,7 +99,7 @@
       <!-- BRAND (LOGO) -->
       <div class="brand">
         <a href="index.html" aria-label="Homepage Tornei ICE">
-          <img src="assets/logo.png" alt="Logo Tornei ICE - Tornei sportivi Torino" width="120" height="120">
+          <img src="/assets/logo.png" alt="Logo Tornei ICE - Tornei sportivi Torino" width="120" height="120">
         </a>
       </div>
 
@@ -112,9 +112,9 @@
 
       <!-- NAVIGATION -->
       <nav class="main-nav" role="navigation" aria-label="Navigazione principale">
-        <a href="index.html">Tornei</a>
-        <a href="standings.html" class="active" aria-current="page">Classifica</a>
-        <a href="tournament.html">Regolamento</a>
+        <a href="/">Tornei</a>
+        <a href="/classifica" class="active">Classifiche</a>
+        <a href="/regolamento">Regolamento</a>
       </nav>
 
     </div>
@@ -274,7 +274,7 @@
     <div class="footer-container">
 
       <div class="footer-brand">
-        <img src="assets/logo.png" alt="Logo Tornei ICE" width="80" height="80">
+        <img src="/assets/logo.png" alt="Logo Tornei ICE" width="80" height="80">
         <p>La tua piattaforma per tornei sportivi</p>
       </div>
 
@@ -288,9 +288,9 @@
 
         <div class="footer-section footer-nav">
           <h2>Naviga</h2>
-          <a href="index.html">Homepage</a>
-          <a href="standings.html">Classifiche</a>
-          <a href="tournament.html">Regolamento</a>
+          <a href="/">Tornei</a>
+          <a href="/classifica">Classifiche</a>
+          <a href="/regolamento">Regolamento</a>
         </div>
 
         <div class="footer-section footer-legal">
@@ -311,9 +311,9 @@
   <!-- ========================================
        JAVASCRIPT (defer per performance)
   ========================================= -->
-  <script src="js/bracket-svg-renderer.js" defer></script>
-  <script src="js/podium-svg-renderer.js" defer></script>
-  <script src="js/standings.js" defer></script>
+  <script src="/js/bracket-svg-renderer.js" defer></script>
+  <script src="/js/podium-svg-renderer.js" defer></script>
+  <script src="/js/standings.js" defer></script>
 
 </body>
 </html>
