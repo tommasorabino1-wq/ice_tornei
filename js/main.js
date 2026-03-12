@@ -163,11 +163,11 @@ function renderTournaments(tournaments) {
       <div class="card-actions">
         ${
           iscrizioniAperte
-            ? `<a href="tournament.html?tournament_id=${t.tournament_id}" class="btn primary">Iscriviti</a>`
+            ? `<a href="/regolamento?tournament_id=${t.tournament_id}" class="btn primary">Iscriviti</a>`
             : `<span class="btn primary disabled">Iscriviti</span>`
         }
-        <a href="tournament.html?tournament_id=${t.tournament_id}" class="btn secondary">Dettagli</a>
-        <a href="standings.html?tournament_id=${t.tournament_id}" class="btn secondary">Classifica</a>
+        <a href="/regolamento?tournament_id=${t.tournament_id}" class="btn secondary">Dettagli</a>
+        <a href="/classifica?tournament_id=${t.tournament_id}" class="btn secondary">Classifica</a>
       </div>
     `;
 
@@ -433,7 +433,7 @@ container.addEventListener("click", e => {
   if (!card) return;
 
   const tournamentId = card.dataset.id;
-  window.location.href = `tournament.html?tournament_id=${tournamentId}`;
+  window.location.href = `/regolamento?tournament_id=${tournamentId}`;
 });
 
 
