@@ -207,6 +207,14 @@ function renderTournament(tournament) {
   document.getElementById("tournament-subtitle").textContent =
     `${tournament.location} · ${tournament.date} · ${tournament.sport}`;
 
+  // ===============================
+  // BREADCRUMB UPDATE
+  // ===============================
+  const breadcrumb = document.getElementById("breadcrumb-tournament");
+  if (breadcrumb) {
+    breadcrumb.textContent = tournament.name + " · Regolamento";
+  }
+
   // ✅ Info torneo
   renderTournamentInfoRows(tournament);
 

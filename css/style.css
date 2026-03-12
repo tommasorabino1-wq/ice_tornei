@@ -6263,10 +6263,13 @@ section > .section-title {
 
 
 /* ===================================
-   PARTE 6 - PAGINA 404
+   PARTE 6 - SEO
    =================================== */
 
 
+/* ===================================
+  404 PAGE
+=================================== */
 .error-wrapper{
   display:flex;
   align-items:center;
@@ -6312,4 +6315,32 @@ section > .section-title {
   display:flex;
   flex-direction:column;
   gap:12px;
+}
+
+
+
+
+
+/* ===================================
+  BREADCRUMB
+=================================== */
+
+.breadcrumb{
+  font-size:13px;
+  color:var(--text-muted);
+  margin-bottom:18px;
+}
+
+.breadcrumb a{
+  color:var(--text-muted);
+  text-decoration:none;
+}
+
+.breadcrumb a:hover{
+  color:var(--brand);
+}
+
+.breadcrumb-separator{
+  margin:0 6px;
+  opacity:0.6;
 }
