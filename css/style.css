@@ -200,6 +200,10 @@ body {
   transition: transform 0.25s ease;
 }
 
+.nav-dropdown.active .nav-arrow{
+  transform: rotate(180deg);
+}
+
 .main-nav a:hover,
 .main-nav a.active {
   color: var(--text-main);

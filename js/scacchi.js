@@ -14,6 +14,26 @@ if (menuToggle && mainNav) {
   });
 }
 
+
+// ===============================
+// NAV DROPDOWN (TORNEI)
+// ===============================
+
+const dropdownToggle = document.querySelector(".nav-dropdown-toggle");
+const dropdown = document.querySelector(".nav-dropdown");
+
+if (dropdownToggle && dropdown) {
+
+  dropdownToggle.addEventListener("click", (e) => {
+
+    e.preventDefault();
+
+    dropdown.classList.toggle("active");
+
+  });
+
+}
+
 // ===============================
 // TORNEI SCACCHI
 // ===============================
