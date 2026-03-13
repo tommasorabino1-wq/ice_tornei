@@ -1288,7 +1288,7 @@ section > .section-title {
 /* Registration block */
 .tournament-registration-block {
   background-color: var(--surface-card);
-  border: 2px solid var(--brand);
+  border: 2.5px solid var(--brand);
   border-radius: var(--radius-lg);
   padding: 14px;
   margin-bottom: 20px;
@@ -1479,7 +1479,7 @@ section > .section-title {
   gap: 0;
   margin-top: 8px;
   counter-reset: form-field;
-  scroll-margin-top: 160px;
+  scroll-margin-top: 190px;
 }
 
 #registration-form label {

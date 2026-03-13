@@ -2422,20 +2422,23 @@ function populateExtraFields(tournament) {
   container.innerHTML = "";
 
   const fixed = String(tournament.fixed_court_days_hours || "false").toLowerCase();
-  
   const availableDays = String(tournament.available_days || "").trim().toLowerCase();
   const availableHours = String(tournament.available_hours || "").trim().toLowerCase();
+
+  let hasExtraFields = false;
 
   // CAMPO 1: ZONA PREFERITA (solo se non fixed_all)
   if (fixed !== "fixed_all") {
     const zoneField = buildZoneField(tournament);
     container.appendChild(zoneField);
+    hasExtraFields = true;
   }
 
   // CAMPO 2: GIORNI PREFERITI (solo se non fixed_all e non è un giorno singolo)
   if (fixed !== "fixed_all" && availableDays && !isSingleDay(availableDays)) {
     const daysField = buildDaysField(availableDays);
     container.appendChild(daysField);
+    hasExtraFields = true;
   }
 
   // CAMPO 3: ORARIO PREFERITO (solo se non fixed_all e c'è un range di orari)
@@ -2443,13 +2446,58 @@ function populateExtraFields(tournament) {
     const hoursField = buildHoursField(availableHours);
     if (hoursField) {
       container.appendChild(hoursField);
+      hasExtraFields = true;
     }
   }
 
-  // CAMPO FINALE: NOTE AGGIUNTIVE (sempre presente, ultimo campo)
+  // Configura form a 2 o 3 step
+  configureFormSteps(hasExtraFields);
+
+  // Note aggiuntive vanno nell'ultimo step (prima del checkbox regolamento)
   const notesField = buildNotesField();
-  container.appendChild(notesField);
+  const lastStepPanel = hasExtraFields
+    ? document.querySelector('.form-step-panel[data-step="3"]')
+    : document.querySelector('.form-step-panel[data-step="2"]');
+  
+  // Inserisci le note PRIMA del div regulation-acceptance
+  const regulationDiv = lastStepPanel.querySelector('.regulation-acceptance');
+  lastStepPanel.insertBefore(notesField, regulationDiv);
 }
+
+
+
+
+// ===============================
+// CONFGIURA STEPS
+// ===============================
+function configureFormSteps(hasExtraFields) {
+  const step2Indicator = document.querySelector('.form-step[data-step="2"]');
+  const step3Indicator = document.querySelector('.form-step[data-step="3"]');
+  const step2Panel = document.querySelector('.form-step-panel[data-step="2"]');
+  const step3Panel = document.querySelector('.form-step-panel[data-step="3"]');
+
+  if (hasExtraFields) {
+    // 3 step: mostra tutto normalmente
+    step2Indicator.style.display = "";
+    step3Indicator.style.display = "";
+    step2Panel.dataset.active = "";
+    totalSteps = 3;
+  } else {
+    // 2 step: nascondi step 2 (preferenze) e rinomina step 3 come step 2
+    step2Indicator.style.display = "none";
+    step2Panel.style.display = "none";
+    
+    // Aggiorna il numero visivo dello step 3
+    step3Indicator.querySelector('.step-number').textContent = "2";
+    step3Indicator.dataset.step = "2";
+    step3Panel.dataset.step = "2";
+    
+    totalSteps = 2;
+  }
+}
+
+
+
 
 // ===============================
 // 20b. CHECK IF SINGLE DAY
@@ -2495,18 +2543,17 @@ function buildZoneField(tournament) {
   
   const titleSpan = document.createElement("span");
   titleSpan.className = "form-field-title";
-  titleSpan.innerHTML = 'Zona preferita <span class="required-asterisk">*</span>';
+  titleSpan.textContent = 'Zona preferita';
   wrapper.appendChild(titleSpan);
 
   const helperSpan = document.createElement("span");
   helperSpan.className = "field-helper";
-  helperSpan.textContent = `Indica la zona di ${location} e dintorni dove preferisci giocare le partite in casa`;
+  helperSpan.textContent = `Indica la zona di ${location} e dintorni dove preferisci giocare le partite in casa (facoltativo)`;
   wrapper.appendChild(helperSpan);
 
   const input = document.createElement("input");
   input.type = "text";
   input.name = "preferred_zone";
-  input.required = true;
   input.placeholder = "Es. Zona Lingotto, Moncalieri, ecc.";
   wrapper.appendChild(input);
 
@@ -2521,25 +2568,19 @@ function buildDaysField(availableDays) {
   wrapper.className = "form-field-wrapper";
   
   const daysOptions = parseDaysRange(availableDays);
-  const minDays = calculateMinDays(availableDays);
-  
-  const labelText = (minDays === 1) 
-    ? "Giorno preferito" 
-    : `Giorni preferiti (seleziona almeno ${minDays})`;
 
   const titleSpan = document.createElement("span");
   titleSpan.className = "form-field-title";
-  titleSpan.innerHTML = `${labelText} <span class="required-asterisk">*</span>`;
+  titleSpan.textContent = 'Giorni preferiti';
   wrapper.appendChild(titleSpan);
 
   const helperSpan = document.createElement("span");
   helperSpan.className = "field-helper";
-  helperSpan.textContent = `Seleziona ${minDays === 1 ? 'il giorno' : 'i giorni'} in cui preferisci giocare le partite in casa`;
+  helperSpan.textContent = 'Seleziona i giorni in cui preferisci giocare le partite in casa (facoltativo)';
   wrapper.appendChild(helperSpan);
 
   const checkboxGroup = document.createElement("div");
   checkboxGroup.className = "checkbox-group";
-  checkboxGroup.dataset.minDays = minDays;
 
   daysOptions.forEach(day => {
     const item = document.createElement("div");
@@ -2570,26 +2611,23 @@ function buildDaysField(availableDays) {
 function buildHoursField(availableHours) {
   const slots = parseHoursSlots(availableHours);
   
-  // Se c'è solo uno slot o nessuno, non mostrare il campo
   if (slots.length <= 1) return null;
 
   const wrapper = document.createElement("label");
 
   const titleSpan = document.createElement("span");
   titleSpan.className = "form-field-title";
-  titleSpan.innerHTML = 'Fascia oraria preferita <span class="required-asterisk">*</span>';
+  titleSpan.textContent = 'Fascia oraria preferita';
   wrapper.appendChild(titleSpan);
 
-  // Helper dinamico basato sul range
   const { start, end } = parseHoursRange(availableHours);
   const helperSpan = document.createElement("span");
   helperSpan.className = "field-helper";
-  helperSpan.textContent = `Scegli la fascia oraria preferita (partite disponibili dalle ${start}:00 alle ${end}:00)`;
+  helperSpan.textContent = `Scegli la fascia oraria preferita (partite disponibili dalle ${start}:00 alle ${end}:00) (facoltativo)`;
   wrapper.appendChild(helperSpan);
 
   const select = document.createElement("select");
   select.name = "preferred_hours";
-  select.required = true;
 
   const placeholder = document.createElement("option");
   placeholder.value = "";
@@ -2811,26 +2849,6 @@ function handleFormSubmit(tournament) {
       return;
     }
 
-    // Validazione giorni (se presenti)
-    const checkboxGroup = form.querySelector(".checkbox-group");
-    if (checkboxGroup) {
-      const minDays = Number(checkboxGroup.dataset.minDays) || 1;
-      const checkedDays = form.querySelectorAll('input[name="preferred_days[]"]:checked');
-      
-      if (checkedDays.length < minDays) {
-        const dayWord = minDays === 1 ? 'giorno' : 'giorni';
-        showToast(`Devi selezionare almeno ${minDays} ${dayWord} ⚠️`);
-        return;
-      }
-    }
-
-    // Validazione orari (se presenti e required)
-    const hoursSelect = form.querySelector('[name="preferred_hours"]');
-    if (hoursSelect && hoursSelect.required && !hoursSelect.value) {
-      showToast("Devi selezionare una fascia oraria ⚠️");
-      return;
-    }
-
     // =====================================================
     // COSTRUZIONE PAYLOAD
     // =====================================================
@@ -2953,6 +2971,7 @@ function handleFormSubmit(tournament) {
 // ===============================
 
 let currentStep = 1;
+let totalSteps = 3;
 
 const panels = document.querySelectorAll(".form-step-panel");
 const steps = document.querySelectorAll(".form-step");
@@ -2963,31 +2982,35 @@ const prevBtn = document.querySelector(".step-prev");
 
 function updateStepUI() {
 
+  // Nascondi tutti i pannelli
   panels.forEach(panel => {
     panel.classList.remove("active");
   });
 
-  document
-    .querySelector(`.form-step-panel[data-step="${currentStep}"]`)
-    .classList.add("active");
+  // Mostra il pannello corrente
+  const activePanel = document.querySelector(`.form-step-panel[data-step="${currentStep}"]`);
+  if (activePanel) activePanel.classList.add("active");
 
+  // Aggiorna indicatori step
   steps.forEach(step => {
     step.classList.remove("active");
   });
 
-  document
-    .querySelector(`.form-step[data-step="${currentStep}"]`)
-    .classList.add("active");
+  const activeStep = document.querySelector(`.form-step[data-step="${currentStep}"]`);
+  if (activeStep) activeStep.classList.add("active");
 
-  progressFill.style.width = ((currentStep - 1) / 2) * 100 + "%";
+  // Progress bar
+  progressFill.style.width = ((currentStep - 1) / (totalSteps - 1)) * 100 + "%";
 
+  // Pulsante indietro
   if (currentStep === 1) {
     prevBtn.style.visibility = "hidden";
   } else {
     prevBtn.style.visibility = "visible";
   }
 
-  if (currentStep === 3) {
+  // Pulsante avanti
+  if (currentStep === totalSteps) {
     nextBtn.style.display = "none";
   } else {
     nextBtn.style.display = "inline-flex";
@@ -2997,13 +3020,7 @@ function updateStepUI() {
     top: document.querySelector("#registration-form").offsetTop - 200,
     behavior: "smooth"
   });
-
 }
-
-
-// ===============================
-// NEXT STEP
-// ===============================
 
 nextBtn.addEventListener("click", () => {
 
@@ -3016,21 +3033,11 @@ nextBtn.addEventListener("click", () => {
   let valid = true;
 
   requiredFields.forEach(field => {
-
     if (field.type === "checkbox") {
-
-      if (!field.checked) {
-        valid = false;
-      }
-
+      if (!field.checked) valid = false;
     } else {
-
-      if (!field.value.trim()) {
-        valid = false;
-      }
-
+      if (!field.value.trim()) valid = false;
     }
-
   });
 
   if (!valid) {
@@ -3038,31 +3045,18 @@ nextBtn.addEventListener("click", () => {
     return;
   }
 
-  if (currentStep < 3) {
+  if (currentStep < totalSteps) {
     currentStep++;
     updateStepUI();
   }
-
 });
 
-
-// ===============================
-// PREVIOUS STEP
-// ===============================
-
 prevBtn.addEventListener("click", () => {
-
   if (currentStep > 1) {
     currentStep--;
     updateStepUI();
   }
-
 });
-
-
-// ===============================
-// INIT
-// ===============================
 
 updateStepUI();
 
