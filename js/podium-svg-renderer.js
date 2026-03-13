@@ -13,7 +13,7 @@
   const PLACE_GAP = 22;
 
   const MEDAL_SIZE = 90;
-  const LOGO_SIZE = 90;
+  const LOGO_SIZE = 60;
 
   const BAR_HEIGHT_1ST = 200;
   const BAR_HEIGHT_2ND = 160;
@@ -179,35 +179,45 @@
   // ─────────────────────────────
 
   function teamLogo(x, y, logoUrl) {
-
+    const size = 52;
+    const borderRadius = 8;
     let o = "";
 
-    if (!logoUrl) {
+    // Sfondo cornice (bianco con bordo)
+    o += svgEl("rect", {
+      x: x - size / 2 - 3,
+      y: y - size / 2 - 3,
+      width: size + 6,
+      height: size + 6,
+      rx: borderRadius + 2,
+      fill: "#ffffff",
+      stroke: P.barBorder,
+      "stroke-width": 1.5
+    });
 
+    if (!logoUrl) {
       o += svgEl(
         "text",
         {
           x: x,
           y: y + 8,
-          "font-size": 36,
+          "font-size": 26,
           "text-anchor": "middle"
         },
         "👥"
       );
-
     } else {
-
-      const clip = `clip-${Math.random()}`;
+      const clip = `clip-${Math.random().toString(36).slice(2)}`;
 
       o += `<clipPath id="${clip}">
-<circle cx="${x}" cy="${y}" r="${LOGO_SIZE / 2}"/>
+<rect x="${x - size / 2}" y="${y - size / 2}" width="${size}" height="${size}" rx="${borderRadius}"/>
 </clipPath>`;
 
       o += svgEl("image", {
-        x: x - LOGO_SIZE / 2,
-        y: y - LOGO_SIZE / 2,
-        width: LOGO_SIZE,
-        height: LOGO_SIZE,
+        x: x - size / 2,
+        y: y - size / 2,
+        width: size,
+        height: size,
         href: logoUrl,
         "clip-path": `url(#${clip})`
       });

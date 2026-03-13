@@ -2428,7 +2428,7 @@ section > .section-title {
   padding: 6px 12px;
   font-size: 13px;
   font-weight: 600;
-  background-color: var(--bg-main);
+  background-color: var(--surface-card);
   color: var(--text-main);
   border: 1px solid var(--border);
   border-radius: 10px;
