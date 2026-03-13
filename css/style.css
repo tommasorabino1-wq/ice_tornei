@@ -241,13 +241,17 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
   min-height: 60px;
 }
 
 .nav-sidebar-logo img {
-  width: 80px;
+  width: 200px;
   height: auto;
+}
+
+.nav-sidebar-logo {
+  border-bottom: none !important;
+  padding: 0;
 }
 
 .nav-sidebar-close {
@@ -286,7 +290,7 @@ body {
   display: block;
 }
 
-.main-nav a:hover,
+.main-nav a:not(.nav-sidebar-logo):hover,
 .main-nav a.active {
   color: var(--text-main);
   background: var(--brand-soft);
