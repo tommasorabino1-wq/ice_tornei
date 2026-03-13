@@ -937,13 +937,12 @@ section > .section-title {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 14px;
-  box-shadow: var(--shadow-md);
   text-decoration: none;
   color: inherit;
   cursor: pointer;
   opacity: 0;
   transform: translateY(30px) scale(0.96);
-  transition: opacity 0.6s ease, transform 0.6s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  transition: opacity 0.6s ease, transform 0.6s ease, box-shadow 0.2s ease;
 }
 
 .tournament-card.visible {
@@ -952,8 +951,8 @@ section > .section-title {
 }
 
 .tournament-card:hover {
-  transform: translateY(-6px) scale(1.01);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md), 0 0 14px var(--brand-glow-soft);
 }
 
 .tournament-card:focus-visible {
@@ -1126,17 +1125,16 @@ section > .section-title {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 18px;
-  box-shadow: var(--shadow-md);
   display: flex;
   flex-direction: column;
   gap: 6px;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   user-select: none;
 }
 
 .sport-box:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md), 0 0 14px var(--brand-glow-soft);
 }
 
 
@@ -1202,6 +1200,10 @@ section > .section-title {
 }
 
 .faq-item.active .faq-answer { max-height: 200px; }
+
+.faq-item.active {
+  border-bottom: 1px solid transparent;
+}
 
 
 /* =========================
