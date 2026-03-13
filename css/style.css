@@ -504,7 +504,7 @@ body {
   padding: 6px 16px;
   border-radius: 10px;
   border: 1px solid var(--border);
-  background: var(--surface-card);
+  background: var(--bg-secondary);
   color: var(--text-main);
   font-weight: 600;
   font-size: 16px;
@@ -598,8 +598,8 @@ section > .section-title {
 .section-divider {
   margin: 35px 0;
   padding: 36px 28px;
-  background: var(--brand-soft);
-  border: 1px solid var(--brand-soft-border);
+  background: var(--surface-card);
+  border: 1px solid var(--border);
   border-radius: 14px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
@@ -887,7 +887,7 @@ section > .section-title {
 .intro-box {
   background-color: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 14px;
   box-shadow: var(--shadow-md);
   padding: 16px;
   margin-top: 8px;
@@ -913,7 +913,7 @@ section > .section-title {
   padding: 6px 14px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: var(--surface-soft);
+  background: var(--bg-secondary);
   align-self: center;
 }
 
@@ -933,7 +933,7 @@ section > .section-title {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background-color: var(--surface-card);
+  background-color: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 14px;
@@ -1133,7 +1133,7 @@ section > .section-title {
 .sport-box {
   min-width: 240px;
   max-width: 240px;
-  background-color: var(--surface-card);
+  background-color: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 18px;
@@ -1160,7 +1160,7 @@ section > .section-title {
   max-width: 100%;
   background: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 14px;
   padding: 12px 18px;
   box-shadow: var(--shadow-sm);
 }
