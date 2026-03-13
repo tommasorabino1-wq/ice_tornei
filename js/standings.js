@@ -954,7 +954,7 @@ function renderFinalsBracket(bracket) {
 
   if (!container) return;
 
-  const finalsSkeleton = document.querySelector(".finals-section .finals-skeleton");
+  const finalsSkeleton = document.getElementById("finals-skeleton");
   if (finalsSkeleton) finalsSkeleton.classList.add("hidden");
 
   const rounds = Object.keys(bracket.rounds)

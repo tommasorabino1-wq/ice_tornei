@@ -2348,12 +2348,13 @@ section > .section-title {
 .standings-phase-title {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  width: fit-content;
+  width: 100%;
   padding: 8px 20px;
   border-radius: 10px;
   border: 1px solid var(--border);
-  background: var(--bg-main);
+  background: var(--surface-card);
   color: var(--text-main);
   font-weight: 700;
   font-size: 18px;
@@ -2944,6 +2945,11 @@ section > .section-title {
   width: 100%;
   scrollbar-color: var(--brand) var(--bg-main);
   scrollbar-width: thin;
+}
+
+.standings-box .bracket-svg-wrapper {
+  padding-top: 0;
+  margin-top: -20px;
 }
 
 .bracket-container::-webkit-scrollbar,
