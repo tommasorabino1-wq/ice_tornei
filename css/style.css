@@ -194,9 +194,10 @@ body {
   background:var(--brand-soft);
 }
 
-.nav-arrow {
+.nav-arrow{
   font-size:12px;
   margin-left:6px;
+  transition: transform 0.25s ease;
 }
 
 .main-nav a:hover,
