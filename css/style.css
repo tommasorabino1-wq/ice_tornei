@@ -194,13 +194,13 @@ body {
   background:var(--brand-soft);
 }
 
-.nav-arrow{
+.nav-arrow {
   font-size:20px;
   margin-left:6px;
   transition: transform 0.25s ease;
 }
 
-.nav-dropdown.active .nav-arrow{
+.nav-dropdown.active .nav-arrow {
   transform: rotate(180deg);
 }
 
