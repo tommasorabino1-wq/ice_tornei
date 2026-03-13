@@ -447,3 +447,4 @@ gsap.utils.toArray(".reveal-section").forEach(section => {
     }
   );
 });
+

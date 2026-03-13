@@ -1141,6 +1141,12 @@ section > .section-title {
   box-shadow: var(--shadow-md), 0 0 14px var(--brand-glow-soft);
 }
 
+.sport-box-link{
+  text-decoration:none;
+  color:inherit;
+  display:block;
+}
+
 
 /* =========================
    19. FAQ
