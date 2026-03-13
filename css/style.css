@@ -245,7 +245,7 @@ body {
 }
 
 .nav-sidebar-logo img {
-  width: 200px;
+  width: 100px;
   height: auto;
 }
 
@@ -254,23 +254,7 @@ body {
   padding: 0;
 }
 
-.nav-sidebar-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  color: var(--text-muted);
-  font-size: 20px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s;
-}
 
-.nav-sidebar-close:hover {
-  color: var(--text-main);
-}
 
 /* =========================
    LINK PRINCIPALI
@@ -3283,60 +3267,12 @@ section > .section-title {
   .standings-layout { gap: 32px; }
   .set-badge { font-size: 13px; padding: 4px 10px; }
 
-  .main-header-container{
-    flex-wrap: nowrap;
-  }
-
-  .main-nav{
-    display:flex;
-    flex-direction:row;
-    align-items:center;
-    gap:6px;
-    width:auto;
-    order:2;
-  }
-
-  .mobile-menu-toggle{
-    display:none;
-  }
-
   .main-nav a{
     border-bottom:none;
     padding:10px 14px;
     border-radius:6px;
   }
 
-  .nav-dropdown-menu{
-    position:absolute;
-    top:100%;
-    left:0;
-
-    display:none;
-    min-width:180px;
-
-    background:var(--surface-card);
-    border:1px solid var(--border-soft);
-    border-radius:10px;
-
-    box-shadow:0 10px 28px rgba(0,0,0,0.08);
-
-    padding:6px;
-  }
-
-  .nav-dropdown:hover > .nav-dropdown-menu{
-    display:flex;
-  }
-
-  .nav-dropdown-menu a {
-    padding:8px 12px;
-    border:none;
-    border-radius:6px;
-    font-size:14px;
-  }
-
-  .nav-dropdown-menu a:hover {
-    background:var(--brand-soft);
-  }
 }
 
 

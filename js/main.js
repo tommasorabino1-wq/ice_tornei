@@ -5,7 +5,6 @@
 const menuToggle   = document.querySelector(".mobile-menu-toggle");
 const mainNav      = document.getElementById("main-navigation");
 const navOverlay   = document.getElementById("nav-overlay");
-const navClose     = document.getElementById("nav-sidebar-close");
 
 function openNav() {
   mainNav.classList.add("active");
@@ -29,11 +28,6 @@ if (menuToggle && mainNav && navOverlay) {
   menuToggle.addEventListener("click", () => {
     mainNav.classList.contains("active") ? closeNav() : openNav();
   });
-
-  // chiudi con X interna
-  if (navClose) {
-    navClose.addEventListener("click", closeNav);
-  }
 
   // chiudi cliccando l'overlay
   navOverlay.addEventListener("click", closeNav);
