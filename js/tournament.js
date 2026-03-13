@@ -3068,73 +3068,51 @@ updateStepUI();
 // TOURNAMENT CAPACITY BAR
 // ===============================
 function updateTournamentCapacity(current, max) {
-
   const fill = document.getElementById("capacity-fill");
-  const currentText = document.getElementById("capacity-current");
-  const maxText = document.getElementById("capacity-max");
-  const capacityBlock = document.querySelector(".tournament-capacity");
+  const textEl = document.getElementById("capacity-inline-text");
+  const inlineBlock = document.getElementById("capacity-inline");
 
-  if (!fill || !currentText || !maxText || !capacityBlock) return;
+  if (!fill || !textEl || !inlineBlock) return;
 
   const currentTeams = Number(current) || 0;
   const maxTeams = Number(max) || 0;
 
-  if (maxTeams === 0) return;
+  if (maxTeams === 0) {
+    inlineBlock.classList.add("hidden");
+    return;
+  }
+
+  inlineBlock.classList.remove("hidden");
 
   const percentage = Math.min((currentTeams / maxTeams) * 100, 100);
+  const remaining = maxTeams - currentTeams;
+  const filledPerc = Math.round(percentage);
 
   fill.style.width = percentage + "%";
 
-  currentText.textContent = currentTeams;
-  maxText.textContent = maxTeams;
+  // Reset urgency classes
+  fill.classList.remove("urgency-high", "urgency-full");
 
-  const remaining = maxTeams - currentTeams;
-
-  // ===============================
-  // MESSAGGIO DINAMICO SCARSITÀ
-  // ===============================
-
-  let warning = capacityBlock.querySelector(".capacity-warning");
-
-  if (!warning) {
-    warning = document.createElement("div");
-    warning.className = "capacity-warning";
-    capacityBlock.appendChild(warning);
-  }
-
-  // ===============================
-  // STILI DINAMICI
-  // ===============================
-
+  // Testo e stile dinamici
   if (remaining <= 0) {
-
-    fill.style.background = "linear-gradient(90deg,#ff3b3b,#c40000)";
-    warning.textContent = "🚫 Torneo completo";
-
+    fill.classList.add("urgency-full");
+    textEl.textContent = "🚫 Posti esauriti";
+  } else if (remaining <= 2) {
+    fill.classList.add("urgency-high");
+    textEl.textContent = `⚠️ Solo ${remaining} ${remaining === 1 ? 'posto' : 'posti'} rimasti — iscriviti subito`;
+  } else if (remaining <= 4) {
+    fill.classList.add("urgency-high");
+    textEl.textContent = `🔥 Ultimi ${remaining} posti disponibili`;
+  } else if (filledPerc >= 50) {
+    textEl.textContent = `${filledPerc}% dei posti occupati — ${remaining} posti rimasti`;
+  } else if (currentTeams === 0) {
+    textEl.textContent = "📢 I posti dell'ultimo torneo si sono esauriti in meno di due giorni";
+  } else if (currentTeams <= 3) {
+    textEl.textContent = `Le iscrizioni sono appena aperte — ${remaining} posti disponibili`;
+  } else {
+    textEl.textContent = `${remaining} posti ancora disponibili su ${maxTeams}`;
   }
-
-  else if (remaining <= 3) {
-
-    fill.style.background = "linear-gradient(90deg,#ff6b6b,#ff3b3b)";
-    warning.textContent = `⚠️ Restano solo ${remaining} posti`;
-
-  }
-
-  else if (remaining <= 6) {
-
-    warning.textContent = `🔥 Restano ${remaining} posti`;
-
-  }
-
-  else {
-
-    warning.textContent = "";
-
-  }
-
 }
-
-
 
 
 
@@ -3152,10 +3130,10 @@ function applyTournamentState(tournament) {
   const entityLabelPlural = isIndividual ? 'giocatori' : 'squadre';
 
   const registrationBlock = document.querySelector(".tournament-registration-block");
-  const capacityBlock = document.querySelector(".tournament-capacity-block");
   const teamsBlock = document.getElementById("tournament-teams-section");
   const headerCta = document.getElementById("tournament-header-cta");
   const headerScroll = document.getElementById("tournament-header-scroll");
+  const capacityInline = document.getElementById("capacity-inline");
 
   form.style.display = "none";
   form.classList.remove("skeleton");
@@ -3163,6 +3141,7 @@ function applyTournamentState(tournament) {
 
   if (headerCta) headerCta.classList.add("hidden");
   if (headerScroll) headerScroll.classList.add("hidden");
+  if (capacityInline) capacityInline.classList.add("hidden");
 
   if (tournament.status === "open") {
     badge.textContent = "ISCRIZIONI APERTE";
@@ -3170,7 +3149,7 @@ function applyTournamentState(tournament) {
     subscribeMessage.textContent = `Le iscrizioni sono aperte. Compila il form per iscrivere il tuo ${entityLabel}.`;
     form.style.display = "flex";
     registrationBlock.style.display = "block";
-    capacityBlock.style.display = "block";
+    if (capacityInline) capacityInline.classList.remove("hidden");
     teamsBlock.style.display = "block";
     if (headerCta) headerCta.classList.remove("hidden");
     if (headerScroll) headerScroll.classList.remove("hidden");
@@ -3187,7 +3166,6 @@ function applyTournamentState(tournament) {
     `;
     form.style.display = "none";
     registrationBlock.style.display = "block";
-    capacityBlock.style.display = "none";
     teamsBlock.style.display = "block";
     return;
   }
@@ -3202,7 +3180,7 @@ function applyTournamentState(tournament) {
     `;
     form.style.display = "none";
     registrationBlock.style.display = "block";
-    capacityBlock.style.display = "block";
+    if (capacityInline) capacityInline.classList.remove("hidden");
     teamsBlock.style.display = "block";
     return;
   }
@@ -3217,7 +3195,6 @@ function applyTournamentState(tournament) {
     `;
     form.style.display = "none";
     registrationBlock.style.display = "block";
-    capacityBlock.style.display = "none";
     teamsBlock.style.display = "none";
     return;
   }
@@ -3232,7 +3209,6 @@ function applyTournamentState(tournament) {
     `;
     form.style.display = "none";
     registrationBlock.style.display = "block";
-    capacityBlock.style.display = "none";
     teamsBlock.style.display = "none";
     return;
   }
@@ -3247,13 +3223,10 @@ function applyTournamentState(tournament) {
     `;
     form.style.display = "none";
     registrationBlock.style.display = "block";
-    capacityBlock.style.display = "none";
     teamsBlock.style.display = "none";
     return;
   }
 }
-
-
 
 
 

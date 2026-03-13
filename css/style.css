@@ -1416,57 +1416,48 @@ section > .section-title {
 
 
 /* =========================
-   23. CAPACITY BAR
+   23. CAPACITY BAR (INLINE)
 ========================= */
-.tournament-capacity-block {
-  margin-top: 18px;
-  padding: 18px;
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
-  border: 1px solid var(--border);
-  margin-bottom: 18px;
+.capacity-inline {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-soft);
 }
 
-.tournament-capacity {
-  padding: 14px;
-  border-radius: var(--radius-md);
-  background: var(--bg-main);
-  border: 1px solid var(--brand-soft-border);
+.capacity-inline.hidden {
+  display: none;
 }
 
-.capacity-header {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: 10px;
+.capacity-inline-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  line-height: 1.4;
 }
 
-.capacity-bar {
-  height: 10px;
+.capacity-inline-bar {
+  height: 6px;
   background: var(--border-soft);
   border-radius: 999px;
   overflow: hidden;
 }
 
-.capacity-fill {
+.capacity-inline-fill {
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, var(--brand), var(--brand-hover));
-  transition: width .5s ease;
+  border-radius: 999px;
+  transition: width 0.5s ease;
 }
 
-.capacity-text {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-main);
-  margin-top: 8px;
+/* Colori dinamici per urgenza */
+.capacity-inline-fill.urgency-high {
+  background: linear-gradient(90deg, #ff6b6b, #ff3b3b);
 }
 
-.capacity-warning {
-  font-size: 13px;
-  font-weight: 600;
-  margin-top: 6px;
-  color: var(--brand);
+.capacity-inline-fill.urgency-full {
+  background: linear-gradient(90deg, #ff3b3b, #c40000);
 }
 
 
