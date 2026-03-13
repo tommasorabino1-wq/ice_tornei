@@ -48,11 +48,15 @@
   --shadow-md: 0 6px 18px rgba(0,0,0,0.08);
   --shadow-lg: 0 10px 28px rgba(0,0,0,0.12);
 
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
   /* Skeleton */
   --skeleton-bg: #e9e1d6;
 
-  /* Misc */
-  --radius: 14px;
+  /* Font */
   --font: 'Inter', sans-serif;
 }
 
@@ -255,7 +259,7 @@ body {
   font-size: 11px;
   font-weight: 700;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   text-transform: uppercase;
   white-space: nowrap;
   letter-spacing: 0.02em;
@@ -281,7 +285,7 @@ body {
   flex: 1;
   text-align: center;
   padding: 10px 12px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
@@ -600,7 +604,7 @@ section > .section-title {
   padding: 36px 28px;
   background: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
 
@@ -751,7 +755,7 @@ section > .section-title {
   max-width: 100%;
   width: fit-content;
   padding: 18px 36px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: var(--surface-card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-md);
@@ -887,7 +891,7 @@ section > .section-title {
 .intro-box {
   background-color: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   padding: 16px;
   margin-top: 8px;
@@ -935,7 +939,7 @@ section > .section-title {
   gap: 8px;
   background-color: var(--bg-main);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   padding: 14px;
   text-decoration: none;
   color: inherit;
@@ -1005,7 +1009,7 @@ section > .section-title {
   line-height: 1.5;
   background: var(--surface-card);
   border: 1px solid var(--brand-soft-border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 6px 8px;
   transition: border-color 0.18s ease, background-color 0.18s ease;
 }
@@ -1123,7 +1127,7 @@ section > .section-title {
   max-width: 240px;
   background-color: var(--bg-main);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -1146,7 +1150,7 @@ section > .section-title {
   max-width: 100%;
   background: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   padding: 12px 18px;
   box-shadow: var(--shadow-sm);
 }
@@ -1196,7 +1200,7 @@ section > .section-title {
   line-height: 1.6;
   background: var(--surface-soft);
   border: 1px solid var(--border-soft);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
 }
 
 .faq-item.active .faq-answer { max-height: 200px; }
@@ -1239,7 +1243,7 @@ section > .section-title {
   line-height: 1.5;
   background: var(--bg-main);
   border: 1px solid var(--brand-soft-border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 6px 8px;
   transition: background-color 0.18s ease, border-color 0.18s ease;
 }
@@ -1263,7 +1267,7 @@ section > .section-title {
 .tournament-info-block {
   background-color: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   padding: 14px;
   margin-bottom: 20px;
 }
@@ -1272,7 +1276,8 @@ section > .section-title {
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 12px;
-  display: inline-block;
+  display: block;
+  text-align: center;
   padding: 6px 16px;
   border-radius: 10px;
   border: 1px solid var(--border);
@@ -1283,17 +1288,19 @@ section > .section-title {
 /* Registration block */
 .tournament-registration-block {
   background-color: var(--surface-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 2px solid var(--brand);
+  border-radius: var(--radius-lg);
   padding: 14px;
   margin-bottom: 20px;
+  box-shadow: 0 0 20px var(--brand-glow-soft), var(--shadow-md);
 }
 
 .tournament-registration-block h3 {
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 10px;
-  display: inline-block;
+  display: block;
+  text-align: center;
   padding: 6px 16px;
   border-radius: 10px;
   border: 1px solid var(--border);
@@ -1323,7 +1330,7 @@ section > .section-title {
 .tournament-specific-rules-block {
   background-color: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   padding: 14px;
   margin-bottom: 20px;
 }
@@ -1332,7 +1339,8 @@ section > .section-title {
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 14px;
-  display: inline-block;
+  display: block;
+  text-align: center;
   padding: 6px 16px;
   border-radius: 10px;
   border: 1px solid var(--border);
@@ -1345,7 +1353,7 @@ section > .section-title {
   margin-top: 20px;
   background-color: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   padding: 14px;
 }
@@ -1363,7 +1371,8 @@ section > .section-title {
   font-weight: 700;
   letter-spacing: 0.02em;
   margin: 0;
-  display: inline-block;
+  display: block;
+  text-align: center;
   padding: 6px 16px;
   border-radius: 10px;
   border: 1px solid var(--border);
@@ -1392,7 +1401,7 @@ section > .section-title {
 .teams-empty,
 .teams-error {
   padding: 12px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   font-size: 12px;
   color: var(--text-muted);
   background-color: rgba(255,255,255,0.02);
@@ -1412,7 +1421,7 @@ section > .section-title {
 .tournament-capacity-block {
   margin-top: 18px;
   padding: 18px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   background: var(--surface-card);
   border: 1px solid var(--border);
   margin-bottom: 18px;
@@ -1420,7 +1429,7 @@ section > .section-title {
 
 .tournament-capacity {
   padding: 14px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   background: var(--bg-main);
   border: 1px solid var(--brand-soft-border);
 }
@@ -1521,7 +1530,7 @@ section > .section-title {
 #registration-form input[type="tel"] {
   margin-top: 8px;
   padding: 10px 12px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background-color: var(--bg-main);
   color: var(--text-main);
@@ -1547,7 +1556,7 @@ section > .section-title {
 #registration-form select {
   margin-top: 6px;
   padding: 10px 12px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background-color: var(--bg-main);
   color: var(--text-main);
@@ -1571,7 +1580,7 @@ section > .section-title {
 #registration-form textarea {
   margin-top: 8px;
   padding: 10px 12px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background-color: var(--bg-main);
   color: var(--text-main);
@@ -1683,7 +1692,7 @@ section > .section-title {
   margin-top: 8px;
   padding: 8px;
   background-color: var(--surface-soft);
-  border-radius: calc(var(--radius) + 2px);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border-soft);
 }
 
@@ -1692,7 +1701,7 @@ section > .section-title {
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   background-color: rgba(255,255,255,0.02);
   border: 1px solid var(--border);
   cursor: pointer;
@@ -1739,7 +1748,7 @@ section > .section-title {
   background: linear-gradient(135deg, var(--brand), var(--brand-hover));
   color: #000;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   box-shadow: var(--shadow-md), 0 0 14px var(--brand-glow);
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
@@ -1784,7 +1793,7 @@ section > .section-title {
   padding: 12px;
   background-color: var(--brand-soft);
   border: 1px solid var(--brand-soft-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
 }
 
 #registration-form .regulation-acceptance::before { content: none; }
@@ -1908,7 +1917,7 @@ section > .section-title {
   align-items: flex-start;
   gap: 10px;
   padding: 10px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   background-color: var(--bg-main);
   border: 1px solid var(--border-soft);
   transition: background-color 0.18s ease, border-color 0.18s ease;
@@ -1956,7 +1965,7 @@ section > .section-title {
   align-items: flex-start;
   gap: 10px;
   padding: 10px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   background-color: var(--bg-main);
   border: 1px solid var(--border-soft);
   transition: background-color 0.18s ease, border-color 0.18s ease;
@@ -2005,7 +2014,7 @@ section > .section-title {
   margin-top: 24px;
   background-color: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   padding: 16px;
 }
@@ -2038,7 +2047,7 @@ section > .section-title {
 .generic-section-box {
   background-color: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   padding: 16px;
   margin-bottom: 16px;
   box-shadow: var(--shadow-md);
@@ -2079,7 +2088,7 @@ section > .section-title {
 .why-ice-card {
   background-color: var(--bg-main);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   padding: 16px;
   text-align: center;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -2142,7 +2151,7 @@ section > .section-title {
 .tournament-skeleton .tournament-info-skeleton {
   background-color: var(--skeleton-bg);
   border: 1px solid var(--brand-soft-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   padding: 14px;
   margin-bottom: 20px;
 }
@@ -2154,7 +2163,7 @@ section > .section-title {
 .tournament-final-summary-block {
   background: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radiuslg);
   padding: 18px;
   margin-top: 24px;
   box-shadow: var(--shadow-sm);
@@ -2165,7 +2174,8 @@ section > .section-title {
   font-size: 16px;
   font-weight: 700;
   color: var(--text-main);
-  display: inline-block;
+  display: block;
+  text-align: center;
   padding: 6px 16px;
   border-radius: 10px;
   border: 1px solid var(--border);
@@ -2184,7 +2194,7 @@ section > .section-title {
 .final-summary-rows {
   background: var(--bg-main);
   border: 1px solid var(--brand-soft-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   padding: 13px;
   display: flex;
   flex-direction: column;
@@ -2238,7 +2248,7 @@ section > .section-title {
   padding: 40px 16px;
   background-color: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
 }
 
 .standings-placeholder-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.7; }
@@ -2267,7 +2277,7 @@ section > .section-title {
   padding: 40px 16px;
   background-color: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
 }
 
 .standings-not-started-icon,
@@ -2342,7 +2352,7 @@ section > .section-title {
 .gironi-section {
   background: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   padding: 16px;
   box-shadow: var(--shadow-md);
 }
@@ -2392,7 +2402,7 @@ section > .section-title {
   width: 100%;
   background-color: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   padding: 12px;
 }
@@ -2406,7 +2416,7 @@ section > .section-title {
   padding: 8px 12px;
   background: var(--surface-soft);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 .round-filter-box label {
@@ -2448,7 +2458,7 @@ section > .section-title {
 .match-card {
   background: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
@@ -2655,7 +2665,7 @@ section > .section-title {
   padding: 12px;
   background-color: var(--brand-soft);
   border: 1px solid var(--brand-soft-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   animation: slideDown 0.8s ease;
 }
 
@@ -2682,7 +2692,7 @@ section > .section-title {
   gap: 8px;
   padding: 6px 10px;
   background: var(--surface-soft);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   transition: background 0.15s ease;
 }
 
@@ -2739,7 +2749,7 @@ section > .section-title {
   padding: 3px 8px;
   background: var(--brand-soft);
   border: 1px solid var(--brand-soft-border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
   font-weight: 600;
   color: var(--text-main);
@@ -2770,7 +2780,7 @@ section > .section-title {
 .standings-group {
   background-color: var(--bg-main);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   position: relative;
   padding: 12px;
   margin-bottom: 12px;
@@ -2890,7 +2900,7 @@ section > .section-title {
   width: 100%;
   background: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 16px;
   box-shadow: var(--shadow-md);
 }
@@ -2942,7 +2952,7 @@ section > .section-title {
 .finals-round {
   background-color: var(--surface-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   padding: 12px;
   margin-bottom: 12px;
 }
@@ -3053,7 +3063,7 @@ section > .section-title {
 
 .standings-skeleton .skeleton-match {
   height: 60px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   background: linear-gradient(90deg, rgba(176,138,90,0.08), rgba(176,138,90,0.18), rgba(176,138,90,0.08));
   background-size: 400% 100%;
   animation: skeleton-shimmer 1.4s ease infinite;
@@ -3646,7 +3656,7 @@ section > .section-title {
 .form-section {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 
   padding: 26px 20px;
 
@@ -3724,7 +3734,7 @@ section > .section-title {
 
   padding: 16px 18px;
 
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 
   background-color: var(--bg-main);
@@ -3789,7 +3799,7 @@ section > .section-title {
   padding: 16px;
   background: rgba(176,138,90,0.08);
   border: 1px solid rgba(176,138,90,0.2);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
 }
 
 .file-preview.hidden {
@@ -3803,7 +3813,7 @@ section > .section-title {
   padding: 14px 14px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   margin-bottom: 8px;
   transition: background-color 0.2s ease;
 }
@@ -4016,7 +4026,7 @@ section > .section-title {
 
   background:var(--surface-card);
   border:1px solid var(--border);
-  border-radius:14px;
+  border-radius: var(--radius-lg);
 
   padding:40px 32px;
 
