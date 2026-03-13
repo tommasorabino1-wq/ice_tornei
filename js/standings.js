@@ -362,8 +362,6 @@ function loadMatches(tournamentId) {
 
       renderRoundFilter(AVAILABLE_ROUNDS, getMatchProfile(TOURNAMENT_SPORT, TOURNAMENT_MATCH_FORMAT_GIRONI));
       renderMatchesByRound(AVAILABLE_ROUNDS[0]);
-
-      document.querySelector(".standings-results-box-fullwidth")?.classList.remove("loading");
     })
     .catch(err => {
       console.error("Errore caricamento match:", err);
@@ -584,7 +582,7 @@ function onRoundChange(value) {
 // LOAD STANDINGS
 // ===============================
 function loadStandings(tournamentId) {
-  const skeleton = document.querySelector(".standings-table-box-fullwidth .standings-skeleton");
+  const skeleton = document.getElementById("standings-skeleton");
   const standingsEl = document.getElementById("standings");
 
   standingsEl.innerHTML = "";

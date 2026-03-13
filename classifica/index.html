@@ -175,13 +175,13 @@
 
       <section class="standings-layout">
 
-        <!-- FINALS SECTION -->
-        <section
-          id="finals-container"
-          class="finals-section hidden"
-          aria-label="Fase finale torneo">
+        <!-- ========================
+             FASI FINALI
+        ========================= -->
+        <section id="finals-container" class="hidden" aria-label="Fase finale torneo">
 
-          <h3 class="finals-section-title">
+          <!-- Titolo Fasi Finali (fuori dai box) -->
+          <h3 class="standings-phase-title">
             <span class="section-icon">🏆</span>
             Fasi Finali
           </h3>
@@ -192,8 +192,8 @@
           </div>
 
           <!-- PODIO -->
-          <div class="finals-subsection" id="podium-subsection-wrapper">
-            <h4 class="finals-subsection-title">Classifica Finale</h4>
+          <div class="standings-box" id="podium-subsection-wrapper">
+            <h4 class="standings-box-title">Classifica Finale</h4>
             <div class="finals-podium-fullwidth">
               <div class="standings-skeleton podium-skeleton" id="podium-skeleton">
                 <div class="skeleton-podium"></div>
@@ -203,76 +203,60 @@
           </div>
 
           <!-- RISULTATI FINALI -->
-          <div class="finals-subsection">
-            <h4 class="finals-subsection-title">Risultati Partite</h4>
-            <div class="finals-matches-fullwidth">
-              <div class="round-filter-box">
-                <label for="finals-round-filter">Seleziona Round</label>
-                <select id="finals-round-filter"></select>
-              </div>
-              <div id="finals-bracket-content"></div>
+          <div class="standings-box">
+            <h4 class="standings-box-title">Risultati Partite</h4>
+            <div class="round-filter-box">
+              <label for="finals-round-filter">Seleziona Round</label>
+              <select id="finals-round-filter"></select>
             </div>
+            <div id="finals-bracket-content"></div>
           </div>
 
           <!-- TABELLONE -->
-          <div class="finals-subsection">
-            <h4 class="finals-subsection-title">Tabellone</h4>
-            <div class="finals-bracket-column">
+          <div class="standings-box">
+            <h4 class="standings-box-title">Tabellone</h4>
+            <div class="bracket-svg-wrapper">
               <div id="finals-bracket-visual"></div>
             </div>
           </div>
 
         </section>
 
-        <!-- GIRONI SECTION -->
-        <section class="gironi-section">
+        <!-- ========================
+             FASE A GIRONI
+        ========================= -->
+        <section class="gironi-wrapper">
 
-          <h3 class="gironi-section-title">
+          <!-- Titolo Fase a Gironi (fuori dai box) -->
+          <h3 class="standings-phase-title">
             <span class="section-icon" id="gironi-section-icon">⚽</span>
             Fase a Gironi
           </h3>
 
           <!-- RISULTATI PARTITE -->
-          <div class="gironi-subsection">
-            <h4 class="gironi-subsection-title">Risultati Partite</h4>
-            <section
-              id="matches-container"
-              class="standings-results-box-fullwidth loading"
-              aria-label="Match gironi">
-              <div class="standings-skeleton" id="matches-skeleton">
-                <div class="skeleton skeleton-title"></div>
-                <div class="matches-scroll">
-                  <div class="skeleton-match"></div>
-                  <div class="skeleton-match"></div>
-                </div>
+          <div class="standings-box" id="matches-container">
+            <h4 class="standings-box-title">Risultati Partite</h4>
+            <div class="standings-skeleton" id="matches-skeleton">
+              <div class="skeleton-match"></div>
+              <div class="skeleton-match"></div>
+            </div>
+            <div class="standings-content">
+              <div class="round-filter-box">
+                <label for="round-filter" id="round-filter-label">Seleziona Giornata</label>
+                <select id="round-filter"></select>
               </div>
-              <div class="standings-content">
-                <div class="round-filter-box">
-                  <label for="round-filter" id="round-filter-label">Seleziona Giornata</label>
-                  <select id="round-filter"></select>
-                </div>
-                <div id="matches-list" class="matches-scroll" aria-live="polite"></div>
-              </div>
-            </section>
+              <div id="matches-list" class="matches-scroll" aria-live="polite"></div>
+            </div>
           </div>
 
           <!-- CLASSIFICA GIRONI -->
-          <div class="gironi-subsection">
-            <h4 class="gironi-subsection-title">Classifica Gironi</h4>
-            <section
-              id="standings-container"
-              class="standings-table-box-fullwidth"
-              aria-label="Classifiche gironi">
-              <div class="standings-skeleton" id="standings-skeleton">
-                <div class="skeleton skeleton-title"></div>
-                <div class="standings-group skeleton">
-                  <div class="skeleton-line"></div>
-                  <div class="skeleton-line"></div>
-                  <div class="skeleton-line short"></div>
-                </div>
-              </div>
-              <div id="standings" class="standings-content hidden"></div>
-            </section>
+          <div class="standings-box" id="standings-container">
+            <h4 class="standings-box-title">Classifica Gironi</h4>
+            <div class="standings-skeleton" id="standings-skeleton">
+              <div class="skeleton-match"></div>
+              <div class="skeleton-match"></div>
+            </div>
+            <div id="standings" class="standings-content hidden"></div>
           </div>
 
         </section>
