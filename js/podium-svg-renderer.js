@@ -219,7 +219,8 @@
         width: size,
         height: size,
         href: logoUrl,
-        "clip-path": `url(#${clip})`
+        "clip-path": `url(#${clip})`,
+        "preserveAspectRatio": "xMidYMid slice"
       });
     }
 
@@ -274,12 +275,12 @@
     const centerY = barY + height / 2;
 
     // logo leggermente sopra il centro
-    const logoY = centerY - 20;
+    const logoY = centerY - 12;
 
     o += teamLogo(cx, logoY, logo);
 
-    // nome molto vicino sotto il logo
-    const nameY = logoY + LOGO_SIZE / 2 + 8;
+    // nome vicino sotto il logo
+    const nameY = logoY + LOGO_SIZE / 2 + 16;
 
     o += svgEl(
       "text",
@@ -287,7 +288,7 @@
         x: cx,
         y: nameY,
         fill: P.textBright,
-        "font-size": 24,
+        "font-size": 20,
         "font-weight": "700",
         "text-anchor": "middle",
         "dominant-baseline": "middle"

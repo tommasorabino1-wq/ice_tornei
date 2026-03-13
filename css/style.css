@@ -2423,11 +2423,15 @@ section > .section-title {
   margin-bottom: 14px;
 }
 
+.standings-box-header .standings-box-title {
+  margin-bottom: 0;
+}
+
 /* Round filter (solo select, compatto) */
 .round-filter-select {
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 700;
   background-color: var(--surface-card);
   color: var(--text-main);
   border: 1px solid var(--border);
@@ -3050,7 +3054,7 @@ section > .section-title {
   .standings-not-started-actions .btn { padding: 12px 20px; font-size: 14px; }
   .standings-not-started-info .info-item { font-size: 14px; }
 
-  .round-filter-select { font-size: 14px; padding: 7px 14px; }
+  .round-filter-select { font-size: 16px; padding: 6px 16px; }
   .standings-box-header { gap: 14px; }
 
   .match-card-inner { padding: 16px; }
@@ -3115,7 +3119,7 @@ section > .section-title {
   .standings-not-started-actions .btn { padding: 14px 22px; font-size: 15px; }
   .standings-not-started-info .info-item { font-size: 15px; gap: 8px; }
 
-  .round-filter-select { font-size: 15px; padding: 8px 16px; }
+  .round-filter-select { font-size: 18px; padding: 6px 18px; }
 
   .match-card-inner { padding: 18px; }
   .match-main { gap: 10px; }
