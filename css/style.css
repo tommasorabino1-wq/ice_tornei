@@ -52,7 +52,7 @@
   --skeleton-bg: #e9e1d6;
 
   /* Misc */
-  --radius: 6px;
+  --radius: 14px;
   --font: 'Inter', sans-serif;
 }
 
@@ -614,7 +614,7 @@ section > .section-title {
   gap: 8px;
   padding: 8px 10px;
   border-radius: 999px;
-  background-color: var(--surface-soft);
+  background-color: var(--bg-main);
   border: 1px solid var(--border-soft);
   transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
 }
@@ -1237,7 +1237,7 @@ section > .section-title {
   font-size: 13px;
   color: var(--text-main);
   line-height: 1.5;
-  background: var(--surface-soft);
+  background: var(--bg-main);
   border: 1px solid var(--brand-soft-border);
   border-radius: 6px;
   padding: 6px 8px;
@@ -1272,6 +1272,12 @@ section > .section-title {
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 12px;
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-main);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Registration block */
@@ -1287,6 +1293,12 @@ section > .section-title {
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 10px;
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-main);
+  box-shadow: var(--shadow-sm);
 }
 
 .tournament-registration-block > p {
@@ -1320,6 +1332,12 @@ section > .section-title {
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 14px;
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-main);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Teams block */
@@ -1345,6 +1363,12 @@ section > .section-title {
   font-weight: 700;
   letter-spacing: 0.02em;
   margin: 0;
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-main);
+  box-shadow: var(--shadow-sm);
 }
 
 .teams-block-count {
@@ -1397,7 +1421,7 @@ section > .section-title {
 .tournament-capacity {
   padding: 14px;
   border-radius: var(--radius);
-  background: var(--surface-soft);
+  background: var(--bg-main);
   border: 1px solid var(--brand-soft-border);
 }
 
@@ -1885,7 +1909,7 @@ section > .section-title {
   gap: 10px;
   padding: 10px;
   border-radius: var(--radius);
-  background-color: var(--surface-soft);
+  background-color: var(--bg-main);
   border: 1px solid var(--border-soft);
   transition: background-color 0.18s ease, border-color 0.18s ease;
 }
@@ -1933,7 +1957,7 @@ section > .section-title {
   gap: 10px;
   padding: 10px;
   border-radius: var(--radius);
-  background-color: var(--surface-soft);
+  background-color: var(--bg-main);
   border: 1px solid var(--border-soft);
   transition: background-color 0.18s ease, border-color 0.18s ease;
 }
@@ -1991,8 +2015,12 @@ section > .section-title {
   font-weight: 700;
   color: var(--text-main);
   margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid var(--brand-soft-border);
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-main);
+  box-shadow: var(--shadow-sm);
 }
 
 
@@ -2049,7 +2077,7 @@ section > .section-title {
 }
 
 .why-ice-card {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-main);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
@@ -2137,6 +2165,12 @@ section > .section-title {
   font-size: 16px;
   font-weight: 700;
   color: var(--text-main);
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-main);
+  box-shadow: var(--shadow-sm);
 }
 
 .final-summary-intro {
@@ -2148,7 +2182,7 @@ section > .section-title {
 }
 
 .final-summary-rows {
-  background: var(--surface-soft);
+  background: var(--bg-main);
   border: 1px solid var(--brand-soft-border);
   border-radius: var(--radius);
   padding: 13px;
