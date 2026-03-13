@@ -805,9 +805,6 @@ function renderRoundFilter(rounds, profile) {
   const isChess = profile?.isChess || false;
   const roundWord = isChess ? 'Turno' : 'Giornata';
 
-  const label = document.getElementById("round-filter-label");
-  if (label) label.textContent = `Seleziona ${roundWord}`;
-
   select.innerHTML = "";
   rounds.forEach((round, index) => {
     const option = document.createElement("option");

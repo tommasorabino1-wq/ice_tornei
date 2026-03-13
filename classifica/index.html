@@ -199,10 +199,9 @@
 
           <!-- RISULTATI FINALI -->
           <div class="standings-box">
-            <h4 class="standings-box-title">Risultati Partite</h4>
-            <div class="round-filter-box">
-              <label for="finals-round-filter">Seleziona Round</label>
-              <select id="finals-round-filter"></select>
+            <div class="standings-box-header">
+              <h4 class="standings-box-title">Risultati Partite</h4>
+              <select id="finals-round-filter" class="round-filter-select"></select>
             </div>
             <div id="finals-bracket-content"></div>
           </div>
@@ -230,16 +229,15 @@
 
           <!-- RISULTATI PARTITE -->
           <div class="standings-box" id="matches-container">
-            <h4 class="standings-box-title">Risultati Partite</h4>
+            <div class="standings-box-header">
+              <h4 class="standings-box-title">Risultati Partite</h4>
+              <select id="round-filter" class="round-filter-select"></select>
+            </div>
             <div class="standings-skeleton" id="matches-skeleton">
               <div class="skeleton-match"></div>
               <div class="skeleton-match"></div>
             </div>
             <div class="standings-content">
-              <div class="round-filter-box">
-                <label for="round-filter" id="round-filter-label">Seleziona Giornata</label>
-                <select id="round-filter"></select>
-              </div>
               <div id="matches-list" class="matches-scroll" aria-live="polite"></div>
             </div>
           </div>
