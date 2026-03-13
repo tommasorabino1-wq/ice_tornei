@@ -113,8 +113,18 @@
 
       <!-- NAVIGATION -->
       <nav id="main-navigation" class="main-nav" aria-label="Navigazione principale">
-        <a href="/">Tornei</a>
-        <a href="/classifica" class="active">Classifiche</a>
+        <div class="nav-item nav-dropdown">
+          <a href="/" class="active" aria-current="page">
+            Tornei
+          </a>
+          <div class="nav-dropdown-menu">
+            <a href="/padel/">🥎 Padel</a>
+            <a href="/calcio/">⚽ Calcio</a>
+            <a href="/beach-volley/">🏐 Beach Volley</a>
+            <a href="/scacchi/">♟️ Scacchi</a>
+          </div>
+        </div>
+        <a href="/classifica">Classifiche</a>
         <a href="/regolamento">Regolamento</a>
       </nav>
 
