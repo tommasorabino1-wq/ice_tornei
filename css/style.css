@@ -2949,7 +2949,7 @@ section > .section-title {
 
 .standings-box .bracket-svg-wrapper {
   padding-top: 0;
-  margin-top: -8px;
+  margin-top: -4px;
 }
 
 .bracket-container::-webkit-scrollbar,
