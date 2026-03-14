@@ -157,16 +157,15 @@
 <body>
 
   <!-- ========================================
-       HEADER + NAV
-  ========================================= -->
+      SIDEBAR OVERLAY
+  ======================================== -->
+  <div class="nav-overlay" id="nav-overlay" aria-hidden="true"></div>
+
+  <!-- ========================================
+      HEADER + NAV
+  ======================================== -->
   <header class="main-header" role="banner">
     <div class="main-header-container">
-
-      <div class="brand">
-        <a href="/" aria-label="Homepage Tornei ICE">
-          <img src="/assets/logo.png" alt="Logo Tornei ICE" width="120" height="120">
-        </a>
-      </div>
 
       <button class="mobile-menu-toggle" aria-label="Apri menu di navigazione" aria-expanded="false" aria-controls="main-navigation">
         <span></span>
@@ -174,28 +173,44 @@
         <span></span>
       </button>
 
-      <nav id="main-navigation" class="main-nav" aria-label="Navigazione principale">
-
-        <div class="nav-item nav-dropdown">
-          <button class="nav-dropdown-toggle">
-            Tornei
-            <span class="nav-arrow">▾</span>
-          </button>
-          <div class="nav-dropdown-menu">
-            <a href="/">🏆 Tutti gli sport</a>
-            <a href="/padel/">🥎 Padel</a>
-            <a href="/calcio/">⚽ Calcio</a>
-            <a href="/beach-volley/">🏐 Beach Volley</a>
-            <a href="/scacchi/">♟️ Scacchi</a>
-          </div>
-        </div>
-        <a href="/classifica">Classifiche</a>
-        <a href="/regolamento">Regolamento</a>
-
-      </nav>
+      <div class="brand">
+        <a href="/" aria-label="Homepage Tornei ICE">
+          <img src="/assets/logo.png" alt="Logo Tornei ICE" width="120" height="120">
+        </a>
+      </div>
 
     </div>
   </header>
+
+  <!-- ========================================
+      SIDEBAR NAV
+  ======================================== -->
+  <nav id="main-navigation" class="main-nav" aria-label="Navigazione principale">
+
+    <div class="nav-sidebar-header">
+      <a href="/" class="nav-sidebar-logo" aria-label="Homepage Tornei ICE">
+        <img src="/assets/logo_nav.png" alt="Logo Tornei ICE" width="300" height="300">
+      </a>
+    </div>
+
+    <div class="nav-item nav-dropdown">
+      <button class="nav-dropdown-toggle" aria-expanded="false">
+        Tornei
+        <span class="nav-arrow"></span>
+      </button>
+      <div class="nav-dropdown-menu">
+        <a href="/">🏆 Tutti gli sport</a>
+        <a href="/padel/">🥎 Padel</a>
+        <a href="/calcio/">⚽ Calcio</a>
+        <a href="/beach-volley/">🏐 Beach Volley</a>
+        <a href="/scacchi/">♟️ Scacchi</a>
+      </div>
+    </div>
+
+    <a href="/classifica">Classifiche</a>
+    <a href="/regolamento">Regolamento</a>
+
+  </nav>
 
   <!-- ========================================
        MAIN CONTENT
