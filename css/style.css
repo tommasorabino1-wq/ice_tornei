@@ -260,7 +260,7 @@ body {
    LINK PRINCIPALI
 ========================= */
 
-.main-nav a,
+.nav-main-links a,
 .nav-dropdown-toggle {
   padding: 15px 20px;
   text-decoration: none;
@@ -274,8 +274,8 @@ body {
   display: block;
 }
 
-.main-nav a:not(.nav-sidebar-logo):hover,
-.main-nav a.active {
+.main-nav-links a:not(.nav-sidebar-logo):hover,
+.main-nav-links a.active {
   color: var(--text-main);
   background: var(--brand-soft);
 }
@@ -350,6 +350,53 @@ body {
 
 .nav-dropdown.active .nav-arrow {
   transform: rotate(-135deg);
+}
+
+
+/* =========================
+   SIDEBAR LEGAL LINKS
+========================= */
+
+.nav-main-links{
+  display:flex;
+  flex-direction:column;
+}
+
+.nav-legal{
+  margin-top:auto;               /* spinge la sezione in fondo */
+  padding:18px 20px 20px 20px;
+  border-top:1px solid var(--border-soft);
+
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+/* titolo legal */
+
+.nav-legal-title{
+  font-size:11px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--text-soft);
+  margin-bottom:4px;
+}
+
+/* link legal */
+
+.nav-legal a{
+  font-size:12px;
+  font-weight:500;
+  text-transform:none;
+  letter-spacing:0;
+  color:var(--text-soft);
+  padding:2px 0;
+  border:none;
+}
+
+.nav-legal a:hover{
+  color:var(--text-muted);
+  background:none;
 }
 
 
@@ -3273,6 +3320,15 @@ section > .section-title {
     border-radius:6px;
   }
 
+  .footer-container { padding: 28px 24px; }
+  .footer-content {
+    flex-direction: row;
+    gap: 32px;
+  }
+  .footer-section {
+    flex: 1;
+  }
+
 }
 
 
@@ -3347,6 +3403,19 @@ section > .section-title {
 
   .podium-svg-wrapper { min-height: 400px; }
   .skeleton-podium { height: 350px; }
+
+  .footer-container {
+    padding: 36px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .footer-brand {
+    justify-content: flex-start;
+    margin-bottom: 24px;
+  }
+  .footer-content {
+    gap: 48px;
+  }
 }
 
 

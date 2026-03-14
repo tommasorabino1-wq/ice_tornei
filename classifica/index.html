@@ -119,31 +119,49 @@
 
   <!-- ========================================
       SIDEBAR NAV
-  ======================================== -->
+  ========================================= -->
   <nav id="main-navigation" class="main-nav" aria-label="Navigazione principale">
 
+    <!-- LOGO -->
     <div class="nav-sidebar-header">
       <a href="/" class="nav-sidebar-logo" aria-label="Homepage Tornei ICE">
         <img src="/assets/logo_nav.png" alt="Logo Tornei ICE" width="300" height="300">
       </a>
     </div>
 
-    <div class="nav-item nav-dropdown">
-      <button class="nav-dropdown-toggle" aria-expanded="false">
-        Tornei
-        <span class="nav-arrow"></span>
-      </button>
-      <div class="nav-dropdown-menu">
-        <a href="/">🏆 Tutti gli sport</a>
-        <a href="/padel/">🥎 Padel</a>
-        <a href="/calcio/">⚽ Calcio</a>
-        <a href="/beach-volley/">🏐 Beach Volley</a>
-        <a href="/scacchi/">♟️ Scacchi</a>
+    <!-- NAV PRINCIPALE -->
+    <div class="nav-main-links">
+
+      <div class="nav-item nav-dropdown">
+        <button class="nav-dropdown-toggle" aria-expanded="false">
+          Tornei
+          <span class="nav-arrow"></span>
+        </button>
+
+        <div class="nav-dropdown-menu">
+          <a href="/">🏆 Tutti gli sport</a>
+          <a href="/padel/">🥎 Padel</a>
+          <a href="/calcio/">⚽ Calcio</a>
+          <a href="/beach-volley/">🏐 Beach Volley</a>
+          <a href="/scacchi/">♟️ Scacchi</a>
+        </div>
       </div>
+
+      <a href="/classifica">Classifiche</a>
+      <a href="/regolamento">Regolamento</a>
+
     </div>
 
-    <a href="/classifica">Classifiche</a>
-    <a href="/regolamento">Regolamento</a>
+    <!-- LEGAL LINKS (BOTTOM SIDEBAR) -->
+    <div class="nav-legal">
+
+      <span class="nav-legal-title">Legal</span>
+
+      <a>Privacy Policy</a>
+      <a>Cookie Policy</a>
+      <a>Termini e condizioni</a>
+
+    </div>
 
   </nav>
 
@@ -287,7 +305,7 @@
   </main>
 
   <!-- ========================================
-       FOOTER (semantico)
+      FOOTER
   ========================================= -->
   <footer class="site-footer" role="contentinfo">
     <div class="footer-container">
@@ -299,23 +317,35 @@
 
       <div class="footer-content">
 
+        <!-- CONTATTI -->
         <div class="footer-section footer-contacts">
           <h2>Contatti</h2>
-          <p><a href="tel:+393396160901" aria-label="Chiama Tornei ICE">📞 +39 339 616 0901</a></p>
-          <p><a href="mailto:tornei.ice.torino@gmail.com" aria-label="Email Tornei ICE">✉️ tornei.ice.torino@gmail.com</a></p>
+          <p>
+            <a href="tel:+393396160901" aria-label="Chiama Tornei ICE">
+              📞 +39 339 616 0901
+            </a>
+          </p>
+          <p>
+            <a href="mailto:tornei.ice.torino@gmail.com" aria-label="Email Tornei ICE">
+              ✉️ tornei.ice.torino@gmail.com
+            </a>
+          </p>
         </div>
 
+        <!-- NAVIGAZIONE -->
         <div class="footer-section footer-nav">
           <h2>Naviga</h2>
-          <a href="/">Tornei</a>
+          <a href="/">Homepage</a>
           <a href="/classifica">Classifiche</a>
           <a href="/regolamento">Regolamento</a>
         </div>
 
+        <!-- LEGAL -->
         <div class="footer-section footer-legal">
           <h2>Legal</h2>
-          <a href="#">Privacy Policy</a>
-          <a href="#">Termini e condizioni</a>
+          <a href="/privacy-policy">Privacy Policy</a>
+          <a href="/cookie-policy">Cookie Policy</a>
+          <a href="/termini-condizioni">Termini e condizioni</a>
         </div>
 
       </div>
