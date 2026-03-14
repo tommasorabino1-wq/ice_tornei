@@ -1,38 +1,61 @@
 // ===============================
-// HAMBURGER MENU TOGGLE
+// SIDEBAR NAVIGATION
 // ===============================
-const menuToggle = document.querySelector(".mobile-menu-toggle");
-const mainNav = document.querySelector(".main-nav");
 
-if (menuToggle && mainNav) {
-  menuToggle.addEventListener("click", () => {
-    menuToggle.classList.toggle("active");
-    mainNav.classList.toggle("active");
+const menuToggle   = document.querySelector(".mobile-menu-toggle");
+const mainNav      = document.getElementById("main-navigation");
+const navOverlay   = document.getElementById("nav-overlay");
 
-    const expanded = menuToggle.getAttribute("aria-expanded") === "true";
-    menuToggle.setAttribute("aria-expanded", String(!expanded));
-  });
+function openNav() {
+  mainNav.classList.add("active");
+  navOverlay.classList.add("active");
+  menuToggle.classList.add("active");
+  menuToggle.setAttribute("aria-expanded", "true");
+  document.body.style.overflow = "hidden"; // blocca scroll pagina
 }
 
+function closeNav() {
+  mainNav.classList.remove("active");
+  navOverlay.classList.remove("active");
+  menuToggle.classList.remove("active");
+  menuToggle.setAttribute("aria-expanded", "false");
+  document.body.style.overflow = "";
+}
+
+if (menuToggle && mainNav && navOverlay) {
+
+  // apri con hamburger
+  menuToggle.addEventListener("click", () => {
+    mainNav.classList.contains("active") ? closeNav() : openNav();
+  });
+
+  // chiudi cliccando l'overlay
+  navOverlay.addEventListener("click", closeNav);
+
+  // chiudi con ESC
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && mainNav.classList.contains("active")) {
+      closeNav();
+    }
+  });
+
+}
 
 // ===============================
 // NAV DROPDOWN (TORNEI)
 // ===============================
 
 const dropdownToggle = document.querySelector(".nav-dropdown-toggle");
-const dropdown = document.querySelector(".nav-dropdown");
+const dropdown       = document.querySelector(".nav-dropdown");
 
 if (dropdownToggle && dropdown) {
-
-  dropdownToggle.addEventListener("click", (e) => {
-
-    e.preventDefault();
-
-    dropdown.classList.toggle("active");
-
+  dropdownToggle.addEventListener("click", () => {
+    const isActive = dropdown.classList.toggle("active");
+    dropdownToggle.setAttribute("aria-expanded", String(isActive));
   });
-
 }
+
+
 
 // ===============================
 // TORNEI PADEL
