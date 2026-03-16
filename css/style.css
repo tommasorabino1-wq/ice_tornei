@@ -1328,6 +1328,16 @@ section > .section-title {
   display:block;
 }
 
+.intro-box a {
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.intro-box a:hover {
+  color: var(--brand-hover);
+}
+
 
 /* =========================
    19. FAQ
