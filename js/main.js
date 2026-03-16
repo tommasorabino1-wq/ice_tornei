@@ -585,42 +585,7 @@ gsap.utils.toArray(".reveal-section").forEach(section => {
 
 
 // ===============================
-// HERO COUNTER ANIMATION
-// ===============================
-
-const statNumbers = document.querySelectorAll(".stat-number");
-function animateStats(){
-  statNumbers.forEach(el => {
-  const target = Number(el.dataset.target);
-    gsap.fromTo(el,
-    { innerText: 0 },
-      {
-      innerText: target,
-      duration: 2,
-      ease: "power1.out",
-      snap:{ innerText:1 },
-      onUpdate:function(){
-        el.innerText = "+" + Math.floor(el.innerText);
-        }
-      }
-    );
-  });
-}
-
-ScrollTrigger.create({
-  trigger: ".hero-stats",
-  start: "top 85%",
-  onEnter: animateStats,
-  once:true
-});
-
-
-
-
-
-
-// ===============================
-// SPORTS SLIDER — frecce only
+// SPORTS SLIDER
 // ===============================
 
 const sportsTrackInner = document.getElementById("sports-track-inner");

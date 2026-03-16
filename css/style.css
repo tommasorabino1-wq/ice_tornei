@@ -1020,45 +1020,6 @@ section > .section-title {
   font-weight: 300;
 }
 
-/* Hero stats */
-.hero-stats {
-  display: flex;
-  justify-content: center;
-  gap: 28px;
-  margin-top: 10px;
-  margin-bottom: 28px;
-  flex-wrap: wrap;
-}
-
-.hero-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: var(--surface-card);
-  border: 1px solid var(--border);
-  min-width: 90px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.hero-stat:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md), 0 0 14px var(--brand-glow-soft);
-}
-
-.stat-number {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--brand);
-}
-
-.stat-label {
-  font-size: 13px;
-  color: var(--text-main);
-  margin-top: 1px;
-  letter-spacing: 0.02em;
-}
 
 /* Hero CTA */
 .hero-cta {
@@ -4080,46 +4041,119 @@ section > .section-title {
 
 
 
+
+
+
 /* =========================
    COOKIE BANNER
 ========================= */
 
 .cookie-banner{
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(30px);
+  width: calc(100% - 32px);
+  max-width: 920px;
+
   background: var(--surface-card);
-  border-top: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+
   padding: 18px 20px;
+
   z-index: 9999;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+
+  box-shadow:
+    0 12px 35px rgba(0,0,0,0.12),
+    0 2px 8px rgba(0,0,0,0.08);
+
+  opacity: 0;
+  transition:
+    transform 0.35s ease,
+    opacity 0.35s ease;
+}
+
+/* banner visibile */
+
+.cookie-banner:not(.hidden){
+  opacity:1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .cookie-banner.hidden{
   display:none;
 }
 
+
+/* =========================
+   CONTENUTO
+========================= */
+
 .cookie-banner-content{
-  max-width: 900px;
-  margin: 0 auto;
   display:flex;
   flex-direction:column;
   gap:14px;
 }
 
+
+/* =========================
+   TESTO
+========================= */
+
 .cookie-text{
   font-size:13px;
+  line-height:1.6;
   color:var(--text-muted);
-  line-height:1.5;
 }
 
 .cookie-text a{
   color:var(--brand);
   text-decoration:none;
+  font-weight:500;
 }
+
+.cookie-text a:hover{
+  text-decoration:underline;
+}
+
+
+/* =========================
+   BOTTONI
+========================= */
 
 .cookie-buttons{
   display:flex;
   gap:10px;
+  flex-wrap:wrap;
+}
+
+.cookie-buttons .btn{
+  font-size:13px;
+  padding:8px 14px;
+}
+
+
+/* =========================
+   DESKTOP LAYOUT
+========================= */
+
+@media (min-width: 640px){
+
+  .cookie-banner-content{
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+  }
+
+  .cookie-text{
+    flex:1;
+    font-size:13px;
+  }
+
+  .cookie-buttons{
+    flex-shrink:0;
+  }
+
 }
