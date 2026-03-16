@@ -3092,31 +3092,28 @@ section > .section-title {
 
 
 /* =========================
-   34. FINALS ROUNDS
+   34. FINALS TITLES
 ========================= */
-.finals-round {
-  background-color: var(--bg-main);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 12px;
-  margin-bottom: 12px;
-}
 
-.finals-round:last-child { margin-bottom: 0; }
-
-.finals-round h3 {
+.finals-round-title {
   font-size: 14px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-main);
-  margin-bottom: 12px;
+  color: var(--text-muted);
+
+  margin-bottom: 10px;
   padding-left: 10px;
   border-left: 3px solid var(--brand);
 }
 
-.finals-round .match-card { margin-bottom: 10px; }
-.finals-round .match-card:last-child { margin-bottom: 0; }
+/* spazio tra gruppi di partite */
+#finals-bracket-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 
 
 /* =========================

@@ -908,30 +908,53 @@ function renderFinalsMatchesByRound(roundId, bracket) {
     return;
   }
 
-  if (matchesInRound.length > 0) {
-    const roundBox = document.createElement("div");
-    roundBox.className = "finals-round";
-    roundBox.innerHTML = `<h3>${escapeHTML(roundLabel)}</h3>`;
-    matchesInRound.forEach(match => {
-      const card = renderMatchCard(match, profile.isSetBased, true, TOURNAMENT_IS_INDIVIDUAL, roundLabel);
-      roundBox.appendChild(card);
-    });
-    container.appendChild(roundBox);
-  }
+  // ===============================
+  // ROUND TITLE
+  // ===============================
+  const roundTitle = document.createElement("h3");
+  roundTitle.className = "finals-round-title";
+  roundTitle.textContent = roundLabel;
+  container.appendChild(roundTitle);
 
+  // ===============================
+  // MATCHES
+  // ===============================
+  matchesInRound.forEach(match => {
+    const card = renderMatchCard(
+      match,
+      profile.isSetBased,
+      true,
+      TOURNAMENT_IS_INDIVIDUAL,
+      roundLabel
+    );
+    container.appendChild(card);
+  });
+
+  // ===============================
+  // THIRD PLACE MATCH
+  // ===============================
   if (bracket.thirdPlaceMatch) {
     const maxRound = Math.max(...Object.keys(bracket.rounds).map(Number));
+
     if (Number(roundId) === maxRound) {
-      const thirdBox = document.createElement("div");
-      thirdBox.className = "finals-round finals-third-place";
-      thirdBox.innerHTML = `<h3>Finale 3°/4° Posto</h3>`;
-      const card = renderMatchCard(bracket.thirdPlaceMatch, profile.isSetBased, true, TOURNAMENT_IS_INDIVIDUAL, "Finale 3°/4° Posto");
-      thirdBox.appendChild(card);
-      container.appendChild(thirdBox);
+
+      const thirdTitle = document.createElement("h3");
+      thirdTitle.className = "finals-round-title finals-third-title";
+      thirdTitle.textContent = "Finale 3°/4° Posto";
+      container.appendChild(thirdTitle);
+
+      const card = renderMatchCard(
+        bracket.thirdPlaceMatch,
+        profile.isSetBased,
+        true,
+        TOURNAMENT_IS_INDIVIDUAL,
+        "Finale 3°/4° Posto"
+      );
+
+      container.appendChild(card);
     }
   }
 }
-
 
 function loadFinalsBracket(tournamentId) {
   const url = `${API_URLS.getBracket}?tournament_id=${encodeURIComponent(tournamentId)}`;
