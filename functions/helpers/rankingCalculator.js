@@ -2,7 +2,7 @@ const admin = require('firebase-admin');
 const db = admin.firestore();
 
 // ===============================
-// HELPER: Normalizza stringa per usarla come chiave
+// HELPER: Normalizza stringa per usarla come chiave di lookup
 // "  Rossoneri FC  " → "rossoneri fc"
 // ===============================
 function normalizeKey(str) {
@@ -10,6 +10,25 @@ function normalizeKey(str) {
     .toLowerCase()
     .trim()
     .replace(/\s+/g, ' ');
+}
+
+// ===============================
+// HELPER: Normalizzazione aggressiva per matching scorer ↔ giocatore
+// Rimuove TUTTI gli spazi e porta in lowercase.
+// Serve per rendere il match robusto a variazioni di spaziatura e maiuscole.
+//
+// Esempi:
+//   "Mario Rossi"  → "mariorossi"
+//   "mario rossi"  → "mariorossi"
+//   "mariorossi"   → "mariorossi"
+//   "Mario  Rossi" → "mariorossi"
+//   "marioRossi"   → "mariorossi"
+//   "MARIO ROSSI"  → "mariorossi"
+// ===============================
+function normalizeForMatch(str) {
+  return String(str || '')
+    .toLowerCase()
+    .replace(/\s+/g, '');
 }
 
 // ===============================
@@ -23,13 +42,10 @@ function makeDocId(sport, name) {
 
 // ===============================
 // HELPER: Determina V/P/S per team_a e team_b da un singolo match
-// Restituisce { resultA: 'win'|'draw'|'loss', resultB: 'win'|'draw'|'loss' }
 // ===============================
 function getMatchResult(match) {
   if (!match.played || match.score_a === null || match.score_b === null) return null;
 
-  // Per le finals: se c'è winner_team_id, è sempre vittoria netta
-  // (gestisce rigori, golden set, ecc.)
   if (match.winner_team_id) {
     const winnerIsA = match.winner_team_id === match.team_a;
     return {
@@ -38,7 +54,6 @@ function getMatchResult(match) {
     };
   }
 
-  // Gironi standard
   const scoreA = Number(match.score_a);
   const scoreB = Number(match.score_b);
   if (scoreA > scoreB) return { resultA: 'win',  resultB: 'loss' };
@@ -47,8 +62,11 @@ function getMatchResult(match) {
 }
 
 // ===============================
-// HELPER: Parsa scorers string in array di nomi normalizzati
-// "Mario Rossi, Luigi Bianchi" → ["mario rossi", "luigi bianchi"]
+// HELPER: Parsa scorers string in array di chiavi normalizzate (aggressive)
+// "Mario Rossi, Luigi Bianchi" → ["mariorossi", "luigibianchi"]
+//
+// Usa normalizeForMatch (no spazi) così il lookup funziona
+// indipendentemente da come l'admin ha scritto il nome.
 // ===============================
 function parseScorers(scorersStr) {
   if (!scorersStr || typeof scorersStr !== 'string') return [];
@@ -56,7 +74,7 @@ function parseScorers(scorersStr) {
     .split(',')
     .map(s => s.trim())
     .filter(Boolean)
-    .map(s => normalizeKey(s));
+    .map(s => normalizeForMatch(s));
 }
 
 // ===============================
@@ -123,21 +141,6 @@ function applyResult(stats, result) {
 
 // ===============================
 // MAIN: Aggiorna ranking per un torneo specifico
-// Da chiamare ogni volta che un match (gironi o finals) cambia risultato.
-//
-// Logica per sport:
-//   - calcio, padel, beach_volley → scrive ranking_teams + ranking_players
-//   - scacchi                     → scrive SOLO ranking_players
-//                                   (team_name = player_name, torneo sempre individual)
-//
-// Logica logo (Falla 1 fix):
-//   - Se il logo calcolato per questo torneo è non-null → sovrascrive sempre
-//     (è il logo più recente disponibile)
-//   - Se è null → mantiene il logo già esistente su Firestore (da torni precedenti)
-//
-// Logica giocatori (Falla 2 fix):
-//   - ranking_players NON contiene team_name né team_logo
-//   - chiave: sport__player_name_norm (accettiamo omonimia come limitazione nota)
 // ===============================
 async function updateRanking(tournamentId) {
   try {
@@ -151,11 +154,11 @@ async function updateRanking(tournamentId) {
     }
 
     const tournament = tournamentDoc.data();
-    const sport    = normalizeSportFromTournament(tournament.sport);
-    const isChess  = sport === 'scacchi';
-    const isCalcio = sport === 'calcio';
-    const hasDraws = isCalcio || isChess;
-    const writeTeams = !isChess; // Scacchi: solo ranking_players
+    const sport      = normalizeSportFromTournament(tournament.sport);
+    const isChess    = sport === 'scacchi';
+    const isCalcio   = sport === 'calcio';
+    const hasDraws   = isCalcio || isChess;
+    const writeTeams = !isChess;
 
     console.log(`📋 [RANKING] Sport: ${sport} | writeTeams: ${writeTeams} | hasDraws: ${hasDraws} | isCalcio: ${isCalcio}`);
 
@@ -177,12 +180,11 @@ async function updateRanking(tournamentId) {
       return;
     }
 
-    // ── 3) Leggi teams del torneo (per logo) ─────────────────────────────────
+    // ── 3) Leggi teams del torneo (per logo + giocatori) ─────────────────────
     const teamsSnap = await db.collection('teams')
       .where('tournament_id', '==', tournamentId)
       .get();
 
-    // Mappa team_id → { team_logo }
     const teamsMap = {};
     teamsSnap.docs.forEach(d => {
       const data = d.data();
@@ -190,15 +192,17 @@ async function updateRanking(tournamentId) {
     });
 
     // ── 4) Strutture di aggregazione ─────────────────────────────────────────
-    // teamStats[team_name_norm]     → stats squadra  (non usato per scacchi)
-    // playerStats[player_name_norm] → stats giocatore (tutti gli sport)
-    //
-    // NOTA logo squadra:
-    //   Teniamo il logo non-null più recente trovato durante l'elaborazione
-    //   dei match di QUESTO torneo. Se null, la logica di scrittura su
-    //   Firestore mantiene il valore già presente (da tornei precedenti).
     const teamStats   = {};
     const playerStats = {};
+
+    // Per l'attribuzione gol agli scorer, manteniamo una mappa:
+    //   matchNorm → playerNorm
+    // dove matchNorm = normalizeForMatch(playerName) (no spazi, lowercase)
+    // e playerNorm = normalizeKey(playerName) (con spazi, lowercase) → chiave di playerStats
+    //
+    // In questo modo quando parsiamo "mario rossi" dallo scorer, troviamo
+    // "mariorossi" → "mario rossi" → playerStats["mario rossi"]
+    const scorerMatchKeyToPlayerNorm = {};
 
     function ensureTeam(teamId, teamName) {
       const norm = normalizeKey(teamName);
@@ -207,12 +211,9 @@ async function updateRanking(tournamentId) {
           ...emptyStats(hasDraws, isCalcio),
           team_name:      teamName,
           team_name_norm: norm,
-          // Logo: prende il valore dal documento teams di QUESTO torneo.
-          // Può essere null se il team non ha ancora un logo.
-          team_logo: teamsMap[teamId]?.team_logo || null,
+          team_logo:      teamsMap[teamId]?.team_logo || null,
         };
       } else {
-        // Se questa occorrenza ha un logo e quella precedente no → aggiorna
         const newLogo = teamsMap[teamId]?.team_logo || null;
         if (newLogo && !teamStats[norm].team_logo) {
           teamStats[norm].team_logo = newLogo;
@@ -222,16 +223,23 @@ async function updateRanking(tournamentId) {
     }
 
     function ensurePlayer(playerName) {
-      const norm = normalizeKey(playerName);
+      const norm = normalizeKey(playerName);         // "mario rossi"   → chiave playerStats
+      const matchKey = normalizeForMatch(playerName); // "mario rossi"   → "mariorossi"
       if (!norm) return null;
+
       if (!playerStats[norm]) {
         playerStats[norm] = {
           ...emptyStats(hasDraws, isCalcio),
           player_name:      playerName,
           player_name_norm: norm,
-          // Nessun riferimento a team_name o team_logo (fix Falla 2)
         };
       }
+
+      // Registra il mapping matchKey → norm per l'attribuzione gol
+      // Se due giocatori diversi collassano sullo stesso matchKey (omonimia senza spazi)
+      // l'ultimo vince — limitazione accettata, già documentata come Falla 3.
+      scorerMatchKeyToPlayerNorm[matchKey] = norm;
+
       return norm;
     }
 
@@ -263,14 +271,12 @@ async function updateRanking(tournamentId) {
 
       // ── 5b) Ranking players ────────────────────────────────────────────────
       if (isChess) {
-        // Scacchi: team_name IS il nome del giocatore (torneo individual)
         const normA = ensurePlayer(teamAName);
         const normB = ensurePlayer(teamBName);
         if (normA) applyResult(playerStats[normA], resultA);
         if (normB) applyResult(playerStats[normB], resultB);
 
       } else {
-        // Calcio, Padel, Beach Volley: leggi i giocatori dal documento teams
         const teamADoc = teamsMap[teamAId];
         if (teamADoc) {
           for (const playerName of extractPlayers(teamADoc)) {
@@ -287,28 +293,36 @@ async function updateRanking(tournamentId) {
           }
         }
 
-        // ── 5c) Gol giocatori (solo calcio, da scorers_a/b) ─────────────────
+        // ── 5c) Gol giocatori (solo calcio) ───────────────────────────────────
+        // parseScorers restituisce chiavi normalizeForMatch (no spazi, lowercase).
+        // Le cerchiamo in scorerMatchKeyToPlayerNorm per ottenere la chiave
+        // di playerStats (con spazi, lowercase).
         if (isCalcio) {
-          for (const scorerNorm of parseScorers(match.scorers_a)) {
-            if (playerStats[scorerNorm]) playerStats[scorerNorm].gol++;
+          for (const matchKey of parseScorers(match.scorers_a)) {
+            const playerNorm = scorerMatchKeyToPlayerNorm[matchKey];
+            if (playerNorm && playerStats[playerNorm]) {
+              playerStats[playerNorm].gol++;
+            } else {
+              console.warn(`⚠️ [RANKING] Scorer not matched: "${matchKey}" in match ${match.match_id}`);
+            }
           }
-          for (const scorerNorm of parseScorers(match.scorers_b)) {
-            if (playerStats[scorerNorm]) playerStats[scorerNorm].gol++;
+          for (const matchKey of parseScorers(match.scorers_b)) {
+            const playerNorm = scorerMatchKeyToPlayerNorm[matchKey];
+            if (playerNorm && playerStats[playerNorm]) {
+              playerStats[playerNorm].gol++;
+            } else {
+              console.warn(`⚠️ [RANKING] Scorer not matched: "${matchKey}" in match ${match.match_id}`);
+            }
           }
         }
       }
     }
 
-    // ── 6) Leggi loghi esistenti su Firestore (per la logica "keep if new is null") ──
-    // Raccogliamo tutti i docId che scriveremo, poi leggiamo i valori correnti
-    // in un'unica query batch per non fare N letture singole.
-    const teamDocIds   = Object.values(teamStats).map(s => makeDocId(sport, s.team_name_norm));
-    const playerDocIds = Object.values(playerStats).map(s => makeDocId(sport, s.player_name_norm));
+    // ── 6) Leggi loghi esistenti su Firestore (keep-if-null logic) ───────────
+    const teamDocIds = Object.values(teamStats).map(s => makeDocId(sport, s.team_name_norm));
 
-    // Leggi loghi esistenti per ranking_teams
     const existingTeamLogos = {};
     if (writeTeams && teamDocIds.length > 0) {
-      // Firestore non supporta "get by multiple IDs" con where, usiamo getAll
       const refs = teamDocIds.map(id => db.collection('ranking_teams').doc(id));
       const docs = await db.getAll(...refs);
       docs.forEach(doc => {
@@ -322,14 +336,10 @@ async function updateRanking(tournamentId) {
     const batch = db.batch();
     let writeCount = 0;
 
-    // ranking_teams (skip per scacchi)
     if (writeTeams) {
       for (const [, stats] of Object.entries(teamStats)) {
         const docId = makeDocId(sport, stats.team_name_norm);
         const ref   = db.collection('ranking_teams').doc(docId);
-
-        // Logo: usa quello di questo torneo se non-null,
-        // altrimenti mantieni quello già su Firestore (da tornei precedenti)
         const resolvedLogo = stats.team_logo || existingTeamLogos[docId] || null;
 
         const docData = {
@@ -353,8 +363,6 @@ async function updateRanking(tournamentId) {
               ? Math.round((stats.gol / stats.presenze) * 100) / 100
               : 0,
           }),
-          // Logo scritto solo se non-null: evita di sovrascrivere con null
-          // un logo valido proveniente da un torneo precedente
           ...(resolvedLogo !== null && { team_logo: resolvedLogo }),
         };
 
@@ -363,8 +371,6 @@ async function updateRanking(tournamentId) {
       }
     }
 
-    // ranking_players (tutti gli sport inclusi scacchi)
-    // Nessun team_name, nessun team_logo (fix Falla 2)
     for (const [, stats] of Object.entries(playerStats)) {
       const docId = makeDocId(sport, stats.player_name_norm);
       const ref   = db.collection('ranking_players').doc(docId);
