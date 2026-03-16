@@ -4077,3 +4077,49 @@ section > .section-title {
     font-size: 20px;
   }
 }
+
+
+
+/* =========================
+   COOKIE BANNER
+========================= */
+
+.cookie-banner{
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--surface-card);
+  border-top: 1px solid var(--border);
+  padding: 18px 20px;
+  z-index: 9999;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+}
+
+.cookie-banner.hidden{
+  display:none;
+}
+
+.cookie-banner-content{
+  max-width: 900px;
+  margin: 0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.cookie-text{
+  font-size:13px;
+  color:var(--text-muted);
+  line-height:1.5;
+}
+
+.cookie-text a{
+  color:var(--brand);
+  text-decoration:none;
+}
+
+.cookie-buttons{
+  display:flex;
+  gap:10px;
+}
