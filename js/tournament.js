@@ -2929,10 +2929,14 @@ function handleFormSubmit(tournament) {
           "TOURNAMENT_NOT_FOUND":         "Torneo non valido ❌",
           "REGISTRATIONS_CLOSED":         "Le iscrizioni sono chiuse ⚠️",
           "INVALID_DATA":                 "Dati mancanti o non validi ⚠️",
-          "DUPLICATE_TEAM":               isIndividual ? "Un giocatore con questo nome è già iscritto ⚠️" : "Una squadra con questo nome è già iscritta ⚠️",
-          "DUPLICATE_EMAIL":              "Questa email è già stata utilizzata ⚠️",
+          "DUPLICATE_TEAM":               isIndividual
+            ? "Questo nome è già iscritto a questo torneo. Prova ad aggiungere un secondo nome, un'iniziale o un soprannome (es. 'Mario R.' o 'MarioTheKing') ⚠️"
+            : "Una squadra con questo nome è già iscritta a questo torneo. Scegli un nome diverso ⚠️",
+          "DUPLICATE_EMAIL":              "Questa email è già stata utilizzata per questo torneo ⚠️",
           "DUPLICATE":                    "Questa email è già iscritta ⚠️",
-          "DUPLICATE_TEAM_NAME_IN_SPORT": isIndividual ? "Questo nome è già registrato in un torneo dello stesso sport ⚠️" : "Questa squadra è già iscritta in un torneo dello stesso sport ⚠️"
+          "DUPLICATE_TEAM_NAME_IN_SPORT": isIndividual
+            ? "Questo nome è già registrato in un torneo dello stesso sport. Prova ad aggiungere un secondo nome, un'iniziale o un soprannome (es. 'Mario R.' o 'MarioTheKing') ⚠️"
+            : "Una squadra con questo nome esiste già in un torneo dello stesso sport. Scegli un nome diverso ⚠️"
         };
  
         if (errorMessages[response]) {
@@ -3067,8 +3071,8 @@ nextBtn.addEventListener("click", async () => {
           const isIndividual = currentTournamentData?.individual_or_team?.toLowerCase() === 'individual';
           showToast(
             isIndividual
-              ? "Questo nome è già registrato in un torneo dello stesso sport ⚠️"
-              : "Questa squadra è già iscritta in un torneo dello stesso sport ⚠️"
+              ? "Nome già in uso. Prova a modificarlo leggermente. ⚠️"
+              : "Nome squadra già in uso. Prova con un altro nome. ⚠️"
           );
           nextBtn.disabled = false;
           nextBtn.textContent = originalText;
