@@ -106,8 +106,8 @@ function emptyStats(hasDraws, isCalcio) {
     presenze:  0,
     vittorie:  0,
     sconfitte: 0,
-    ...(hasDraws  && { pareggi: 0 }),
-    ...(isCalcio  && { gol: 0 }),
+    ...(hasDraws && { pareggi: 0 }),
+    ...(isCalcio && { gol: 0 }),
   };
 }
 
@@ -129,6 +129,15 @@ function applyResult(stats, result) {
 //   - calcio, padel, beach_volley → scrive ranking_teams + ranking_players
 //   - scacchi                     → scrive SOLO ranking_players
 //                                   (team_name = player_name, torneo sempre individual)
+//
+// Logica logo (Falla 1 fix):
+//   - Se il logo calcolato per questo torneo è non-null → sovrascrive sempre
+//     (è il logo più recente disponibile)
+//   - Se è null → mantiene il logo già esistente su Firestore (da torni precedenti)
+//
+// Logica giocatori (Falla 2 fix):
+//   - ranking_players NON contiene team_name né team_logo
+//   - chiave: sport__player_name_norm (accettiamo omonimia come limitazione nota)
 // ===============================
 async function updateRanking(tournamentId) {
   try {
@@ -146,9 +155,7 @@ async function updateRanking(tournamentId) {
     const isChess  = sport === 'scacchi';
     const isCalcio = sport === 'calcio';
     const hasDraws = isCalcio || isChess;
-
-    // Scacchi: scrivi solo ranking_players, skip ranking_teams
-    const writeTeams = !isChess;
+    const writeTeams = !isChess; // Scacchi: solo ranking_players
 
     console.log(`📋 [RANKING] Sport: ${sport} | writeTeams: ${writeTeams} | hasDraws: ${hasDraws} | isCalcio: ${isCalcio}`);
 
@@ -170,11 +177,12 @@ async function updateRanking(tournamentId) {
       return;
     }
 
-    // ── 3) Leggi tutti i teams del torneo (per logo + giocatori) ─────────────
+    // ── 3) Leggi teams del torneo (per logo) ─────────────────────────────────
     const teamsSnap = await db.collection('teams')
       .where('tournament_id', '==', tournamentId)
       .get();
 
+    // Mappa team_id → { team_logo }
     const teamsMap = {};
     teamsSnap.docs.forEach(d => {
       const data = d.data();
@@ -184,37 +192,44 @@ async function updateRanking(tournamentId) {
     // ── 4) Strutture di aggregazione ─────────────────────────────────────────
     // teamStats[team_name_norm]     → stats squadra  (non usato per scacchi)
     // playerStats[player_name_norm] → stats giocatore (tutti gli sport)
+    //
+    // NOTA logo squadra:
+    //   Teniamo il logo non-null più recente trovato durante l'elaborazione
+    //   dei match di QUESTO torneo. Se null, la logica di scrittura su
+    //   Firestore mantiene il valore già presente (da tornei precedenti).
     const teamStats   = {};
     const playerStats = {};
 
     function ensureTeam(teamId, teamName) {
       const norm = normalizeKey(teamName);
       if (!teamStats[norm]) {
-        const teamDoc = teamsMap[teamId] || {};
         teamStats[norm] = {
           ...emptyStats(hasDraws, isCalcio),
           team_name:      teamName,
           team_name_norm: norm,
-          team_logo:      teamDoc.team_logo || null,
+          // Logo: prende il valore dal documento teams di QUESTO torneo.
+          // Può essere null se il team non ha ancora un logo.
+          team_logo: teamsMap[teamId]?.team_logo || null,
         };
-      } else if (!teamStats[norm].team_logo && teamsMap[teamId]?.team_logo) {
-        // Aggiorna logo se ora disponibile
-        teamStats[norm].team_logo = teamsMap[teamId].team_logo;
+      } else {
+        // Se questa occorrenza ha un logo e quella precedente no → aggiorna
+        const newLogo = teamsMap[teamId]?.team_logo || null;
+        if (newLogo && !teamStats[norm].team_logo) {
+          teamStats[norm].team_logo = newLogo;
+        }
       }
       return norm;
     }
 
-    function ensurePlayer(playerName, teamId, teamName) {
+    function ensurePlayer(playerName) {
       const norm = normalizeKey(playerName);
       if (!norm) return null;
-      const teamDoc = teamsMap[teamId] || {};
       if (!playerStats[norm]) {
         playerStats[norm] = {
           ...emptyStats(hasDraws, isCalcio),
           player_name:      playerName,
           player_name_norm: norm,
-          team_name:        teamName,
-          team_logo:        teamDoc.team_logo || null,
+          // Nessun riferimento a team_name o team_logo (fix Falla 2)
         };
       }
       return norm;
@@ -249,8 +264,8 @@ async function updateRanking(tournamentId) {
       // ── 5b) Ranking players ────────────────────────────────────────────────
       if (isChess) {
         // Scacchi: team_name IS il nome del giocatore (torneo individual)
-        const normA = ensurePlayer(teamAName, teamAId, teamAName);
-        const normB = ensurePlayer(teamBName, teamBId, teamBName);
+        const normA = ensurePlayer(teamAName);
+        const normB = ensurePlayer(teamBName);
         if (normA) applyResult(playerStats[normA], resultA);
         if (normB) applyResult(playerStats[normB], resultB);
 
@@ -259,7 +274,7 @@ async function updateRanking(tournamentId) {
         const teamADoc = teamsMap[teamAId];
         if (teamADoc) {
           for (const playerName of extractPlayers(teamADoc)) {
-            const pNorm = ensurePlayer(playerName, teamAId, teamAName);
+            const pNorm = ensurePlayer(playerName);
             if (pNorm) applyResult(playerStats[pNorm], resultA);
           }
         }
@@ -267,7 +282,7 @@ async function updateRanking(tournamentId) {
         const teamBDoc = teamsMap[teamBId];
         if (teamBDoc) {
           for (const playerName of extractPlayers(teamBDoc)) {
-            const pNorm = ensurePlayer(playerName, teamBId, teamBName);
+            const pNorm = ensurePlayer(playerName);
             if (pNorm) applyResult(playerStats[pNorm], resultB);
           }
         }
@@ -284,7 +299,26 @@ async function updateRanking(tournamentId) {
       }
     }
 
-    // ── 6) Scrivi su Firestore ───────────────────────────────────────────────
+    // ── 6) Leggi loghi esistenti su Firestore (per la logica "keep if new is null") ──
+    // Raccogliamo tutti i docId che scriveremo, poi leggiamo i valori correnti
+    // in un'unica query batch per non fare N letture singole.
+    const teamDocIds   = Object.values(teamStats).map(s => makeDocId(sport, s.team_name_norm));
+    const playerDocIds = Object.values(playerStats).map(s => makeDocId(sport, s.player_name_norm));
+
+    // Leggi loghi esistenti per ranking_teams
+    const existingTeamLogos = {};
+    if (writeTeams && teamDocIds.length > 0) {
+      // Firestore non supporta "get by multiple IDs" con where, usiamo getAll
+      const refs = teamDocIds.map(id => db.collection('ranking_teams').doc(id));
+      const docs = await db.getAll(...refs);
+      docs.forEach(doc => {
+        if (doc.exists) {
+          existingTeamLogos[doc.id] = doc.data().team_logo || null;
+        }
+      });
+    }
+
+    // ── 7) Scrivi su Firestore ───────────────────────────────────────────────
     const batch = db.batch();
     let writeCount = 0;
 
@@ -294,11 +328,14 @@ async function updateRanking(tournamentId) {
         const docId = makeDocId(sport, stats.team_name_norm);
         const ref   = db.collection('ranking_teams').doc(docId);
 
+        // Logo: usa quello di questo torneo se non-null,
+        // altrimenti mantieni quello già su Firestore (da tornei precedenti)
+        const resolvedLogo = stats.team_logo || existingTeamLogos[docId] || null;
+
         const docData = {
           ranking_id:     docId,
           team_name:      stats.team_name,
           team_name_norm: stats.team_name_norm,
-          team_logo:      stats.team_logo,
           sport,
           presenze:       stats.presenze,
           vittorie:       stats.vittorie,
@@ -316,6 +353,9 @@ async function updateRanking(tournamentId) {
               ? Math.round((stats.gol / stats.presenze) * 100) / 100
               : 0,
           }),
+          // Logo scritto solo se non-null: evita di sovrascrivere con null
+          // un logo valido proveniente da un torneo precedente
+          ...(resolvedLogo !== null && { team_logo: resolvedLogo }),
         };
 
         batch.set(ref, docData, { merge: true });
@@ -323,7 +363,8 @@ async function updateRanking(tournamentId) {
       }
     }
 
-    // ranking_players (tutti gli sport, inclusi scacchi)
+    // ranking_players (tutti gli sport inclusi scacchi)
+    // Nessun team_name, nessun team_logo (fix Falla 2)
     for (const [, stats] of Object.entries(playerStats)) {
       const docId = makeDocId(sport, stats.player_name_norm);
       const ref   = db.collection('ranking_players').doc(docId);
@@ -332,8 +373,6 @@ async function updateRanking(tournamentId) {
         ranking_id:       docId,
         player_name:      stats.player_name,
         player_name_norm: stats.player_name_norm,
-        team_name:        stats.team_name,
-        team_logo:        stats.team_logo,
         sport,
         presenze:         stats.presenze,
         vittorie:         stats.vittorie,

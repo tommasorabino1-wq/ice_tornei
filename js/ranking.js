@@ -65,7 +65,7 @@ let currentOrderBy = 'pct_vittorie';
 
 
 // ===============================
-// HELPER: escapeHTML (identica a standings.js)
+// HELPER: escapeHTML
 // ===============================
 function escapeHTML(str) {
   return String(str ?? "")
@@ -77,7 +77,7 @@ function escapeHTML(str) {
 }
 
 // ===============================
-// HELPER: skeleton fade-out (identica a standings.js)
+// HELPER: skeleton fade-out
 // ===============================
 function fadeOutSkeleton(wrapper) {
   wrapper.classList.add("fade-out");
@@ -86,7 +86,6 @@ function fadeOutSkeleton(wrapper) {
 
 // ===============================
 // HELPER: Formato percentuale
-// Es: 66.7 → "66.7%"
 // ===============================
 function formatPct(val) {
   const n = Number(val);
@@ -96,7 +95,6 @@ function formatPct(val) {
 
 // ===============================
 // HELPER: Opzioni orderBy in base a sport e tipo
-// Restituisce array di { value, label }
 // ===============================
 function getOrderByOptions(sport, type) {
   const base = [
@@ -105,15 +103,9 @@ function getOrderByOptions(sport, type) {
     { value: 'presenze',     label: 'Presenze'   },
   ];
 
-  // Gol: solo calcio, solo giocatori
-  if (sport === 'calcio' && type === 'players') {
+  if (sport === 'calcio') {
     base.push({ value: 'gol',       label: 'Gol'       });
     base.push({ value: 'media_gol', label: 'Media Gol' });
-  }
-
-  // Gol: solo calcio, squadre
-  if (sport === 'calcio' && type === 'teams') {
-    base.push({ value: 'gol', label: 'Gol' });
   }
 
   return base;
@@ -150,13 +142,8 @@ function initTabs() {
       tab.setAttribute("aria-selected", "true");
 
       currentSport = tab.dataset.sport;
-
-      // Scacchi: forza tipo = players, nasconde tab squadre
       handleSubtabsVisibility();
-
-      // Reset orderBy al default quando cambia sport
       currentOrderBy = 'pct_vittorie';
-
       loadRanking();
     });
   });
@@ -172,10 +159,7 @@ function initTabs() {
       tab.setAttribute("aria-selected", "true");
 
       currentType = tab.dataset.type;
-
-      // Reset orderBy al default quando cambia tipo
       currentOrderBy = 'pct_vittorie';
-
       loadRanking();
     });
   });
@@ -199,23 +183,20 @@ function handleSubtabsVisibility() {
   const playersSubtab = document.querySelector('.ranking-subtab[data-type="players"]');
 
   if (currentSport === 'scacchi') {
-    // Nasconde il tab squadre e forza giocatori
     if (teamsSubtab)   teamsSubtab.classList.add("hidden");
     if (playersSubtab) {
       playersSubtab.classList.remove("hidden");
       playersSubtab.classList.add("active");
       playersSubtab.setAttribute("aria-selected", "true");
+      if (teamsSubtab) {
+        teamsSubtab.classList.remove("active");
+        teamsSubtab.setAttribute("aria-selected", "false");
+      }
     }
     currentType = 'players';
   } else {
-    // Mostra entrambi, ripristina selezione corrente
     if (teamsSubtab)   teamsSubtab.classList.remove("hidden");
     if (playersSubtab) playersSubtab.classList.remove("hidden");
-
-    // Se il currentType era rimasto 'players' per scacchi, resetta a 'teams'
-    if (currentType === 'players' && currentSport !== 'scacchi') {
-      // mantieni la selezione utente, non forzare reset
-    }
 
     // Rispecchia il currentType nei tab
     document.querySelectorAll(".ranking-subtab").forEach(t => {
@@ -244,7 +225,7 @@ function renderOrderBySelect(sport, type) {
     select.appendChild(el);
   });
 
-  // Se currentOrderBy non è tra le opzioni valide per questo sport/tipo, reset al default
+  // Se currentOrderBy non è più valido per questo sport/tipo, reset al default
   const validValues = options.map(o => o.value);
   if (!validValues.includes(currentOrderBy)) {
     currentOrderBy = 'pct_vittorie';
@@ -256,23 +237,21 @@ function renderOrderBySelect(sport, type) {
 // LOAD RANKING
 // ===============================
 async function loadRanking() {
-  const skeleton      = document.getElementById("ranking-skeleton");
-  const placeholder   = document.getElementById("ranking-placeholder");
-  const tableWrapper  = document.getElementById("ranking-table-wrapper");
-  const tableTitle    = document.getElementById("ranking-table-title");
+  const skeleton     = document.getElementById("ranking-skeleton");
+  const placeholder  = document.getElementById("ranking-placeholder");
+  const tableWrapper = document.getElementById("ranking-table-wrapper");
+  const tableTitle   = document.getElementById("ranking-table-title");
 
   // Reset UI
   skeleton.classList.remove("hidden", "fade-out");
   placeholder.classList.add("hidden");
   tableWrapper.classList.add("hidden");
 
-  // Aggiorna orderBy select in base a sport/tipo corrente
   renderOrderBySelect(currentSport, currentType);
 
-  // Aggiorna titolo box
   if (tableTitle) {
-    const sportLabel  = getSportLabel(currentSport);
-    const typeLabel   = currentType === 'teams' ? 'Squadre' : 'Giocatori';
+    const sportLabel = getSportLabel(currentSport);
+    const typeLabel  = currentType === 'teams' ? 'Squadre' : 'Giocatori';
     tableTitle.textContent = `Ranking ${typeLabel} — ${sportLabel}`;
   }
 
@@ -306,126 +285,99 @@ async function loadRanking() {
 // RENDER RANKING TABLE
 // ===============================
 function renderRankingTable(data, sport, type) {
-  const container   = document.getElementById("ranking-table-container");
-  const isCalcio    = sport === 'calcio';
-  const isChess     = sport === 'scacchi';
-  const hasDraws    = isCalcio || isChess;
-  const isPlayers   = type === 'players';
+  const container = document.getElementById("ranking-table-container");
+  const isCalcio  = sport === 'calcio';
+  const isChess   = sport === 'scacchi';
+  const hasDraws  = isCalcio || isChess;
+  const isPlayers = type === 'players';
 
   // ── Colonne header ──────────────────────────────────────────────────────────
-  let headers = [];
-
-  if (isPlayers) {
-    headers.push({ key: 'player_name', label: isChess ? 'Giocatore' : 'Giocatore' });
-    if (!isChess) {
-      // Per calcio/padel/beach: mostra anche la squadra di appartenenza
-      headers.push({ key: 'team_name', label: 'Squadra' });
-    }
-  } else {
-    headers.push({ key: 'team_name', label: 'Squadra' });
-  }
-
-  headers.push({ key: 'presenze',     label: 'PG'   });
-  headers.push({ key: 'vittorie',     label: 'V'    });
-  if (hasDraws) {
-    headers.push({ key: 'pareggi',    label: isChess ? 'Patta' : 'N' });
-  }
-  headers.push({ key: 'sconfitte',    label: 'P'    });
-  headers.push({ key: 'pct_vittorie', label: '% V'  });
-  if (hasDraws) {
-    headers.push({ key: 'pct_pareggi',  label: isChess ? '% Patta' : '% N' });
-  }
-  headers.push({ key: 'pct_sconfitte', label: '% P' });
-
-  if (isCalcio) {
-    if (isPlayers) {
-      headers.push({ key: 'gol',       label: 'Gol'  });
-      headers.push({ key: 'media_gol', label: 'xG'   });
-    } else {
-      headers.push({ key: 'gol',       label: 'Gol'  });
-      headers.push({ key: 'media_gol', label: 'xG'   });
-    }
-  }
+  // Squadre: Logo + Nome squadra
+  // Giocatori: Nome giocatore (nessun riferimento a squadra o logo)
+  const nameHeader = isPlayers ? 'Giocatore' : 'Squadra';
 
   // ── Costruisci tabella ──────────────────────────────────────────────────────
   const table = document.createElement("table");
   table.className = "standings-table ranking-table";
 
-  // Thead
-  const thead = document.createElement("thead");
-  thead.innerHTML = `
-    <tr>
-      <th class="ranking-pos-col">#</th>
-      ${headers.map(h => `<th data-key="${h.key}">${h.label}</th>`).join('')}
-    </tr>
-  `;
-  table.appendChild(thead);
+  const drawHeader   = hasDraws  ? `<th>${isChess ? 'Patta' : 'N'}</th>` : '';
+  const drawPctHeader = hasDraws ? `<th>${isChess ? '% Patta' : '% N'}</th>` : '';
+  const golHeaders   = isCalcio  ? '<th>Gol</th><th>xG</th>' : '';
 
-  // Tbody
-  const tbody = document.createElement("tbody");
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th class="ranking-pos-col">#</th>
+        <th>${nameHeader}</th>
+        <th>PG</th>
+        <th>V</th>
+        ${drawHeader}
+        <th>P</th>
+        <th>% V</th>
+        ${drawPctHeader}
+        <th>% P</th>
+        ${golHeaders}
+      </tr>
+    </thead>
+    <tbody></tbody>
+  `;
+
+  const tbody = table.querySelector('tbody');
 
   data.forEach((row, index) => {
-    const pos = index + 1;
+    const pos      = index + 1;
+    const posClass = pos === 1 ? 'rank-gold' : pos === 2 ? 'rank-silver' : pos === 3 ? 'rank-bronze' : '';
 
-    // Logo
-    const logo = row.team_logo;
-    const logoHTML = logo
-      ? `<img src="${escapeHTML(logo)}" alt="" class="team-logo-mini">`
-      : `<span class="team-logo-mini-fallback">${isPlayers ? '👤' : '👥'}</span>`;
+    // Prima cella: logo (solo squadre) + nome
+    let nameCellContent;
+    if (isPlayers) {
+      // Giocatori: solo nome, nessun logo, nessun riferimento squadra
+      nameCellContent = `
+        <td class="team-cell">
+          <span class="team-name-text">${escapeHTML(row.player_name || '—')}</span>
+        </td>
+      `;
+    } else {
+      // Squadre: logo + nome
+      const logo = row.team_logo;
+      const logoHTML = logo
+        ? `<img src="${escapeHTML(logo)}" alt="" class="team-logo-mini">`
+        : `<span class="team-logo-mini-fallback">👥</span>`;
+      nameCellContent = `
+        <td class="team-cell">
+          ${logoHTML}
+          <span class="team-name-text">${escapeHTML(row.team_name || '—')}</span>
+        </td>
+      `;
+    }
 
-    // Prima cella: nome entità con logo
-    const nameValue = isPlayers ? (row.player_name || '—') : (row.team_name || '—');
-    const nameCellHTML = `
-      <td class="team-cell">
-        <span class="rank-badge">${pos}</span>
-        ${logoHTML}
-        <span class="team-name-text">${escapeHTML(nameValue)}</span>
-      </td>
-    `;
-
-    // Cella squadra (solo giocatori non-scacchi)
-    const teamCellHTML = (isPlayers && !isChess)
-      ? `<td class="ranking-team-ref">${escapeHTML(row.team_name || '—')}</td>`
-      : '';
-
-    // Statistiche base
-    const presenze    = Number(row.presenze)     || 0;
-    const vittorie    = Number(row.vittorie)      || 0;
-    const pareggi     = Number(row.pareggi)       || 0;
-    const sconfitte   = Number(row.sconfitte)     || 0;
-    const pctV        = formatPct(row.pct_vittorie);
-    const pctP        = formatPct(row.pct_pareggi);
-    const pctS        = formatPct(row.pct_sconfitte);
-
-    // Gol (solo calcio)
-    const golHTML = isCalcio
+    const drawCell    = hasDraws ? `<td>${Number(row.pareggi)     || 0}</td>` : '';
+    const drawPctCell = hasDraws ? `<td class="pct-col">${formatPct(row.pct_pareggi)}</td>` : '';
+    const golCells    = isCalcio
       ? `<td>${Number(row.gol) || 0}</td><td>${Number(row.media_gol) ? Number(row.media_gol).toFixed(2) : '0.00'}</td>`
       : '';
 
     const tr = document.createElement("tr");
-
-    // Badge posizione (top 3 evidenziati)
-    const posClass = pos === 1 ? 'rank-gold' : pos === 2 ? 'rank-silver' : pos === 3 ? 'rank-bronze' : '';
     if (posClass) tr.classList.add(posClass);
 
     tr.innerHTML = `
-      <td class="ranking-pos-col"><span class="ranking-pos-badge ${posClass}">${pos}</span></td>
-      ${nameCellHTML}
-      ${teamCellHTML}
-      <td>${presenze}</td>
-      <td>${vittorie}</td>
-      ${hasDraws ? `<td>${pareggi}</td>` : ''}
-      <td>${sconfitte}</td>
-      <td class="pct-col">${pctV}</td>
-      ${hasDraws ? `<td class="pct-col">${pctP}</td>` : ''}
-      <td class="pct-col">${pctS}</td>
-      ${golHTML}
+      <td class="ranking-pos-col">
+        <span class="ranking-pos-badge ${posClass}">${pos}</span>
+      </td>
+      ${nameCellContent}
+      <td>${Number(row.presenze)  || 0}</td>
+      <td>${Number(row.vittorie)  || 0}</td>
+      ${drawCell}
+      <td>${Number(row.sconfitte) || 0}</td>
+      <td class="pct-col">${formatPct(row.pct_vittorie)}</td>
+      ${drawPctCell}
+      <td class="pct-col">${formatPct(row.pct_sconfitte)}</td>
+      ${golCells}
     `;
 
     tbody.appendChild(tr);
   });
 
-  table.appendChild(tbody);
   container.innerHTML = "";
   container.appendChild(table);
 }
