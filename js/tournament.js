@@ -2656,39 +2656,43 @@ function buildDaysField(availableDays) {
 // ===============================
 function buildHoursField(availableHours) {
   const slots = parseHoursSlots(availableHours);
-  
-  if (slots.length <= 1) return null;
-
+ 
+  // Se non ci sono slot (range < 2 ore) non mostrare il campo
+  if (slots.length === 0) return null;
+ 
+  // Se c'è un solo slot non ha senso mostrare una select con una sola opzione
+  // ma la creiamo comunque perché handleFormSubmit cerca hoursSelect
   const wrapper = document.createElement("label");
-
+ 
   const titleSpan = document.createElement("span");
   titleSpan.className = "form-field-title";
   titleSpan.textContent = 'Fascia oraria preferita';
   wrapper.appendChild(titleSpan);
-
+ 
   const { start, end } = parseHoursRange(availableHours);
   const helperSpan = document.createElement("span");
   helperSpan.className = "field-helper";
-  helperSpan.textContent = `Scegli la fascia oraria preferita (partite disponibili dalle ${start}:00 alle ${end}:00) (facoltativo)`;
+  helperSpan.textContent = `Scegli la fascia oraria preferita (partite disponibili dalle ${String(start).padStart(2,'0')}:00 alle ${String(end).padStart(2,'0')}:00) (facoltativo)`;
   wrapper.appendChild(helperSpan);
-
+ 
   const select = document.createElement("select");
   select.name = "preferred_hours";
-
+  select.id = "hours-select"; // ✅ id per poterlo trovare nel submit
+ 
   const placeholder = document.createElement("option");
   placeholder.value = "";
   placeholder.textContent = "Seleziona una fascia oraria";
   placeholder.disabled = true;
   placeholder.selected = true;
   select.appendChild(placeholder);
-
+ 
   slots.forEach(slot => {
     const option = document.createElement("option");
     option.value = slot.value;
     option.textContent = slot.label;
     select.appendChild(option);
   });
-
+ 
   wrapper.appendChild(select);
   return wrapper;
 }
@@ -2747,21 +2751,25 @@ function calculateMinDays(availableDays) {
 // 25. PARSE HOURS RANGE
 // ===============================
 function parseHoursRange(range) {
-  const rangeLower = range.toLowerCase().trim();
+  const rangeLower = String(range || '').toLowerCase().trim();
   const parts = rangeLower.split("-");
-  
+ 
   if (parts.length !== 2) {
-    return { start: 10, end: 22 }; // Default
+    return { start: 10, end: 22 };
   }
-  
+ 
   const start = parseInt(parts[0], 10);
-  const end = parseInt(parts[1], 10);
-  
+  const end   = parseInt(parts[1], 10);
+ 
   if (isNaN(start) || isNaN(end)) {
-    return { start: 10, end: 22 }; // Default
+    return { start: 10, end: 22 };
   }
-  
-  return { start, end };
+ 
+  // Clamp: start tra 0 e 23, end tra 1 e 24
+  const clampedStart = Math.max(0,  Math.min(start, 23));
+  const clampedEnd   = Math.max(1,  Math.min(end,   24));
+ 
+  return { start: clampedStart, end: clampedEnd };
 }
 
 // ===============================
@@ -2770,62 +2778,25 @@ function parseHoursRange(range) {
 // ===============================
 function parseHoursSlots(range) {
   const { start, end } = parseHoursRange(range);
-  
+ 
   const totalHours = end - start;
-  
-  // Se il range è troppo piccolo (meno di 2 ore), nessuno slot
+ 
+  // Range troppo piccolo (meno di 2 ore) → nessuno slot
   if (totalHours < 2) {
     return [];
   }
-  
-  const slots = [];
-  
-  // =====================================================
-  // CASO 1: Range piccolo (2-4 ore) → Slot unico
-  // =====================================================
-  
-  if (totalHours <= 4) {
-    const slotNames = {
-      6: "Prima mattina",
-      7: "Prima mattina",
-      8: "Mattina",
-      9: "Mattina",
-      10: "Mattina",
-      11: "Tarda mattina",
-      12: "Mezzogiorno",
-      13: "Primo pomeriggio",
-      14: "Primo pomeriggio",
-      15: "Pomeriggio",
-      16: "Tardo pomeriggio",
-      17: "Tardo pomeriggio",
-      18: "Pre-serata",
-      19: "Sera",
-      20: "Sera",
-      21: "Sera",
-      22: "Tarda serata"
-    };
-    
-    const slotName = slotNames[start] || "Fascia";
-    
-    slots.push({
-      value: `${start}-${end}`,
-      label: `${slotName} (${String(start).padStart(2, '0')}:00 - ${String(end).padStart(2, '0')}:00)`
-    });
-    
-    return slots;
-  }
-  
-  // =====================================================
-  // CASO 2: Range medio/grande (5+ ore) → Slot multipli da 3 ore
-  // =====================================================
-  
-  const slotDuration = 3; // Ogni slot dura 3 ore
-  
+ 
   const slotNames = {
-    6: "Prima mattina",
-    7: "Prima mattina",
-    8: "Mattina",
-    9: "Mattina",
+    0:  "Notte",
+    1:  "Notte",
+    2:  "Notte",
+    3:  "Notte",
+    4:  "Prima mattina",
+    5:  "Prima mattina",
+    6:  "Prima mattina",
+    7:  "Prima mattina",
+    8:  "Mattina",
+    9:  "Mattina",
     10: "Mattina",
     11: "Tarda mattina",
     12: "Mezzogiorno",
@@ -2838,129 +2809,133 @@ function parseHoursSlots(range) {
     19: "Sera",
     20: "Sera",
     21: "Sera",
-    22: "Tarda serata"
+    22: "Tarda serata",
+    23: "Tarda serata"
   };
-  
-  // Genera slot da 3 ore ciascuno
+ 
+  const slots = [];
+ 
+  // =====================================================
+  // CASO 1: Range piccolo (2-4 ore) → Slot unico
+  // =====================================================
+  if (totalHours <= 4) {
+    const slotName = slotNames[start] || "Fascia";
+    const startStr = String(start).padStart(2, '0');
+    const endStr   = String(end).padStart(2, '0');
+ 
+    slots.push({
+      value: `${start}-${end}`,
+      label: `${slotName} (${startStr}:00 - ${endStr}:00)`
+    });
+ 
+    return slots;
+  }
+ 
+  // =====================================================
+  // CASO 2: Range medio/grande (5+ ore) → Slot da 3 ore
+  // =====================================================
+  const slotDuration = 3;
   let currentStart = start;
-  
+ 
   while (currentStart + slotDuration <= end) {
-    const slotEnd = currentStart + slotDuration;
+    const slotEnd  = currentStart + slotDuration;
     const slotName = slotNames[currentStart] || "Fascia";
-    
+    const startStr = String(currentStart).padStart(2, '0');
+    const endStr   = String(slotEnd).padStart(2, '0');
+ 
     slots.push({
       value: `${currentStart}-${slotEnd}`,
-      label: `${slotName} (${String(currentStart).padStart(2, '0')}:00 - ${String(slotEnd).padStart(2, '0')}:00)`
+      label: `${slotName} (${startStr}:00 - ${endStr}:00)`
     });
-    
+ 
     currentStart = slotEnd;
   }
-  
-  // Se rimane un gap finale (es. da 21 a 22), aggiungilo come slot ridotto
-  // solo se è almeno 2 ore
+ 
+  // Gap finale ≥ 2 ore
   if (currentStart < end && (end - currentStart) >= 2) {
     const slotName = slotNames[currentStart] || "Fascia";
+    const startStr = String(currentStart).padStart(2, '0');
+    const endStr   = String(end).padStart(2, '0');
+ 
     slots.push({
       value: `${currentStart}-${end}`,
-      label: `${slotName} (${String(currentStart).padStart(2, '0')}:00 - ${String(end).padStart(2, '0')}:00)`
+      label: `${slotName} (${startStr}:00 - ${endStr}:00)`
     });
   }
-  
+ 
   return slots;
 }
+ 
 
 
 // ===============================
 // 27. SUBMIT ISCRIZIONE (FIREBASE)
 // ===============================
 let isSubmitting = false;
-
+ 
 function handleFormSubmit(tournament) {
   const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
-  
+ 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
-    
-    // Evita submit multipli
+ 
     if (isSubmitting) return;
-
-    // =====================================================
-    // VALIDAZIONI
-    // =====================================================
-
-    // Validazione checkbox regolamento
+ 
+    // ── Validazione checkbox regolamento ─────────────────────────────────
     const acceptRegulation = form.querySelector('input[name="accept_regulation"]');
     if (!acceptRegulation || !acceptRegulation.checked) {
       showToast("Devi accettare il regolamento per iscriverti ⚠️");
       return;
     }
-
-    // =====================================================
-    // COSTRUZIONE PAYLOAD
-    // =====================================================
-
+ 
+    // ── Costruzione payload ───────────────────────────────────────────────
     const payload = {
       tournament_id: tournament.tournament_id,
-      team_name: form.querySelector('[name="team_name"]').value.trim(),
-      email: form.querySelector('[name="email"]').value.trim().toLowerCase(),
-      phone: form.querySelector('[name="phone"]').value.trim()
+      team_name:     form.querySelector('[name="team_name"]').value.trim(),
+      email:         form.querySelector('[name="email"]').value.trim().toLowerCase(),
+      phone:         form.querySelector('[name="phone"]').value.trim()
     };
-
-    // Campo zona (se presente)
+ 
     const zoneInput = form.querySelector('[name="preferred_zone"]');
     if (zoneInput && zoneInput.value.trim()) {
       payload.preferred_zone = zoneInput.value.trim();
     }
-
-    // Campo giorni (se presente)
+ 
     const daysChecked = form.querySelectorAll('[name="preferred_days[]"]:checked');
     if (daysChecked.length > 0) {
       payload.preferred_days = Array.from(daysChecked).map(cb => cb.value).join(", ");
     }
-
-    // Campo orari (se presente)
+ 
+    // ✅ hoursSelect letto dal DOM, non da variabile globale
+    const hoursSelect = form.querySelector('[name="preferred_hours"]');
     if (hoursSelect && hoursSelect.value) {
       payload.preferred_hours = hoursSelect.value;
     }
-
-    // Campo note aggiuntive (se presente)
+ 
     const notesTextarea = form.querySelector('[name="additional_notes"]');
     if (notesTextarea && notesTextarea.value.trim()) {
       payload.additional_notes = notesTextarea.value.trim();
     }
-
-    // =====================================================
-    // STATO LOADING
-    // =====================================================
-
+ 
+    // ── Stato loading ─────────────────────────────────────────────────────
     isSubmitting = true;
-    
+ 
     const submitBtn = form.querySelector('button[type="submit"]');
-    const inputs = form.querySelectorAll("input, select, textarea, button");
-
-    submitBtn.innerHTML = `
-      <span class="spinner"></span>
-      Iscrizione in corso...
-    `;
+    const inputs    = form.querySelectorAll("input, select, textarea, button");
+ 
+    submitBtn.innerHTML = `<span class="spinner"></span> Iscrizione in corso...`;
     submitBtn.classList.add("disabled");
     submitBtn.disabled = true;
     inputs.forEach(input => input.disabled = true);
-
-    // =====================================================
-    // INVIO RICHIESTA
-    // =====================================================
-
+ 
+    // ── Invio richiesta ───────────────────────────────────────────────────
     fetch(API_URLS.submitSubscription, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     })
       .then(res => res.text())
       .then(response => {
-        
-        // Mapping risposte errore
         const errorMessages = {
           "TOURNAMENT_NOT_FOUND":         "Torneo non valido ❌",
           "REGISTRATIONS_CLOSED":         "Le iscrizioni sono chiuse ⚠️",
@@ -2968,24 +2943,21 @@ function handleFormSubmit(tournament) {
           "DUPLICATE_TEAM":               isIndividual ? "Un giocatore con questo nome è già iscritto ⚠️" : "Una squadra con questo nome è già iscritta ⚠️",
           "DUPLICATE_EMAIL":              "Questa email è già stata utilizzata ⚠️",
           "DUPLICATE":                    "Questa email è già iscritta ⚠️",
-          "DUPLICATE_TEAM_NAME_IN_SPORT": isIndividual ? "Questo nome è già registrato in un torneo dello stesso sport ⚠️" : "Questa squadra è già iscritta in un torneo dello stesso sport ⚠️"  // ✅ NUOVO
+          "DUPLICATE_TEAM_NAME_IN_SPORT": isIndividual ? "Questo nome è già registrato in un torneo dello stesso sport ⚠️" : "Questa squadra è già iscritta in un torneo dello stesso sport ⚠️"
         };
-
-        // Gestione errori
+ 
         if (errorMessages[response]) {
           showToast(errorMessages[response]);
           restoreForm();
           return;
         }
-
-        // Successo
+ 
         if (response === "SUBSCRIPTION_SAVED") {
           showToast("Iscrizione completata 🎉");
           setTimeout(() => window.location.reload(), 1200);
           return;
         }
-
-        // Errore inatteso
+ 
         console.error("Risposta inattesa:", response);
         showToast("Errore inatteso ❌");
         restoreForm();
@@ -2995,11 +2967,8 @@ function handleFormSubmit(tournament) {
         showToast("Errore di connessione ❌");
         restoreForm();
       });
-
-    // =====================================================
-    // RIPRISTINO FORM
-    // =====================================================
-
+ 
+    // ── Ripristino form ───────────────────────────────────────────────────
     function restoreForm() {
       isSubmitting = false;
       submitBtn.innerHTML = "Invia iscrizione";
@@ -3007,7 +2976,6 @@ function handleFormSubmit(tournament) {
       submitBtn.disabled = false;
       inputs.forEach(input => input.disabled = false);
     }
-
   });
 }
 
