@@ -491,3 +491,75 @@ gsap.utils.toArray(".reveal-section").forEach(section => {
   );
 });
 
+
+
+// ===============================
+// SPORTS SLIDER
+// ===============================
+
+const sportsTrackInner = document.getElementById("sports-track-inner");
+const sportsSlider     = document.getElementById("sports-slider");
+const sportsPrev       = document.getElementById("sports-prev");
+const sportsNext       = document.getElementById("sports-next");
+
+if (sportsTrackInner && sportsSlider && sportsPrev && sportsNext) {
+
+  const CARD_WIDTH  = 240 + 18;
+  const TOTAL_CARDS = sportsTrackInner.querySelectorAll(".sport-box").length;
+  let currentIndex  = 0;
+
+  function updateButtons() {
+    const trackWidth  = TOTAL_CARDS * CARD_WIDTH - 18;
+    const sliderWidth = sportsSlider.clientWidth;
+    const maxIndex    = Math.ceil((trackWidth - sliderWidth) / CARD_WIDTH);
+
+    sportsPrev.style.opacity       = currentIndex <= 0          ? "0.3" : "1";
+    sportsNext.style.opacity       = currentIndex >= maxIndex   ? "0.3" : "1";
+    sportsPrev.style.pointerEvents = currentIndex <= 0          ? "none" : "auto";
+    sportsNext.style.pointerEvents = currentIndex >= maxIndex   ? "none" : "auto";
+  }
+
+  function goTo(index) {
+    const trackWidth  = TOTAL_CARDS * CARD_WIDTH - 18;
+    const sliderWidth = sportsSlider.clientWidth;
+    const maxIndex    = Math.ceil((trackWidth - sliderWidth) / CARD_WIDTH);
+
+    currentIndex = Math.max(0, Math.min(index, maxIndex));
+    sportsTrackInner.style.transform = `translateX(${-currentIndex * CARD_WIDTH}px)`;
+    updateButtons();
+  }
+
+  sportsPrev.addEventListener("click", () => goTo(currentIndex - 1));
+  sportsNext.addEventListener("click", () => goTo(currentIndex + 1));
+
+  window.addEventListener("resize", () => goTo(currentIndex));
+
+  goTo(0);
+
+  // ===============================
+  // SWIPE TOUCH (mobile)
+  // ===============================
+  let touchStartX = 0;
+  let touchDeltaX = 0;
+
+  sportsTrackInner.addEventListener("touchstart", e => {
+    touchStartX = e.touches[0].clientX;
+    touchDeltaX = 0;
+  }, { passive: true });
+
+  sportsTrackInner.addEventListener("touchmove", e => {
+    touchDeltaX = e.touches[0].clientX - touchStartX;
+  }, { passive: true });
+
+  sportsTrackInner.addEventListener("touchend", () => {
+    const THRESHOLD = 40; // px minimi per considerare uno swipe
+    if (touchDeltaX < -THRESHOLD) {
+      goTo(currentIndex + 1); // swipe sinistra → avanti
+    } else if (touchDeltaX > THRESHOLD) {
+      goTo(currentIndex - 1); // swipe destra → indietro
+    }
+    touchDeltaX = 0;
+  });
+
+}
+

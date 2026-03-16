@@ -1102,6 +1102,16 @@ section > .section-title {
   align-self: center;
 }
 
+.intro-box a {
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.intro-box a:hover {
+  color: var(--brand-hover);
+}
+
 
 /* =========================
    17. TOURNAMENT LIST & CARDS (Homepage)
@@ -1328,15 +1338,7 @@ section > .section-title {
   display:block;
 }
 
-.intro-box a {
-  color: var(--brand);
-  font-weight: 600;
-  text-decoration: none;
-}
 
-.intro-box a:hover {
-  color: var(--brand-hover);
-}
 
 
 /* =========================
