@@ -36,7 +36,18 @@ function handleOptions(req, res) {
   return false;
 }
 
-
+// ===============================
+// HELPER: Normalizza nome squadra per controlli di unicità
+// Usato da checkTeamName e submitSubscription.
+// Lowercase + trim + spazi multipli → spazio singolo.
+// NON rimuove caratteri speciali: "L'Aquila" ≠ "Laquila"
+// ===============================
+function normalizeTeamNameForCheck(name) {
+  return String(name || '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ');
+}
 
 
 // ===============================
@@ -630,6 +641,7 @@ exports.onFinalResultUpdated = onDocumentUpdated(
 
 // ===============================
 // POST: SUBMIT SUBSCRIPTION
+// ✅ MODIFICATO: aggiunto controllo cross-torneo stesso sport + stesso nome
 // ===============================
 exports.submitSubscription = onRequest(async (req, res) => {
   setCORS(res);
@@ -667,7 +679,7 @@ exports.submitSubscription = onRequest(async (req, res) => {
     const normalizedTeamName = team_name.trim().toLowerCase();
     const teamId = `${tournament_id}_${normalizedTeamName}`;
 
-    // Verifica duplicati
+    // ── Verifica duplicato stesso torneo (team_id) ──────────────────────────
     const duplicateTeamCheck = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .where('team_id', '==', teamId)
@@ -678,6 +690,7 @@ exports.submitSubscription = onRequest(async (req, res) => {
       return res.status(409).send('DUPLICATE_TEAM');
     }
 
+    // ── Verifica duplicato email stesso torneo ──────────────────────────────
     const duplicateEmailCheck = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .where('email', '==', email)
@@ -687,6 +700,42 @@ exports.submitSubscription = onRequest(async (req, res) => {
     if (!duplicateEmailCheck.empty) {
       return res.status(409).send('DUPLICATE_EMAIL');
     }
+
+    // ── ✅ NUOVO: Verifica duplicato nome stesso sport (cross-torneo) ────────
+    // Seconda linea di difesa: il frontend lo verifica già allo step 1,
+    // ma verifichiamo anche qui per sicurezza (es. chiamate API dirette).
+    const nameNormForSportCheck = normalizeTeamNameForCheck(team_name);
+    const sameSportTournamentsSnap = await db.collection('tournaments')
+      .where('sport', '==', tournament.sport)
+      .get();
+
+    const sameSportTournamentIds = sameSportTournamentsSnap.docs
+      .map(d => d.data().tournament_id || d.id)
+      .filter(id => id !== tournament_id); // escludi il torneo corrente (già controllato sopra)
+
+    if (sameSportTournamentIds.length > 0) {
+      const BATCH_SIZE = 30;
+      let sportDuplicate = false;
+
+      for (let i = 0; i < sameSportTournamentIds.length && !sportDuplicate; i += BATCH_SIZE) {
+        const batchIds = sameSportTournamentIds.slice(i, i + BATCH_SIZE);
+        const subsSnap = await db.collection('subscriptions')
+          .where('tournament_id', 'in', batchIds)
+          .get();
+
+        for (const doc of subsSnap.docs) {
+          if (normalizeTeamNameForCheck(doc.data().team_name) === nameNormForSportCheck) {
+            sportDuplicate = true;
+            break;
+          }
+        }
+      }
+
+      if (sportDuplicate) {
+        return res.status(409).send('DUPLICATE_TEAM_NAME_IN_SPORT');
+      }
+    }
+    // ── Fine controllo cross-torneo ─────────────────────────────────────────
 
     const existingSubsSnapshot = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
@@ -719,9 +768,7 @@ exports.submitSubscription = onRequest(async (req, res) => {
 
     await db.collection('subscriptions').doc(subscriptionId).set(subscriptionData);
 
-    // ===============================
     // 2) Crea documento teams
-    // ===============================
     const teamData = {
       team_id: teamId,
       tournament_id,
@@ -730,13 +777,11 @@ exports.submitSubscription = onRequest(async (req, res) => {
     };
 
     if (isIndividual) {
-      // Torneo individuale: player_name_1 pre-popolato con team_name
       teamData['name_player_1'] = team_name;
       if (certificateRequired) {
         teamData['certificato_player_1'] = null;
       }
     } else {
-      // Torneo a squadre: slot vuoti per tutti i giocatori
       for (let i = 1; i <= teamSizeMax; i++) {
         teamData[`name_player_${i}`] = null;
         if (certificateRequired) {
@@ -756,7 +801,6 @@ exports.submitSubscription = onRequest(async (req, res) => {
     res.status(500).send('ERROR');
   }
 });
-
 
 
 // ===============================
@@ -1406,3 +1450,85 @@ exports.getRankingPlayers = onRequest(async (req, res) => {
     res.status(500).json([]);
   }
 });
+
+
+// ===============================
+// GET: CHECK TEAM NAME AVAILABILITY
+// Verifica se esiste già una squadra con lo stesso nome
+// nello stesso sport (cross-torneo, cross-edizione).
+//
+// Query params:
+//   team_name     (required): nome squadra da verificare
+//   tournament_id (required): torneo a cui si sta iscrivendo
+//                             (serve per ricavare lo sport)
+//
+// Risposta:
+//   { available: true }   → nome libero, può procedere
+//   { available: false }  → nome già usato in questo sport
+// ===============================
+exports.checkTeamName = onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  try {
+    const { team_name, tournament_id } = req.query;
+
+    if (!team_name || !tournament_id) {
+      return res.status(400).json({ error: 'MISSING_PARAMS' });
+    }
+
+    // 1) Ricava lo sport del torneo a cui si sta iscrivendo
+    const tournamentDoc = await db.collection('tournaments').doc(tournament_id).get();
+    if (!tournamentDoc.exists) {
+      return res.status(404).json({ error: 'TOURNAMENT_NOT_FOUND' });
+    }
+
+    const tournament = tournamentDoc.data();
+
+    // 2) Normalizza il nome da cercare
+    const nameNorm = normalizeTeamNameForCheck(team_name);
+    if (!nameNorm) {
+      return res.status(400).json({ error: 'INVALID_TEAM_NAME' });
+    }
+
+    // 3) Trova tutti i tornei dello stesso sport
+    const tournamentsSnap = await db.collection('tournaments')
+      .where('sport', '==', tournament.sport)
+      .get();
+
+    const sameSportTournamentIds = tournamentsSnap.docs
+      .map(d => d.data().tournament_id || d.id)
+      .filter(Boolean);
+
+    if (sameSportTournamentIds.length === 0) {
+      return res.status(200).json({ available: true });
+    }
+
+    // 4) Cerca nelle subscriptions di quei tornei in batch da 30
+    const BATCH_SIZE = 30;
+    let found = false;
+
+    for (let i = 0; i < sameSportTournamentIds.length && !found; i += BATCH_SIZE) {
+      const batch = sameSportTournamentIds.slice(i, i + BATCH_SIZE);
+
+      const subsSnap = await db.collection('subscriptions')
+        .where('tournament_id', 'in', batch)
+        .get();
+
+      for (const doc of subsSnap.docs) {
+        if (normalizeTeamNameForCheck(doc.data().team_name) === nameNorm) {
+          found = true;
+          break;
+        }
+      }
+    }
+
+    return res.status(200).json({ available: !found });
+
+  } catch (error) {
+    console.error('checkTeamName error:', error);
+    res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+

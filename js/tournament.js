@@ -97,10 +97,11 @@ const tournamentSelect = document.getElementById("tournament-select");
 // ===============================
 
 const API_URLS = {
-  getTournaments: "https://gettournaments-dzvezz2yhq-uc.a.run.app",
-  getTeams: "https://getteams-dzvezz2yhq-uc.a.run.app",
+  getTournaments:    "https://gettournaments-dzvezz2yhq-uc.a.run.app",
+  getTeams:          "https://getteams-dzvezz2yhq-uc.a.run.app",
   getTeamsWithLogos: "https://getteamswithlogos-dzvezz2yhq-uc.a.run.app",
-  submitSubscription: "https://submitsubscription-dzvezz2yhq-uc.a.run.app"
+  submitSubscription:"https://submitsubscription-dzvezz2yhq-uc.a.run.app",
+  checkTeamName:     "https://checkteamname-dzvezz2yhq-uc.a.run.app"
 };
 
 
@@ -210,6 +211,8 @@ function renderGenericRegulation(tournaments) {
 // 7. INFO-BOX TORNEO
 // ===============================
 function renderTournament(tournament) {
+
+  currentTournamentData = tournament;
 
   genericSection.classList.add("hidden");
   tournamentSection.classList.remove("hidden");
@@ -2959,12 +2962,13 @@ function handleFormSubmit(tournament) {
         
         // Mapping risposte errore
         const errorMessages = {
-          "TOURNAMENT_NOT_FOUND": "Torneo non valido ❌",
-          "REGISTRATIONS_CLOSED": "Le iscrizioni sono chiuse ⚠️",
-          "INVALID_DATA": "Dati mancanti o non validi ⚠️",
-          "DUPLICATE_TEAM": isIndividual ? "Un giocatore con questo nome è già iscritto ⚠️" : "Una squadra con questo nome è già iscritta ⚠️",
-          "DUPLICATE_EMAIL": "Questa email è già stata utilizzata ⚠️",
-          "DUPLICATE": "Questa email è già iscritta ⚠️"
+          "TOURNAMENT_NOT_FOUND":         "Torneo non valido ❌",
+          "REGISTRATIONS_CLOSED":         "Le iscrizioni sono chiuse ⚠️",
+          "INVALID_DATA":                 "Dati mancanti o non validi ⚠️",
+          "DUPLICATE_TEAM":               isIndividual ? "Un giocatore con questo nome è già iscritto ⚠️" : "Una squadra con questo nome è già iscritta ⚠️",
+          "DUPLICATE_EMAIL":              "Questa email è già stata utilizzata ⚠️",
+          "DUPLICATE":                    "Questa email è già iscritta ⚠️",
+          "DUPLICATE_TEAM_NAME_IN_SPORT": isIndividual ? "Questo nome è già registrato in un torneo dello stesso sport ⚠️" : "Questa squadra è già iscritta in un torneo dello stesso sport ⚠️"  // ✅ NUOVO
         };
 
         // Gestione errori
@@ -3065,16 +3069,13 @@ function updateStepUI() {
   });
 }
 
-nextBtn.addEventListener("click", () => {
+nextBtn.addEventListener("click", async () => {
 
-  const currentPanel =
-    document.querySelector(`.form-step-panel[data-step="${currentStep}"]`);
+  const currentPanel = document.querySelector(`.form-step-panel[data-step="${currentStep}"]`);
+  const requiredFields = currentPanel.querySelectorAll("[required]");
 
-  const requiredFields =
-    currentPanel.querySelectorAll("[required]");
-
+  // ── Validazione campi obbligatori (invariata) ───────────────────────────
   let valid = true;
-
   requiredFields.forEach(field => {
     if (field.type === "checkbox") {
       if (!field.checked) valid = false;
@@ -3087,6 +3088,46 @@ nextBtn.addEventListener("click", () => {
     showToast("Compila tutti i campi obbligatori ⚠️");
     return;
   }
+
+  // ── ✅ NUOVO: Check nome squadra allo step 1 ────────────────────────────
+  if (currentStep === 1 && tournamentId) {
+    const teamNameInput = currentPanel.querySelector('[name="team_name"]');
+
+    if (teamNameInput && teamNameInput.value.trim()) {
+      const originalText = nextBtn.textContent;
+      nextBtn.disabled = true;
+      nextBtn.textContent = "Verifica...";
+
+      try {
+        const checkUrl = `${API_URLS.checkTeamName}?team_name=${encodeURIComponent(teamNameInput.value.trim())}&tournament_id=${encodeURIComponent(tournamentId)}`;
+        const checkRes = await fetch(checkUrl);
+
+        if (!checkRes.ok) throw new Error(`HTTP error: ${checkRes.status}`);
+
+        const checkData = await checkRes.json();
+
+        if (!checkData.available) {
+          const isIndividual = currentTournamentData?.individual_or_team?.toLowerCase() === 'individual';
+          showToast(
+            isIndividual
+              ? "Questo nome è già registrato in un torneo dello stesso sport ⚠️"
+              : "Questa squadra è già iscritta in un torneo dello stesso sport ⚠️"
+          );
+          nextBtn.disabled = false;
+          nextBtn.textContent = originalText;
+          return;
+        }
+
+      } catch (err) {
+        console.error("checkTeamName error:", err);
+        // Fail open: in caso di errore di rete lascia procedere
+      } finally {
+        nextBtn.disabled = false;
+        nextBtn.textContent = originalText;
+      }
+    }
+  }
+  // ── Fine check nome squadra ─────────────────────────────────────────────
 
   if (currentStep < totalSteps) {
     currentStep++;
