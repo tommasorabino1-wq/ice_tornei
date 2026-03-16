@@ -302,9 +302,9 @@ exports.getBracket = onRequest(async (req, res) => {
 // ===============================
 const { generateMatchesIfReady } = require('./helpers/matchGenerator');
 const { generateStandingsBackend } = require('./helpers/standingsCalculator');
-// ✅ MODIFICATO: importa propagateFinalsResult invece di tryGenerateNextFinalRound
 const { generateFinalsIfReady, propagateFinalsResult } = require('./helpers/finalsGenerator');
 const { updateTournamentStatus } = require('./helpers/tournamentStatus');
+const { updateRanking } = require('./helpers/rankingCalculator');
 
 
 
@@ -499,11 +499,15 @@ exports.onMatchResultUpdated = onDocumentUpdated(
       // 1) Ricalcola standings
       await generateStandingsBackend(tournamentId);
       console.log(`✅ Standings recalculated for ${tournamentId}`);
+
+      // 2) Aggiorna ranking globale
+      await updateRanking(tournamentId);
+      console.log(`✅ Ranking updated for ${tournamentId}`);
       
-      // 2) Aggiorna status torneo
+      // 3) Aggiorna status torneo
       await updateTournamentStatus(tournamentId);
       
-      // 3) Verifica se tutti i match dei gironi sono giocati
+      // 4) Verifica se tutti i match dei gironi sono giocati
       const allMatchesSnapshot = await db.collection('matches')
         .where('tournament_id', '==', tournamentId)
         .get();
@@ -557,9 +561,10 @@ exports.onMatchResultUpdated = onDocumentUpdated(
 );
 
 
+
+
 // ===============================
 // FIRESTORE TRIGGER: ON FINAL RESULT UPDATED
-// ✅ MODIFICATO: usa propagateFinalsResult invece di tryGenerateNextFinalRound
 // ===============================
 exports.onFinalResultUpdated = onDocumentUpdated(
   "finals/{matchId}",
@@ -583,8 +588,6 @@ exports.onFinalResultUpdated = onDocumentUpdated(
       beforeData?.score_b !== afterData?.score_b ||
       beforeData?.winner_team_id !== afterData?.winner_team_id;
     
-    // ✅ Trigger se il match è appena diventato played, oppure se era già played
-    // e i dati sono cambiati (correzione risultato)
     const justBecamePlayed = !beforePlayed && afterPlayed;
     const resultCorrected = beforePlayed && afterPlayed && scoreChanged;
 
@@ -602,10 +605,14 @@ exports.onFinalResultUpdated = onDocumentUpdated(
     }
     
     try {
-      // 1) ✅ NUOVO: Propaga il risultato ai match futuri (popola team_a/team_b nei round successivi)
+      // 1) Propaga il risultato ai match futuri (popola team_a/team_b nei round successivi)
       await propagateFinalsResult(tournamentId, matchId);
+
+      // 2) Aggiorna ranking globale
+      await updateRanking(tournamentId);
+      console.log(`✅ Ranking updated after final for ${tournamentId}`);
       
-      // 2) Aggiorna status torneo
+      // 3) Aggiorna status torneo
       await updateTournamentStatus(tournamentId);
       
       console.log(`✅ Final processing completed for ${tournamentId}`);
@@ -1298,3 +1305,104 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
     return null;
   }
 );
+
+
+
+
+// ===============================
+// GET RANKING TEAMS
+// Query params:
+//   sport     (required): calcio | padel | beach_volley | scacchi
+//   orderBy   (optional): pct_vittorie | presenze | vittorie | gol — default: pct_vittorie
+//
+// Ordina in memoria → zero indici Firestore necessari.
+// Scacchi non ha ranking_teams: restituisce sempre [].
+// ===============================
+exports.getRankingTeams = onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  try {
+    const sport   = req.query.sport;
+    const orderBy = req.query.orderBy || 'pct_vittorie';
+
+    if (!sport) {
+      return res.status(400).json({ error: 'MISSING_SPORT' });
+    }
+
+    // Scacchi non ha ranking squadre
+    if (sport === 'scacchi') {
+      return res.status(200).json([]);
+    }
+
+    const validOrderFields = ['pct_vittorie', 'presenze', 'vittorie', 'gol'];
+    const safeOrder = validOrderFields.includes(orderBy) ? orderBy : 'pct_vittorie';
+
+    // Scarica tutti i documenti per sport (nessun orderBy su Firestore → nessun indice)
+    const snapshot = await db.collection('ranking_teams')
+      .where('sport', '==', sport)
+      .get();
+
+    const ranking = snapshot.docs.map(doc => doc.data());
+
+    // Ordina in memoria: campo primario DESC, poi pct_vittorie DESC come tiebreaker,
+    // poi nome squadra ASC come tiebreaker finale
+    ranking.sort((a, b) =>
+      (b[safeOrder] ?? 0) - (a[safeOrder] ?? 0) ||
+      (b.pct_vittorie ?? 0) - (a.pct_vittorie ?? 0) ||
+      String(a.team_name || '').localeCompare(String(b.team_name || ''))
+    );
+
+    res.status(200).json(ranking);
+  } catch (error) {
+    console.error('getRankingTeams error:', error);
+    res.status(500).json([]);
+  }
+});
+
+// ===============================
+// GET RANKING PLAYERS
+// Query params:
+//   sport     (required): calcio | padel | beach_volley | scacchi
+//   orderBy   (optional): pct_vittorie | presenze | vittorie | gol | media_gol — default: pct_vittorie
+//
+// Ordina in memoria → zero indici Firestore necessari.
+// Per scacchi: player_name = team_name (torneo individual).
+// gol e media_gol disponibili solo per sport=calcio.
+// ===============================
+exports.getRankingPlayers = onRequest(async (req, res) => {
+  setCORS(res);
+  if (handleOptions(req, res)) return;
+
+  try {
+    const sport   = req.query.sport;
+    const orderBy = req.query.orderBy || 'pct_vittorie';
+
+    if (!sport) {
+      return res.status(400).json({ error: 'MISSING_SPORT' });
+    }
+
+    const validOrderFields = ['pct_vittorie', 'presenze', 'vittorie', 'gol', 'media_gol'];
+    const safeOrder = validOrderFields.includes(orderBy) ? orderBy : 'pct_vittorie';
+
+    // Scarica tutti i documenti per sport (nessun orderBy su Firestore → nessun indice)
+    const snapshot = await db.collection('ranking_players')
+      .where('sport', '==', sport)
+      .get();
+
+    const ranking = snapshot.docs.map(doc => doc.data());
+
+    // Ordina in memoria: campo primario DESC, poi pct_vittorie DESC come tiebreaker,
+    // poi nome giocatore ASC come tiebreaker finale
+    ranking.sort((a, b) =>
+      (b[safeOrder] ?? 0) - (a[safeOrder] ?? 0) ||
+      (b.pct_vittorie ?? 0) - (a.pct_vittorie ?? 0) ||
+      String(a.player_name || '').localeCompare(String(b.player_name || ''))
+    );
+
+    res.status(200).json(ranking);
+  } catch (error) {
+    console.error('getRankingPlayers error:', error);
+    res.status(500).json([]);
+  }
+});
