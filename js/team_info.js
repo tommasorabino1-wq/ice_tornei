@@ -6,6 +6,13 @@ const API_URLS = {
   submitTeamInfo: "https://submitteaminfo-dzvezz2yhq-uc.a.run.app"
 };
 
+
+function toBool(val) {
+  return val === true || String(val).toLowerCase() === 'true';
+}
+
+
+
 // ===================================
 // STATE
 // ===================================
@@ -89,7 +96,7 @@ async function loadTeamInfo() {
     tournamentData = data.tournament;
 
     const isIndividual = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
-    const certificateRequired = tournamentData.certificate_required === true;
+    const certificateRequired = toBool(tournamentData.certificate_required);
 
     // ===================================
     // ADATTA UI A INDIVIDUAL / TEAM
@@ -378,7 +385,7 @@ form.addEventListener('submit', async (e) => {
   console.log('📤 Form submit started');
 
   const isIndividual = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
-  const certificateRequired = tournamentData.certificate_required === true;
+  const certificateRequired = toBool(tournamentData.certificate_required);
 
   // -------------------------
   // VALIDAZIONE CONTESTUALE

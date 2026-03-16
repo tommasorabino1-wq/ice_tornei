@@ -50,6 +50,14 @@ function normalizeTeamNameForCheck(name) {
 }
 
 
+
+function toBool(val) {
+  return val === true || String(val).toLowerCase() === 'true';
+}
+
+
+
+
 // ===============================
 // GET TOURNAMENTS
 // ===============================
@@ -340,7 +348,7 @@ async function sendTeamInfoRequestEmails(tournamentId) {
     const teamSizeMax = Number(tournament.team_size_max || 2);
     const sport = tournament.sport || "Sport";
     const individualOrTeam = tournament.individual_or_team || 'team';
-    const certificateRequired = tournament.certificate_required === true;
+    const certificateRequired = toBool(tournament.certificate_required);
 
     // 2) Recupera subscriptions
     const subscriptionsSnapshot = await db.collection('subscriptions')
@@ -673,7 +681,7 @@ exports.submitSubscription = onRequest(async (req, res) => {
     const needsPreferences = fixedCourtDaysHours !== 'fixed_all';
 
     const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
-    const certificateRequired = tournament.certificate_required === true;
+    const certificateRequired = toBool(tournament.certificate_required);
     const teamSizeMax = Number(tournament.team_size_max || 2);
 
     const normalizedTeamName = team_name.trim().toLowerCase();
@@ -877,7 +885,7 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
     const tournament = tournamentDoc.data();
     const teamSizeMax = Number(tournament.team_size_max || 2);
     const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
-    const certificateRequired = tournament.certificate_required === true;
+    const certificateRequired = toBool(tournament.certificate_required);
 
     console.log('📋 Tournament info:', {
       name: tournament.name,

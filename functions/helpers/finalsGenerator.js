@@ -183,6 +183,13 @@ function computeRounds(numTeams) {
   return rounds;
 }
 
+
+function toBool(val) {
+  return val === true || String(val).toLowerCase() === 'true';
+}
+
+
+
 // ===============================
 // MAIN: Genera tutte le Finals (triggerata da status → final_phase)
 // Genera TUTTI i round in anticipo, con i round futuri vuoti.
@@ -201,7 +208,7 @@ async function generateFinalsIfReady(tournamentId) {
 
     const tournament = tournamentDoc.data();
     const formatType = String(tournament.format_type || '').toLowerCase();
-    const has3x4 = tournament['3_4_posto'] === true;
+    const has3x4 = toBool(tournament['3_4_posto']);
 
     // Verifica formato
     if (!formatHasFinals(formatType)) {
