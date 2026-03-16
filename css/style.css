@@ -1323,8 +1323,13 @@ section > .section-title {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  height: 100%;   /* AGGIUNGI QUESTO */
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   user-select: none;
+}
+
+.sport-box p {
+  flex-grow: 1;
 }
 
 .sport-box:hover {
