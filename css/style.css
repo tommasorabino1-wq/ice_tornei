@@ -3441,6 +3441,351 @@ section > .section-title {
 
 
 
+/* =================================================================
+   RANKING PAGE
+   ================================================================= */
+
+
+/* =========================
+   SPORT TABS
+========================= */
+.ranking-sport-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.ranking-tab {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-card);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  white-space: nowrap;
+}
+
+.ranking-tab:hover {
+  border-color: var(--brand-soft-border);
+  background: var(--brand-soft);
+  color: var(--text-main);
+}
+
+.ranking-tab.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  box-shadow: 0 2px 10px var(--brand-glow-soft);
+}
+
+
+/* =========================
+   SUBTABS (SQUADRE / GIOCATORI)
+========================= */
+.ranking-subtabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.ranking-subtab {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.ranking-subtab:hover {
+  border-color: var(--brand-soft-border);
+  background: var(--brand-soft);
+  color: var(--text-main);
+}
+
+.ranking-subtab.active {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+
+/* =========================
+   RANKING TABLE
+========================= */
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ranking-table thead tr {
+  border-bottom: 2px solid var(--border);
+}
+
+.ranking-table thead th {
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.ranking-table tbody tr {
+  border-bottom: 1px solid var(--border-soft);
+  transition: background 0.15s ease;
+}
+
+.ranking-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.ranking-table tbody tr:hover {
+  background: var(--brand-soft);
+}
+
+.ranking-table tbody td {
+  padding: 9px 10px;
+  color: var(--text-main);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Colonna posizione */
+.ranking-pos-col {
+  width: 36px;
+  text-align: center;
+  padding-right: 4px !important;
+}
+
+.ranking-pos-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/* Top 3 highlight */
+.rank-gold .ranking-pos-badge {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #f59e0b;
+}
+
+.rank-silver .ranking-pos-badge {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #94a3b8;
+}
+
+.rank-bronze .ranking-pos-badge {
+  background: #fff7ed;
+  color: #9a3412;
+  border-color: #fb923c;
+}
+
+/* Highlight intera riga top 3 */
+.rank-gold   { background: rgba(251,191,36,0.05)  !important; }
+.rank-silver { background: rgba(148,163,184,0.06) !important; }
+.rank-bronze { background: rgba(251,146,60,0.05)  !important; }
+
+.rank-gold:hover   { background: rgba(251,191,36,0.10)  !important; }
+.rank-silver:hover { background: rgba(148,163,184,0.11) !important; }
+.rank-bronze:hover { background: rgba(251,146,60,0.10)  !important; }
+
+/* Colonne percentuale: leggero accent */
+.pct-col {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* Riferimento squadra nel ranking giocatori */
+.ranking-team-ref {
+  color: var(--text-muted);
+  font-size: 12px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* =========================
+   STANDINGS BOX (riutilizzo)
+   Già in style.css, ma aggiungiamo
+   variante per il ranking
+========================= */
+.standings-box {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+
+.standings-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.standings-box-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+/* Select orderBy (riusa .round-filter-select) */
+.round-filter-select {
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s ease;
+}
+
+.round-filter-select:hover,
+.round-filter-select:focus {
+  border-color: var(--brand);
+  outline: none;
+}
+
+
+/* =========================
+   SKELETON RANKING
+========================= */
+#ranking-skeleton .skeleton-match {
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    rgba(176,138,90,0.10) 25%,
+    rgba(176,138,90,0.22) 37%,
+    rgba(176,138,90,0.10) 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+  margin-bottom: 8px;
+}
+
+#ranking-skeleton .skeleton-match:nth-child(2) { animation-delay: 0.1s; }
+#ranking-skeleton .skeleton-match:nth-child(3) { animation-delay: 0.2s; }
+
+
+/* =========================
+   PLACEHOLDER (nessun dato)
+========================= */
+.standings-placeholder {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.standings-placeholder-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.standings-placeholder h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.standings-placeholder p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+
+/* =========================
+   BREADCRUMB (riutilizzo)
+========================= */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb a {
+  color: var(--brand);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.18s ease;
+}
+
+.breadcrumb a:hover { color: var(--brand-hover); }
+
+.breadcrumb-separator {
+  color: var(--text-soft);
+  font-size: 13px;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+/* Tablet */
+@media (min-width: 600px) {
+  .ranking-sport-tabs { gap: 8px; }
+  .ranking-tab        { padding: 9px 18px; font-size: 14px; }
+  .ranking-subtab     { padding: 7px 16px; font-size: 13px; }
+  .ranking-table      { font-size: 14px; }
+
+  .ranking-table thead th { padding: 10px 12px; }
+  .ranking-table tbody td { padding: 10px 12px; }
+
+  .ranking-pos-badge  { width: 26px; height: 26px; font-size: 12px; }
+}
+
+/* Desktop */
+@media (min-width: 960px) {
+  .ranking-team-ref { max-width: 180px; }
+}
+
+
+
+
+
+
 
 
 
