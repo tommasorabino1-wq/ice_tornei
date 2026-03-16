@@ -2773,10 +2773,10 @@ section > .section-title {
 
 .meta-item.meta-round {
   padding: 3px 8px;
-  background: var(--brand-soft);
-  color: var(--brand);
-  border: 1px solid var(--brand-soft-border);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
   border-radius: 4px;
+  color: var(--text-muted);
 }
 
 .match-actions { display: flex; align-items: center; gap: 6px; }
