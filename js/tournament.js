@@ -2781,8 +2781,8 @@ function parseHoursSlots(range) {
  
   const totalHours = end - start;
  
-  // Range troppo piccolo (meno di 2 ore) → nessuno slot
-  if (totalHours < 2) {
+  // Range troppo piccolo → nessuno slot
+  if (totalHours < 1) {
     return [];
   }
  
@@ -2813,53 +2813,42 @@ function parseHoursSlots(range) {
     23: "Tarda serata"
   };
  
-  const slots = [];
- 
-  // =====================================================
-  // CASO 1: Range piccolo (2-4 ore) → Slot unico
-  // =====================================================
-  if (totalHours <= 4) {
-    const slotName = slotNames[start] || "Fascia";
+  // Se il range è esattamente 1 ora → un unico slot (edge case)
+  if (totalHours === 1) {
     const startStr = String(start).padStart(2, '0');
     const endStr   = String(end).padStart(2, '0');
- 
-    slots.push({
+    return [{
       value: `${start}-${end}`,
-      label: `${slotName} (${startStr}:00 - ${endStr}:00)`
-    });
- 
-    return slots;
+      label: `${slotNames[start] || 'Fascia'} (${startStr}:00 - ${endStr}:00)`
+    }];
   }
  
-  // =====================================================
-  // CASO 2: Range medio/grande (5+ ore) → Slot da 3 ore
-  // =====================================================
-  const slotDuration = 3;
+  const slots = [];
+  const SLOT_DURATION = 2; // slot fissi da 2 ore
   let currentStart = start;
  
-  while (currentStart + slotDuration <= end) {
-    const slotEnd  = currentStart + slotDuration;
-    const slotName = slotNames[currentStart] || "Fascia";
+  while (currentStart + SLOT_DURATION <= end) {
+    const slotEnd  = currentStart + SLOT_DURATION;
     const startStr = String(currentStart).padStart(2, '0');
     const endStr   = String(slotEnd).padStart(2, '0');
  
     slots.push({
       value: `${currentStart}-${slotEnd}`,
-      label: `${slotName} (${startStr}:00 - ${endStr}:00)`
+      label: `${slotNames[currentStart] || 'Fascia'} (${startStr}:00 - ${endStr}:00)`
     });
  
     currentStart = slotEnd;
   }
  
-  // Gap finale ≥ 2 ore
-  if (currentStart < end && (end - currentStart) >= 2) {
-    const slotName = slotNames[currentStart] || "Fascia";
+  // Gap finale (es. range dispari come 19-24 → dopo 19-21, 21-23 rimane 23-24)
+  // Lo includiamo solo se è esattamente 1 ora (altrimenti non si verifica mai
+  // con slot da 2h e range interi)
+  if (currentStart < end) {
     const startStr = String(currentStart).padStart(2, '0');
     const endStr   = String(end).padStart(2, '0');
- 
     slots.push({
       value: `${currentStart}-${end}`,
-      label: `${slotName} (${startStr}:00 - ${endStr}:00)`
+      label: `${slotNames[currentStart] || 'Fascia'} (${startStr}:00 - ${endStr}:00)`
     });
   }
  
@@ -3437,71 +3426,58 @@ function renderFinalSummary(tournament) {
   const block   = document.getElementById("tournament-final-summary-block");
   const content = document.getElementById("tournament-final-summary-content");
   if (!block || !content) return;
-
-  const isIndividual   = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
-  const formatType     = String(tournament.format_type || '').toLowerCase();
-  const hasFinals      = formatType.includes('finals');
-  const hasAward       = tournament.award === true || String(tournament.award).toUpperCase() === 'TRUE';
-
-  const teamsCurrent   = Number(tournament.teams_current)   || 0;
-  const teamsPerGroup  = Number(tournament.teams_per_group) || 0;
-  const teamsInFinal   = Number(tournament.teams_in_final)  || 0;
+ 
+  // ── Visibile solo se iscrizioni chiuse e struttura definita ─────────────
+  if (tournament.status !== 'full' && tournament.status !== 'wip') {
+    block.classList.add('hidden');
+    return;
+  }
+ 
+  const isIndividual    = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
+  const formatType      = String(tournament.format_type || '').toLowerCase();
+  const hasFinals       = formatType.includes('finals');
+  const hasAward        = tournament.award === true || String(tournament.award).toUpperCase() === 'TRUE';
+ 
+  const teamsCurrent    = Number(tournament.teams_current)   || 0;
+  const teamsPerGroup   = Number(tournament.teams_per_group) || 0;
+  const teamsInFinal    = Number(tournament.teams_in_final)  || 0;
   const awardAmountPerc = String(tournament.award_amount_perc || 'NA');
-  const price          = Number(tournament.price)           || 0;
-
-  // =====================================================
-  // CONTROLLO: dati minimi necessari
-  // =====================================================
+  const price           = Number(tournament.price)           || 0;
+ 
+  // Dati minimi necessari
   if (teamsCurrent === 0 || teamsPerGroup === 0) {
     block.classList.add('hidden');
     return;
   }
-
-  // =====================================================
-  // CONTROLLO: se format_type prevede finali,
-  // teams_in_final deve essere > 0
-  // =====================================================
+ 
+  // Se prevede finali, teams_in_final deve essere > 0
   if (hasFinals && teamsInFinal === 0) {
     block.classList.add('hidden');
     return;
   }
-
+ 
   block.classList.remove('hidden');
-
-  // =====================================================
-  // ETICHETTE individual / team
-  // =====================================================
-  const entitySingular = isIndividual ? 'giocatore'  : 'squadra';
+ 
   const entityPlural   = isIndividual ? 'giocatori'  : 'squadre';
   const entityPerGroup = isIndividual ? 'giocatori per girone' : 'squadre per girone';
-
-  // =====================================================
-  // CALCOLI
-  // =====================================================
-  const numGroups = Math.floor(teamsCurrent / teamsPerGroup);
-
-  // =====================================================
-  // COSTRUZIONE ITEMS
-  // =====================================================
+  const numGroups      = Math.floor(teamsCurrent / teamsPerGroup);
+ 
   const items = [];
-
-  // Partecipanti totali
+ 
   items.push(`
     <div class="final-summary-row">
       <span class="final-summary-icon">👥</span>
       <span><strong>${capitalizeFirst(entityPlural)} partecipanti:</strong> ${teamsCurrent}</span>
     </div>
   `);
-
-  // Gironi
+ 
   items.push(`
     <div class="final-summary-row">
       <span class="final-summary-icon">📋</span>
       <span><strong>Gironi:</strong> ${numGroups} ${numGroups !== 1 ? 'gironi' : 'girone'} da ${teamsPerGroup} ${entityPerGroup}</span>
     </div>
   `);
-
-  // Qualificati alle fasi finali (solo se hasFinals)
+ 
   if (hasFinals) {
     items.push(`
       <div class="final-summary-row">
@@ -3510,11 +3486,10 @@ function renderFinalSummary(tournament) {
       </div>
     `);
   }
-
-  // Montepremi definitivo (solo se award = true)
+ 
   if (hasAward) {
-    let awardText = '';
-
+    let awardText = 'sarà comunicato a breve';
+ 
     if (
       awardAmountPerc !== 'NA' &&
       !isNaN(Number(awardAmountPerc)) &&
@@ -3523,10 +3498,8 @@ function renderFinalSummary(tournament) {
     ) {
       const totalPrize = Math.round(teamsCurrent * price * Number(awardAmountPerc) / 100);
       awardText = `<strong>€${totalPrize}</strong>`;
-    } else {
-      awardText = 'sarà comunicato a breve';
     }
-
+ 
     items.push(`
       <div class="final-summary-row">
         <span class="final-summary-icon">💰</span>
@@ -3534,10 +3507,7 @@ function renderFinalSummary(tournament) {
       </div>
     `);
   }
-
-  // =====================================================
-  // OUTPUT
-  // =====================================================
+ 
   content.innerHTML = `
     <div class="final-summary-intro">
       Le iscrizioni sono chiuse. Di seguito la struttura definitiva del torneo.
