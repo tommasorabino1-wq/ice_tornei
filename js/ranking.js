@@ -100,22 +100,7 @@ function formatPct(val) {
   return `${n % 1 === 0 ? n : n.toFixed(1)}%`;
 }
 
-// ===============================
-// HELPER: Opzioni orderBy in base a sport e tipo
-// ===============================
-function getOrderByOptions(sport, type) {
-  const base = [
-    { value: 'pct_vittorie', label: '% Vittorie' },
-    { value: 'presenze',     label: 'Partite giocate' },
-  ];
 
-  if (sport === 'calcio') {
-    base.push({ value: 'gol',       label: 'Gol'        });
-    base.push({ value: 'media_gol', label: 'Gol/Partita' });
-  }
-
-  return base;
-}
 
 // ===============================
 // HELPER: hasDraws per sport
@@ -197,7 +182,6 @@ function initTabs() {
 
       currentSport = tab.dataset.sport;
       handleSubtabsVisibility();
-      currentOrderBy = 'pct_vittorie';
       loadRanking();
     });
   });
@@ -218,14 +202,6 @@ function initTabs() {
     });
   });
 
-  // OrderBy select
-  const orderBySelect = document.getElementById("ranking-orderby");
-  if (orderBySelect) {
-    orderBySelect.addEventListener("change", (e) => {
-      currentOrderBy = e.target.value;
-      loadRanking();
-    });
-  }
 }
 
 // ===============================
@@ -261,35 +237,11 @@ function handleSubtabsVisibility() {
   }
 }
 
-// ===============================
-// RENDER ORDERBY SELECT
-// ===============================
-function renderOrderBySelect(sport, type) {
-  const select = document.getElementById("ranking-orderby");
-  if (!select) return;
 
-  const options = getOrderByOptions(sport, type);
 
-  select.innerHTML = "";
-  options.forEach(opt => {
-    const el = document.createElement("option");
-    el.value = opt.value;
-    el.textContent = opt.label;
-    if (opt.value === currentOrderBy) el.selected = true;
-    select.appendChild(el);
-  });
 
-  // Se currentOrderBy non è più valido per questo sport/tipo, reset al default
-  const validValues = options.map(o => o.value);
-  if (!validValues.includes(currentOrderBy)) {
-    currentOrderBy = 'pct_vittorie';
-    select.value = 'pct_vittorie';
-  }
-}
 
-// ===============================
-// LOAD RANKING
-// ===============================
+
 // ===============================
 // LOAD RANKING
 // ===============================
@@ -301,11 +253,8 @@ async function loadRanking() {
 
   const key = cacheKey(currentSport, currentType, currentOrderBy);
 
-  // Reset UI
   placeholder.classList.add("hidden");
   tableWrapper.classList.add("hidden");
-
-  renderOrderBySelect(currentSport, currentType);
 
   if (tableTitle) {
     const sportLabel = getSportLabel(currentSport);
@@ -316,7 +265,6 @@ async function loadRanking() {
     `;
   }
 
-  // Se già in cache → mostra subito senza skeleton
   if (rankingCache[key]) {
     skeleton.classList.add("hidden");
     const data = rankingCache[key];
@@ -329,7 +277,6 @@ async function loadRanking() {
     return;
   }
 
-  // Altrimenti → mostra skeleton e carica
   skeleton.classList.remove("hidden", "fade-out");
 
   try {
@@ -360,88 +307,156 @@ async function loadRanking() {
   }
 }
 
+
+
+
+
 // ===============================
 // RENDER RANKING TABLE
+// Con ordinamento cliccabile sulle intestazioni
 // ===============================
-// ===============================
-// RENDER RANKING TABLE
-// ===============================
+
+// Stato ordinamento locale alla tabella (non legato al backend)
+let tableSort = { field: null, dir: 'desc' };
+
 function renderRankingTable(data, sport, type) {
   const container = document.getElementById("ranking-table-container");
   const isCalcio  = sport === 'calcio';
-  const isChess   = sport === 'scacchi';
   const isPlayers = type === 'players';
 
+  // Definizione colonne: { key, label, sortable }
+  const columns = [
+    { key: 'presenze',    label: 'PG',   sortable: true  },
+    { key: 'pct_vittorie', label: '% V',  sortable: true  },
+    ...(isCalcio ? [
+      { key: 'gol',       label: 'Gol',  sortable: true  },
+      { key: 'media_gol', label: 'G/P',  sortable: true  },
+    ] : []),
+  ];
+
+  // Funzione che ordina i dati in base a tableSort
+  function getSortedData(rows) {
+    if (!tableSort.field) return rows;
+    return [...rows].sort((a, b) => {
+      const va = Number(a[tableSort.field]) || 0;
+      const vb = Number(b[tableSort.field]) || 0;
+      return tableSort.dir === 'desc' ? vb - va : va - vb;
+    });
+  }
+
+  // Funzione che (ri)costruisce solo il tbody — usata anche al click
+  function buildTbody(rows) {
+    const tbody = table.querySelector('tbody');
+    tbody.innerHTML = '';
+    getSortedData(rows).forEach((row, index) => {
+      const pos      = index + 1;
+      const posClass = pos === 1 ? 'rank-gold' : pos === 2 ? 'rank-silver' : pos === 3 ? 'rank-bronze' : '';
+
+      let nameCellContent;
+      if (isPlayers) {
+        nameCellContent = `
+          <td class="team-cell">
+            <span class="team-name-text">${escapeHTML(row.player_name || '—')}</span>
+          </td>
+        `;
+      } else {
+        const logo = row.team_logo;
+        const logoHTML = logo
+          ? `<img src="${escapeHTML(logo)}" alt="" class="team-logo-mini">`
+          : `<span class="team-logo-mini-fallback">👥</span>`;
+        nameCellContent = `
+          <td class="team-cell">
+            ${logoHTML}
+            <span class="team-name-text">${escapeHTML(row.team_name || '—')}</span>
+          </td>
+        `;
+      }
+
+      const golCells = isCalcio
+        ? `<td>${Number(row.gol) || 0}</td><td>${Number(row.media_gol) ? Number(row.media_gol).toFixed(2) : '0.00'}</td>`
+        : '';
+
+      const tr = document.createElement("tr");
+      if (posClass) tr.classList.add(posClass);
+
+      tr.innerHTML = `
+        <td class="ranking-pos-col">
+          <span class="ranking-pos-badge ${posClass}">${pos}</span>
+        </td>
+        ${nameCellContent}
+        <td>${Number(row.presenze) || 0}</td>
+        <td class="pct-col">${formatPct(row.pct_vittorie)}</td>
+        ${golCells}
+      `;
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Funzione che aggiorna le frecce nelle intestazioni
+  function updateHeaderArrows() {
+    table.querySelectorAll('th[data-sort]').forEach(th => {
+      const field = th.dataset.sort;
+      const arrow = th.querySelector('.sort-arrow');
+      if (!arrow) return;
+      if (field === tableSort.field) {
+        arrow.textContent = tableSort.dir === 'desc' ? ' ↓' : ' ↑';
+        th.classList.add('sort-active');
+      } else {
+        arrow.textContent = ' ↕';
+        th.classList.remove('sort-active');
+      }
+    });
+  }
+
+  // Costruisci la tabella
   const table = document.createElement("table");
   table.className = "standings-table ranking-table";
 
-  // ── Header colonne ──────────────────────────────────────────────────────────
   const nameHeader = isPlayers ? 'Giocatore' : 'Squadra';
-  const logoHeader = (!isPlayers) ? '' : ''; // logo incluso nella cella nome, nessuna colonna separata
-  const golHeaders = isCalcio ? '<th>Gol</th><th>G/P</th>' : '';
+
+  const colHeaders = columns.map(col => {
+    if (col.sortable) {
+      const isActive = col.key === tableSort.field;
+      const arrow    = isActive ? (tableSort.dir === 'desc' ? ' ↓' : ' ↑') : ' ↕';
+      return `<th data-sort="${col.key}" class="sortable-col${isActive ? ' sort-active' : ''}">${col.label}<span class="sort-arrow">${arrow}</span></th>`;
+    }
+    return `<th>${col.label}</th>`;
+  }).join('');
 
   table.innerHTML = `
     <thead>
       <tr>
         <th class="ranking-pos-col">#</th>
         <th>${nameHeader}</th>
-        <th>PG</th>
-        <th>% V</th>
-        ${golHeaders}
+        ${colHeaders}
       </tr>
     </thead>
     <tbody></tbody>
   `;
 
-  const tbody = table.querySelector('tbody');
-
-  data.forEach((row, index) => {
-    const pos      = index + 1;
-    const posClass = pos === 1 ? 'rank-gold' : pos === 2 ? 'rank-silver' : pos === 3 ? 'rank-bronze' : '';
-
-    let nameCellContent;
-    if (isPlayers) {
-      nameCellContent = `
-        <td class="team-cell">
-          <span class="team-name-text">${escapeHTML(row.player_name || '—')}</span>
-        </td>
-      `;
-    } else {
-      const logo = row.team_logo;
-      const logoHTML = logo
-        ? `<img src="${escapeHTML(logo)}" alt="" class="team-logo-mini">`
-        : `<span class="team-logo-mini-fallback">👥</span>`;
-      nameCellContent = `
-        <td class="team-cell">
-          ${logoHTML}
-          <span class="team-name-text">${escapeHTML(row.team_name || '—')}</span>
-        </td>
-      `;
-    }
-
-    const golCells = isCalcio
-      ? `<td>${Number(row.gol) || 0}</td><td>${Number(row.media_gol) ? Number(row.media_gol).toFixed(2) : '0.00'}</td>`
-      : '';
-
-    const tr = document.createElement("tr");
-    if (posClass) tr.classList.add(posClass);
-
-    tr.innerHTML = `
-      <td class="ranking-pos-col">
-        <span class="ranking-pos-badge ${posClass}">${pos}</span>
-      </td>
-      ${nameCellContent}
-      <td>${Number(row.presenze)  || 0}</td>
-      <td class="pct-col">${formatPct(row.pct_vittorie)}</td>
-      ${golCells}
-    `;
-
-    tbody.appendChild(tr);
+  // Click sulle intestazioni
+  table.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const field = th.dataset.sort;
+      if (tableSort.field === field) {
+        tableSort.dir = tableSort.dir === 'desc' ? 'asc' : 'desc';
+      } else {
+        tableSort.field = field;
+        tableSort.dir   = 'desc';
+      }
+      buildTbody(data);
+      updateHeaderArrows();
+    });
   });
+
+  buildTbody(data);
 
   container.innerHTML = "";
   container.appendChild(table);
 }
+
+
 
 
 

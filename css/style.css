@@ -3808,6 +3808,32 @@ section > .section-title {
   white-space: nowrap;
 }
 
+/* =========================
+   INTESTAZIONI ORDINABILI
+========================= */
+.sortable-col {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+.sortable-col:hover {
+  color: var(--brand);
+}
+
+.sortable-col.sort-active {
+  color: var(--brand);
+}
+
+.sort-arrow {
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+.sortable-col.sort-active .sort-arrow {
+  opacity: 1;
+}
+
 
 
 /* =========================
