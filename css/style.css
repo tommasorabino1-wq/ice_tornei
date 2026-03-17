@@ -2431,6 +2431,131 @@ section > .section-title {
 }
 
 
+
+/* =========================
+   EVENT BANNER
+   Visibile solo per tornei con event_description
+========================= */
+.tournament-event-banner {
+  background: var(--surface-card);
+  border: 2px solid var(--brand);
+  border-radius: var(--radius-lg);
+  padding: 20px 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 24px var(--brand-glow-soft), var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Alone decorativo in alto a destra */
+.tournament-event-banner::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.ev-badge {
+  display: inline-block;
+  background: var(--brand);
+  color: #000;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+
+.ev-body {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-main);
+}
+
+/* Paragrafi intro */
+.ev-body .ev-intro {
+  margin: 0 0 12px;
+}
+
+.ev-body .ev-intro:last-child {
+  margin-bottom: 0;
+}
+
+/* Box regola d'oro */
+.ev-body .ev-rule-box {
+  background: var(--bg-main);
+  border: 1px solid var(--brand-soft-border);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin: 14px 0;
+}
+
+.ev-body .ev-rule-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand);
+  margin: 0 0 6px;
+}
+
+.ev-body .ev-rule-text {
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+  color: var(--text-main);
+}
+
+/* Box premi */
+.ev-body .ev-awards {
+  background: var(--bg-main);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin: 14px 0;
+}
+
+.ev-body .ev-awards-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 10px;
+}
+
+.ev-body .ev-awards-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ev-body .ev-awards-list li {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-main);
+}
+
+/* CTA finale */
+.ev-body .ev-cta {
+  margin: 14px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-main);
+}
+
+.ev-body .ev-cta strong {
+  color: var(--brand);
+}
+
+
 /* =================================================================
    STANDINGS PAGE (standings.html)
    ================================================================= */

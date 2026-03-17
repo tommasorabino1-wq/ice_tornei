@@ -217,6 +217,9 @@ function renderTournament(tournament) {
   genericSection.classList.add("hidden");
   tournamentSection.classList.remove("hidden");
 
+  // ── BANNER EVENTO ─────────────────────────────────────────────────────────
+  renderEventBanner(tournament);
+
   const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
 
   // ✅ Aggiorna elementi dinamici individual/team
@@ -286,6 +289,76 @@ function renderTournament(tournament) {
 
   // Riepilogo definitivo (se iscrizioni chiuse e dati compilati)
   renderFinalSummary(tournament);
+}
+
+
+
+// ===============================
+// RENDER EVENT BANNER
+// ===============================
+function renderEventBanner(tournament) {
+  const banner = document.getElementById("tournament-event-banner");
+  if (!banner) return;
+
+  const raw = tournament.event_description;
+  if (!raw || typeof raw !== 'string' || !raw.trim()) {
+    banner.classList.add("hidden");
+    return;
+  }
+
+  const badge = tournament.event_badge || "Torneo Evento";
+
+  banner.classList.remove("hidden");
+  banner.innerHTML = `
+    <div class="ev-badge">${escapeHTML(badge)}</div>
+    <div class="ev-body">${sanitizeEventHTML(raw)}</div>
+  `;
+}
+
+
+
+// ===============================
+// SANITIZE EVENT HTML
+// ===============================
+function sanitizeEventHTML(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  const allowedTags = new Set(['P', 'STRONG', 'EM', 'BR', 'UL', 'LI', 'DIV', 'SPAN']);
+
+  function sanitizeNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) return node.cloneNode();
+
+    if (node.nodeType !== Node.ELEMENT_NODE) return null;
+
+    if (!allowedTags.has(node.tagName)) return null;
+
+    const clean = document.createElement(node.tagName);
+
+    // Permetti solo class che iniziano con "ev-"
+    if (node.hasAttribute('class')) {
+      const safeClasses = node.getAttribute('class')
+        .split(' ')
+        .filter(c => c.startsWith('ev-'))
+        .join(' ');
+      if (safeClasses) clean.setAttribute('class', safeClasses);
+    }
+
+    for (const child of node.childNodes) {
+      const sanitized = sanitizeNode(child);
+      if (sanitized) clean.appendChild(sanitized);
+    }
+
+    return clean;
+  }
+
+  const result = document.createElement('div');
+  for (const child of doc.body.childNodes) {
+    const sanitized = sanitizeNode(child);
+    if (sanitized) result.appendChild(sanitized);
+  }
+
+  return result.innerHTML;
 }
 
 
