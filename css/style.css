@@ -3617,7 +3617,7 @@ section > .section-title {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 16px 16px 16px 16px;
+  padding: 20px 16px 16px 16px;
   min-height: 36px;
 }
 

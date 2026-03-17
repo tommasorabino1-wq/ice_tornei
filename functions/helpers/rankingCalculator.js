@@ -3,7 +3,6 @@ const db = admin.firestore();
 
 // ===============================
 // HELPER: Normalizza stringa per usarla come chiave di lookup
-// "  Rossoneri FC  " → "rossoneri fc"
 // ===============================
 function normalizeKey(str) {
   return String(str || '')
@@ -14,16 +13,6 @@ function normalizeKey(str) {
 
 // ===============================
 // HELPER: Normalizzazione aggressiva per matching scorer ↔ giocatore
-// Rimuove TUTTI gli spazi e porta in lowercase.
-// Serve per rendere il match robusto a variazioni di spaziatura e maiuscole.
-//
-// Esempi:
-//   "Mario Rossi"  → "mariorossi"
-//   "mario rossi"  → "mariorossi"
-//   "mariorossi"   → "mariorossi"
-//   "Mario  Rossi" → "mariorossi"
-//   "marioRossi"   → "mariorossi"
-//   "MARIO ROSSI"  → "mariorossi"
 // ===============================
 function normalizeForMatch(str) {
   return String(str || '')
@@ -33,7 +22,6 @@ function normalizeForMatch(str) {
 
 // ===============================
 // HELPER: Genera document ID sicuro per Firestore
-// Rimuove caratteri non validi (slash, etc.)
 // ===============================
 function makeDocId(sport, name) {
   const norm = normalizeKey(name).replace(/[^a-z0-9 _-]/g, '').replace(/\s/g, '_');
@@ -62,11 +50,7 @@ function getMatchResult(match) {
 }
 
 // ===============================
-// HELPER: Parsa scorers string in array di chiavi normalizzate (aggressive)
-// "Mario Rossi, Luigi Bianchi" → ["mariorossi", "luigibianchi"]
-//
-// Usa normalizeForMatch (no spazi) così il lookup funziona
-// indipendentemente da come l'admin ha scritto il nome.
+// HELPER: Parsa scorers string in array di chiavi normalizzate
 // ===============================
 function parseScorers(scorersStr) {
   if (!scorersStr || typeof scorersStr !== 'string') return [];
@@ -90,8 +74,34 @@ function normalizeSportFromTournament(sport) {
 }
 
 // ===============================
+// HELPER: Parsa point_system "3-1-0" → { win: 3, draw: 1, loss: 0 }
+// Fallback per sport se stringa assente o malformata:
+//   calcio        → 3-1-0
+//   padel         → 2-1-0
+//   beach_volley  → 2-1-0
+//   scacchi       → 1-0.5-0
+// ===============================
+function parsePointSystem(raw, sport) {
+  const fallbacks = {
+    calcio:       { win: 3,   draw: 1,   loss: 0 },
+    padel:        { win: 2,   draw: 1,   loss: 0 },
+    beach_volley: { win: 2,   draw: 1,   loss: 0 },
+    scacchi:      { win: 1,   draw: 0.5, loss: 0 },
+  };
+
+  if (raw && typeof raw === 'string') {
+    const parts = raw.split('-').map(Number);
+    if (parts.length === 3 && parts.every(n => !isNaN(n))) {
+      return { win: parts[0], draw: parts[1], loss: parts[2] };
+    }
+    console.warn(`⚠️ [RANKING] point_system malformato: "${raw}" — uso fallback per ${sport}`);
+  }
+
+  return fallbacks[sport] || fallbacks['calcio'];
+}
+
+// ===============================
 // HELPER: Estrae nomi giocatori da documento teams
-// Legge name_player_1, name_player_2, ... fino a trovare null
 // ===============================
 function extractPlayers(teamDoc) {
   const players = [];
@@ -104,7 +114,7 @@ function extractPlayers(teamDoc) {
       players.push(name.trim());
     }
     i++;
-    if (i > 20) break; // safety cap
+    if (i > 20) break;
   }
   return players;
 }
@@ -124,6 +134,7 @@ function emptyStats(hasDraws, isCalcio) {
     presenze:  0,
     vittorie:  0,
     sconfitte: 0,
+    punti:     0,
     ...(hasDraws && { pareggi: 0 }),
     ...(isCalcio && { gol: 0 }),
   };
@@ -131,12 +142,20 @@ function emptyStats(hasDraws, isCalcio) {
 
 // ===============================
 // HELPER: Applica risultato a un'entry stats
+// Ora accumula anche i punti in base al pointSystem
 // ===============================
-function applyResult(stats, result) {
+function applyResult(stats, result, pointSystem) {
   stats.presenze++;
-  if (result === 'win')       stats.vittorie++;
-  else if (result === 'draw') stats.pareggi = (stats.pareggi || 0) + 1;
-  else                        stats.sconfitte++;
+  if (result === 'win') {
+    stats.vittorie++;
+    stats.punti += pointSystem.win;
+  } else if (result === 'draw') {
+    stats.pareggi = (stats.pareggi || 0) + 1;
+    stats.punti += pointSystem.draw;
+  } else {
+    stats.sconfitte++;
+    stats.punti += pointSystem.loss;
+  }
 }
 
 // ===============================
@@ -160,7 +179,9 @@ async function updateRanking(tournamentId) {
     const hasDraws   = isCalcio || isChess;
     const writeTeams = !isChess;
 
-    console.log(`📋 [RANKING] Sport: ${sport} | writeTeams: ${writeTeams} | hasDraws: ${hasDraws} | isCalcio: ${isCalcio}`);
+    // ── 1b) Parsa point_system ────────────────────────────────────────────────
+    const pointSystem = parsePointSystem(tournament.point_system, sport);
+    console.log(`📋 [RANKING] Sport: ${sport} | pointSystem: ${JSON.stringify(pointSystem)} | writeTeams: ${writeTeams}`);
 
     // ── 2) Leggi tutti i match giocati (gironi + finals) ─────────────────────
     const [matchesSnap, finalsSnap] = await Promise.all([
@@ -194,14 +215,6 @@ async function updateRanking(tournamentId) {
     // ── 4) Strutture di aggregazione ─────────────────────────────────────────
     const teamStats   = {};
     const playerStats = {};
-
-    // Per l'attribuzione gol agli scorer, manteniamo una mappa:
-    //   matchNorm → playerNorm
-    // dove matchNorm = normalizeForMatch(playerName) (no spazi, lowercase)
-    // e playerNorm = normalizeKey(playerName) (con spazi, lowercase) → chiave di playerStats
-    //
-    // In questo modo quando parsiamo "mario rossi" dallo scorer, troviamo
-    // "mariorossi" → "mario rossi" → playerStats["mario rossi"]
     const scorerMatchKeyToPlayerNorm = {};
 
     function ensureTeam(teamId, teamName) {
@@ -223,8 +236,8 @@ async function updateRanking(tournamentId) {
     }
 
     function ensurePlayer(playerName) {
-      const norm = normalizeKey(playerName);         // "mario rossi"   → chiave playerStats
-      const matchKey = normalizeForMatch(playerName); // "mario rossi"   → "mariorossi"
+      const norm     = normalizeKey(playerName);
+      const matchKey = normalizeForMatch(playerName);
       if (!norm) return null;
 
       if (!playerStats[norm]) {
@@ -235,11 +248,7 @@ async function updateRanking(tournamentId) {
         };
       }
 
-      // Registra il mapping matchKey → norm per l'attribuzione gol
-      // Se due giocatori diversi collassano sullo stesso matchKey (omonimia senza spazi)
-      // l'ultimo vince — limitazione accettata, già documentata come Falla 3.
       scorerMatchKeyToPlayerNorm[matchKey] = norm;
-
       return norm;
     }
 
@@ -256,12 +265,12 @@ async function updateRanking(tournamentId) {
 
       if (!teamAId || !teamBId) continue;
 
-      // ── 5a) Ranking teams (skip per scacchi) ───────────────────────────────
+      // ── 5a) Ranking teams ──────────────────────────────────────────────────
       if (writeTeams) {
         const normA = ensureTeam(teamAId, teamAName);
         const normB = ensureTeam(teamBId, teamBName);
-        applyResult(teamStats[normA], resultA);
-        applyResult(teamStats[normB], resultB);
+        applyResult(teamStats[normA], resultA, pointSystem);
+        applyResult(teamStats[normB], resultB, pointSystem);
 
         if (isCalcio) {
           teamStats[normA].gol += Number(match.score_a) || 0;
@@ -273,15 +282,15 @@ async function updateRanking(tournamentId) {
       if (isChess) {
         const normA = ensurePlayer(teamAName);
         const normB = ensurePlayer(teamBName);
-        if (normA) applyResult(playerStats[normA], resultA);
-        if (normB) applyResult(playerStats[normB], resultB);
+        if (normA) applyResult(playerStats[normA], resultA, pointSystem);
+        if (normB) applyResult(playerStats[normB], resultB, pointSystem);
 
       } else {
         const teamADoc = teamsMap[teamAId];
         if (teamADoc) {
           for (const playerName of extractPlayers(teamADoc)) {
             const pNorm = ensurePlayer(playerName);
-            if (pNorm) applyResult(playerStats[pNorm], resultA);
+            if (pNorm) applyResult(playerStats[pNorm], resultA, pointSystem);
           }
         }
 
@@ -289,14 +298,11 @@ async function updateRanking(tournamentId) {
         if (teamBDoc) {
           for (const playerName of extractPlayers(teamBDoc)) {
             const pNorm = ensurePlayer(playerName);
-            if (pNorm) applyResult(playerStats[pNorm], resultB);
+            if (pNorm) applyResult(playerStats[pNorm], resultB, pointSystem);
           }
         }
 
         // ── 5c) Gol giocatori (solo calcio) ───────────────────────────────────
-        // parseScorers restituisce chiavi normalizeForMatch (no spazi, lowercase).
-        // Le cerchiamo in scorerMatchKeyToPlayerNorm per ottenere la chiave
-        // di playerStats (con spazi, lowercase).
         if (isCalcio) {
           for (const matchKey of parseScorers(match.scorers_a)) {
             const playerNorm = scorerMatchKeyToPlayerNorm[matchKey];
@@ -338,21 +344,25 @@ async function updateRanking(tournamentId) {
 
     if (writeTeams) {
       for (const [, stats] of Object.entries(teamStats)) {
-        const docId = makeDocId(sport, stats.team_name_norm);
-        const ref   = db.collection('ranking_teams').doc(docId);
+        const docId        = makeDocId(sport, stats.team_name_norm);
+        const ref          = db.collection('ranking_teams').doc(docId);
         const resolvedLogo = stats.team_logo || existingTeamLogos[docId] || null;
 
         const docData = {
-          ranking_id:     docId,
-          team_name:      stats.team_name,
-          team_name_norm: stats.team_name_norm,
+          ranking_id:          docId,
+          team_name:           stats.team_name,
+          team_name_norm:      stats.team_name_norm,
           sport,
-          presenze:       stats.presenze,
-          vittorie:       stats.vittorie,
-          sconfitte:      stats.sconfitte,
-          pct_vittorie:   pct(stats.vittorie,  stats.presenze),
-          pct_sconfitte:  pct(stats.sconfitte, stats.presenze),
-          updated_at:     admin.firestore.FieldValue.serverTimestamp(),
+          presenze:            stats.presenze,
+          vittorie:            stats.vittorie,
+          sconfitte:           stats.sconfitte,
+          punti:               stats.punti,
+          punti_per_partita:   stats.presenze > 0
+            ? Math.round((stats.punti / stats.presenze) * 100) / 100
+            : 0,
+          pct_vittorie:        pct(stats.vittorie,  stats.presenze),
+          pct_sconfitte:       pct(stats.sconfitte, stats.presenze),
+          updated_at:          admin.firestore.FieldValue.serverTimestamp(),
           ...(hasDraws && {
             pareggi:     stats.pareggi,
             pct_pareggi: pct(stats.pareggi, stats.presenze),
@@ -376,16 +386,20 @@ async function updateRanking(tournamentId) {
       const ref   = db.collection('ranking_players').doc(docId);
 
       const docData = {
-        ranking_id:       docId,
-        player_name:      stats.player_name,
-        player_name_norm: stats.player_name_norm,
+        ranking_id:          docId,
+        player_name:         stats.player_name,
+        player_name_norm:    stats.player_name_norm,
         sport,
-        presenze:         stats.presenze,
-        vittorie:         stats.vittorie,
-        sconfitte:        stats.sconfitte,
-        pct_vittorie:     pct(stats.vittorie,  stats.presenze),
-        pct_sconfitte:    pct(stats.sconfitte, stats.presenze),
-        updated_at:       admin.firestore.FieldValue.serverTimestamp(),
+        presenze:            stats.presenze,
+        vittorie:            stats.vittorie,
+        sconfitte:           stats.sconfitte,
+        punti:               stats.punti,
+        punti_per_partita:   stats.presenze > 0
+          ? Math.round((stats.punti / stats.presenze) * 100) / 100
+          : 0,
+        pct_vittorie:        pct(stats.vittorie,  stats.presenze),
+        pct_sconfitte:       pct(stats.sconfitte, stats.presenze),
+        updated_at:          admin.firestore.FieldValue.serverTimestamp(),
         ...(hasDraws && {
           pareggi:     stats.pareggi,
           pct_pareggi: pct(stats.pareggi, stats.presenze),

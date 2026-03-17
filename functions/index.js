@@ -1363,12 +1363,6 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
 
 // ===============================
 // GET RANKING TEAMS
-// Query params:
-//   sport     (required): calcio | padel | beach_volley | scacchi
-//   orderBy   (optional): pct_vittorie | presenze | vittorie | gol — default: pct_vittorie
-//
-// Ordina in memoria → zero indici Firestore necessari.
-// Scacchi non ha ranking_teams: restituisce sempre [].
 // ===============================
 exports.getRankingTeams = onRequest(async (req, res) => {
   setCORS(res);
@@ -1376,32 +1370,28 @@ exports.getRankingTeams = onRequest(async (req, res) => {
 
   try {
     const sport   = req.query.sport;
-    const orderBy = req.query.orderBy || 'pct_vittorie';
+    const orderBy = req.query.orderBy || 'punti';
 
     if (!sport) {
       return res.status(400).json({ error: 'MISSING_SPORT' });
     }
 
-    // Scacchi non ha ranking squadre
     if (sport === 'scacchi') {
       return res.status(200).json([]);
     }
 
-    const validOrderFields = ['pct_vittorie', 'presenze', 'vittorie', 'gol'];
-    const safeOrder = validOrderFields.includes(orderBy) ? orderBy : 'pct_vittorie';
+    const validOrderFields = ['punti', 'punti_per_partita', 'presenze', 'vittorie', 'gol', 'pct_vittorie'];
+    const safeOrder = validOrderFields.includes(orderBy) ? orderBy : 'punti';
 
-    // Scarica tutti i documenti per sport (nessun orderBy su Firestore → nessun indice)
     const snapshot = await db.collection('ranking_teams')
       .where('sport', '==', sport)
       .get();
 
     const ranking = snapshot.docs.map(doc => doc.data());
 
-    // Ordina in memoria: campo primario DESC, poi pct_vittorie DESC come tiebreaker,
-    // poi nome squadra ASC come tiebreaker finale
     ranking.sort((a, b) =>
       (b[safeOrder] ?? 0) - (a[safeOrder] ?? 0) ||
-      (b.pct_vittorie ?? 0) - (a.pct_vittorie ?? 0) ||
+      (b.punti ?? 0) - (a.punti ?? 0) ||
       String(a.team_name || '').localeCompare(String(b.team_name || ''))
     );
 
@@ -1414,13 +1404,6 @@ exports.getRankingTeams = onRequest(async (req, res) => {
 
 // ===============================
 // GET RANKING PLAYERS
-// Query params:
-//   sport     (required): calcio | padel | beach_volley | scacchi
-//   orderBy   (optional): pct_vittorie | presenze | vittorie | gol | media_gol — default: pct_vittorie
-//
-// Ordina in memoria → zero indici Firestore necessari.
-// Per scacchi: player_name = team_name (torneo individual).
-// gol e media_gol disponibili solo per sport=calcio.
 // ===============================
 exports.getRankingPlayers = onRequest(async (req, res) => {
   setCORS(res);
@@ -1428,27 +1411,24 @@ exports.getRankingPlayers = onRequest(async (req, res) => {
 
   try {
     const sport   = req.query.sport;
-    const orderBy = req.query.orderBy || 'pct_vittorie';
+    const orderBy = req.query.orderBy || 'punti';
 
     if (!sport) {
       return res.status(400).json({ error: 'MISSING_SPORT' });
     }
 
-    const validOrderFields = ['pct_vittorie', 'presenze', 'vittorie', 'gol', 'media_gol'];
-    const safeOrder = validOrderFields.includes(orderBy) ? orderBy : 'pct_vittorie';
+    const validOrderFields = ['punti', 'punti_per_partita', 'presenze', 'vittorie', 'gol', 'media_gol', 'pct_vittorie'];
+    const safeOrder = validOrderFields.includes(orderBy) ? orderBy : 'punti';
 
-    // Scarica tutti i documenti per sport (nessun orderBy su Firestore → nessun indice)
     const snapshot = await db.collection('ranking_players')
       .where('sport', '==', sport)
       .get();
 
     const ranking = snapshot.docs.map(doc => doc.data());
 
-    // Ordina in memoria: campo primario DESC, poi pct_vittorie DESC come tiebreaker,
-    // poi nome giocatore ASC come tiebreaker finale
     ranking.sort((a, b) =>
       (b[safeOrder] ?? 0) - (a[safeOrder] ?? 0) ||
-      (b.pct_vittorie ?? 0) - (a.pct_vittorie ?? 0) ||
+      (b.punti ?? 0) - (a.punti ?? 0) ||
       String(a.player_name || '').localeCompare(String(b.player_name || ''))
     );
 

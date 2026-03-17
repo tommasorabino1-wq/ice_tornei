@@ -60,7 +60,7 @@ const API_URLS = {
 // ===============================
 let currentSport   = 'calcio';
 let currentType    = 'teams';
-let currentOrderBy = 'pct_vittorie';
+let currentOrderBy = 'punti';
 
 const rankingCache = {};
 
@@ -90,12 +90,12 @@ function fadeOutSkeleton(wrapper) {
 }
 
 // ===============================
-// HELPER: Formato percentuale
+// HELPER: Formatta punti (interi senza decimali, float con max 1 decimale)
 // ===============================
-function formatPct(val) {
+function formatPunti(val) {
   const n = Number(val);
-  if (isNaN(n)) return "0%";
-  return `${n % 1 === 0 ? n : n.toFixed(1)}%`;
+  if (isNaN(n)) return '0';
+  return n % 1 === 0 ? String(n) : n.toFixed(1);
 }
 
 // ===============================
@@ -112,7 +112,7 @@ function sportHasDraws(sport) {
 async function prefetchRankingInBackground() {
   const sports  = ['calcio', 'padel', 'beach_volley', 'scacchi'];
   const types   = ['teams', 'players'];
-  const orderBy = 'pct_vittorie';
+  const orderBy = 'punti';
 
   for (const sport of sports) {
     for (const type of types) {
@@ -183,7 +183,7 @@ function initTabs() {
       tab.setAttribute("aria-selected", "true");
 
       currentType    = tab.dataset.type;
-      currentOrderBy = 'pct_vittorie';
+      currentOrderBy = 'punti';
       loadRanking();
     });
   });
@@ -292,7 +292,8 @@ async function loadRanking() {
 // RENDER RANKING TABLE
 // ===============================
 
-let tableSort = { field: null, dir: 'desc' };
+// Default sort su punti (colonna principale del ranking)
+let tableSort = { field: 'punti', dir: 'desc' };
 
 function renderRankingTable(data, sport, type) {
   const container = document.getElementById("rk-table-container");
@@ -300,8 +301,9 @@ function renderRankingTable(data, sport, type) {
   const isPlayers = type === 'players';
 
   const columns = [
-    { key: 'presenze',     label: 'PG',  sortable: true },
-    { key: 'pct_vittorie', label: '% V', sortable: true },
+    { key: 'presenze',          label: 'PG',   sortable: true },
+    { key: 'punti',             label: 'Pts',  sortable: true },
+    { key: 'punti_per_partita', label: 'P/PG', sortable: true },
     ...(isCalcio ? [
       { key: 'gol',       label: 'Gol', sortable: true },
       { key: 'media_gol', label: 'G/P', sortable: true },
@@ -361,7 +363,8 @@ function renderRankingTable(data, sport, type) {
         </td>
         ${nameCellContent}
         <td>${Number(row.presenze) || 0}</td>
-        <td class="rk-pct-col">${formatPct(row.pct_vittorie)}</td>
+        <td><strong>${formatPunti(row.punti)}</strong></td>
+        <td>${formatPunti(row.punti_per_partita)}</td>
         ${golCells}
       `;
 
@@ -441,7 +444,6 @@ function renderRankingTable(data, sport, type) {
   searchInput.value = '';
   searchBar.classList.add('hidden');
 
-  // Clona per rimuovere vecchi listener
   const newToggle = searchToggle.cloneNode(true);
   searchToggle.parentNode.replaceChild(newToggle, searchToggle);
   const newInput = searchInput.cloneNode(true);
@@ -450,15 +452,13 @@ function renderRankingTable(data, sport, type) {
   newToggle.addEventListener('click', () => {
     const isHidden = searchBar.classList.toggle('hidden');
     if (!isHidden) {
-      // Aspetta che l'animazione CSS apra il box, poi scrolla e fa focus
       requestAnimationFrame(() => {
         setTimeout(() => {
           newInput.focus();
-          const inputRect = newInput.getBoundingClientRect();
+          const inputRect      = newInput.getBoundingClientRect();
           const viewportHeight = window.visualViewport
             ? window.visualViewport.height
             : window.innerHeight;
-          // Se l'input è coperto dalla tastiera (parte bassa del viewport)
           if (inputRect.bottom > viewportHeight * 0.6) {
             newInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
