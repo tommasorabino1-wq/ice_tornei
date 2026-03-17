@@ -24,7 +24,6 @@ function toBooleanSafe(val, fallback = false) {
 
 // ===============================
 // MAIN: Aggiorna Status Torneo
-// ✅ MODIFICATO: supporta nuovo status "wip"
 // ===============================
 async function updateTournamentStatus(tournamentId) {
   try {
@@ -38,41 +37,45 @@ async function updateTournamentStatus(tournamentId) {
       return;
     }
 
-    const tournament = tournamentDoc.data();
+    const tournament    = tournamentDoc.data();
     const currentStatus = toStringSafe(tournament.status).toLowerCase();
 
     console.log(`ℹ️ Current status: ${currentStatus}`);
 
     // ⚠️ NON modificare questi status (gestiti manualmente):
-    // - open (apertura iscrizioni)
-    // - wip (chiusura iscrizioni + richiesta info)
-    // - final_phase (inizio fase finale)
-    // - finished (torneo concluso)
-    const manualStatuses = ['open', 'wip', 'full', 'final_phase', 'finished'];
+    // - open        → apertura iscrizioni
+    // - wip         → chiusura iscrizioni + richiesta info
+    // - final_phase → inizio fase finale
+    // - finished    → torneo concluso
+    //
+    // FIX BUG 2: rimosso 'full' dai manuali — è il punto di partenza
+    // della transizione automatica full → live e non deve essere bloccato
+    const manualStatuses = ['open', 'wip', 'final_phase', 'finished'];
     
     if (manualStatuses.includes(currentStatus)) {
       console.log(`ℹ️ Status "${currentStatus}" is manual - no automatic update`);
       return;
     }
 
-    // Recupera matches
     const matchesSnapshot = await db.collection('matches')
       .where('tournament_id', '==', tournamentId)
       .get();
 
     const matches = matchesSnapshot.docs.map(doc => doc.data());
-    const someMatchesPlayed = matches.some(m => m.played === true);
+
+    // FIX BUG 1: toBooleanSafe invece di === true per gestire
+    // sia boolean nativi sia la stringa "true" in Firestore
+    const someMatchesPlayed = matches.some(m => toBooleanSafe(m.played));
 
     console.log(`📋 Matches: ${matches.length} total, somePlayed: ${someMatchesPlayed}`);
 
     let newStatus = currentStatus;
 
-    // ✅ Unica transizione automatica: full → live quando almeno un match è giocato
+    // Unica transizione automatica: full → live quando almeno un match è giocato
     if (currentStatus === 'full' && someMatchesPlayed) {
       newStatus = 'live';
     }
 
-    // Aggiorna status se cambiato
     if (newStatus !== currentStatus) {
       await tournamentRef.update({ status: newStatus });
       console.log(`✅ Status updated: ${currentStatus} → ${newStatus}`);

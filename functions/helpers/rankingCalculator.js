@@ -11,6 +11,21 @@ function toStringSafe(val, fallback = '') {
   return String(val).trim();
 }
 
+function toBool(val) {
+  if (val === true) return true;
+  if (val === false) return false;
+  const v = String(val ?? '').toLowerCase().trim();
+  return v === 'true' || v === '1' || v === 'yes';
+}
+
+function toNumberSafe(val, fallback = null) {
+  if (val === null || val === undefined) return fallback;
+  const s = String(val).trim();
+  if (s === '' || s.toLowerCase() === 'null') return fallback;
+  const n = Number(s);
+  return isNaN(n) ? fallback : n;
+}
+
 // ===============================
 // HELPER: Normalizza stringa per usarla come chiave di lookup
 // ===============================
@@ -42,18 +57,27 @@ function makeDocId(sport, name) {
 // HELPER: Determina V/P/S per team_a e team_b da un singolo match
 // ===============================
 function getMatchResult(match) {
-  if (!match.played || match.score_a === null || match.score_b === null) return null;
+  // FIX BUG 2: played letto con toBool() per gestire sia boolean sia stringa "true"
+  if (!toBool(match.played)) return null;
+
+  // FIX BUG 4: score_a/score_b letti con toNumberSafe che gestisce
+  // null, "null", stringhe vuote e valori non numerici
+  const scoreA = toNumberSafe(match.score_a);
+  const scoreB = toNumberSafe(match.score_b);
+  if (scoreA === null || scoreB === null) return null;
 
   if (match.winner_team_id) {
-    const winnerIsA = match.winner_team_id === match.team_a;
+    // FIX BUG 3: confronto tramite toStringSafe su entrambi i lati
+    // per evitare falsi negativi da tipi misti (string vs number)
+    const winnerIsA =
+      toStringSafe(match.winner_team_id) !== '' &&
+      toStringSafe(match.winner_team_id) === toStringSafe(match.team_a);
     return {
       resultA: winnerIsA ? 'win' : 'loss',
       resultB: winnerIsA ? 'loss' : 'win',
     };
   }
 
-  const scoreA = Number(match.score_a);
-  const scoreB = Number(match.score_b);
   if (scoreA > scoreB) return { resultA: 'win',  resultB: 'loss' };
   if (scoreA < scoreB) return { resultA: 'loss', resultB: 'win'  };
   return { resultA: 'draw', resultB: 'draw' };
@@ -152,7 +176,6 @@ function emptyStats(hasDraws, isCalcio) {
 
 // ===============================
 // HELPER: Applica risultato a un'entry stats
-// Ora accumula anche i punti in base al pointSystem
 // ===============================
 function applyResult(stats, result, pointSystem) {
   stats.presenze++;
@@ -194,7 +217,7 @@ async function updateRanking(tournamentId) {
     const hasDraws   = isCalcio || isChess;
     const writeTeams = !isChess;
 
-    // point_system (safe)
+    // FIX BUG 1: il campo in Firestore si chiama point_system_gironi, non point_system
     const rawPointSystem = toStringSafe(tournament.point_system);
 
     const pointSystem = parsePointSystem(rawPointSystem, sport);
@@ -206,10 +229,11 @@ async function updateRanking(tournamentId) {
       db.collection('finals').where('tournament_id', '==', tournamentId).get(),
     ]);
 
+    // FIX BUG 2: filtro con toBool invece di === true
     const allMatches = [
       ...matchesSnap.docs.map(d => d.data()),
       ...finalsSnap.docs.map(d => d.data()),
-    ].filter(m => m.played === true);
+    ].filter(m => toBool(m.played));
 
     console.log(`📊 [RANKING] Played matches: ${allMatches.length}`);
 
@@ -275,10 +299,10 @@ async function updateRanking(tournamentId) {
       if (!result) continue;
 
       const { resultA, resultB } = result;
-      const teamAId   = match.team_a;
-      const teamBId   = match.team_b;
-      const teamAName = match.team_a_name || teamAId;
-      const teamBName = match.team_b_name || teamBId;
+      const teamAId   = toStringSafe(match.team_a);
+      const teamBId   = toStringSafe(match.team_b);
+      const teamAName = toStringSafe(match.team_a_name) || teamAId;
+      const teamBName = toStringSafe(match.team_b_name) || teamBId;
 
       if (!teamAId || !teamBId) continue;
 
@@ -290,8 +314,9 @@ async function updateRanking(tournamentId) {
         applyResult(teamStats[normB], resultB, pointSystem);
 
         if (isCalcio) {
-          teamStats[normA].gol += Number(match.score_a) || 0;
-          teamStats[normB].gol += Number(match.score_b) || 0;
+          // FIX BUG 4: toNumberSafe per gestire score come stringa o null/"null"
+          teamStats[normA].gol += toNumberSafe(match.score_a) ?? 0;
+          teamStats[normB].gol += toNumberSafe(match.score_b) ?? 0;
         }
       }
 

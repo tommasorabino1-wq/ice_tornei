@@ -63,9 +63,6 @@ function handleOptions(req, res) {
 
 // ===============================
 // HELPER: Normalizza nome squadra per controlli di unicità
-// Usato da checkTeamName e submitSubscription.
-// Lowercase + trim + spazi multipli → spazio singolo.
-// NON rimuove caratteri speciali: "L'Aquila" ≠ "Laquila"
 // ===============================
 function normalizeTeamNameForCheck(name) {
   return String(name || '')
@@ -249,7 +246,6 @@ exports.getTeams = onRequest(async (req, res) => {
 
 // ===============================
 // GET BRACKET (struttura finals)
-// ✅ MODIFICATO: separa il match 3°/4° posto in thirdPlaceMatch
 // ===============================
 exports.getBracket = onRequest(async (req, res) => {
   setCORS(res);
@@ -272,24 +268,21 @@ exports.getBracket = onRequest(async (req, res) => {
 
     const rounds = {};
     const paths = {};
-    let thirdPlaceMatch = null; // ✅ NUOVO: match 3°/4° posto separato
+    let thirdPlaceMatch = null;
 
     snapshot.docs.forEach(doc => {
       const data = doc.data();
 
-      // ✅ NUOVO: il match 3°/4° viene estratto separatamente, non finisce in rounds
       if (toBooleanSafe(data.is_third_place_match)) {
         thirdPlaceMatch = data;
-        return; // non aggiungerlo a rounds né a paths
+        return;
       }
 
       const roundId = data.round_id;
 
-      // Aggiungi a rounds
       if (!rounds[roundId]) rounds[roundId] = [];
       rounds[roundId].push(data);
 
-      // Aggiungi a paths per team_a
       if (data.team_a) {
         if (!paths[data.team_a]) paths[data.team_a] = [];
         paths[data.team_a].push({
@@ -299,7 +292,6 @@ exports.getBracket = onRequest(async (req, res) => {
         });
       }
 
-      // Aggiungi a paths per team_b
       if (data.team_b) {
         if (!paths[data.team_b]) paths[data.team_b] = [];
         paths[data.team_b].push({
@@ -310,12 +302,10 @@ exports.getBracket = onRequest(async (req, res) => {
       }
     });
 
-    // Ordina paths per round
     Object.keys(paths).forEach(teamId => {
       paths[teamId].sort((a, b) => a.round - b.round);
     });
 
-    // Ordina match dentro ogni round per match_id
     Object.keys(rounds).forEach(roundId => {
       rounds[roundId].sort((a, b) =>
         String(a.match_id || '').localeCompare(String(b.match_id || ''))
@@ -326,7 +316,7 @@ exports.getBracket = onRequest(async (req, res) => {
       tournament_id: tournamentId,
       rounds,
       paths,
-      thirdPlaceMatch // ✅ null se non esiste, altrimenti il documento del match
+      thirdPlaceMatch
     });
   } catch (error) {
     console.error('getBracket error:', error);
@@ -350,26 +340,23 @@ const { updateRanking } = require('./helpers/rankingCalculator');
 // ===============================
 // HELPER: Invia email richiesta info squadre
 // ===============================
-
 async function sendTeamInfoRequestEmails(tournamentId) {
   try {
     console.log(`📧 Sending team info request emails for ${tournamentId}`);
 
-    // 1) Recupera torneo
     const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
     if (!tournamentDoc.exists) {
       throw new Error('Tournament not found');
     }
 
     const tournament = tournamentDoc.data();
-    const tournamentName = toStringSafe(tournament.name);
-    const teamSizeMin = toNumberSafe(tournament.team_size_min, 2);
-    const teamSizeMax = toNumberSafe(tournament.team_size_max, 2);
-    const sport = toStringSafe(tournament.sport, "Sport");
-    const individualOrTeam = toStringSafe(tournament.individual_or_team, 'team').toLowerCase();
-    const certificateRequired = toBooleanSafe(tournament.certificate_required);
+    const tournamentName        = toStringSafe(tournament.name);
+    const teamSizeMin           = toNumberSafe(tournament.team_size_min, 2);
+    const teamSizeMax           = toNumberSafe(tournament.team_size_max, 2);
+    const sport                 = toStringSafe(tournament.sport, "Sport");
+    const individualOrTeam      = toStringSafe(tournament.individual_or_team, 'team').toLowerCase();
+    const certificateRequired   = toBooleanSafe(tournament.certificate_required);
 
-    // 2) Recupera subscriptions
     const subscriptionsSnapshot = await db.collection('subscriptions')
       .where('tournament_id', '==', tournamentId)
       .get();
@@ -379,16 +366,14 @@ async function sendTeamInfoRequestEmails(tournamentId) {
       return;
     }
 
-    // 3) Configurazione mailer
-    const mailerUrl = "https://script.google.com/macros/s/AKfycbyt5UdChl1gjka1jcqTqdpZXMZyNKKIvwVGmm6gkPutOsGe8qw5qip04RCLUajjSgve/exec";
+    const mailerUrl   = "https://script.google.com/macros/s/AKfycbyt5UdChl1gjka1jcqTqdpZXMZyNKKIvwVGmm6gkPutOsGe8qw5qip04RCLUajjSgve/exec";
     const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
-    // 4) Invia email a ogni squadra
     const emailPromises = subscriptionsSnapshot.docs.map(async (doc) => {
       const subscription = doc.data();
-      const email = subscription.email;
+      const email    = subscription.email;
       const teamName = subscription.team_name;
-      const teamId = subscription.team_id;
+      const teamId   = subscription.team_id;
 
       const payload = {
         token: mailerToken,
@@ -444,8 +429,6 @@ async function sendTeamInfoRequestEmails(tournamentId) {
 
 
 
-
-
 // ===============================
 // FIRESTORE TRIGGER: GENERATE MATCHES ON STATUS CHANGE
 // ===============================
@@ -455,14 +438,13 @@ exports.onTournamentStatusChange = onDocumentUpdated(
     const tournamentId = event.params.tournamentId;
     
     const beforeData = event.data.before.data();
-    const afterData = event.data.after.data();
+    const afterData  = event.data.after.data();
     
     const oldStatus = toStringSafe(beforeData?.status).toLowerCase();
     const newStatus = toStringSafe(afterData?.status).toLowerCase();
     
     console.log(`🔄 Tournament ${tournamentId} status change: ${oldStatus} → ${newStatus}`);
     
-    // ✅ NUOVO: Trigger invio email info squadre: open → wip
     if (oldStatus === 'open' && newStatus === 'wip') {
       console.log(`📧 Triggering team info email for ${tournamentId}`);
       try {
@@ -473,7 +455,6 @@ exports.onTournamentStatusChange = onDocumentUpdated(
       }
     }
 
-    // ✅ MODIFICATO: Trigger generazione match: wip → full (non più open → full)
     if (oldStatus === 'wip' && newStatus === 'full') {
       console.log(`🚀 Triggering match generation for ${tournamentId}`);
       try {
@@ -485,7 +466,6 @@ exports.onTournamentStatusChange = onDocumentUpdated(
       }
     }
 
-    // Trigger generazione finals: qualsiasi status → final_phase
     if (oldStatus !== 'final_phase' && newStatus === 'final_phase') {
       console.log(`🏆 Triggering finals generation for ${tournamentId}`);
       try {
@@ -511,7 +491,7 @@ exports.onMatchResultUpdated = onDocumentUpdated(
     const matchId = event.params.matchId;
     
     const beforeData = event.data.before.data();
-    const afterData = event.data.after.data();
+    const afterData  = event.data.after.data();
     
     const tournamentId = afterData?.tournament_id;
     
@@ -520,11 +500,15 @@ exports.onMatchResultUpdated = onDocumentUpdated(
       return null;
     }
     
-    const beforePlayed = toBooleanSafe(beforeData?.played);
-    const afterPlayed = toBooleanSafe(afterData?.played);
-    const scoreChanged = 
-      beforeData?.score_a !== afterData?.score_a || 
-      beforeData?.score_b !== afterData?.score_b;
+    const beforePlayed  = toBooleanSafe(beforeData?.played);
+    const afterPlayed   = toBooleanSafe(afterData?.played);
+
+    // FIX BUG 2 (applicato anche qui per coerenza):
+    // confronto numerico per score_a/score_b per evitare falsi negativi
+    // quando uno dei due è numero e l'altro stringa
+    const scoreChanged =
+      toNumberSafe(beforeData?.score_a, null) !== toNumberSafe(afterData?.score_a, null) ||
+      toNumberSafe(beforeData?.score_b, null) !== toNumberSafe(afterData?.score_b, null);
     
     if (!afterPlayed && !scoreChanged) {
       console.log(`ℹ️ Match ${matchId} - no relevant changes`);
@@ -534,24 +518,20 @@ exports.onMatchResultUpdated = onDocumentUpdated(
     console.log(`🔄 Match ${matchId} result updated: ${afterData.score_a} - ${afterData.score_b}`);
     
     try {
-      // 1) Ricalcola standings
       await generateStandingsBackend(tournamentId);
       console.log(`✅ Standings recalculated for ${tournamentId}`);
 
-      // 2) Aggiorna ranking globale
       await updateRanking(tournamentId);
       console.log(`✅ Ranking updated for ${tournamentId}`);
       
-      // 3) Aggiorna status torneo
       await updateTournamentStatus(tournamentId);
       
-      // 4) Verifica se tutti i match dei gironi sono giocati
       const allMatchesSnapshot = await db.collection('matches')
         .where('tournament_id', '==', tournamentId)
         .get();
       
       const allMatches = allMatchesSnapshot.docs.map(doc => doc.data());
-      const allPlayed = allMatches.every(m => toBooleanSafe(m.played));
+      const allPlayed  = allMatches.every(m => toBooleanSafe(m.played));
       
       if (allPlayed) {
         console.log(`🏆 All group matches played for ${tournamentId} - checking finals generation`);
@@ -610,7 +590,7 @@ exports.onFinalResultUpdated = onDocumentUpdated(
     const matchId = event.params.matchId;
     
     const beforeData = event.data.before.data();
-    const afterData = event.data.after.data();
+    const afterData  = event.data.after.data();
     
     const tournamentId = afterData?.tournament_id;
     
@@ -620,14 +600,17 @@ exports.onFinalResultUpdated = onDocumentUpdated(
     }
     
     const beforePlayed = toBooleanSafe(beforeData?.played);
-    const afterPlayed = toBooleanSafe(afterData?.played);
-    const scoreChanged = 
-      beforeData?.score_a !== afterData?.score_a || 
-      beforeData?.score_b !== afterData?.score_b ||
-      beforeData?.winner_team_id !== afterData?.winner_team_id;
+    const afterPlayed  = toBooleanSafe(afterData?.played);
+
+    // FIX BUG 2: confronto numerico per score_a/score_b per evitare falsi
+    // negativi quando uno dei due è numero e l'altro stringa (es. 2 vs "2")
+    const scoreChanged =
+      toNumberSafe(beforeData?.score_a, null) !== toNumberSafe(afterData?.score_a, null) ||
+      toNumberSafe(beforeData?.score_b, null) !== toNumberSafe(afterData?.score_b, null) ||
+      toStringSafe(beforeData?.winner_team_id) !== toStringSafe(afterData?.winner_team_id);
     
     const justBecamePlayed = !beforePlayed && afterPlayed;
-    const resultCorrected = beforePlayed && afterPlayed && scoreChanged;
+    const resultCorrected  = beforePlayed && afterPlayed && scoreChanged;
 
     if (!justBecamePlayed && !resultCorrected) {
       console.log(`ℹ️ Final ${matchId} - no relevant changes`);
@@ -636,21 +619,21 @@ exports.onFinalResultUpdated = onDocumentUpdated(
     
     console.log(`🔄 Final ${matchId} result updated: ${afterData.score_a} - ${afterData.score_b} (winner: ${afterData.winner_team_id})`);
     
-    // Validazione: se pareggio, deve esserci winner_team_id
-    if (afterData.score_a === afterData.score_b && !afterData.winner_team_id) {
+    // FIX BUG 2: confronto numerico invece di === per rilevare il pareggio
+    // Evita falsi negativi quando score_a/score_b sono di tipo diverso
+    const scoreA = toNumberSafe(afterData.score_a, null);
+    const scoreB = toNumberSafe(afterData.score_b, null);
+    if (scoreA !== null && scoreB !== null && scoreA === scoreB && !afterData.winner_team_id) {
       console.log(`⚠️ Final ${matchId} is a tie but no winner_team_id specified`);
       return null;
     }
     
     try {
-      // 1) Propaga il risultato ai match futuri (popola team_a/team_b nei round successivi)
       await propagateFinalsResult(tournamentId, matchId);
 
-      // 2) Aggiorna ranking globale
       await updateRanking(tournamentId);
       console.log(`✅ Ranking updated after final for ${tournamentId}`);
       
-      // 3) Aggiorna status torneo
       await updateTournamentStatus(tournamentId);
       
       console.log(`✅ Final processing completed for ${tournamentId}`);
@@ -668,7 +651,6 @@ exports.onFinalResultUpdated = onDocumentUpdated(
 
 // ===============================
 // POST: SUBMIT SUBSCRIPTION
-// ✅ MODIFICATO: aggiunto controllo cross-torneo stesso sport + stesso nome
 // ===============================
 exports.submitSubscription = onRequest(async (req, res) => {
   setCORS(res);
@@ -699,16 +681,15 @@ exports.submitSubscription = onRequest(async (req, res) => {
     }
 
     const fixedCourtDaysHours = toStringSafe(tournament.fixed_court_days_hours, 'false').toLowerCase();
-    const needsPreferences = fixedCourtDaysHours !== 'fixed_all';
+    const needsPreferences    = fixedCourtDaysHours !== 'fixed_all';
 
-    const isIndividual = toStringSafe(tournament.individual_or_team, 'team').toLowerCase() === 'individual';
+    const isIndividual        = toStringSafe(tournament.individual_or_team, 'team').toLowerCase() === 'individual';
     const certificateRequired = toBooleanSafe(tournament.certificate_required);
-    const teamSizeMax = toNumberSafe(tournament.team_size_max, 2);
+    const teamSizeMax         = toNumberSafe(tournament.team_size_max, 2);
 
-    const normalizedTeamName = normalizeTeamNameForCheck(team_name);
-    const teamId = `${tournament_id}_${normalizedTeamName}`;
+    const normalizedTeamName  = normalizeTeamNameForCheck(team_name);
+    const teamId              = `${tournament_id}_${normalizedTeamName}`;
 
-    // ── Verifica duplicato stesso torneo (team_id) ──────────────────────────
     const duplicateTeamCheck = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .where('team_id', '==', teamId)
@@ -719,7 +700,6 @@ exports.submitSubscription = onRequest(async (req, res) => {
       return res.status(409).send('DUPLICATE_TEAM');
     }
 
-    // ── Verifica duplicato email stesso torneo ──────────────────────────────
     const duplicateEmailCheck = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .where('email', '==', email)
@@ -730,9 +710,6 @@ exports.submitSubscription = onRequest(async (req, res) => {
       return res.status(409).send('DUPLICATE_EMAIL');
     }
 
-    // ── ✅ NUOVO: Verifica duplicato nome stesso sport (cross-torneo) ────────
-    // Seconda linea di difesa: il frontend lo verifica già allo step 1,
-    // ma verifichiamo anche qui per sicurezza (es. chiamate API dirette).
     const nameNormForSportCheck = normalizeTeamNameForCheck(team_name);
     const sameSportTournamentsSnap = await db.collection('tournaments')
       .where('sport', '==', tournament.sport)
@@ -740,7 +717,7 @@ exports.submitSubscription = onRequest(async (req, res) => {
 
     const sameSportTournamentIds = sameSportTournamentsSnap.docs
       .map(d => d.data().tournament_id || d.id)
-      .filter(id => id !== tournament_id); // escludi il torneo corrente (già controllato sopra)
+      .filter(id => id !== tournament_id);
 
     if (sameSportTournamentIds.length > 0) {
       const BATCH_SIZE = 30;
@@ -764,16 +741,14 @@ exports.submitSubscription = onRequest(async (req, res) => {
         return res.status(409).send('DUPLICATE_TEAM_NAME_IN_SPORT');
       }
     }
-    // ── Fine controllo cross-torneo ─────────────────────────────────────────
 
     const existingSubsSnapshot = await db.collection('subscriptions')
       .where('tournament_id', '==', tournament_id)
       .get();
 
-    const subsCount = existingSubsSnapshot.size + 1;
+    const subsCount      = existingSubsSnapshot.size + 1;
     const subscriptionId = `${tournament_id}_sub${subsCount}`;
 
-    // 1) Crea subscription
     const subscriptionData = {
       subscription_id: subscriptionId,
       team_id: teamId,
@@ -786,8 +761,8 @@ exports.submitSubscription = onRequest(async (req, res) => {
     };
 
     if (needsPreferences) {
-      if (preferred_zone) subscriptionData.preferred_zone = preferred_zone.trim();
-      if (preferred_days) subscriptionData.preferred_days = preferred_days.trim();
+      if (preferred_zone)  subscriptionData.preferred_zone  = preferred_zone.trim();
+      if (preferred_days)  subscriptionData.preferred_days  = preferred_days.trim();
       if (preferred_hours) subscriptionData.preferred_hours = preferred_hours.trim();
     }
 
@@ -797,7 +772,6 @@ exports.submitSubscription = onRequest(async (req, res) => {
 
     await db.collection('subscriptions').doc(subscriptionId).set(subscriptionData);
 
-    // 2) Crea documento teams
     const teamData = {
       team_id: teamId,
       tournament_id,
@@ -861,7 +835,6 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
       has_logo: !!logo_base64
     });
 
-    // Validazione
     if (!team_id || !tournament_id || !players) {
       console.error('❌ Validation failed: missing required fields');
       return res.status(400).send('INVALID_DATA');
@@ -874,7 +847,6 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
 
     console.log('✅ Validation passed');
 
-    // Verifica team esista
     const teamDoc = await db.collection('teams').doc(team_id).get();
     if (!teamDoc.exists) {
       console.error('❌ Team not found:', team_id);
@@ -884,28 +856,27 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
     const teamData = teamDoc.data();
     console.log('✅ Team found:', team_id);
 
-    // Verifica tournament match
     if (teamData.tournament_id !== tournament_id) {
       console.error('❌ Tournament mismatch');
       return res.status(403).send('TOURNAMENT_MISMATCH');
     }
 
-    // Verifica non già completato
-    if (teamData.info_completed === true) {
+    // FIX BUG 1: toBooleanSafe per gestire sia boolean sia stringa "true"
+    // Evita che una squadra possa sovrascrivere i dati già inseriti
+    if (toBooleanSafe(teamData.info_completed)) {
       console.error('❌ Already completed');
       return res.status(409).send('ALREADY_COMPLETED');
     }
 
-    // Recupera tournament
     const tournamentDoc = await db.collection('tournaments').doc(tournament_id).get();
     if (!tournamentDoc.exists) {
       console.error('❌ Tournament not found:', tournament_id);
       return res.status(404).send('TOURNAMENT_NOT_FOUND');
     }
 
-    const tournament = tournamentDoc.data();
-    const teamSizeMax = toNumberSafe(tournament.team_size_max, 2);
-    const isIndividual = toStringSafe(tournament.individual_or_team, 'team').toLowerCase() === 'individual';
+    const tournament      = tournamentDoc.data();
+    const teamSizeMax     = toNumberSafe(tournament.team_size_max, 2);
+    const isIndividual    = toStringSafe(tournament.individual_or_team, 'team').toLowerCase() === 'individual';
     const certificateRequired = toBooleanSafe(tournament.certificate_required);
 
     console.log('📋 Tournament info:', {
@@ -915,9 +886,8 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
       certificate_required: certificateRequired
     });
 
-    // Prepara update object
     const updateData = {
-      info_completed: true,
+      info_completed:    true,
       info_completed_at: admin.firestore.FieldValue.serverTimestamp()
     };
 
@@ -928,14 +898,14 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
       try {
         console.log('📤 Uploading logo:', logo_filename);
 
-        const bucket = admin.storage().bucket('ice-tournaments-ba14a.firebasestorage.app');
-        const logoPath = `teams/${team_id}/logo_${Date.now()}_${logo_filename}`;
-        const logoFile = bucket.file(logoPath);
+        const bucket    = admin.storage().bucket('ice-tournaments-ba14a.firebasestorage.app');
+        const logoPath  = `teams/${team_id}/logo_${Date.now()}_${logo_filename}`;
+        const logoFile  = bucket.file(logoPath);
         const logoBuffer = Buffer.from(logo_base64, 'base64');
 
         let contentType = 'image/png';
         if (logo_filename.match(/\.(jpg|jpeg)$/i)) contentType = 'image/jpeg';
-        else if (logo_filename.match(/\.svg$/i)) contentType = 'image/svg+xml';
+        else if (logo_filename.match(/\.svg$/i))   contentType = 'image/svg+xml';
 
         await logoFile.save(logoBuffer, { metadata: { contentType }, public: true });
 
@@ -953,12 +923,11 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
     const bucket = admin.storage().bucket('ice-tournaments-ba14a.firebasestorage.app');
 
     for (let i = 0; i < Math.min(players.length, teamSizeMax); i++) {
-      const player = players[i];
+      const player      = players[i];
       const playerIndex = i + 1;
 
       console.log(`👤 Processing player ${playerIndex}:`, player.name);
 
-      // Nome giocatore: saltato per tornei individuali (già pre-popolato in submitSubscription)
       if (!isIndividual) {
         if (player.name && player.name.trim()) {
           updateData[`name_player_${playerIndex}`] = player.name.trim();
@@ -968,19 +937,18 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
         console.log(`ℹ️ Individual tournament - skipping name update for player ${playerIndex}`);
       }
 
-      // Certificato: processato solo se certificate_required = true
       if (certificateRequired) {
         if (player.certificate_base64 && player.certificate_filename) {
           try {
             console.log(`📤 Uploading certificate for player ${playerIndex}:`, player.certificate_filename);
 
-            const certPath = `teams/${team_id}/certificates/player_${playerIndex}_${Date.now()}_${player.certificate_filename}`;
-            const certFile = bucket.file(certPath);
+            const certPath   = `teams/${team_id}/certificates/player_${playerIndex}_${Date.now()}_${player.certificate_filename}`;
+            const certFile   = bucket.file(certPath);
             const certBuffer = Buffer.from(player.certificate_base64, 'base64');
 
             let contentType = 'application/pdf';
             if (player.certificate_filename.match(/\.(jpg|jpeg)$/i)) contentType = 'image/jpeg';
-            else if (player.certificate_filename.match(/\.png$/i)) contentType = 'image/png';
+            else if (player.certificate_filename.match(/\.png$/i))   contentType = 'image/png';
 
             await certFile.save(certBuffer, { metadata: { contentType }, public: true });
 
@@ -996,9 +964,6 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
       }
     }
 
-    // ===============================
-    // AGGIORNA FIRESTORE
-    // ===============================
     console.log('💾 Updating Firestore...');
     await db.collection('teams').doc(team_id).update(updateData);
     console.log(`✅ Team info completed for ${team_id}`);
@@ -1019,17 +984,20 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
 exports.onSubscriptionCreated = onDocumentCreated(
   "subscriptions/{subscriptionId}",
   async (event) => {
-    const subscription = event.data.data();
+    const subscription   = event.data.data();
     const subscriptionId = event.params.subscriptionId;
 
-    if (subscription.emailStatus === "sent") {
+    // FIX BUG 3: toBooleanSafe + confronto stringa normalizzato
+    // per evitare reinvii se il campo ha casing diverso o tipo diverso
+    if (toBooleanSafe(subscription.emailStatus) ||
+        toStringSafe(subscription.emailStatus).toLowerCase() === 'sent') {
       console.log(`Email già inviata per subscription ${subscriptionId}`);
       return null;
     }
 
     const tournamentId = subscription.tournament_id;
-    const teamName = subscription.team_name;
-    const email = subscription.email;
+    const teamName     = subscription.team_name;
+    const email        = subscription.email;
 
     if (!tournamentId || !teamName || !email) {
       console.error("Dati mancanti nella subscription:", subscriptionId);
@@ -1046,12 +1014,14 @@ exports.onSubscriptionCreated = onDocumentCreated(
         return null;
       }
 
-      const tournament = tournamentDoc.data();
-      const amount = toNumberSafe(tournament.price, 0);
+      const tournament     = tournamentDoc.data();
+      const amount         = toNumberSafe(tournament.price, null);
       const tournamentName = toStringSafe(tournament.name);
       const individualOrTeam = toStringSafe(tournament.individual_or_team, 'team').toLowerCase();
 
-      if (!amount) {
+      // FIX BUG 5: controllo esplicito su null invece di !amount
+      // Così i tornei gratuiti (price = 0) non vengono bloccati
+      if (amount === null) {
         console.error(`Prezzo non definito per tournament ${tournamentId}`);
         await event.data.ref.update({ emailStatus: "error", emailError: "price_not_defined" });
         return null;
@@ -1062,7 +1032,7 @@ exports.onSubscriptionCreated = onDocumentCreated(
         paypalLink: `https://paypal.me/TommasoRabino/${amount}`,
       };
 
-      const mailerUrl = "https://script.google.com/macros/s/AKfycbxByIqXZ2jKlLbAEV5lCXRpGksnCu5i3Pa6nMMWzEgD0vkzF0ROz8hpzYbiLxfGMmx_aw/exec";
+      const mailerUrl   = "https://script.google.com/macros/s/AKfycbxByIqXZ2jKlLbAEV5lCXRpGksnCu5i3Pa6nMMWzEgD0vkzF0ROz8hpzYbiLxfGMmx_aw/exec";
       const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
       const payload = {
@@ -1109,8 +1079,6 @@ exports.onSubscriptionCreated = onDocumentCreated(
 
 
 
-
-
 // ===============================
 // GET: TEAM INFO (per form pre-compilazione)
 // ===============================
@@ -1119,14 +1087,13 @@ exports.getTeamInfo = onRequest(async (req, res) => {
   if (handleOptions(req, res)) return;
 
   try {
-    const teamId = req.query.team_id;
+    const teamId       = req.query.team_id;
     const tournamentId = req.query.tournament_id;
 
     if (!teamId || !tournamentId) {
       return res.status(400).json({ error: 'MISSING_PARAMS' });
     }
 
-    // Verifica che il team esista
     const teamDoc = await db.collection('teams').doc(teamId).get();
     if (!teamDoc.exists) {
       return res.status(404).json({ error: 'TEAM_NOT_FOUND' });
@@ -1134,43 +1101,40 @@ exports.getTeamInfo = onRequest(async (req, res) => {
 
     const teamData = teamDoc.data();
 
-    // Verifica che appartenga al torneo corretto
     if (teamData.tournament_id !== tournamentId) {
       return res.status(403).json({ error: 'TOURNAMENT_MISMATCH' });
     }
 
-    // Verifica che non abbia già completato il form
-    if (teamData.info_completed === true) {
+    // FIX BUG 1: toBooleanSafe per gestire sia boolean sia stringa "true"
+    if (toBooleanSafe(teamData.info_completed)) {
       return res.status(409).json({
         error: 'ALREADY_COMPLETED',
         message: 'Hai già completato la registrazione per questo torneo.'
       });
     }
 
-    // Recupera tournament
     const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
     if (!tournamentDoc.exists) {
       return res.status(404).json({ error: 'TOURNAMENT_NOT_FOUND' });
     }
 
     const tournamentData = tournamentDoc.data();
-    const isIndividual = toStringSafe(tournamentData.individual_or_team, 'team').toLowerCase() === 'individual';
+    const isIndividual   = toStringSafe(tournamentData.individual_or_team, 'team').toLowerCase() === 'individual';
 
-    // Costruisci risposta
     const response = {
       team: {
-        team_id: teamData.team_id,
-        team_name: teamData.team_name,
+        team_id:       teamData.team_id,
+        team_name:     teamData.team_name,
         tournament_id: teamData.tournament_id,
         ...(isIndividual && { name_player_1: teamData.name_player_1 || teamData.team_name })
       },
       tournament: {
-        tournament_id: tournamentData.tournament_id || tournamentId,
-        name: tournamentData.name,
-        sport: toStringSafe(tournamentData.sport, 'Sport'),
-        team_size_min: toNumberSafe(tournamentData.team_size_min, 2),
-        team_size_max: toNumberSafe(tournamentData.team_size_max, 2),
-        individual_or_team: toStringSafe(tournamentData.individual_or_team, 'team'),
+        tournament_id:        tournamentData.tournament_id || tournamentId,
+        name:                 tournamentData.name,
+        sport:                toStringSafe(tournamentData.sport, 'Sport'),
+        team_size_min:        toNumberSafe(tournamentData.team_size_min, 2),
+        team_size_max:        toNumberSafe(tournamentData.team_size_max, 2),
+        individual_or_team:   toStringSafe(tournamentData.individual_or_team, 'team'),
         certificate_required: toBooleanSafe(tournamentData.certificate_required)
       }
     };
@@ -1187,7 +1151,6 @@ exports.getTeamInfo = onRequest(async (req, res) => {
 
 // ===============================
 // GET TEAMS WITH LOGOS (from teams collection)
-// ✅ NUOVO: Ritorna team_name + team_logo
 // ===============================
 exports.getTeamsWithLogos = onRequest(async (req, res) => {
   setCORS(res);
@@ -1200,7 +1163,6 @@ exports.getTeamsWithLogos = onRequest(async (req, res) => {
       return res.status(200).json([]);
     }
 
-    // Query sulla collection 'teams' invece di 'subscriptions'
     const snapshot = await db.collection('teams')
       .where('tournament_id', '==', tournamentId)
       .get();
@@ -1208,13 +1170,12 @@ exports.getTeamsWithLogos = onRequest(async (req, res) => {
     const teams = snapshot.docs.map(doc => {
       const data = doc.data();
       return {
-        team_id: data.team_id,
+        team_id:   data.team_id,
         team_name: data.team_name,
-        team_logo: data.team_logo || null // ✅ Include il logo
+        team_logo: data.team_logo || null
       };
     });
 
-    // Ordina alfabeticamente per nome squadra
     teams.sort((a, b) => 
       String(a.team_name || '').localeCompare(String(b.team_name || ''))
     );
@@ -1230,7 +1191,6 @@ exports.getTeamsWithLogos = onRequest(async (req, res) => {
 
 // ===============================
 // GET TEAMS LOGOS MAP (lightweight)
-// ✅ NUOVO: Ritorna solo { team_id: logo_url } per lookup
 // ===============================
 exports.getTeamsLogosMap = onRequest(async (req, res) => {
   setCORS(res);
@@ -1266,12 +1226,9 @@ exports.getTeamsLogosMap = onRequest(async (req, res) => {
 
 
 
-
-
 // ===============================
 // FIRESTORE TRIGGER: AUTO GENERATE TEAM LOGO
 // ===============================
-
 exports.onTeamInfoCompleted = onDocumentUpdated(
   {
     document: "teams/{teamId}",
@@ -1282,24 +1239,25 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
     const teamId = event.params.teamId;
 
     const beforeData = event.data.before.data();
-    const afterData = event.data.after.data();
+    const afterData  = event.data.after.data();
 
     const beforeCompleted = toBooleanSafe(beforeData?.info_completed);
-    const afterCompleted = toBooleanSafe(afterData?.info_completed);
+    const afterCompleted  = toBooleanSafe(afterData?.info_completed);
 
     if (beforeCompleted || !afterCompleted) {
       return null;
     }
 
-    if (afterData.team_logo || afterData.logo_generated) {
+    // FIX BUG 4: toBooleanSafe per logo_generated per gestire sia
+    // boolean sia stringa "true" in modo robusto
+    if (afterData.team_logo || toBooleanSafe(afterData.logo_generated)) {
       console.log(`🖼️ Team ${teamId} already has logo`);
       return null;
     }
 
-    const teamName = afterData.team_name;
+    const teamName     = afterData.team_name;
     const tournamentId = afterData.tournament_id;
 
-    // Recupera individual_or_team dal torneo
     let isIndividual = false;
     try {
       const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
@@ -1311,7 +1269,6 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
       console.warn('⚠️ Could not fetch tournament data, defaulting to team prompt:', err.message);
     }
 
-    // Costruisci prompt in base al tipo di torneo
     let prompt;
     if (isIndividual) {
       const initials = teamName
@@ -1349,9 +1306,9 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
 
       console.log("📦 Image resized to 128px");
 
-      const bucket = admin.storage().bucket("ice-tournaments-ba14a.firebasestorage.app");
+      const bucket   = admin.storage().bucket("ice-tournaments-ba14a.firebasestorage.app");
       const logoPath = `teams/${teamId}/generated_logo.png`;
-      const file = bucket.file(logoPath);
+      const file     = bucket.file(logoPath);
 
       await file.save(resizedImage, {
         metadata: {
@@ -1365,7 +1322,7 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
       console.log(`✅ Logo uploaded: ${logoUrl}`);
 
       await db.collection("teams").doc(teamId).update({
-        team_logo: logoUrl,
+        team_logo:      logoUrl,
         logo_generated: true
       });
 
@@ -1390,8 +1347,8 @@ exports.getRankingTeams = onRequest(async (req, res) => {
   if (handleOptions(req, res)) return;
 
   try {
-    const sport = toStringSafe(req.query.sport).toLowerCase();
-    const orderBy = req.query.orderBy || 'punti';
+    const sport    = toStringSafe(req.query.sport).toLowerCase();
+    const orderBy  = req.query.orderBy || 'punti';
 
     if (!sport) {
       return res.status(400).json({ error: 'MISSING_SPORT' });
@@ -1431,7 +1388,7 @@ exports.getRankingPlayers = onRequest(async (req, res) => {
   if (handleOptions(req, res)) return;
 
   try {
-    const sport = toStringSafe(req.query.sport).toLowerCase();
+    const sport   = toStringSafe(req.query.sport).toLowerCase();
     const orderBy = req.query.orderBy || 'punti';
 
     if (!sport) {
@@ -1463,17 +1420,6 @@ exports.getRankingPlayers = onRequest(async (req, res) => {
 
 // ===============================
 // GET: CHECK TEAM NAME AVAILABILITY
-// Verifica se esiste già una squadra con lo stesso nome
-// nello stesso sport (cross-torneo, cross-edizione).
-//
-// Query params:
-//   team_name     (required): nome squadra da verificare
-//   tournament_id (required): torneo a cui si sta iscrivendo
-//                             (serve per ricavare lo sport)
-//
-// Risposta:
-//   { available: true }   → nome libero, può procedere
-//   { available: false }  → nome già usato in questo sport
 // ===============================
 exports.checkTeamName = onRequest(async (req, res) => {
   setCORS(res);
@@ -1486,7 +1432,6 @@ exports.checkTeamName = onRequest(async (req, res) => {
       return res.status(400).json({ error: 'MISSING_PARAMS' });
     }
 
-    // 1) Ricava lo sport del torneo a cui si sta iscrivendo
     const tournamentDoc = await db.collection('tournaments').doc(tournament_id).get();
     if (!tournamentDoc.exists) {
       return res.status(404).json({ error: 'TOURNAMENT_NOT_FOUND' });
@@ -1494,13 +1439,11 @@ exports.checkTeamName = onRequest(async (req, res) => {
 
     const tournament = tournamentDoc.data();
 
-    // 2) Normalizza il nome da cercare
     const nameNorm = normalizeTeamNameForCheck(team_name);
     if (!nameNorm) {
       return res.status(400).json({ error: 'INVALID_TEAM_NAME' });
     }
 
-    // 3) Trova tutti i tornei dello stesso sport
     const tournamentsSnap = await db.collection('tournaments')
       .where('sport', '==', tournament.sport)
       .get();
@@ -1513,7 +1456,6 @@ exports.checkTeamName = onRequest(async (req, res) => {
       return res.status(200).json({ available: true });
     }
 
-    // 4) Cerca nelle subscriptions di quei tornei in batch da 30
     const BATCH_SIZE = 30;
     let found = false;
 
@@ -1539,5 +1481,3 @@ exports.checkTeamName = onRequest(async (req, res) => {
     res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
-
-

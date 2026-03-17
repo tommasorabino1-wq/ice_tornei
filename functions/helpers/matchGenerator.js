@@ -57,6 +57,57 @@ function buildRoundRobinPairsEven(teamIds, isDouble = false) {
 }
 
 // ===============================
+// HELPER: Round-robin per N dispari (con bye)
+// ===============================
+function buildRoundRobinPairsOdd(teamIds, isDouble = false) {
+  // Aggiunge un "bye" virtuale per rendere N pari, poi filtra le coppie con bye
+  const BYE = '__BYE__';
+  const extended = [...teamIds, BYE];
+  const n = extended.length; // pari
+
+  const fixed = extended[0];
+  let rot = extended.slice(1);
+
+  const rounds = [];
+  const totalRounds = n - 1;
+
+  for (let r = 0; r < totalRounds; r++) {
+    const lineup = [fixed, ...rot];
+    const pairs = [];
+    for (let i = 0; i < n / 2; i++) {
+      const a = lineup[i];
+      const b = lineup[n - 1 - i];
+      // Filtra coppie con il bye
+      if (a !== BYE && b !== BYE) {
+        pairs.push([a, b]);
+      }
+    }
+    rounds.push(pairs);
+    rot = [rot[rot.length - 1], ...rot.slice(0, rot.length - 1)];
+  }
+
+  if (isDouble) {
+    const returnRounds = rounds.map(pairs =>
+      pairs.map(([a, b]) => [b, a])
+    );
+    return [...rounds, ...returnRounds];
+  }
+
+  return rounds;
+}
+
+// ===============================
+// HELPER: Dispatcher round-robin (pari o dispari)
+// ===============================
+function buildRoundRobinPairs(teamIds, isDouble = false) {
+  if (teamIds.length % 2 === 0) {
+    return buildRoundRobinPairsEven(teamIds, isDouble);
+  } else {
+    return buildRoundRobinPairsOdd(teamIds, isDouble);
+  }
+}
+
+// ===============================
 // HELPER: Assegna home/away
 // ===============================
 function assignHomeAwayGreedy(roundPairs, isDouble = false) {
@@ -105,10 +156,12 @@ function assignHomeAwayGreedy(roundPairs, isDouble = false) {
 
 // ===============================
 // HELPER: Calcola configurazione gironi ottimale
+// FIX BUG 1: rimosso il vincolo % 2 === 0 su preferredTeamsPerGroup,
+// così gironi da 3/5 squadre (con bye) sono ora supportati.
 // ===============================
 function calculateGroupConfig(totalTeams, preferredTeamsPerGroup) {
   if (preferredTeamsPerGroup && preferredTeamsPerGroup > 0) {
-    if (totalTeams % preferredTeamsPerGroup === 0 && preferredTeamsPerGroup % 2 === 0) {
+    if (totalTeams % preferredTeamsPerGroup === 0) {
       return {
         teamsPerGroup: preferredTeamsPerGroup,
         numGroups: totalTeams / preferredTeamsPerGroup
@@ -116,7 +169,8 @@ function calculateGroupConfig(totalTeams, preferredTeamsPerGroup) {
     }
   }
 
-  const possibleSizes = [4, 6, 8, 10, 12];
+  // Fallback: prova taglie standard (incluse dispari con bye)
+  const possibleSizes = [4, 3, 6, 5, 8, 10, 12];
 
   for (const size of possibleSizes) {
     if (totalTeams % size === 0 && totalTeams >= size) {
@@ -127,14 +181,15 @@ function calculateGroupConfig(totalTeams, preferredTeamsPerGroup) {
     }
   }
 
-  if (totalTeams % 2 === 0 && totalTeams >= 2) {
+  // Ultimo fallback: girone unico
+  if (totalTeams >= 2) {
     return {
       teamsPerGroup: totalTeams,
       numGroups: 1
     };
   }
 
-  throw new Error(`Cannot create groups with ${totalTeams} teams (odd number)`);
+  throw new Error(`Cannot create groups with ${totalTeams} teams`);
 }
 
 // ===============================
@@ -153,12 +208,6 @@ function normalizeSport(sport) {
 
 // ===============================
 // HELPER: Profilo match (sport + format)
-// Determina le caratteristiche del match in base a sport e formato.
-// isSetBased: true se il formato prevede set (es. 1su1, 2su3)
-// hasGoals: true se il formato prevede gol (calcio)
-// hasGames: true se il formato prevede game (padel/beach a tempo)
-// hasScorers: true se ha senso tracciare i marcatori (solo calcio)
-// isChess: true se lo sport è scacchi
 // ===============================
 function getMatchProfile(sport, matchFormat) {
   const fmt = String(matchFormat || '').toLowerCase();
@@ -195,22 +244,19 @@ function buildMatchData(matchId, tournamentId, groupId, roundNumber, teamA, team
     is_set_based: profile.isSetBased,
   };
 
-  // Campi set (padel/beach set-based)
   if (profile.isSetBased) {
-    base.sets_detail = null;  // Es: "6-4,3-6,7-5"
+    base.sets_detail = null;
     base.games_a = null;
     base.games_b = null;
   }
 
-  // Campi game (padel/beach a tempo)
   if (profile.hasGames) {
     base.games_a = null;
     base.games_b = null;
   }
 
-  // Campi marcatori (solo calcio)
   if (profile.hasScorers) {
-    base.scorers_a = null;  // Es: "Mario Rossi, Luigi Bianchi"
+    base.scorers_a = null;
     base.scorers_b = null;
   }
 
@@ -238,12 +284,10 @@ function buildStandingData(standingId, teamId, tournamentId, groupId, teamName, 
     is_set_based: profile.isSetBased,
   };
 
-  // Pareggio: esiste in calcio e scacchi, non nei format a set
   if (!profile.isSetBased) {
     base.draws = 0;
   }
 
-  // Gol: solo calcio
   if (profile.hasGoals) {
     base.goals_for = 0;
     base.goals_against = 0;
@@ -253,7 +297,6 @@ function buildStandingData(standingId, teamId, tournamentId, groupId, teamName, 
     base.h2h_goals_for = 0;
   }
 
-  // Game: padel/beach a tempo
   if (profile.hasGames) {
     base.games_for = 0;
     base.games_against = 0;
@@ -263,7 +306,6 @@ function buildStandingData(standingId, teamId, tournamentId, groupId, teamName, 
     base.h2h_games_for = 0;
   }
 
-  // Set + game: padel/beach set-based
   if (profile.isSetBased) {
     base.sets_for = 0;
     base.sets_against = 0;
@@ -278,7 +320,6 @@ function buildStandingData(standingId, teamId, tournamentId, groupId, teamName, 
     base.h2h_games_for = 0;
   }
 
-  // Scacchi: solo punti e h2h punti, niente gol/set/game
   if (profile.isChess) {
     base.h2h_points = 0;
   }
@@ -302,21 +343,12 @@ async function generateMatchesIfReady(tournamentId) {
 
     const tournament = tournamentDoc.data();
 
-    // teams_per_group (numero safe)
     const preferredTeamsPerGroup = toNumber(tournament.teams_per_group, 0);
-
-    // format_type (string safe)
-    const formatType = toStringSafe(tournament.format_type).toLowerCase();
-    const isDouble = formatType.startsWith('double_');
-
-    // sport (string safe)
-    const sport = normalizeSport(toStringSafe(tournament.sport));
-
-    // match_format_gironi (string safe)
-    const matchFormatGironi = toStringSafe(tournament.match_format_gironi).toLowerCase();
-
-    // profile
-    const profile = getMatchProfile(sport, matchFormatGironi);
+    const formatType             = toStringSafe(tournament.format_type).toLowerCase();
+    const isDouble               = formatType.startsWith('double_');
+    const sport                  = normalizeSport(toStringSafe(tournament.sport));
+    const matchFormatGironi      = toStringSafe(tournament.match_format_gironi).toLowerCase();
+    const profile                = getMatchProfile(sport, matchFormatGironi);
 
     console.log(`🏆 Sport: ${sport}, Format: ${matchFormatGironi}, isDouble: ${isDouble}, Profile:`, profile);
 
@@ -357,13 +389,19 @@ async function generateMatchesIfReady(tournamentId) {
     console.log(`📊 Group config: ${numGroups} groups × ${teamsPerGroup} teams each`);
 
     // 5) Estrai team_id e team_name da subscriptions + shuffle
+    // FIX BUG 3: toStringSafe su team_id per evitare chiavi undefined nella mappa
     const teamIds = [];
     const teamNamesMap = {};
 
     subscriptionsSnapshot.docs.forEach(doc => {
       const data = doc.data();
-      teamIds.push(data.team_id);
-      teamNamesMap[data.team_id] = data.team_name;
+      const teamId = toStringSafe(data.team_id);
+      if (!teamId) {
+        console.warn(`⚠️ Subscription ${doc.id} has missing team_id - skipping`);
+        return;
+      }
+      teamIds.push(teamId);
+      teamNamesMap[teamId] = toStringSafe(data.team_name, teamId);
     });
 
     console.log(`📝 Team IDs before shuffle: ${teamIds.join(', ')}`);
@@ -381,7 +419,7 @@ async function generateMatchesIfReady(tournamentId) {
     const teamGroupAssignment = {};
 
     for (let g = 0; g < numGroups; g++) {
-      const groupId = `G${g + 1}`;
+      const groupId    = `G${g + 1}`;
       const groupTeams = teamIds.slice(g * teamsPerGroup, (g + 1) * teamsPerGroup);
 
       groupTeams.forEach(teamId => {
@@ -390,14 +428,16 @@ async function generateMatchesIfReady(tournamentId) {
 
       console.log(`🏟️ Generating matches for ${groupId}: ${groupTeams.join(', ')}`);
 
-      const pairsByRound = buildRoundRobinPairsEven(groupTeams, isDouble);
+      // FIX BUG 2: usa buildRoundRobinPairs (dispatcher pari/dispari)
+      // invece di buildRoundRobinPairsEven che crashava con N dispari
+      const pairsByRound = buildRoundRobinPairs(groupTeams, isDouble);
       const rounds = assignHomeAwayGreedy(pairsByRound, isDouble);
 
       rounds.forEach(rObj => {
         const roundNumber = rObj.roundNumber;
 
         rObj.matches.forEach(m => {
-          const matchId = `${tournamentId}_${groupId}_R${String(roundNumber).padStart(2, '0')}_M${String(globalMatchCounter).padStart(3, '0')}`;
+          const matchId  = `${tournamentId}_${groupId}_R${String(roundNumber).padStart(2, '0')}_M${String(globalMatchCounter).padStart(3, '0')}`;
           const matchRef = db.collection('matches').doc(matchId);
 
           const matchData = buildMatchData(
@@ -416,12 +456,14 @@ async function generateMatchesIfReady(tournamentId) {
     }
 
     // 7) Genera standings iniziali
+    // FIX BUG 4: standingId include tournamentId per evitare collisioni
+    // tra tornei diversi che condividono gli stessi team_id
     console.log(`📊 Generating initial standings...`);
 
     teamIds.forEach(teamId => {
-      const groupId = teamGroupAssignment[teamId];
-      const teamName = teamNamesMap[teamId] || teamId;
-      const standingId = `standings_${teamId}`;
+      const groupId   = teamGroupAssignment[teamId];
+      const teamName  = teamNamesMap[teamId] || teamId;
+      const standingId = `standings_${tournamentId}_${teamId}`;
       const standingRef = db.collection('standings').doc(standingId);
 
       const standingData = buildStandingData(
