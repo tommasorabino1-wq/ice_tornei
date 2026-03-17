@@ -3454,6 +3454,7 @@ section > .section-title {
   gap: 6px;
   flex-wrap: wrap;
   margin-bottom: 12px;
+  justify-content: center;
 }
 
 .ranking-tab {
@@ -3490,20 +3491,20 @@ section > .section-title {
   display: flex;
   gap: 6px;
   margin-bottom: 16px;
+  justify-content: center;
 }
 
 .ranking-subtab {
-  padding: 6px 14px;
+  padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: var(--surface-soft);
+  background: var(--surface-card);
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
   white-space: nowrap;
-  letter-spacing: 0.02em;
 }
 
 .ranking-subtab:hover {
@@ -3513,11 +3514,11 @@ section > .section-title {
 }
 
 .ranking-subtab.active {
-  background: var(--brand-soft);
+  background: var(--brand);
   border-color: var(--brand);
-  color: var(--brand);
+  color: #fff;
+  box-shadow: 0 2px 10px var(--brand-glow-soft);
 }
-
 
 /* =========================
    RANKING TABLE
