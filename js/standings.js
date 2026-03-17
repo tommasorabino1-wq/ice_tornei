@@ -100,6 +100,28 @@ const standingsSpecificSection = document.getElementById("standings-specific-sec
 const standingsTournamentSelect = document.getElementById("standings-tournament-select");
 
 
+
+// ===============================
+// HELPER: idempotente bool (frontend)
+// ===============================
+function toBool(val) {
+  if (val === true  || val === 1)  return true;
+  if (val === false || val === 0)  return false;
+  const s = String(val ?? '').toLowerCase().trim();
+  return s === 'true' || s === '1' || s === 'yes';
+}
+
+// ===============================
+// HELPER: idempotente number (frontend)
+// ===============================
+function toNum(val, fallback = 0) {
+  if (val === null || val === undefined || val === '') return fallback;
+  const n = Number(val);
+  return isNaN(n) ? fallback : n;
+}
+
+
+
 // ===============================
 // HELPER: Match profile (sport + format)
 // ===============================
@@ -172,7 +194,7 @@ function formatHasFinals(formatType) {
 async function loadStandingsPage(tournamentId) {
   try {
     const tournamentsRes = await fetch(API_URLS.getTournaments);
-    if (!tournamentsRes.ok) throw new Error(`HTTP error! status: ${tournamentsRes.ok}`);
+    if (!tournamentsRes.ok) throw new Error(`HTTP error! status: ${tournamentsRes.status}`);
     const tournaments = await tournamentsRes.json();
 
     const t = tournaments.find(t => t.tournament_id === tournamentId);
@@ -181,13 +203,14 @@ async function loadStandingsPage(tournamentId) {
       return;
     }
 
-    TOURNAMENT_STATUS = t?.status || null;
-    TOURNAMENT_FORMAT = t?.format_type || null;
-    TOURNAMENT_SPORT = getMatchProfile(t?.sport, t?.match_format_gironi).normalizedSport;
-    TOURNAMENT_IS_INDIVIDUAL = String(t?.individual_or_team || '').toLowerCase() === 'individual';
+    TOURNAMENT_STATUS              = String(t?.status || '').toLowerCase() || null;
+    TOURNAMENT_FORMAT              = String(t?.format_type || '').toLowerCase() || null;
+    TOURNAMENT_SPORT               = getMatchProfile(t?.sport, t?.match_format_gironi).normalizedSport;
+    TOURNAMENT_IS_INDIVIDUAL       = String(t?.individual_or_team || '').toLowerCase() === 'individual';
     TOURNAMENT_MATCH_FORMAT_GIRONI = String(t?.match_format_gironi || '').toLowerCase();
     TOURNAMENT_MATCH_FORMAT_FINALS = String(t?.match_format_finals || '').toLowerCase();
-    TOURNAMENT_HAS_3X4 = t?.['3_4_posto'] === true;
+    // FIX BUG 1: toBool per gestire sia boolean nativo sia stringa "true"
+    TOURNAMENT_HAS_3X4             = toBool(t?.['3_4_posto']);
 
     const tournamentProfile = getMatchProfile(t?.sport, t?.match_format_gironi);
     const gironiIcon = document.getElementById("gironi-section-icon");
@@ -330,9 +353,12 @@ function showTournamentNotStarted(tournament) {
   hideSkeletons();
   const specificSection = document.getElementById("standings-specific-section");
 
-  const isIndividual = String(tournament.individual_or_team || '').toLowerCase() === 'individual';
-  const entityIcon  = isIndividual ? '👤' : '👥';
-  const entityLabel = isIndividual ? 'giocatori iscritti' : 'squadre iscritte';
+  const isIndividual  = String(tournament.individual_or_team || '').toLowerCase() === 'individual';
+  const entityIcon    = isIndividual ? '👤' : '👥';
+  const entityLabel   = isIndividual ? 'giocatori iscritti' : 'squadre iscritte';
+  // FIX BUG 4: toNum per teams_current e teams_max
+  const teamsCurrent  = toNum(tournament.teams_current, 0);
+  const teamsMax      = toNum(tournament.teams_max, 0);
 
   specificSection.innerHTML = `
     <div class="standings-not-started">
@@ -353,7 +379,7 @@ function showTournamentNotStarted(tournament) {
       </div>
       <div class="standings-not-started-info">
         <div class="info-item"><span class="info-icon">📍</span><span>${escapeHTML(tournament.location)}</span></div>
-        <div class="info-item"><span class="info-icon">${entityIcon}</span><span>${tournament.teams_current} / ${tournament.teams_max} ${entityLabel}</span></div>
+        <div class="info-item"><span class="info-icon">${entityIcon}</span><span>${teamsCurrent} / ${teamsMax} ${entityLabel}</span></div>
         <div class="info-item"><span class="info-icon">🏐</span><span>${escapeHTML(tournament.sport)}</span></div>
       </div>
     </div>
@@ -443,7 +469,8 @@ function renderMatchCard(match, isSetBased, isFinals, isIndividual = false, roun
   card.className = "match-card";
   if (isFinals) card.classList.add("finals");
 
-  const isPlayed = match.played === true || String(match.played).toUpperCase() === "TRUE";
+  // FIX BUG 2: toBool per gestire sia boolean nativo sia stringa "true" sia numero 1
+  const isPlayed = toBool(match.played);
   if (isPlayed) card.classList.add("played");
 
   const teamAName = match.team_a_name || (match.team_a ? formatTeam(match.team_a) : "TBD");
@@ -453,8 +480,8 @@ function renderMatchCard(match, isSetBased, isFinals, isIndividual = false, roun
   if (isTbd) card.classList.add("tbd");
 
   const court = match.court || "none";
-  const day = match.day || "none";
-  const hour = match.hour || "none";
+  const day   = match.day   || "none";
+  const hour  = match.hour  || "none";
   const hasDetails = court !== "none" || day !== "none" || hour !== "none";
 
   const collapseId = `match-details-${match.match_id || match.final_id}`;
@@ -465,32 +492,31 @@ function renderMatchCard(match, isSetBased, isFinals, isIndividual = false, roun
   let isDraw = false;
 
   if (isPlayed) {
-    const numA = Number(match.score_a);
-    const numB = Number(match.score_b);
+    const numA = toNum(match.score_a, null);
+    const numB = toNum(match.score_b, null);
     if (match.winner_team_id) {
       winnerTeamId = match.winner_team_id;
-      isDraw = numA === numB;
-    } else if (numA > numB) {
-      winnerTeamId = match.team_a;
-    } else if (numB > numA) {
-      winnerTeamId = match.team_b;
+      isDraw = numA !== null && numB !== null && numA === numB;
+    } else if (numA !== null && numB !== null) {
+      if (numA > numB)      winnerTeamId = match.team_a;
+      else if (numB > numA) winnerTeamId = match.team_b;
     }
   }
 
   const teamAClass = winnerTeamId === match.team_a ? "winner" : (winnerTeamId === match.team_b ? "loser" : "");
   const teamBClass = winnerTeamId === match.team_b ? "winner" : (winnerTeamId === match.team_a ? "loser" : "");
 
-  const setsDetail = match.sets_detail || null;
+  const setsDetail  = match.sets_detail || null;
   const showSetsDetail = isSetBased && isPlayed && setsDetail;
 
-  const isCalcio = String(TOURNAMENT_SPORT || '').includes('calcio');
+  const isCalcio   = String(TOURNAMENT_SPORT || '').includes('calcio');
   const hasScorers = isCalcio && isPlayed && (match.scorers_a || match.scorers_b);
 
   const fallbackIcon = isIndividual ? '👤' : '👥';
 
   let metaInfo;
   if (isFinals) {
-    if (match.is_third_place_match) {
+    if (toBool(match.is_third_place_match)) {
       metaInfo = `<span class="meta-item meta-round meta-3x4">Finale 3°/4° Posto</span>`;
     } else {
       metaInfo = `<span class="meta-item meta-round">${escapeHTML(roundLabel || 'Fase Finale')}</span>`;
@@ -530,8 +556,8 @@ function renderMatchCard(match, isSetBased, isFinals, isIndividual = false, roun
       infoPanelContent = `
         <div class="match-details-grid">
           ${court !== "none" ? `<div class="match-detail-item"><span class="detail-icon">🥅</span><span class="detail-value">${escapeHTML(court)}</span></div>` : ''}
-          ${day !== "none" ? `<div class="match-detail-item"><span class="detail-icon">📅</span><span class="detail-value">${escapeHTML(day)}</span></div>` : ''}
-          ${hour !== "none" ? `<div class="match-detail-item"><span class="detail-icon">🕐</span><span class="detail-value">${escapeHTML(hour)}</span></div>` : ''}
+          ${day   !== "none" ? `<div class="match-detail-item"><span class="detail-icon">📅</span><span class="detail-value">${escapeHTML(day)}</span></div>`   : ''}
+          ${hour  !== "none" ? `<div class="match-detail-item"><span class="detail-icon">🕐</span><span class="detail-value">${escapeHTML(hour)}</span></div>`  : ''}
         </div>
       `;
     } else {
@@ -546,8 +572,8 @@ function renderMatchCard(match, isSetBased, isFinals, isIndividual = false, roun
     infoPanelContent = hasDetails ? `
       <div class="match-details-grid">
         ${court !== "none" ? `<div class="match-detail-item"><span class="detail-icon">🥅</span><span class="detail-value">${escapeHTML(court)}</span></div>` : ''}
-        ${day !== "none" ? `<div class="match-detail-item"><span class="detail-icon">📅</span><span class="detail-value">${escapeHTML(day)}</span></div>` : ''}
-        ${hour !== "none" ? `<div class="match-detail-item"><span class="detail-icon">🕐</span><span class="detail-value">${escapeHTML(hour)}</span></div>` : ''}
+        ${day   !== "none" ? `<div class="match-detail-item"><span class="detail-icon">📅</span><span class="detail-value">${escapeHTML(day)}</span></div>`   : ''}
+        ${hour  !== "none" ? `<div class="match-detail-item"><span class="detail-icon">🕐</span><span class="detail-value">${escapeHTML(hour)}</span></div>`  : ''}
       </div>
     ` : `
       <div class="match-details-pending">
@@ -599,7 +625,7 @@ function renderMatchCard(match, isSetBased, isFinals, isIndividual = false, roun
   `;
 
   const toggleBtn = card.querySelector(".match-details-toggle");
-  const panel = card.querySelector(".match-details-panel");
+  const panel     = card.querySelector(".match-details-panel");
   toggleBtn.addEventListener("click", () => {
     const isExpanded = toggleBtn.getAttribute("aria-expanded") === "true";
     toggleBtn.setAttribute("aria-expanded", !isExpanded);
@@ -608,7 +634,6 @@ function renderMatchCard(match, isSetBased, isFinals, isIndividual = false, roun
 
   return card;
 }
-
 
 
 // ===============================

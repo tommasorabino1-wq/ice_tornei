@@ -11,7 +11,7 @@ function openNav() {
   navOverlay.classList.add("active");
   menuToggle.classList.add("active");
   menuToggle.setAttribute("aria-expanded", "true");
-  document.body.style.overflow = "hidden"; // blocca scroll pagina
+  document.body.style.overflow = "hidden";
 }
 
 function closeNav() {
@@ -23,22 +23,17 @@ function closeNav() {
 }
 
 if (menuToggle && mainNav && navOverlay) {
-
-  // apri con hamburger
   menuToggle.addEventListener("click", () => {
     mainNav.classList.contains("active") ? closeNav() : openNav();
   });
 
-  // chiudi cliccando l'overlay
   navOverlay.addEventListener("click", closeNav);
 
-  // chiudi con ESC
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && mainNav.classList.contains("active")) {
       closeNav();
     }
   });
-
 }
 
 // ===============================
@@ -64,10 +59,28 @@ const container = document.getElementById("tournaments");
 
 const API_URL = "https://gettournaments-dzvezz2yhq-uc.a.run.app";
 
-// Sport tags che rientrano nella categoria "calcio"
 const CALCIO_SPORTS = ["calcio", "calcetto", "calcio a 5", "calcio a 7", "calciotto", "calcio a 8"];
 
 let ALL_TOURNAMENTS = [];
+
+// ===============================
+// HELPER: idempotente bool (frontend)
+// ===============================
+function toBool(val) {
+  if (val === true  || val === 1)  return true;
+  if (val === false || val === 0)  return false;
+  const s = String(val ?? '').toLowerCase().trim();
+  return s === 'true' || s === '1' || s === 'yes';
+}
+
+// ===============================
+// HELPER: idempotente number (frontend)
+// ===============================
+function toNum(val, fallback = 0) {
+  if (val === null || val === undefined || val === '') return fallback;
+  const n = Number(val);
+  return isNaN(n) ? fallback : n;
+}
 
 // ===============================
 // FETCH TORNEI DAL BACKEND
@@ -85,7 +98,7 @@ fetch(API_URL)
     }
 
     ALL_TOURNAMENTS = tournaments.filter(t =>
-      CALCIO_SPORTS.includes(String(t.sport).toLowerCase().trim())
+      CALCIO_SPORTS.includes(String(t.sport || '').toLowerCase().trim())
     );
 
     const skeletons = container.querySelectorAll(".tournament-card.skeleton");
@@ -95,7 +108,6 @@ fetch(API_URL)
       container.innerHTML = "";
       renderTournaments(ALL_TOURNAMENTS);
     }, 350);
-
   })
   .catch(err => {
     console.error("Errore nel caricamento dei tornei:", err);
@@ -109,16 +121,19 @@ function renderTournaments(tournaments) {
 
   const statusPriority = {
     needs_attention: 0,
-    open: 1,
-    wip: 2,
-    live: 3,
-    final_phase: 4,
-    full: 5,
-    finished: 6
+    open:            1,
+    wip:             2,
+    live:            3,
+    final_phase:     4,
+    full:            5,
+    finished:        6
   };
 
   tournaments.sort((a, b) => {
-    return statusPriority[a.status] - statusPriority[b.status];
+    // FIX BUG 5: fallback a 99 per status non mappati → evita NaN
+    const pa = statusPriority[a.status] ?? 99;
+    const pb = statusPriority[b.status] ?? 99;
+    return pa - pb;
   });
 
   container.innerHTML = "";
@@ -138,9 +153,9 @@ function renderTournaments(tournaments) {
       card.classList.add("finished");
     }
 
-    const statusLabel = buildStatusLabel(t.status);
+    const statusLabel      = buildStatusLabel(t.status);
     const iscrizioniAperte = t.status === "open";
-    const isIndividual = String(t.individual_or_team || "team").toLowerCase() === "individual";
+    const isIndividual     = String(t.individual_or_team || "team").toLowerCase() === "individual";
 
     const row1 = `${t.sport} · ${t.location} · ${t.date}`;
     const row2 = buildParticipantsInfoText(t);
@@ -151,8 +166,9 @@ function renderTournaments(tournaments) {
     const row7 = buildCourtSchedulingModeText(t);
     const row8 = buildCourtDaysHoursRangeText(t);
 
-    const teamsCurrent = t.teams_current || 0;
-    const teamsMax = t.teams_max || 0;
+    // FIX BUG 2: toNum per teams_current e teams_max
+    const teamsCurrent = toNum(t.teams_current, 0);
+    const teamsMax     = toNum(t.teams_max, 0);
     const row9 = `${teamsCurrent} / ${teamsMax} squadre iscritte`;
 
     card.innerHTML = `
@@ -197,15 +213,15 @@ function renderTournaments(tournaments) {
 // ===============================
 function buildStatusLabel(status) {
   const labels = {
-    open: "ISCRIZIONI APERTE",
-    wip: "IN DEFINIZIONE",
-    live: "IN CORSO",
-    final_phase: "FASE FINALE",
-    full: "COMPLETO",
+    open:            "ISCRIZIONI APERTE",
+    wip:             "IN DEFINIZIONE",
+    live:            "IN CORSO",
+    final_phase:     "FASE FINALE",
+    full:            "COMPLETO",
     needs_attention: "IN DEFINIZIONE",
-    finished: "CONCLUSO"
+    finished:        "CONCLUSO"
   };
-  return labels[status] || status.toUpperCase();
+  return labels[status] || String(status || '').toUpperCase();
 }
 
 // ===============================
@@ -215,26 +231,26 @@ function buildParticipantsInfoText(t) {
   const parts = [];
 
   const genderMap = {
-    only_male: "Solo ragazzi",
-    only_female: "Solo ragazze",
-    mixed_strict: "Misto obbligatorio",
+    only_male:            "Solo ragazzi",
+    only_female:          "Solo ragazze",
+    mixed_strict:         "Misto obbligatorio",
     mixed_female_allowed: "Misto o femminile",
-    open: "Aperto a tutti"
+    open:                 "Aperto a tutti"
   };
-  parts.push(genderMap[t.gender] || "Aperto a tutti");
+  parts.push(genderMap[String(t.gender || 'open').toLowerCase()] || "Aperto a tutti");
 
   const ageMap = {
     under_18: "Under 18",
-    over_35: "Over 35",
-    open: "Tutte le età"
+    over_35:  "Over 35",
+    open:     "Tutte le età"
   };
-  parts.push(ageMap[t.age] || "Tutte le età");
+  parts.push(ageMap[String(t.age || 'open').toLowerCase()] || "Tutte le età");
 
   const expertiseMap = {
-    open: "Livello amatoriale",
+    open:   "Livello amatoriale",
     expert: "Livello agonistico"
   };
-  parts.push(expertiseMap[t.expertise] || "Livello amatoriale");
+  parts.push(expertiseMap[String(t.expertise || 'open').toLowerCase()] || "Livello amatoriale");
 
   return parts.join(" · ");
 }
@@ -243,11 +259,12 @@ function buildParticipantsInfoText(t) {
 // BUILD PRICE INFO
 // ===============================
 function buildPriceInfoText(t, isIndividual = false) {
-  const price = t.price || 0;
+  // FIX BUG 2: toNum invece di || 0 per gestire price = 0 (torneo gratuito)
+  const price    = toNum(t.price, 0);
   const perLabel = isIndividual ? "a giocatore" : "a squadra";
 
-  const courtPrice = String(t.court_price || "non_compreso").toLowerCase();
-  const refereePrice = String(t.referee_price || "na").toLowerCase();
+  const courtPrice   = String(t.court_price   || "non_compreso").toLowerCase().trim();
+  const refereePrice = String(t.referee_price || "na").toLowerCase().trim();
 
   let courtText = "";
 
@@ -260,6 +277,9 @@ function buildPriceInfoText(t, isIndividual = false) {
       break;
     case "compreso_finals":
       courtText = "Campi inclusi solo per la fase finale";
+      break;
+    case "na":
+      courtText = ""; // sport senza campo → nessun messaggio
       break;
     case "non_compreso":
     default:
@@ -276,28 +296,30 @@ function buildPriceInfoText(t, isIndividual = false) {
     refereeText = "Arbitro incluso";
   }
 
-  const parts = [courtText];
-  if (refereeText) parts.push(refereeText);
-
-  return `€${price} ${perLabel} · ${parts.join(", ")}`;
+  // FIX: filter(Boolean) evita " · " trailing quando entrambe le parti sono vuote
+  const parts    = [courtText, refereeText].filter(Boolean);
+  const infoText = parts.length > 0 ? ` · ${parts.join(", ")}` : "";
+  return `€${price} ${perLabel}${infoText}`;
 }
 
 // ===============================
 // BUILD AWARD INFO
 // ===============================
 function buildAwardInfoText(t) {
-  const hasAward = t.award === true || String(t.award).toUpperCase() === "TRUE";
+  // FIX BUG 1: toBool gestisce boolean nativo, stringa "true"/"false", numero 1/0
+  const hasAward = toBool(t.award);
 
   if (!hasAward) {
     return "Premi simbolici";
   }
 
-  const perc = t.award_amount_perc;
-  const price = Number(t.price) || 0;
-  const teamsMax = Number(t.teams_max) || 0;
+  const perc     = t.award_amount_perc;
+  // FIX BUG 3: toNum invece di Number() || 0
+  const price    = toNum(t.price, 0);
+  const teamsMax = toNum(t.teams_max, 0);
 
   if (perc && perc !== "NA" && !isNaN(Number(perc)) && price > 0 && teamsMax > 0) {
-    const percValue = Number(perc) / 100;
+    const percValue  = Number(perc) / 100;
     const totalPrize = Math.round(teamsMax * price * percValue);
     return `€${totalPrize}`;
   }
@@ -310,14 +332,15 @@ function buildAwardInfoText(t) {
 // ===============================
 function buildFormatInfoText(t) {
   const formatMap = {
-    round_robin: "Girone unico solo andata",
-    double_round_robin: "Girone unico andata e ritorno",
-    round_robin_finals: "Gironi + fasi finali",
+    round_robin:               "Girone unico solo andata",
+    double_round_robin:        "Girone unico andata e ritorno",
+    round_robin_finals:        "Gironi + fasi finali",
     double_round_robin_finals: "Gironi (A/R) + fasi finali"
   };
 
   const formatText = formatMap[t.format_type] || "Formato da definire";
-  const guaranteed = t.guaranteed_match || 0;
+  // FIX BUG 4: toNum per gestire guaranteed_match come stringa numerica o 0
+  const guaranteed = toNum(t.guaranteed_match, 0);
 
   if (guaranteed > 0) {
     return `${formatText} · ${guaranteed} partite garantite`;
@@ -332,11 +355,11 @@ function buildFormatInfoText(t) {
 function buildTimeRangeInfoText(t) {
   const timeMap = {
     short: "Torneo giornaliero",
-    mid: "Una partita a settimana per gironi · Finali in un giorno",
-    long: "Una partita a settimana per gironi e finali"
+    mid:   "Una partita a settimana per gironi · Finali in un giorno",
+    long:  "Una partita a settimana per gironi e finali"
   };
 
-  return timeMap[t.time_range] || "Durata da definire";
+  return timeMap[String(t.time_range || '').toLowerCase()] || "Durata da definire";
 }
 
 // ===============================
@@ -346,9 +369,9 @@ function buildCourtSchedulingModeText(t) {
   const fixed = String(t.fixed_court_days_hours || "false").toLowerCase();
 
   const fixedMap = {
-    "false": "A scelta per tutte le partite",
+    "false":        "A scelta per tutte le partite",
     "fixed_finals": "A scelta (Gironi) · Prestabiliti (Finali)",
-    "fixed_all": "Prestabiliti per tutte le partite"
+    "fixed_all":    "Prestabiliti per tutte le partite"
   };
 
   return fixedMap[fixed] || "A scelta per tutte le partite";
@@ -359,34 +382,30 @@ function buildCourtSchedulingModeText(t) {
 // ===============================
 function buildCourtDaysHoursRangeText(t) {
 
-  const daysRaw = String(t.available_days || "").toLowerCase().trim();
+  const daysRaw  = String(t.available_days  || "").toLowerCase().trim();
   const hoursRaw = String(t.available_hours || "").toLowerCase().trim();
 
   const parts = [];
 
   const dayLabels = {
-    lun: "Lunedì",
-    mar: "Martedì",
-    mer: "Mercoledì",
-    gio: "Giovedì",
+    lun:  "Lunedì",
+    mar:  "Martedì",
+    mer:  "Mercoledì",
+    gio:  "Giovedì",
     giov: "Giovedì",
-    ven: "Venerdì",
-    sab: "Sabato",
-    dom: "Domenica"
+    ven:  "Venerdì",
+    sab:  "Sabato",
+    dom:  "Domenica"
   };
 
   if (daysRaw.includes("-")) {
     const [start, end] = daysRaw.split("-");
 
-    if (daysRaw === "lun-dom") {
-      parts.push("Tutti i giorni");
-    } else if (daysRaw === "lun-ven") {
-      parts.push("Lun-Ven");
-    } else if (daysRaw === "sab-dom") {
-      parts.push("Weekend");
-    } else if (daysRaw === "ven-dom") {
-      parts.push("Ven-Dom");
-    } else if (dayLabels[start] && dayLabels[end]) {
+    if      (daysRaw === "lun-dom") parts.push("Tutti i giorni");
+    else if (daysRaw === "lun-ven") parts.push("Lun-Ven");
+    else if (daysRaw === "sab-dom") parts.push("Weekend");
+    else if (daysRaw === "ven-dom") parts.push("Ven-Dom");
+    else if (dayLabels[start] && dayLabels[end]) {
       parts.push(`${dayLabels[start]} - ${dayLabels[end]}`);
     }
   } else if (dayLabels[daysRaw]) {
@@ -403,7 +422,7 @@ function buildCourtDaysHoursRangeText(t) {
     };
 
     const formattedStart = formatHour(startHour);
-    const formattedEnd = formatHour(endHour);
+    const formattedEnd   = formatHour(endHour);
 
     if (formattedStart && formattedEnd) {
       parts.push(`${formattedStart}-${formattedEnd}`);
@@ -418,11 +437,11 @@ function buildCourtDaysHoursRangeText(t) {
 // ===============================
 function escapeHTML(str) {
   return String(str ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/&/g,  "&amp;")
+    .replace(/</g,  "&lt;")
+    .replace(/>/g,  "&gt;")
+    .replace(/"/g,  "&quot;")
+    .replace(/'/g,  "&#039;");
 }
 
 // ===============================
@@ -509,10 +528,10 @@ if (sportsTrackInner && sportsSlider && sportsPrev && sportsNext) {
     const sliderWidth = sportsSlider.clientWidth;
     const maxIndex    = Math.ceil((trackWidth - sliderWidth) / CARD_WIDTH);
 
-    sportsPrev.style.opacity       = currentIndex <= 0          ? "0.3" : "1";
-    sportsNext.style.opacity       = currentIndex >= maxIndex   ? "0.3" : "1";
-    sportsPrev.style.pointerEvents = currentIndex <= 0          ? "none" : "auto";
-    sportsNext.style.pointerEvents = currentIndex >= maxIndex   ? "none" : "auto";
+    sportsPrev.style.opacity       = currentIndex <= 0        ? "0.3" : "1";
+    sportsNext.style.opacity       = currentIndex >= maxIndex ? "0.3" : "1";
+    sportsPrev.style.pointerEvents = currentIndex <= 0        ? "none" : "auto";
+    sportsNext.style.pointerEvents = currentIndex >= maxIndex ? "none" : "auto";
   }
 
   function goTo(index) {
@@ -548,12 +567,9 @@ if (sportsTrackInner && sportsSlider && sportsPrev && sportsNext) {
   }, { passive: true });
 
   sportsTrackInner.addEventListener("touchend", () => {
-    const THRESHOLD = 40; // px minimi per considerare uno swipe
-    if (touchDeltaX < -THRESHOLD) {
-      goTo(currentIndex + 1); // swipe sinistra → avanti
-    } else if (touchDeltaX > THRESHOLD) {
-      goTo(currentIndex - 1); // swipe destra → indietro
-    }
+    const THRESHOLD = 40;
+    if      (touchDeltaX < -THRESHOLD) goTo(currentIndex + 1);
+    else if (touchDeltaX >  THRESHOLD) goTo(currentIndex - 1);
     touchDeltaX = 0;
   });
 

@@ -57,6 +57,14 @@ if (dropdownToggle && dropdown) {
 
 
 
+
+
+
+
+
+
+
+
 // ===============================
 // HOMEPAGE - TORNEI (ICE PLATFORM)
 // ===============================
@@ -67,6 +75,29 @@ const sportFilter = document.getElementById("sport-filter");
 const API_URL = "https://gettournaments-dzvezz2yhq-uc.a.run.app";
 
 let ALL_TOURNAMENTS = [];
+
+
+// ===============================
+// HELPER: idempotente bool (frontend)
+// ===============================
+function toBool(val) {
+  if (val === true  || val === 1)  return true;
+  if (val === false || val === 0)  return false;
+  const s = String(val ?? '').toLowerCase().trim();
+  return s === 'true' || s === '1' || s === 'yes';
+}
+
+// ===============================
+// HELPER: idempotente number (frontend)
+// ===============================
+function toNum(val, fallback = 0) {
+  if (val === null || val === undefined || val === '') return fallback;
+  const n = Number(val);
+  return isNaN(n) ? fallback : n;
+}
+
+
+
 
 // ===============================
 // FETCH TORNEI DAL BACKEND
@@ -137,16 +168,18 @@ function renderTournaments(tournaments) {
 
   const statusPriority = {
     needs_attention: 0,
-    open: 1,
-    wip: 2,                 
-    live: 3,
-    final_phase: 4,
-    full: 5,
-    finished: 6
+    open:            1,
+    wip:             2,
+    live:            3,
+    final_phase:     4,
+    full:            5,
+    finished:        6
   };
 
   tournaments.sort((a, b) => {
-    return statusPriority[a.status] - statusPriority[b.status];
+    const pa = statusPriority[a.status] ?? 99;
+    const pb = statusPriority[b.status] ?? 99;
+    return pa - pb;
   });
 
   container.innerHTML = "";
@@ -166,21 +199,21 @@ function renderTournaments(tournaments) {
       card.classList.add("finished");
     }
 
-    const statusLabel = buildStatusLabel(t.status);
+    const statusLabel      = buildStatusLabel(t.status);
     const iscrizioniAperte = t.status === "open";
-    const isIndividual = String(t.individual_or_team || 'team').toLowerCase() === 'individual';  
+    const isIndividual     = String(t.individual_or_team || 'team').toLowerCase() === 'individual';
 
     const row1 = `${t.sport} · ${t.location} · ${t.date}`;
     const row2 = buildParticipantsInfoText(t);
-    const row3 = buildPriceInfoText(t, isIndividual);  
+    const row3 = buildPriceInfoText(t, isIndividual);
     const row4 = buildAwardInfoText(t);
     const row5 = buildFormatInfoText(t);
     const row6 = buildTimeRangeInfoText(t);
     const row7 = buildCourtSchedulingModeText(t);
     const row8 = buildCourtDaysHoursRangeText(t);
 
-    const teamsCurrent = t.teams_current || 0;
-    const teamsMax = t.teams_max || 0;
+    const teamsCurrent = toNum(t.teams_current, 0);
+    const teamsMax     = toNum(t.teams_max, 0);
     const row9 = `${teamsCurrent} / ${teamsMax} squadre iscritte`;
 
     card.innerHTML = `
@@ -218,7 +251,6 @@ function renderTournaments(tournaments) {
   });
 
   animateCards();
-
 }
 
 
@@ -227,16 +259,18 @@ function renderTournaments(tournaments) {
 // ===============================
 function buildStatusLabel(status) {
   const labels = {
-    open: "ISCRIZIONI APERTE",
-    wip: "IN DEFINIZIONE",
-    live: "IN CORSO",
-    final_phase: "FASE FINALE",
-    full: "COMPLETO",
+    open:            "ISCRIZIONI APERTE",
+    wip:             "IN DEFINIZIONE",
+    live:            "IN CORSO",
+    final_phase:     "FASE FINALE",
+    full:            "COMPLETO",
     needs_attention: "IN DEFINIZIONE",
-    finished: "CONCLUSO"
+    finished:        "CONCLUSO"
   };
-  return labels[status] || status.toUpperCase();
+  return labels[status] || String(status || '').toUpperCase();
 }
+
+
 
 // ===============================
 // BUILD PARTICIPANTS INFO
@@ -245,26 +279,26 @@ function buildParticipantsInfoText(t) {
   const parts = [];
 
   const genderMap = {
-    only_male: "Solo ragazzi",
-    only_female: "Solo ragazze",
-    mixed_strict: "Misto obbligatorio",
+    only_male:            "Solo ragazzi",
+    only_female:          "Solo ragazze",
+    mixed_strict:         "Misto obbligatorio",
     mixed_female_allowed: "Misto o femminile",
-    open: "Aperto a tutti"
+    open:                 "Aperto a tutti"
   };
-  parts.push(genderMap[t.gender] || "Aperto a tutti");
+  parts.push(genderMap[String(t.gender || 'open').toLowerCase()] || "Aperto a tutti");
 
   const ageMap = {
     under_18: "Under 18",
-    over_35: "Over 35",
-    open: "Tutte le età"
+    over_35:  "Over 35",
+    open:     "Tutte le età"
   };
-  parts.push(ageMap[t.age] || "Tutte le età");
+  parts.push(ageMap[String(t.age || 'open').toLowerCase()] || "Tutte le età");
 
   const expertiseMap = {
-    open: "Livello amatoriale",
+    open:   "Livello amatoriale",
     expert: "Livello agonistico"
   };
-  parts.push(expertiseMap[t.expertise] || "Livello amatoriale");
+  parts.push(expertiseMap[String(t.expertise || 'open').toLowerCase()] || "Livello amatoriale");
 
   return parts.join(" · ");
 }
@@ -274,11 +308,11 @@ function buildParticipantsInfoText(t) {
 // BUILD PRICE INFO
 // ===============================
 function buildPriceInfoText(t, isIndividual = false) {
-  const price = t.price || 0;
+  const price    = toNum(t.price, 0);
   const perLabel = isIndividual ? "a giocatore" : "a squadra";
 
-  const courtPrice = String(t.court_price || "non_compreso").toLowerCase();
-  const refereePrice = String(t.referee_price || "na").toLowerCase();
+  const courtPrice   = String(t.court_price   || "non_compreso").toLowerCase().trim();
+  const refereePrice = String(t.referee_price || "na").toLowerCase().trim();
 
   let courtText = "";
 
@@ -291,6 +325,9 @@ function buildPriceInfoText(t, isIndividual = false) {
       break;
     case "compreso_finals":
       courtText = "Campi inclusi solo per la fase finale";
+      break;
+    case "na":
+      courtText = ""; // scacchi o sport senza campo → nessun messaggio
       break;
     case "non_compreso":
     default:
@@ -307,31 +344,29 @@ function buildPriceInfoText(t, isIndividual = false) {
     refereeText = "Arbitro incluso";
   }
 
-  const parts = [courtText];
-
-  if (refereeText) {
-    parts.push(refereeText);
-  }
-
-  return `€${price} ${perLabel} · ${parts.join(", ")}`;
+  const parts    = [courtText, refereeText].filter(Boolean);
+  const infoText = parts.length > 0 ? ` · ${parts.join(", ")}` : "";
+  return `€${price} ${perLabel}${infoText}`;
 }
+
+
 
 // ===============================
 // BUILD AWARD INFO
 // ===============================
 function buildAwardInfoText(t) {
-  const hasAward = t.award === true || String(t.award).toUpperCase() === "TRUE";
-  
+  const hasAward = toBool(t.award);
+
   if (!hasAward) {
     return "Premi simbolici";
   }
 
-  const perc = t.award_amount_perc;
-  const price = Number(t.price) || 0;
-  const teamsMax = Number(t.teams_max) || 0;
-  
+  const perc     = t.award_amount_perc;
+  const price    = toNum(t.price, 0);
+  const teamsMax = toNum(t.teams_max, 0);
+
   if (perc && perc !== "NA" && !isNaN(Number(perc)) && price > 0 && teamsMax > 0) {
-    const percValue = Number(perc) / 100;
+    const percValue  = Number(perc) / 100;
     const totalPrize = Math.round(teamsMax * price * percValue);
     return `€${totalPrize}`;
   }
@@ -339,19 +374,20 @@ function buildAwardInfoText(t) {
   return "Montepremi garantito";
 }
 
+
 // ===============================
 // BUILD FORMAT INFO
 // ===============================
 function buildFormatInfoText(t) {
   const formatMap = {
-    round_robin: "Girone unico solo andata",
-    double_round_robin: "Girone unico andata e ritorno",
-    round_robin_finals: "Gironi + fasi finali",
+    round_robin:               "Girone unico solo andata",
+    double_round_robin:        "Girone unico andata e ritorno",
+    round_robin_finals:        "Gironi + fasi finali",
     double_round_robin_finals: "Gironi (A/R) + fasi finali"
   };
 
   const formatText = formatMap[t.format_type] || "Formato da definire";
-  const guaranteed = t.guaranteed_match || 0;
+  const guaranteed = toNum(t.guaranteed_match, 0);
 
   if (guaranteed > 0) {
     return `${formatText} · ${guaranteed} partite garantite`;
@@ -360,18 +396,21 @@ function buildFormatInfoText(t) {
   return formatText;
 }
 
+
+
 // ===============================
 // BUILD TIME RANGE INFO
 // ===============================
 function buildTimeRangeInfoText(t) {
   const timeMap = {
     short: "Torneo giornaliero",
-    mid: "Una partita a settimana per gironi · Finali in un giorno",
-    long: "Una partita a settimana per gironi e finali"
+    mid:   "Una partita a settimana per gironi · Finali in un giorno",
+    long:  "Una partita a settimana per gironi e finali"
   };
 
-  return timeMap[t.time_range] || "Durata da definire";
+  return timeMap[String(t.time_range || '').toLowerCase()] || "Durata da definire";
 }
+
 
 // ===============================
 // BUILD COURT SCHEDULING MODE

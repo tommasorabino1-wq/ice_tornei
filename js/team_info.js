@@ -8,8 +8,18 @@ const API_URLS = {
 
 
 function toBool(val) {
-  return val === true || String(val).toLowerCase() === 'true';
+  if (val === true  || val === 1)  return true;
+  if (val === false || val === 0)  return false;
+  const s = String(val ?? '').toLowerCase().trim();
+  return s === 'true' || s === '1' || s === 'yes';
 }
+
+function toNum(val, fallback = 0) {
+  if (val === null || val === undefined || val === '') return fallback;
+  const n = Number(val);
+  return isNaN(n) ? fallback : n;
+}
+
 
 
 
@@ -92,15 +102,17 @@ async function loadTeamInfo() {
 
     console.log('✅ Data received:', data);
 
-    teamData = data.team;
+    teamData       = data.team;
     tournamentData = data.tournament;
 
-    const isIndividual = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
+    const isIndividual        = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
     const certificateRequired = toBool(tournamentData.certificate_required);
 
-    // ===================================
-    // ADATTA UI A INDIVIDUAL / TEAM
-    // ===================================
+    // FIX BUG 2: toNum su team_size_min e team_size_max per gestire
+    // sia numeri nativi sia stringhe numeriche da Firestore
+    const teamSizeMin = toNum(tournamentData.team_size_min, 1);
+    const teamSizeMax = toNum(tournamentData.team_size_max, 1);
+
     if (isIndividual) {
       document.getElementById('page-title').textContent = 'Completa Registrazione';
       document.getElementById('team-icon').textContent = '👤';
@@ -113,20 +125,12 @@ async function loadTeamInfo() {
       document.getElementById('logo-section-title').textContent = 'Logo Squadra';
     }
 
-    // Popola info box
     document.getElementById('tournament-name').textContent = tournamentData.name;
-    document.getElementById('team-name').textContent = teamData.team_name;
-    document.getElementById('sport-name').textContent = tournamentData.sport;
+    document.getElementById('team-name').textContent       = teamData.team_name;
+    document.getElementById('sport-name').textContent      = tournamentData.sport;
 
-    // Genera sezioni giocatori
-    generatePlayerSections(
-      tournamentData.team_size_min,
-      tournamentData.team_size_max,
-      isIndividual,
-      certificateRequired
-    );
+    generatePlayerSections(teamSizeMin, teamSizeMax, isIndividual, certificateRequired);
 
-    // Mostra contenuto
     loadingSkeleton.classList.add('hidden');
     content.classList.remove('hidden');
 
@@ -140,6 +144,8 @@ async function loadTeamInfo() {
     );
   }
 }
+
+
 
 // ===================================
 // GENERA SEZIONI GIOCATORI
@@ -384,73 +390,64 @@ form.addEventListener('submit', async (e) => {
 
   console.log('📤 Form submit started');
 
-  const isIndividual = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
+  const isIndividual        = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
   const certificateRequired = toBool(tournamentData.certificate_required);
+  // FIX BUG 2: toNum per confronto numerico affidabile
+  const teamSizeMin         = toNum(tournamentData.team_size_min, 1);
 
-  // -------------------------
-  // VALIDAZIONE CONTESTUALE
-  // -------------------------
   if (isIndividual && certificateRequired) {
-    // 2a: deve esserci il certificato
     if (!playerData[0]?.certificateFile) {
       alert('Devi caricare il tuo certificato medico per completare la registrazione.');
       return;
     }
   } else if (!isIndividual) {
-    // 2c e 2d: almeno team_size_min giocatori con nome
     const validPlayers = playerData.filter(p => p.name);
-    if (validPlayers.length < tournamentData.team_size_min) {
-      alert(`Devi inserire almeno ${tournamentData.team_size_min} giocatori`);
+    if (validPlayers.length < teamSizeMin) {
+      alert(`Devi inserire almeno ${teamSizeMin} giocatori`);
       return;
     }
-    // 2c: i giocatori inseriti devono avere anche il certificato
     if (certificateRequired) {
       const validWithCert = playerData.filter(p => p.name && p.certificateFile);
-      if (validWithCert.length < tournamentData.team_size_min) {
-        alert(`Devi caricare il certificato medico per almeno ${tournamentData.team_size_min} giocatori`);
+      if (validWithCert.length < teamSizeMin) {
+        alert(`Devi caricare il certificato medico per almeno ${teamSizeMin} giocatori`);
         return;
       }
     }
   }
-  // 2b: nessuna validazione richiesta
 
   showLoading('Preparazione file...');
 
   try {
-    // Converti logo
-    let logoBase64 = null;
+    let logoBase64   = null;
     let logoFilename = null;
 
     if (logoFile) {
       loadingText.textContent = 'Caricamento logo...';
-      logoBase64 = await fileToBase64(logoFile);
+      logoBase64   = await fileToBase64(logoFile);
       logoFilename = logoFile.name;
       console.log('🖼️ Logo converted');
     }
 
-    // Costruisci array players per il payload
     loadingText.textContent = 'Caricamento dati...';
 
     const players = [];
 
     if (isIndividual) {
-      // Individuale: un solo player, nome pre-popolato
-      const p = playerData[0];
+      const p      = playerData[0];
       const player = { name: p.name };
       if (p.certificateFile) {
-        player.certificate_base64 = await fileToBase64(p.certificateFile);
-        player.certificate_filename = p.certificateFile.name;
+        player.certificate_base64    = await fileToBase64(p.certificateFile);
+        player.certificate_filename  = p.certificateFile.name;
       }
       players.push(player);
     } else {
-      // Team: tutti i giocatori con nome compilato
       for (const player of playerData) {
         if (!player.name) continue;
         const p = { name: player.name };
         if (certificateRequired && player.certificateFile) {
-          loadingText.textContent = 'Caricamento certificati...';
-          p.certificate_base64 = await fileToBase64(player.certificateFile);
-          p.certificate_filename = player.certificateFile.name;
+          loadingText.textContent      = 'Caricamento certificati...';
+          p.certificate_base64         = await fileToBase64(player.certificateFile);
+          p.certificate_filename       = player.certificateFile.name;
         }
         players.push(p);
       }
@@ -461,24 +458,24 @@ form.addEventListener('submit', async (e) => {
     loadingText.textContent = 'Salvataggio informazioni...';
 
     const payload = {
-      team_id: teamId,
+      team_id:       teamId,
       tournament_id: tournamentId,
       players,
-      logo_base64: logoBase64,
+      logo_base64:   logoBase64,
       logo_filename: logoFilename
     };
 
     console.log('📦 Payload structure:', {
-      team_id: payload.team_id,
+      team_id:       payload.team_id,
       tournament_id: payload.tournament_id,
       players_count: payload.players.length,
-      has_logo: !!payload.logo_base64
+      has_logo:      !!payload.logo_base64
     });
 
     const response = await fetch(API_URLS.submitTeamInfo, {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body:    JSON.stringify(payload)
     });
 
     console.log('📥 Response status:', response.status);
@@ -544,11 +541,12 @@ function showSuccess() {
   successState.classList.remove('hidden');
 }
 
+// FIX BUG 3: guard su null/undefined per evitare "null" o "undefined" in output
 function escapeHTML(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+  return String(str ?? '')
+    .replace(/&/g,  '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;')
+    .replace(/'/g,  '&#039;');
 }
