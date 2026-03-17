@@ -313,10 +313,9 @@ async function loadRanking() {
 
 // ===============================
 // RENDER RANKING TABLE
-// Con ordinamento cliccabile sulle intestazioni
+// Con ordinamento cliccabile sulle intestazioni e ricerca
 // ===============================
 
-// Stato ordinamento locale alla tabella (non legato al backend)
 let tableSort = { field: null, dir: 'desc' };
 
 function renderRankingTable(data, sport, type) {
@@ -324,17 +323,19 @@ function renderRankingTable(data, sport, type) {
   const isCalcio  = sport === 'calcio';
   const isPlayers = type === 'players';
 
-  // Definizione colonne: { key, label, sortable }
   const columns = [
-    { key: 'presenze',    label: 'PG',   sortable: true  },
-    { key: 'pct_vittorie', label: '% V',  sortable: true  },
+    { key: 'presenze',     label: 'PG',  sortable: true },
+    { key: 'pct_vittorie', label: '% V', sortable: true },
     ...(isCalcio ? [
-      { key: 'gol',       label: 'Gol',  sortable: true  },
-      { key: 'media_gol', label: 'G/P',  sortable: true  },
+      { key: 'gol',       label: 'Gol', sortable: true },
+      { key: 'media_gol', label: 'G/P', sortable: true },
     ] : []),
   ];
 
-  // Funzione che ordina i dati in base a tableSort
+  function normalize(str) {
+    return String(str || '').toLowerCase().trim().replace(/\s+/g, ' ');
+  }
+
   function getSortedData(rows) {
     if (!tableSort.field) return rows;
     return [...rows].sort((a, b) => {
@@ -344,7 +345,6 @@ function renderRankingTable(data, sport, type) {
     });
   }
 
-  // Funzione che (ri)costruisce solo il tbody — usata anche al click
   function buildTbody(rows) {
     const tbody = table.querySelector('tbody');
     tbody.innerHTML = '';
@@ -393,7 +393,6 @@ function renderRankingTable(data, sport, type) {
     });
   }
 
-  // Funzione che aggiorna le frecce nelle intestazioni
   function updateHeaderArrows() {
     table.querySelectorAll('th[data-sort]').forEach(th => {
       const field = th.dataset.sort;
@@ -407,13 +406,11 @@ function renderRankingTable(data, sport, type) {
     });
   }
 
-  // Costruisci la tabella
   const table = document.createElement("table");
   table.className = "standings-table ranking-table";
 
   const nameHeader = isPlayers ? 'Giocatore' : 'Squadra';
 
-  // Costruisci headers colonne (dentro renderRankingTable, sostituisci colHeaders)
   const colHeaders = columns.map(col => {
     if (col.sortable) {
       const isActive = col.key === tableSort.field;
@@ -434,7 +431,6 @@ function renderRankingTable(data, sport, type) {
     <tbody></tbody>
   `;
 
-  // Click sulle intestazioni
   table.querySelectorAll('th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
       const field = th.dataset.sort;
@@ -444,7 +440,12 @@ function renderRankingTable(data, sport, type) {
         tableSort.field = field;
         tableSort.dir   = 'desc';
       }
-      buildTbody(data);
+      // Applica sort tenendo conto del filtro di ricerca attivo
+      const query = searchInput ? normalize(searchInput.value) : '';
+      const filtered = query
+        ? data.filter(row => normalize(isPlayers ? row.player_name : row.team_name).includes(query))
+        : data;
+      buildTbody(filtered);
       updateHeaderArrows();
     });
   });
@@ -453,6 +454,43 @@ function renderRankingTable(data, sport, type) {
 
   container.innerHTML = "";
   container.appendChild(table);
+
+  // ── Ricerca ──────────────────────────────────────────────────────
+  const searchToggle = document.getElementById('ranking-search-toggle');
+  const searchBar    = document.getElementById('ranking-search-bar');
+  const searchInput  = document.getElementById('ranking-search-input');
+
+  searchInput.value = '';
+  searchBar.classList.add('hidden');
+
+  // Rimuovi vecchi listener clonando i nodi
+  const newToggle = searchToggle.cloneNode(true);
+  searchToggle.parentNode.replaceChild(newToggle, searchToggle);
+  const newInput = searchInput.cloneNode(true);
+  searchInput.parentNode.replaceChild(newInput, searchInput);
+
+  newToggle.addEventListener('click', () => {
+    const isHidden = searchBar.classList.toggle('hidden');
+    if (!isHidden) {
+      newInput.focus();
+    } else {
+      newInput.value = '';
+      buildTbody(data);
+    }
+  });
+
+  newInput.addEventListener('input', () => {
+    const query = normalize(newInput.value);
+    if (!query) {
+      buildTbody(data);
+      return;
+    }
+    const filtered = data.filter(row => {
+      const name = normalize(isPlayers ? row.player_name : row.team_name);
+      return name.includes(query);
+    });
+    buildTbody(filtered);
+  });
 }
 
 
