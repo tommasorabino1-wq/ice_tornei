@@ -450,7 +450,20 @@ function renderRankingTable(data, sport, type) {
   newToggle.addEventListener('click', () => {
     const isHidden = searchBar.classList.toggle('hidden');
     if (!isHidden) {
-      newInput.focus();
+      // Aspetta che l'animazione CSS apra il box, poi scrolla e fa focus
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          newInput.focus();
+          const inputRect = newInput.getBoundingClientRect();
+          const viewportHeight = window.visualViewport
+            ? window.visualViewport.height
+            : window.innerHeight;
+          // Se l'input è coperto dalla tastiera (parte bassa del viewport)
+          if (inputRect.bottom > viewportHeight * 0.6) {
+            newInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 60);
+      });
     } else {
       newInput.value = '';
       buildTbody(data);

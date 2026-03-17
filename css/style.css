@@ -3619,7 +3619,6 @@ section > .section-title {
   justify-content: flex-start;
   padding: 16px 16px 16px 16px;
   min-height: 36px;
-  border-bottom: 1px solid var(--border-soft);
 }
 
 .rk-box__title {
@@ -3648,13 +3647,13 @@ section > .section-title {
 .rk-search-toggle {
   position: absolute;
   top: 50%;
-  right: 12px;
+  right: 20px;
   transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
   color: var(--text-muted);
-  padding: 6px;
+  padding: 12px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -3706,51 +3705,6 @@ section > .section-title {
 }
 
 
-/* =========================
-   SEARCH
-========================= */
-.rk-search-toggle {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 4px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.15s ease, background 0.15s ease;
-}
-
-.rk-search-toggle:hover {
-  color: var(--brand);
-  background: var(--brand-soft);
-}
-
-.rk-search-bar {
-  margin-bottom: 12px;
-}
-
-.rk-search-bar input {
-  width: 100%;
-  padding: 7px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-main);
-  color: var(--text-main);
-  font-size: 16px;
-  outline: none;
-  transition: border-color 0.18s ease;
-  box-sizing: border-box;
-}
-
-.rk-search-bar input:focus {
-  border-color: var(--brand);
-}
 
 
 /* =========================
