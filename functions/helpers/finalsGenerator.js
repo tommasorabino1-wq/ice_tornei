@@ -185,7 +185,24 @@ function computeRounds(numTeams) {
 
 
 function toBool(val) {
-  return val === true || String(val).toLowerCase() === 'true';
+  if (val === true) return true;
+  if (val === false) return false;
+
+  const v = String(val ?? '').toLowerCase().trim();
+
+  return v === 'true' || v === '1' || v === 'yes';
+}
+
+function toNumber(val, fallback = 0) {
+  if (val === null || val === undefined) return fallback;
+
+  const n = Number(String(val).trim());
+  return isNaN(n) ? fallback : n;
+}
+
+function toStringSafe(val, fallback = '') {
+  if (val === null || val === undefined) return fallback;
+  return String(val).trim();
 }
 
 
@@ -207,7 +224,7 @@ async function generateFinalsIfReady(tournamentId) {
     }
 
     const tournament = tournamentDoc.data();
-    const formatType = String(tournament.format_type || '').toLowerCase();
+    const formatType = toStringSafe(tournament.format_type).toLowerCase();
     const has3x4 = toBool(tournament['3_4_posto']);
 
     // Verifica formato
@@ -216,9 +233,12 @@ async function generateFinalsIfReady(tournamentId) {
       throw new Error('E_FORMAT_NO_FINALS');
     }
 
-    const profile        = getMatchProfile(tournament.sport, tournament.match_format_finals);
+    const profile = getMatchProfile(
+      toStringSafe(tournament.sport),
+      toStringSafe(tournament.match_format_finals)
+    );
     const sport          = profile.normalizedSport;
-    const matchFormatFinals = String(tournament.match_format_finals || '').toLowerCase();
+    const matchFormatFinals = toStringSafe(tournament.match_format_finals).toLowerCase();
     const isSetBased     = profile.isSetBased;
     const isChess        = profile.isChess;
 
@@ -263,7 +283,7 @@ async function generateFinalsIfReady(tournamentId) {
     // Controlla parità intra-girone
     checkIntraGroupTies(byGroup, standingsIsSetBased);
 
-    const slots = Number(tournament.teams_in_final);
+    const slots = toNumber(tournament.teams_in_final, 0);
     if (!slots || slots <= 0) throw new Error('E_INVALID_SLOTS');
 
     // Estrai teams qualificati (stessa logica di prima)

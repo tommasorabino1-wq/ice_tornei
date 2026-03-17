@@ -1,6 +1,16 @@
 const admin = require('firebase-admin');
 const db = admin.firestore();
 
+
+
+// ===============================
+// HELPERS SAFE (per Firestore)
+// ===============================
+function toStringSafe(val, fallback = '') {
+  if (val === null || val === undefined) return fallback;
+  return String(val).trim();
+}
+
 // ===============================
 // HELPER: Normalizza stringa per usarla come chiave di lookup
 // ===============================
@@ -173,14 +183,21 @@ async function updateRanking(tournamentId) {
     }
 
     const tournament = tournamentDoc.data();
-    const sport      = normalizeSportFromTournament(tournament.sport);
+
+    // sport (safe)
+    const sport = normalizeSportFromTournament(
+      toStringSafe(tournament.sport)
+    );
+
     const isChess    = sport === 'scacchi';
     const isCalcio   = sport === 'calcio';
     const hasDraws   = isCalcio || isChess;
     const writeTeams = !isChess;
 
-    // ── 1b) Parsa point_system ────────────────────────────────────────────────
-    const pointSystem = parsePointSystem(tournament.point_system, sport);
+    // point_system (safe)
+    const rawPointSystem = toStringSafe(tournament.point_system);
+
+    const pointSystem = parsePointSystem(rawPointSystem, sport);
     console.log(`📋 [RANKING] Sport: ${sport} | pointSystem: ${JSON.stringify(pointSystem)} | writeTeams: ${writeTeams}`);
 
     // ── 2) Leggi tutti i match giocati (gironi + finals) ─────────────────────

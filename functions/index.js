@@ -19,6 +19,31 @@ admin.initializeApp();
 // Riferimento al database Firestore
 const db = admin.firestore();
 
+
+
+
+function toStringSafe(val, fallback = '') {
+  if (val === null || val === undefined) return fallback;
+  return String(val).trim();
+}
+
+function toNumberSafe(val, fallback = 0) {
+  if (val === null || val === undefined || val === '') return fallback;
+  const n = Number(val);
+  return isNaN(n) ? fallback : n;
+}
+
+function toBooleanSafe(val, fallback = false) {
+  if (typeof val === 'boolean') return val;
+  if (typeof val === 'string') {
+    const v = val.toLowerCase().trim();
+    if (v === 'true') return true;
+    if (v === 'false') return false;
+  }
+  if (typeof val === 'number') return val === 1;
+  return fallback;
+}
+
 // ===============================
 // HELPER: CORS (permette chiamate dal frontend)
 // ===============================
@@ -51,12 +76,6 @@ function normalizeTeamNameForCheck(name) {
 
 
 
-function toBool(val) {
-  return val === true || String(val).toLowerCase() === 'true';
-}
-
-
-
 
 // ===============================
 // GET TOURNAMENTS
@@ -77,7 +96,7 @@ exports.getTournaments = onRequest(async (req, res) => {
     for (const doc of snapshot.docs) {
       const data = doc.data();
       
-      const tournamentId = data.tournament_id || doc.id;
+      const tournamentId = toStringSafe(data.tournament_id, doc.id);
       
       const subsSnapshot = await db.collection('subscriptions')
         .where('tournament_id', '==', tournamentId)
@@ -259,7 +278,7 @@ exports.getBracket = onRequest(async (req, res) => {
       const data = doc.data();
 
       // ✅ NUOVO: il match 3°/4° viene estratto separatamente, non finisce in rounds
-      if (data.is_third_place_match === true) {
+      if (toBooleanSafe(data.is_third_place_match)) {
         thirdPlaceMatch = data;
         return; // non aggiungerlo a rounds né a paths
       }
@@ -343,12 +362,12 @@ async function sendTeamInfoRequestEmails(tournamentId) {
     }
 
     const tournament = tournamentDoc.data();
-    const tournamentName = tournament.name;
-    const teamSizeMin = Number(tournament.team_size_min || 2);
-    const teamSizeMax = Number(tournament.team_size_max || 2);
-    const sport = tournament.sport || "Sport";
-    const individualOrTeam = tournament.individual_or_team || 'team';
-    const certificateRequired = toBool(tournament.certificate_required);
+    const tournamentName = toStringSafe(tournament.name);
+    const teamSizeMin = toNumberSafe(tournament.team_size_min, 2);
+    const teamSizeMax = toNumberSafe(tournament.team_size_max, 2);
+    const sport = toStringSafe(tournament.sport, "Sport");
+    const individualOrTeam = toStringSafe(tournament.individual_or_team, 'team').toLowerCase();
+    const certificateRequired = toBooleanSafe(tournament.certificate_required);
 
     // 2) Recupera subscriptions
     const subscriptionsSnapshot = await db.collection('subscriptions')
@@ -438,8 +457,8 @@ exports.onTournamentStatusChange = onDocumentUpdated(
     const beforeData = event.data.before.data();
     const afterData = event.data.after.data();
     
-    const oldStatus = beforeData?.status;
-    const newStatus = afterData?.status;
+    const oldStatus = toStringSafe(beforeData?.status).toLowerCase();
+    const newStatus = toStringSafe(afterData?.status).toLowerCase();
     
     console.log(`🔄 Tournament ${tournamentId} status change: ${oldStatus} → ${newStatus}`);
     
@@ -501,8 +520,8 @@ exports.onMatchResultUpdated = onDocumentUpdated(
       return null;
     }
     
-    const beforePlayed = beforeData?.played === true;
-    const afterPlayed = afterData?.played === true;
+    const beforePlayed = toBooleanSafe(beforeData?.played);
+    const afterPlayed = toBooleanSafe(afterData?.played);
     const scoreChanged = 
       beforeData?.score_a !== afterData?.score_a || 
       beforeData?.score_b !== afterData?.score_b;
@@ -532,7 +551,7 @@ exports.onMatchResultUpdated = onDocumentUpdated(
         .get();
       
       const allMatches = allMatchesSnapshot.docs.map(doc => doc.data());
-      const allPlayed = allMatches.every(m => m.played === true);
+      const allPlayed = allMatches.every(m => toBooleanSafe(m.played));
       
       if (allPlayed) {
         console.log(`🏆 All group matches played for ${tournamentId} - checking finals generation`);
@@ -600,8 +619,8 @@ exports.onFinalResultUpdated = onDocumentUpdated(
       return null;
     }
     
-    const beforePlayed = beforeData?.played === true;
-    const afterPlayed = afterData?.played === true;
+    const beforePlayed = toBooleanSafe(beforeData?.played);
+    const afterPlayed = toBooleanSafe(afterData?.played);
     const scoreChanged = 
       beforeData?.score_a !== afterData?.score_a || 
       beforeData?.score_b !== afterData?.score_b ||
@@ -673,18 +692,20 @@ exports.submitSubscription = onRequest(async (req, res) => {
 
     const tournament = tournamentDoc.data();
 
-    if (tournament.status !== 'open') {
+    const status = toStringSafe(tournament.status).toLowerCase();
+
+    if (status !== 'open') {
       return res.status(403).send('REGISTRATIONS_CLOSED');
     }
 
-    const fixedCourtDaysHours = String(tournament.fixed_court_days_hours || 'false').toLowerCase();
+    const fixedCourtDaysHours = toStringSafe(tournament.fixed_court_days_hours, 'false').toLowerCase();
     const needsPreferences = fixedCourtDaysHours !== 'fixed_all';
 
-    const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
-    const certificateRequired = toBool(tournament.certificate_required);
-    const teamSizeMax = Number(tournament.team_size_max || 2);
+    const isIndividual = toStringSafe(tournament.individual_or_team, 'team').toLowerCase() === 'individual';
+    const certificateRequired = toBooleanSafe(tournament.certificate_required);
+    const teamSizeMax = toNumberSafe(tournament.team_size_max, 2);
 
-    const normalizedTeamName = team_name.trim().toLowerCase();
+    const normalizedTeamName = normalizeTeamNameForCheck(team_name);
     const teamId = `${tournament_id}_${normalizedTeamName}`;
 
     // ── Verifica duplicato stesso torneo (team_id) ──────────────────────────
@@ -883,9 +904,9 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
     }
 
     const tournament = tournamentDoc.data();
-    const teamSizeMax = Number(tournament.team_size_max || 2);
-    const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
-    const certificateRequired = toBool(tournament.certificate_required);
+    const teamSizeMax = toNumberSafe(tournament.team_size_max, 2);
+    const isIndividual = toStringSafe(tournament.individual_or_team, 'team').toLowerCase() === 'individual';
+    const certificateRequired = toBooleanSafe(tournament.certificate_required);
 
     console.log('📋 Tournament info:', {
       name: tournament.name,
@@ -1026,9 +1047,9 @@ exports.onSubscriptionCreated = onDocumentCreated(
       }
 
       const tournament = tournamentDoc.data();
-      const amount = tournament.price;
-      const tournamentName = tournament.name;
-      const individualOrTeam = tournament.individual_or_team || 'team';
+      const amount = toNumberSafe(tournament.price, 0);
+      const tournamentName = toStringSafe(tournament.name);
+      const individualOrTeam = toStringSafe(tournament.individual_or_team, 'team').toLowerCase();
 
       if (!amount) {
         console.error(`Prezzo non definito per tournament ${tournamentId}`);
@@ -1133,7 +1154,7 @@ exports.getTeamInfo = onRequest(async (req, res) => {
     }
 
     const tournamentData = tournamentDoc.data();
-    const isIndividual = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
+    const isIndividual = toStringSafe(tournamentData.individual_or_team, 'team').toLowerCase() === 'individual';
 
     // Costruisci risposta
     const response = {
@@ -1146,11 +1167,11 @@ exports.getTeamInfo = onRequest(async (req, res) => {
       tournament: {
         tournament_id: tournamentData.tournament_id || tournamentId,
         name: tournamentData.name,
-        sport: tournamentData.sport || 'Sport',
-        team_size_min: Number(tournamentData.team_size_min || 2),
-        team_size_max: Number(tournamentData.team_size_max || 2),
-        individual_or_team: tournamentData.individual_or_team || 'team',
-        certificate_required: tournamentData.certificate_required === true
+        sport: toStringSafe(tournamentData.sport, 'Sport'),
+        team_size_min: toNumberSafe(tournamentData.team_size_min, 2),
+        team_size_max: toNumberSafe(tournamentData.team_size_max, 2),
+        individual_or_team: toStringSafe(tournamentData.individual_or_team, 'team'),
+        certificate_required: toBooleanSafe(tournamentData.certificate_required)
       }
     };
 
@@ -1263,8 +1284,8 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
     const beforeData = event.data.before.data();
     const afterData = event.data.after.data();
 
-    const beforeCompleted = beforeData?.info_completed === true;
-    const afterCompleted = afterData?.info_completed === true;
+    const beforeCompleted = toBooleanSafe(beforeData?.info_completed);
+    const afterCompleted = toBooleanSafe(afterData?.info_completed);
 
     if (beforeCompleted || !afterCompleted) {
       return null;
@@ -1284,7 +1305,7 @@ exports.onTeamInfoCompleted = onDocumentUpdated(
       const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
       if (tournamentDoc.exists) {
         const tournamentData = tournamentDoc.data();
-        isIndividual = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
+        isIndividual = toStringSafe(tournamentData.individual_or_team, 'team').toLowerCase() === 'individual';
       }
     } catch (err) {
       console.warn('⚠️ Could not fetch tournament data, defaulting to team prompt:', err.message);
@@ -1369,7 +1390,7 @@ exports.getRankingTeams = onRequest(async (req, res) => {
   if (handleOptions(req, res)) return;
 
   try {
-    const sport   = req.query.sport;
+    const sport = toStringSafe(req.query.sport).toLowerCase();
     const orderBy = req.query.orderBy || 'punti';
 
     if (!sport) {
@@ -1410,7 +1431,7 @@ exports.getRankingPlayers = onRequest(async (req, res) => {
   if (handleOptions(req, res)) return;
 
   try {
-    const sport   = req.query.sport;
+    const sport = toStringSafe(req.query.sport).toLowerCase();
     const orderBy = req.query.orderBy || 'punti';
 
     if (!sport) {

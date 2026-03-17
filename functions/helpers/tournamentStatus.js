@@ -1,6 +1,27 @@
 const admin = require('firebase-admin');
 const db = admin.firestore();
 
+
+function toStringSafe(val, fallback = '') {
+  if (val === null || val === undefined) return fallback;
+  return String(val).trim();
+}
+
+function toBooleanSafe(val, fallback = false) {
+  if (typeof val === 'boolean') return val;
+  if (typeof val === 'string') {
+    const v = val.toLowerCase().trim();
+    if (v === 'true') return true;
+    if (v === 'false') return false;
+  }
+  if (typeof val === 'number') {
+    return val === 1;
+  }
+  return fallback;
+}
+
+
+
 // ===============================
 // MAIN: Aggiorna Status Torneo
 // ✅ MODIFICATO: supporta nuovo status "wip"
@@ -18,7 +39,7 @@ async function updateTournamentStatus(tournamentId) {
     }
 
     const tournament = tournamentDoc.data();
-    const currentStatus = tournament.status;
+    const currentStatus = toStringSafe(tournament.status).toLowerCase();
 
     console.log(`ℹ️ Current status: ${currentStatus}`);
 

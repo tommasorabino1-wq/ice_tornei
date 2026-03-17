@@ -3,6 +3,29 @@ const db = admin.firestore();
 
 
 
+function toStringSafe(val, fallback = '') {
+  if (val === null || val === undefined) return fallback;
+  return String(val).trim();
+}
+
+function toNumberSafe(val, fallback = 0) {
+  if (val === null || val === undefined || val === '') return fallback;
+  const n = Number(val);
+  return isNaN(n) ? fallback : n;
+}
+
+function toBooleanSafe(val, fallback = false) {
+  if (typeof val === 'boolean') return val;
+  if (typeof val === 'string') {
+    const v = val.toLowerCase().trim();
+    if (v === 'true') return true;
+    if (v === 'false') return false;
+  }
+  return fallback;
+}
+
+
+
 // ===============================
 // HELPER: Match profile (sport + format)
 // ===============================
@@ -484,13 +507,23 @@ async function generateStandingsBackend(tournamentId) {
     const tournament = tournamentDoc.data();
     
     // Determina sport e format
-    const profile           = getMatchProfile(tournament.sport, tournament.match_format_gironi);
-    const sport             = profile.normalizedSport;
-    const matchFormatGironi = String(tournament.match_format_gironi || '').toLowerCase();
+    const rawSport = toStringSafe(tournament.sport);
+    const rawMatchFormat = toStringSafe(tournament.match_format_gironi);
+
+    const profile = getMatchProfile(rawSport, rawMatchFormat);
+
+    const sport = profile.normalizedSport;
+    const matchFormatGironi = rawMatchFormat.toLowerCase();
     const isSetBased        = profile.isSetBased;
     const isChess           = profile.isChess;
 
-    const pointSystem = parsePointSystem(tournament.point_system, isSetBased, isChess);
+    const rawPointSystem = toStringSafe(tournament.point_system);
+
+    const pointSystem = parsePointSystem(
+      rawPointSystem,
+      isSetBased,
+      isChess
+    );
 
     console.log(`🏆 Sport: ${sport}, Format: ${matchFormatGironi}, Set-based: ${isSetBased}, Chess: ${isChess}`);
     console.log(`⚙️ Point system: Win=${pointSystem.win}, Draw=${pointSystem.draw}, Loss=${pointSystem.loss}`);
@@ -589,7 +622,7 @@ async function generateStandingsBackend(tournamentId) {
         match_format_gironi: matchFormatGironi,
         is_set_based: isSetBased,
         is_chess: isChess,
-        individual_or_team: tournament.individual_or_team || 'team'
+        individual_or_team: toStringSafe(tournament.individual_or_team, 'team')
       };
 
       // Calcola statistiche dai match giocati

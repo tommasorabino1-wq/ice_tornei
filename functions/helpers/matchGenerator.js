@@ -1,6 +1,22 @@
 const admin = require('firebase-admin');
 const db = admin.firestore();
 
+
+// ===============================
+// HELPERS SAFE (per Firestore)
+// ===============================
+function toStringSafe(val, fallback = '') {
+  if (val === null || val === undefined) return fallback;
+  return String(val).trim();
+}
+
+function toNumber(val, fallback = 0) {
+  if (val === null || val === undefined) return fallback;
+  const n = Number(String(val).trim());
+  return isNaN(n) ? fallback : n;
+}
+
+
 // ===============================
 // HELPER: Round-robin per N pari
 // ===============================
@@ -285,11 +301,21 @@ async function generateMatchesIfReady(tournamentId) {
     }
 
     const tournament = tournamentDoc.data();
-    const preferredTeamsPerGroup = Number(tournament.teams_per_group) || 0;
-    const isDouble = String(tournament.format_type || '').toLowerCase().startsWith('double_');
 
-    const sport = normalizeSport(tournament.sport);
-    const matchFormatGironi = String(tournament.match_format_gironi || '').toLowerCase();
+    // teams_per_group (numero safe)
+    const preferredTeamsPerGroup = toNumber(tournament.teams_per_group, 0);
+
+    // format_type (string safe)
+    const formatType = toStringSafe(tournament.format_type).toLowerCase();
+    const isDouble = formatType.startsWith('double_');
+
+    // sport (string safe)
+    const sport = normalizeSport(toStringSafe(tournament.sport));
+
+    // match_format_gironi (string safe)
+    const matchFormatGironi = toStringSafe(tournament.match_format_gironi).toLowerCase();
+
+    // profile
     const profile = getMatchProfile(sport, matchFormatGironi);
 
     console.log(`🏆 Sport: ${sport}, Format: ${matchFormatGironi}, isDouble: ${isDouble}, Profile:`, profile);
