@@ -483,6 +483,9 @@ function renderMatchCard(match, isSetBased, isFinals, isIndividual = false, roun
   const setsDetail = match.sets_detail || null;
   const showSetsDetail = isSetBased && isPlayed && setsDetail;
 
+  const isCalcio = String(TOURNAMENT_SPORT || '').includes('calcio');
+  const hasScorers = isCalcio && isPlayed && (match.scorers_a || match.scorers_b);
+
   const fallbackIcon = isIndividual ? '👤' : '👥';
 
   let metaInfo;
@@ -507,7 +510,6 @@ function renderMatchCard(match, isSetBased, isFinals, isIndividual = false, roun
     ? `<img src="${escapeHTML(logoB)}" alt="" class="team-logo-match">`
     : `<span class="team-logo-match-fallback">${fallbackIcon}</span>`;
 
-  // Pannello info: se giocata mostra set details (se presenti), altrimenti campo/giorno/ora
   let infoPanelContent;
   if (isPlayed) {
     if (showSetsDetail) {
@@ -515,6 +517,13 @@ function renderMatchCard(match, isSetBased, isFinals, isIndividual = false, roun
         <div class="match-details-sets">
           <span class="detail-icon">🎯</span>
           ${formatSetsDetail(setsDetail)}
+        </div>
+      `;
+    } else if (hasScorers) {
+      infoPanelContent = `
+        <div class="match-details-sets">
+          <span class="detail-icon">⚽</span>
+          ${formatScorers(match.scorers_a, match.scorers_b, teamAName, teamBName)}
         </div>
       `;
     } else if (hasDetails) {
@@ -602,7 +611,6 @@ function renderMatchCard(match, isSetBased, isFinals, isIndividual = false, roun
 
 
 
-
 // ===============================
 // FORMAT SETS DETAIL
 // ===============================
@@ -614,6 +622,58 @@ function formatSetsDetail(setsDetail) {
       ${sets.map(set => `<span class="set-badge">${escapeHTML(set)}</span>`).join('')}
     </div>
   `;
+}
+
+// ===============================
+// FORMAT SCORERS (CALCIO)
+// ===============================
+function formatScorers(scorersA, scorersB, teamAName, teamBName) {
+  const parseList = (str) =>
+    str ? str.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+  const listA = parseList(scorersA);
+  const listB = parseList(scorersB);
+
+  if (listA.length === 0 && listB.length === 0) {
+    return `<div class="sets-badges"><span class="set-badge">Nessun marcatore</span></div>`;
+  }
+
+  // Conta le occorrenze per ogni nome (un nome ripetuto = più gol)
+  const countOccurrences = (list) => {
+    const map = {};
+    list.forEach(name => { map[name] = (map[name] || 0) + 1; });
+    return map;
+  };
+
+  const renderBadges = (map) =>
+    Object.entries(map)
+      .map(([name, count]) => {
+        const label = count > 1 ? `${name} ×${count}` : name;
+        return `<span class="set-badge">${escapeHTML(label)}</span>`;
+      })
+      .join('');
+
+  let html = '';
+
+  if (listA.length > 0) {
+    html += `
+      <div style="margin-bottom: 6px;">
+        <span style="font-size: 0.75rem; opacity: 0.6; display: block; margin-bottom: 4px;">${escapeHTML(teamAName || 'Squadra A')}</span>
+        <div class="sets-badges">${renderBadges(countOccurrences(listA))}</div>
+      </div>
+    `;
+  }
+
+  if (listB.length > 0) {
+    html += `
+      <div>
+        <span style="font-size: 0.75rem; opacity: 0.6; display: block; margin-bottom: 4px;">${escapeHTML(teamBName || 'Squadra B')}</span>
+        <div class="sets-badges">${renderBadges(countOccurrences(listB))}</div>
+      </div>
+    `;
+  }
+
+  return html;
 }
 
 function onRoundChange(value) {
