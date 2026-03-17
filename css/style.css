@@ -2624,7 +2624,7 @@ section > .section-title {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .standings-box-header .standings-box-title {
@@ -3535,13 +3535,21 @@ section > .section-title {
 
 .ranking-table thead th {
   padding: 8px 10px;
-  text-align: left;
+  text-align: center;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
   white-space: nowrap;
+}
+
+.ranking-table .team-cell {
+  text-align: left;
+}
+
+.ranking-table th:nth-child(2) {
+  text-align: left;
 }
 
 .ranking-table tbody tr {
@@ -3562,6 +3570,7 @@ section > .section-title {
   color: var(--text-main);
   vertical-align: middle;
   white-space: nowrap;
+  text-align: center;
 }
 
 /* Colonna posizione */
@@ -3649,7 +3658,7 @@ section > .section-title {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
@@ -3815,6 +3824,8 @@ section > .section-title {
   cursor: pointer;
   user-select: none;
   transition: color 0.15s ease;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .sortable-col:hover {
@@ -3825,14 +3836,40 @@ section > .section-title {
   color: var(--brand);
 }
 
-.sort-arrow {
-  font-size: 10px;
-  opacity: 0.5;
+.sort-label {
+  position: relative;
+  padding-right: 12px;
+  display: inline-block;
 }
 
-.sortable-col.sort-active .sort-arrow {
-  opacity: 1;
+.sort-label::before,
+.sort-label::after {
+  content: '';
+  position: absolute;
+  right: 1px;
+  width: 0;
+  height: 0;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  opacity: 0.3;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
 }
+
+.sort-label::before {
+  top: calc(50% - 5px);
+  border-bottom: 4px solid currentColor;
+}
+
+.sort-label::after {
+  top: calc(50% + 1px);
+  border-top: 4px solid currentColor;
+}
+
+.sortable-col.sort-active.sort-desc .sort-label::before { opacity: 0; }
+.sortable-col.sort-active.sort-desc .sort-label::after  { opacity: 1; border-top-color: var(--brand); }
+
+.sortable-col.sort-active.sort-asc .sort-label::after  { opacity: 0; }
+.sortable-col.sort-active.sort-asc .sort-label::before { opacity: 1; border-bottom-color: var(--brand); }
 
 
 

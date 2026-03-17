@@ -397,14 +397,12 @@ function renderRankingTable(data, sport, type) {
   function updateHeaderArrows() {
     table.querySelectorAll('th[data-sort]').forEach(th => {
       const field = th.dataset.sort;
-      const arrow = th.querySelector('.sort-arrow');
-      if (!arrow) return;
       if (field === tableSort.field) {
-        arrow.textContent = tableSort.dir === 'desc' ? ' ↓' : ' ↑';
         th.classList.add('sort-active');
+        th.classList.toggle('sort-desc', tableSort.dir === 'desc');
+        th.classList.toggle('sort-asc',  tableSort.dir === 'asc');
       } else {
-        arrow.textContent = ' ↕';
-        th.classList.remove('sort-active');
+        th.classList.remove('sort-active', 'sort-desc', 'sort-asc');
       }
     });
   }
@@ -415,11 +413,12 @@ function renderRankingTable(data, sport, type) {
 
   const nameHeader = isPlayers ? 'Giocatore' : 'Squadra';
 
+  // Costruisci headers colonne (dentro renderRankingTable, sostituisci colHeaders)
   const colHeaders = columns.map(col => {
     if (col.sortable) {
       const isActive = col.key === tableSort.field;
-      const arrow    = isActive ? (tableSort.dir === 'desc' ? ' ↓' : ' ↑') : ' ↕';
-      return `<th data-sort="${col.key}" class="sortable-col${isActive ? ' sort-active' : ''}">${col.label}<span class="sort-arrow">${arrow}</span></th>`;
+      const dirClass = isActive ? (tableSort.dir === 'desc' ? ' sort-desc' : ' sort-asc') : '';
+      return `<th data-sort="${col.key}" class="sortable-col${isActive ? ' sort-active' : ''}${dirClass}"><span class="sort-label">${col.label}</span></th>`;
     }
     return `<th>${col.label}</th>`;
   }).join('');
