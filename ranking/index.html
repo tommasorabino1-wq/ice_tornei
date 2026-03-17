@@ -177,7 +177,7 @@
 
     <header class="page-header">
       <h1 class="page-title page-title-box">
-        Ranking Globale
+        Ranking Tornei ICE
       </h1>
     </header>
 
@@ -223,11 +223,12 @@
 
         <!-- TABELLA -->
         <div class="standings-box hidden" id="ranking-table-wrapper">
-          <div class="standings-box-header">
-            <h4 class="standings-box-title" id="ranking-table-title">Ranking Squadre</h4>
-            <select id="ranking-orderby" class="round-filter-select" aria-label="Ordina per">
-              <!-- opzioni popolate da JS in base allo sport/tipo -->
-            </select>
+          <div class="standings-box-header ranking-table-header">
+            <h4 class="standings-box-title" id="ranking-table-title"></h4>
+            <div class="ranking-orderby-row">
+              <span class="ranking-orderby-label">Ordina per:</span>
+              <select id="ranking-orderby" class="round-filter-select" aria-label="Ordina per"></select>
+            </div>
           </div>
           <div id="ranking-table-container"></div>
         </div>

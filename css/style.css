@@ -3761,6 +3761,56 @@ section > .section-title {
 
 
 /* =========================
+   TITOLO TABELLA RANKING
+========================= */
+.ranking-table-header {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.standings-box-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.ranking-table-type {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.ranking-table-sport {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* =========================
+   ORDINA PER
+========================= */
+.ranking-orderby-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ranking-orderby-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+
+
+/* =========================
    RESPONSIVE
 ========================= */
 

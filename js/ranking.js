@@ -251,8 +251,11 @@ async function loadRanking() {
 
   if (tableTitle) {
     const sportLabel = getSportLabel(currentSport);
-    const typeLabel  = currentType === 'teams' ? 'Squadre' : 'Giocatori';
-    tableTitle.textContent = `Ranking ${typeLabel} — ${sportLabel}`;
+    const typeLabel  = currentType === 'teams' ? 'Ranking Squadre' : 'Ranking Giocatori';
+    tableTitle.innerHTML = `
+      <span class="ranking-table-type">${typeLabel}</span>
+      <span class="ranking-table-sport">${sportLabel}</span>
+    `;
   }
 
   try {
