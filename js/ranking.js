@@ -60,8 +60,15 @@ const API_URLS = {
 // STATE
 // ===============================
 let currentSport   = 'calcio';
-let currentType    = 'teams';   // 'teams' | 'players'
+let currentType    = 'teams';
 let currentOrderBy = 'pct_vittorie';
+
+// Cache in memoria: chiave = "sport__type__orderBy" → array di risultati
+const rankingCache = {};
+
+function cacheKey(sport, type, orderBy) {
+  return `${sport}__${type}__${orderBy}`;
+}
 
 
 // ===============================
@@ -99,13 +106,12 @@ function formatPct(val) {
 function getOrderByOptions(sport, type) {
   const base = [
     { value: 'pct_vittorie', label: '% Vittorie' },
-    { value: 'vittorie',     label: 'Vittorie'   },
-    { value: 'presenze',     label: 'Presenze'   },
+    { value: 'presenze',     label: 'Partite giocate' },
   ];
 
   if (sport === 'calcio') {
-    base.push({ value: 'gol',       label: 'Gol'       });
-    base.push({ value: 'media_gol', label: 'Media Gol' });
+    base.push({ value: 'gol',       label: 'Gol'        });
+    base.push({ value: 'media_gol', label: 'Gol/Partita' });
   }
 
   return base;
@@ -118,13 +124,61 @@ function sportHasDraws(sport) {
   return sport === 'calcio' || sport === 'scacchi';
 }
 
+
+
+// ===============================
+// PREFETCH BACKGROUND
+// Carica in background gli altri tab dopo che il default è già visibile.
+// Non tocca mai l'UI — scrive solo nella cache.
+// ===============================
+async function prefetchRankingInBackground() {
+  const sports = ['calcio', 'padel', 'beach_volley', 'scacchi'];
+  const types  = ['teams', 'players'];
+  const orderBy = 'pct_vittorie'; // prefetch solo il default orderBy
+
+  for (const sport of sports) {
+    for (const type of types) {
+      // Skip scacchi teams (non esiste)
+      if (sport === 'scacchi' && type === 'teams') continue;
+
+      const key = cacheKey(sport, type, orderBy);
+
+      // Skip se già in cache (es. il default caricato da loadRanking)
+      if (rankingCache[key]) continue;
+
+      try {
+        const url = type === 'teams'
+          ? `${API_URLS.getRankingTeams}?sport=${encodeURIComponent(sport)}&orderBy=${encodeURIComponent(orderBy)}`
+          : `${API_URLS.getRankingPlayers}?sport=${encodeURIComponent(sport)}&orderBy=${encodeURIComponent(orderBy)}`;
+
+        const res = await fetch(url);
+        if (!res.ok) continue; // fail silenzioso in background
+
+        const data = await res.json();
+        rankingCache[key] = Array.isArray(data) ? data : [];
+
+      } catch {
+        // Prefetch fallito silenziosamente — non blocca nulla
+      }
+
+      // Piccola pausa tra un fetch e l'altro per non saturare la connessione
+      await new Promise(r => setTimeout(r, 300));
+    }
+  }
+}
+
+
+
 // ===============================
 // INIT
 // ===============================
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   initTabs();
-  loadRanking();
+  await loadRanking(); // aspetta che il default sia visibile
+  prefetchRankingInBackground(); // poi parte in background senza await
 });
+
+
 
 // ===============================
 // INIT TABS
@@ -236,14 +290,18 @@ function renderOrderBySelect(sport, type) {
 // ===============================
 // LOAD RANKING
 // ===============================
+// ===============================
+// LOAD RANKING
+// ===============================
 async function loadRanking() {
   const skeleton     = document.getElementById("ranking-skeleton");
   const placeholder  = document.getElementById("ranking-placeholder");
   const tableWrapper = document.getElementById("ranking-table-wrapper");
   const tableTitle   = document.getElementById("ranking-table-title");
 
+  const key = cacheKey(currentSport, currentType, currentOrderBy);
+
   // Reset UI
-  skeleton.classList.remove("hidden", "fade-out");
   placeholder.classList.add("hidden");
   tableWrapper.classList.add("hidden");
 
@@ -258,6 +316,22 @@ async function loadRanking() {
     `;
   }
 
+  // Se già in cache → mostra subito senza skeleton
+  if (rankingCache[key]) {
+    skeleton.classList.add("hidden");
+    const data = rankingCache[key];
+    if (data.length === 0) {
+      placeholder.classList.remove("hidden");
+    } else {
+      tableWrapper.classList.remove("hidden");
+      renderRankingTable(data, currentSport, currentType);
+    }
+    return;
+  }
+
+  // Altrimenti → mostra skeleton e carica
+  skeleton.classList.remove("hidden", "fade-out");
+
   try {
     const url = currentType === 'teams'
       ? `${API_URLS.getRankingTeams}?sport=${encodeURIComponent(currentSport)}&orderBy=${encodeURIComponent(currentOrderBy)}`
@@ -267,15 +341,17 @@ async function loadRanking() {
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
 
+    rankingCache[key] = Array.isArray(data) ? data : [];
+
     fadeOutSkeleton(skeleton);
 
-    if (!Array.isArray(data) || data.length === 0) {
+    if (rankingCache[key].length === 0) {
       placeholder.classList.remove("hidden");
       return;
     }
 
     tableWrapper.classList.remove("hidden");
-    renderRankingTable(data, currentSport, currentType);
+    renderRankingTable(rankingCache[key], currentSport, currentType);
 
   } catch (err) {
     console.error("Errore caricamento ranking:", err);
@@ -287,25 +363,22 @@ async function loadRanking() {
 // ===============================
 // RENDER RANKING TABLE
 // ===============================
+// ===============================
+// RENDER RANKING TABLE
+// ===============================
 function renderRankingTable(data, sport, type) {
   const container = document.getElementById("ranking-table-container");
   const isCalcio  = sport === 'calcio';
   const isChess   = sport === 'scacchi';
-  const hasDraws  = isCalcio || isChess;
   const isPlayers = type === 'players';
 
-  // ── Colonne header ──────────────────────────────────────────────────────────
-  // Squadre: Logo + Nome squadra
-  // Giocatori: Nome giocatore (nessun riferimento a squadra o logo)
-  const nameHeader = isPlayers ? 'Giocatore' : 'Squadra';
-
-  // ── Costruisci tabella ──────────────────────────────────────────────────────
   const table = document.createElement("table");
   table.className = "standings-table ranking-table";
 
-  const drawHeader   = hasDraws  ? `<th>${isChess ? 'Patta' : 'N'}</th>` : '';
-  const drawPctHeader = hasDraws ? `<th>${isChess ? '% Patta' : '% N'}</th>` : '';
-  const golHeaders   = isCalcio  ? '<th>Gol</th><th>xG</th>' : '';
+  // ── Header colonne ──────────────────────────────────────────────────────────
+  const nameHeader = isPlayers ? 'Giocatore' : 'Squadra';
+  const logoHeader = (!isPlayers) ? '' : ''; // logo incluso nella cella nome, nessuna colonna separata
+  const golHeaders = isCalcio ? '<th>Gol</th><th>G/P</th>' : '';
 
   table.innerHTML = `
     <thead>
@@ -313,12 +386,7 @@ function renderRankingTable(data, sport, type) {
         <th class="ranking-pos-col">#</th>
         <th>${nameHeader}</th>
         <th>PG</th>
-        <th>V</th>
-        ${drawHeader}
-        <th>P</th>
         <th>% V</th>
-        ${drawPctHeader}
-        <th>% P</th>
         ${golHeaders}
       </tr>
     </thead>
@@ -331,17 +399,14 @@ function renderRankingTable(data, sport, type) {
     const pos      = index + 1;
     const posClass = pos === 1 ? 'rank-gold' : pos === 2 ? 'rank-silver' : pos === 3 ? 'rank-bronze' : '';
 
-    // Prima cella: logo (solo squadre) + nome
     let nameCellContent;
     if (isPlayers) {
-      // Giocatori: solo nome, nessun logo, nessun riferimento squadra
       nameCellContent = `
         <td class="team-cell">
           <span class="team-name-text">${escapeHTML(row.player_name || '—')}</span>
         </td>
       `;
     } else {
-      // Squadre: logo + nome
       const logo = row.team_logo;
       const logoHTML = logo
         ? `<img src="${escapeHTML(logo)}" alt="" class="team-logo-mini">`
@@ -354,9 +419,7 @@ function renderRankingTable(data, sport, type) {
       `;
     }
 
-    const drawCell    = hasDraws ? `<td>${Number(row.pareggi)     || 0}</td>` : '';
-    const drawPctCell = hasDraws ? `<td class="pct-col">${formatPct(row.pct_pareggi)}</td>` : '';
-    const golCells    = isCalcio
+    const golCells = isCalcio
       ? `<td>${Number(row.gol) || 0}</td><td>${Number(row.media_gol) ? Number(row.media_gol).toFixed(2) : '0.00'}</td>`
       : '';
 
@@ -369,12 +432,7 @@ function renderRankingTable(data, sport, type) {
       </td>
       ${nameCellContent}
       <td>${Number(row.presenze)  || 0}</td>
-      <td>${Number(row.vittorie)  || 0}</td>
-      ${drawCell}
-      <td>${Number(row.sconfitte) || 0}</td>
       <td class="pct-col">${formatPct(row.pct_vittorie)}</td>
-      ${drawPctCell}
-      <td class="pct-col">${formatPct(row.pct_sconfitte)}</td>
       ${golCells}
     `;
 
@@ -384,6 +442,8 @@ function renderRankingTable(data, sport, type) {
   container.innerHTML = "";
   container.appendChild(table);
 }
+
+
 
 // ===============================
 // HELPER: Label leggibile per sport
