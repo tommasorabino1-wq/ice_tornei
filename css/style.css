@@ -3453,13 +3453,16 @@ section > .section-title {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 0;
   justify-content: center;
   padding-bottom: 16px;
   padding-top: 16px;
-  border-bottom: 1px solid var(--border);
-  margin-left: 60px;
-  margin-right: 60px;
+}
+
+.ranking-tabs-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 60px 16px 60px;
 }
 
 .ranking-tab {
@@ -3919,7 +3922,7 @@ section > .section-title {
   border-radius: var(--radius-sm);
   background: var(--bg-main);
   color: var(--text-main);
-  font-size: 13px;
+  font-size: 16px;
   outline: none;
   transition: border-color 0.18s ease;
   box-sizing: border-box;
