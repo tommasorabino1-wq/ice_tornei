@@ -292,13 +292,16 @@ async function loadRanking() {
 // RENDER RANKING TABLE
 // ===============================
 
-// Default sort su punti (colonna principale del ranking)
+const PAGE_SIZE = 25;
 let tableSort = { field: 'punti', dir: 'desc' };
 
 function renderRankingTable(data, sport, type) {
   const container = document.getElementById("rk-table-container");
   const isCalcio  = sport === 'calcio';
   const isPlayers = type === 'players';
+
+  // Stato paginazione locale alla render (reset a ogni nuova chiamata)
+  let currentPage = 1;
 
   const columns = [
     { key: 'presenze',          label: 'PG',   sortable: true },
@@ -314,20 +317,27 @@ function renderRankingTable(data, sport, type) {
     return String(str || '').toLowerCase().trim().replace(/\s+/g, ' ');
   }
 
-  function getSortedData(rows) {
-    if (!tableSort.field) return rows;
-    return [...rows].sort((a, b) => {
+  // Restituisce tutti i dati ordinati con posizione reale pre-calcolata
+  function getSortedWithRank(rows) {
+    const sorted = [...rows].sort((a, b) => {
+      if (!tableSort.field) return 0;
       const va = Number(a[tableSort.field]) || 0;
       const vb = Number(b[tableSort.field]) || 0;
       return tableSort.dir === 'desc' ? vb - va : va - vb;
     });
+    // Aggiunge campo _rank (posizione reale nell'ordinamento globale)
+    return sorted.map((row, i) => ({ ...row, _rank: i + 1 }));
   }
 
-  function buildTbody(rows) {
+  function buildTbody(filteredRows, page) {
     const tbody = table.querySelector('tbody');
     tbody.innerHTML = '';
-    getSortedData(rows).forEach((row, index) => {
-      const pos      = index + 1;
+
+    const start = (page - 1) * PAGE_SIZE;
+    const pageRows = filteredRows.slice(start, start + PAGE_SIZE);
+
+    pageRows.forEach(row => {
+      const pos      = row._rank; // posizione reale, invariante alla ricerca
       const posClass = pos === 1 ? 'rk-gold' : pos === 2 ? 'rk-silver' : pos === 3 ? 'rk-bronze' : '';
 
       let nameCellContent;
@@ -372,6 +382,95 @@ function renderRankingTable(data, sport, type) {
     });
   }
 
+  function buildPagination(filteredRows, page) {
+    // Rimuovi paginazione esistente
+    const existing = table.parentElement.querySelector('.rk-pagination');
+    if (existing) existing.remove();
+
+    const totalPages = Math.ceil(filteredRows.length / PAGE_SIZE);
+    if (totalPages <= 1) return;
+
+    const nav = document.createElement('div');
+    nav.className = 'rk-pagination';
+
+    // ← Prev
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'rk-pagination__btn';
+    prevBtn.textContent = '←';
+    prevBtn.disabled = page === 1;
+    prevBtn.addEventListener('click', () => {
+      currentPage--;
+      buildTbody(filteredRows, currentPage);
+      buildPagination(filteredRows, currentPage);
+    });
+    nav.appendChild(prevBtn);
+
+    // Numeri pagina (max 5 visibili, con ellissi)
+    const range = getPaginationRange(page, totalPages);
+    range.forEach(item => {
+      if (item === '…') {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'rk-pagination__info';
+        ellipsis.textContent = '…';
+        nav.appendChild(ellipsis);
+      } else {
+        const btn = document.createElement('button');
+        btn.className = 'rk-pagination__btn' + (item === page ? ' rk-pagination__btn--active' : '');
+        btn.textContent = String(item);
+        btn.addEventListener('click', () => {
+          currentPage = item;
+          buildTbody(filteredRows, currentPage);
+          buildPagination(filteredRows, currentPage);
+        });
+        nav.appendChild(btn);
+      }
+    });
+
+    // → Next
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'rk-pagination__btn';
+    nextBtn.textContent = '→';
+    nextBtn.disabled = page === totalPages;
+    nextBtn.addEventListener('click', () => {
+      currentPage++;
+      buildTbody(filteredRows, currentPage);
+      buildPagination(filteredRows, currentPage);
+    });
+    nav.appendChild(nextBtn);
+
+    // Info "1–25 di 80"
+    const info = document.createElement('span');
+    info.className = 'rk-pagination__info';
+    const from = (page - 1) * PAGE_SIZE + 1;
+    const to   = Math.min(page * PAGE_SIZE, filteredRows.length);
+    info.textContent = `${from}–${to} di ${filteredRows.length}`;
+    nav.appendChild(info);
+
+    table.parentElement.appendChild(nav);
+  }
+
+  function getPaginationRange(current, total) {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    if (current <= 4) return [1, 2, 3, 4, 5, '…', total];
+    if (current >= total - 3) return [1, '…', total - 4, total - 3, total - 2, total - 1, total];
+    return [1, '…', current - 1, current, current + 1, '…', total];
+  }
+
+  // Render completo: ordina globalmente (con rank), filtra, pagina
+  function renderAll(query, page) {
+    const sortedWithRank = getSortedWithRank(data);
+    const filtered = query
+      ? sortedWithRank.filter(row => {
+          const name = normalize(isPlayers ? row.player_name : row.team_name);
+          return name.includes(query);
+        })
+      : sortedWithRank;
+
+    buildTbody(filtered, page);
+    buildPagination(filtered, page);
+    updateHeaderArrows();
+  }
+
   function updateHeaderArrows() {
     table.querySelectorAll('th[data-sort]').forEach(th => {
       const field = th.dataset.sort;
@@ -385,7 +484,7 @@ function renderRankingTable(data, sport, type) {
     });
   }
 
-  // Costruisci tabella
+  // ── Costruisci struttura tabella ──────────────────────────────────
   const table = document.createElement("table");
   table.className = "rk-table";
 
@@ -411,7 +510,7 @@ function renderRankingTable(data, sport, type) {
     <tbody></tbody>
   `;
 
-  // Click intestazioni
+  // Click intestazioni → reset pagina a 1
   table.querySelectorAll('th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
       const field = th.dataset.sort;
@@ -421,20 +520,18 @@ function renderRankingTable(data, sport, type) {
         tableSort.field = field;
         tableSort.dir   = 'desc';
       }
+      currentPage = 1;
       const currentInput = document.getElementById('rk-search-input');
       const query = currentInput ? normalize(currentInput.value) : '';
-      const filtered = query
-        ? data.filter(row => normalize(isPlayers ? row.player_name : row.team_name).includes(query))
-        : data;
-      buildTbody(filtered);
-      updateHeaderArrows();
+      renderAll(query, currentPage);
     });
   });
 
-  buildTbody(data);
-
   container.innerHTML = "";
   container.appendChild(table);
+
+  // Primo render
+  renderAll('', currentPage);
 
   // ── Ricerca ──────────────────────────────────────────────────────
   const searchToggle = document.getElementById('rk-search-toggle');
@@ -466,21 +563,15 @@ function renderRankingTable(data, sport, type) {
       });
     } else {
       newInput.value = '';
-      buildTbody(data);
+      currentPage = 1;
+      renderAll('', currentPage);
     }
   });
 
   newInput.addEventListener('input', () => {
     const query = normalize(newInput.value);
-    if (!query) {
-      buildTbody(data);
-      return;
-    }
-    const filtered = data.filter(row => {
-      const name = normalize(isPlayers ? row.player_name : row.team_name);
-      return name.includes(query);
-    });
-    buildTbody(filtered);
+    currentPage = 1; // reset pagina a ogni ricerca
+    renderAll(query, currentPage);
   });
 }
 
