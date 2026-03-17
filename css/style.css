@@ -101,6 +101,15 @@ body {
   display: none !important;
 }
 
+.rk-search-bar.hidden {
+  display: block !important;
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
 
 /* =========================
    4. HEADER
@@ -3608,8 +3617,9 @@ section > .section-title {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  padding: 16px 16px 0 16px;
+  padding: 16px 16px 16px 16px;
   min-height: 36px;
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .rk-box__title {
@@ -3638,13 +3648,13 @@ section > .section-title {
 .rk-search-toggle {
   position: absolute;
   top: 50%;
-  right: 16px;
+  right: 12px;
   transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
   color: var(--text-muted);
-  padding: 4px;
+  padding: 6px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -3658,7 +3668,19 @@ section > .section-title {
 }
 
 .rk-search-bar {
-  padding: 12px 16px 0 16px;
+  padding: 0 16px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.22s ease;
+  opacity: 0;
+}
+
+.rk-search-bar:not(.hidden) {
+  max-height: 80px;
+  padding: 12px 16px;
+  opacity: 1;
 }
 
 .rk-search-bar input {
@@ -3682,7 +3704,6 @@ section > .section-title {
   overflow-x: auto;
   padding: 16px;
 }
-
 
 
 /* =========================
@@ -3987,9 +4008,7 @@ section > .section-title {
   font-size: 16px;
 }
 
-.hidden {
-  display: none !important;
-}
+
 
 /* ===================================
    TOURNAMENT INFO BOX
