@@ -3699,12 +3699,11 @@ section > .section-title {
   border-color: var(--brand);
 }
 
+/* Niente padding laterale: le sticky partono dal bordo esatto del box */
 .rk-table-scroll {
   overflow-x: auto;
-  padding: 16px;
+  padding: 0 0 16px 0;
 }
-
-
 
 
 /* =========================
@@ -3713,7 +3712,7 @@ section > .section-title {
 .rk-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 11px; /* ridotto da 13px */
 }
 
 .rk-table thead tr {
@@ -3721,9 +3720,9 @@ section > .section-title {
 }
 
 .rk-table thead th {
-  padding: 8px 10px;
+  padding: 8px 8px;
   text-align: center;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -3749,7 +3748,7 @@ section > .section-title {
 }
 
 .rk-table tbody td {
-  padding: 9px 10px;
+  padding: 8px 8px;
   color: var(--text-main);
   vertical-align: middle;
   white-space: nowrap;
@@ -3802,10 +3801,10 @@ section > .section-title {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   background: var(--bg-secondary);
   color: var(--text-muted);
@@ -3828,7 +3827,7 @@ section > .section-title {
 /* % vittorie */
 .rk-pct-col {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 
@@ -3937,7 +3936,6 @@ section > .section-title {
 }
 
 
-
 /* =========================
    RESPONSIVE
 ========================= */
@@ -3945,10 +3943,11 @@ section > .section-title {
   .rk-sport-tabs { gap: 8px; }
   .rk-tab        { padding: 9px 18px; font-size: 14px; }
   .rk-subtab     { padding: 7px 16px; font-size: 13px; }
-  .rk-table      { font-size: 14px; }
-  .rk-table thead th { padding: 10px 12px; }
-  .rk-table tbody td { padding: 10px 12px; }
-  .rk-pos-badge  { width: 26px; height: 26px; font-size: 12px; }
+  .rk-table      { font-size: 12px; }
+  .rk-table thead th { font-size: 11px; padding: 10px 10px; }
+  .rk-table tbody td { padding: 9px 10px; }
+  .rk-pos-badge  { width: 24px; height: 24px; font-size: 11px; }
+  .rk-pct-col    { font-size: 12px; }
 }
 
 
