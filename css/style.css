@@ -3453,8 +3453,13 @@ section > .section-title {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   justify-content: center;
+  padding-bottom: 16px;
+  padding-top: 16px;
+  border-bottom: 1px solid var(--border);
+  margin-left: 60px;
+  margin-right: 60px;
 }
 
 .ranking-tab {
@@ -3492,6 +3497,7 @@ section > .section-title {
   gap: 6px;
   margin-bottom: 16px;
   justify-content: center;
+  padding-bottom: 16px;
 }
 
 .ranking-subtab {
