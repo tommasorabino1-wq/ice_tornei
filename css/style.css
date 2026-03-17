@@ -3609,18 +3609,22 @@ section > .section-title {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   margin-bottom: 16px;
   min-height: 36px;
 }
 
 .rk-box__title {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 2px;
-  text-align: center;
   margin: 0;
+  padding: 6px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-main);
+  box-shadow: var(--shadow-sm);
 }
 
 .rk-table-type {
