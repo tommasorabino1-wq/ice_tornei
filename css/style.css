@@ -3442,14 +3442,16 @@ section > .section-title {
 
 
 /* =================================================================
-   RANKING PAGE
+   RANKING PAGE — classi prefissate rk- (scope: solo pagina ranking)
+   Da incollare dentro css/style.css in fondo, o in un file separato
+   importato solo dalla pagina ranking.
    ================================================================= */
 
 
 /* =========================
    SPORT TABS
 ========================= */
-.ranking-sport-tabs {
+.rk-sport-tabs {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
@@ -3459,13 +3461,7 @@ section > .section-title {
   padding-top: 16px;
 }
 
-.ranking-tabs-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 0 60px 16px 60px;
-}
-
-.ranking-tab {
+.rk-tab {
   padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -3478,13 +3474,13 @@ section > .section-title {
   white-space: nowrap;
 }
 
-.ranking-tab:hover {
+.rk-tab:hover {
   border-color: var(--brand-soft-border);
   background: var(--brand-soft);
   color: var(--text-main);
 }
 
-.ranking-tab.active {
+.rk-tab--active {
   background: var(--brand);
   border-color: var(--brand);
   color: #fff;
@@ -3493,9 +3489,19 @@ section > .section-title {
 
 
 /* =========================
+   DIVISORE SPORT / SUBTABS
+========================= */
+.rk-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 60px 16px 60px;
+}
+
+
+/* =========================
    SUBTABS (SQUADRE / GIOCATORI)
 ========================= */
-.ranking-subtabs {
+.rk-subtabs {
   display: flex;
   gap: 6px;
   margin-bottom: 16px;
@@ -3503,7 +3509,7 @@ section > .section-title {
   padding-bottom: 16px;
 }
 
-.ranking-subtab {
+.rk-subtab {
   padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -3516,192 +3522,28 @@ section > .section-title {
   white-space: nowrap;
 }
 
-.ranking-subtab:hover {
+.rk-subtab:hover {
   border-color: var(--brand-soft-border);
   background: var(--brand-soft);
   color: var(--text-main);
 }
 
-.ranking-subtab.active {
+.rk-subtab--active {
   background: var(--brand);
   border-color: var(--brand);
   color: #fff;
   box-shadow: 0 2px 10px var(--brand-glow-soft);
 }
 
-/* =========================
-   RANKING TABLE
-========================= */
-.ranking-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.ranking-table thead tr {
-  border-bottom: 2px solid var(--border);
-}
-
-.ranking-table thead th {
-  padding: 8px 10px;
-  text-align: center;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-.ranking-table .team-cell {
-  text-align: left;
-}
-
-.ranking-table th:nth-child(2) {
-  text-align: left;
-}
-
-.ranking-table tbody tr {
-  border-bottom: 1px solid var(--border-soft);
-  transition: background 0.15s ease;
-}
-
-.ranking-table tbody tr:last-child {
-  border-bottom: none;
-}
-
-.ranking-table tbody tr:hover {
-  background: var(--brand-soft);
-}
-
-.ranking-table tbody td {
-  padding: 9px 10px;
-  color: var(--text-main);
-  vertical-align: middle;
-  white-space: nowrap;
-  text-align: center;
-}
-
-/* Colonna posizione */
-.ranking-pos-col {
-  width: 36px;
-  text-align: center;
-  padding-right: 4px !important;
-}
-
-.ranking-pos-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  font-size: 11px;
-  font-weight: 700;
-  background: var(--bg-secondary);
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-
-/* Top 3 highlight */
-.rank-gold .ranking-pos-badge {
-  background: #fef3c7;
-  color: #92400e;
-  border-color: #f59e0b;
-}
-
-.rank-silver .ranking-pos-badge {
-  background: #f1f5f9;
-  color: #475569;
-  border-color: #94a3b8;
-}
-
-.rank-bronze .ranking-pos-badge {
-  background: #fff7ed;
-  color: #9a3412;
-  border-color: #fb923c;
-}
-
-/* Highlight intera riga top 3 */
-.rank-gold   { background: rgba(251,191,36,0.05)  !important; }
-.rank-silver { background: rgba(148,163,184,0.06) !important; }
-.rank-bronze { background: rgba(251,146,60,0.05)  !important; }
-
-.rank-gold:hover   { background: rgba(251,191,36,0.10)  !important; }
-.rank-silver:hover { background: rgba(148,163,184,0.11) !important; }
-.rank-bronze:hover { background: rgba(251,146,60,0.10)  !important; }
-
-/* Colonne percentuale: leggero accent */
-.pct-col {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-/* Riferimento squadra nel ranking giocatori */
-.ranking-team-ref {
-  color: var(--text-muted);
-  font-size: 12px;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 
 /* =========================
-   STANDINGS BOX (riutilizzo)
-   Già in style.css, ma aggiungiamo
-   variante per il ranking
+   SKELETON
 ========================= */
-.standings-box {
-  background: var(--surface-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: 16px;
-  margin-bottom: 16px;
-  overflow-x: auto;
+.rk-skeleton {
+  padding: 8px 0;
 }
 
-.standings-box-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.standings-box-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 0;
-}
-
-/* Select orderBy (riusa .round-filter-select) */
-.round-filter-select {
-  padding: 5px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--bg-main);
-  color: var(--text-main);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color 0.18s ease;
-}
-
-.round-filter-select:hover,
-.round-filter-select:focus {
-  border-color: var(--brand);
-  outline: none;
-}
-
-
-/* =========================
-   SKELETON RANKING
-========================= */
-#ranking-skeleton .skeleton-match {
+.rk-skeleton__row {
   height: 44px;
   border-radius: var(--radius-sm);
   background: linear-gradient(
@@ -3715,14 +3557,14 @@ section > .section-title {
   margin-bottom: 8px;
 }
 
-#ranking-skeleton .skeleton-match:nth-child(2) { animation-delay: 0.1s; }
-#ranking-skeleton .skeleton-match:nth-child(3) { animation-delay: 0.2s; }
+.rk-skeleton__row:nth-child(2) { animation-delay: 0.1s; }
+.rk-skeleton__row:nth-child(3) { animation-delay: 0.2s; }
 
 
 /* =========================
-   PLACEHOLDER (nessun dato)
+   PLACEHOLDER
 ========================= */
-.standings-placeholder {
+.rk-placeholder {
   text-align: center;
   padding: 40px 20px;
   background: var(--surface-card);
@@ -3731,19 +3573,19 @@ section > .section-title {
   box-shadow: var(--shadow-sm);
 }
 
-.standings-placeholder-icon {
+.rk-placeholder__icon {
   font-size: 36px;
   margin-bottom: 12px;
 }
 
-.standings-placeholder h2 {
+.rk-placeholder__title {
   font-size: 16px;
   font-weight: 700;
   color: var(--text-main);
   margin-bottom: 8px;
 }
 
-.standings-placeholder p {
+.rk-placeholder__text {
   font-size: 13px;
   color: var(--text-muted);
   line-height: 1.6;
@@ -3751,58 +3593,43 @@ section > .section-title {
 
 
 /* =========================
-   BREADCRUMB (riutilizzo)
+   BOX TABELLA
 ========================= */
-.breadcrumb {
+.rk-box {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+
+.rk-box__header {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 16px;
+  min-height: 36px;
 }
 
-.breadcrumb a {
-  color: var(--brand);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.18s ease;
-}
-
-.breadcrumb a:hover { color: var(--brand-hover); }
-
-.breadcrumb-separator {
-  color: var(--text-soft);
-  font-size: 13px;
-}
-
-
-/* =========================
-   TITOLO TABELLA RANKING
-========================= */
-.ranking-table-header {
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 8px;
-}
-
-.standings-box-title {
+.rk-box__title {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
   text-align: center;
+  margin: 0;
 }
 
-.ranking-table-type {
+.rk-table-type {
   font-size: 14px;
   font-weight: 700;
   color: var(--text-main);
 }
 
-.ranking-table-sport {
+.rk-table-sport {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
@@ -3810,86 +3637,11 @@ section > .section-title {
   letter-spacing: 0.06em;
 }
 
-/* =========================
-   ORDINA PER
-========================= */
-.ranking-orderby-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.ranking-orderby-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-/* =========================
-   INTESTAZIONI ORDINABILI
-========================= */
-.sortable-col {
-  cursor: pointer;
-  user-select: none;
-  transition: color 0.15s ease;
-  white-space: nowrap;
-  text-align: center;
-}
-
-.sortable-col:hover {
-  color: var(--brand);
-}
-
-.sortable-col.sort-active {
-  color: var(--brand);
-}
-
-.sort-label {
-  position: relative;
-  padding-right: 12px;
-  display: inline-block;
-}
-
-.sort-label::before,
-.sort-label::after {
-  content: '';
-  position: absolute;
-  right: 1px;
-  width: 0;
-  height: 0;
-  border-left: 3px solid transparent;
-  border-right: 3px solid transparent;
-  opacity: 0.3;
-  transition: opacity 0.15s ease, border-color 0.15s ease;
-}
-
-.sort-label::before {
-  top: calc(50% - 5px);
-  border-bottom: 4px solid currentColor;
-}
-
-.sort-label::after {
-  top: calc(50% + 1px);
-  border-top: 4px solid currentColor;
-}
-
-.sortable-col.sort-active.sort-desc .sort-label::before { opacity: 0; }
-.sortable-col.sort-active.sort-desc .sort-label::after  { opacity: 1; border-top-color: var(--brand); }
-
-.sortable-col.sort-active.sort-asc .sort-label::after  { opacity: 0; }
-.sortable-col.sort-active.sort-asc .sort-label::before { opacity: 1; border-bottom-color: var(--brand); }
-
-
 
 /* =========================
    SEARCH
 ========================= */
-.ranking-table-header {
-  position: relative;
-}
-
-.ranking-search-toggle {
+.rk-search-toggle {
   position: absolute;
   top: 50%;
   right: 0;
@@ -3906,16 +3658,16 @@ section > .section-title {
   transition: color 0.15s ease, background 0.15s ease;
 }
 
-.ranking-search-toggle:hover {
+.rk-search-toggle:hover {
   color: var(--brand);
   background: var(--brand-soft);
 }
 
-.ranking-search-bar {
+.rk-search-bar {
   margin-bottom: 12px;
 }
 
-.ranking-search-bar input {
+.rk-search-bar input {
   width: 100%;
   padding: 7px 12px;
   border: 1px solid var(--border);
@@ -3928,33 +3680,172 @@ section > .section-title {
   box-sizing: border-box;
 }
 
-.ranking-search-bar input:focus {
+.rk-search-bar input:focus {
   border-color: var(--brand);
 }
 
 
 /* =========================
+   TABELLA
+========================= */
+.rk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.rk-table thead tr {
+  border-bottom: 2px solid var(--border);
+}
+
+.rk-table thead th {
+  padding: 8px 10px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.rk-table th:nth-child(2) {
+  text-align: left;
+}
+
+.rk-table tbody tr {
+  border-bottom: 1px solid var(--border-soft);
+  transition: background 0.15s ease;
+}
+
+.rk-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.rk-table tbody tr:hover {
+  background: var(--brand-soft);
+}
+
+.rk-table tbody td {
+  padding: 9px 10px;
+  color: var(--text-main);
+  vertical-align: middle;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.rk-table .rk-name-cell {
+  text-align: left;
+}
+
+/* Colonna posizione */
+.rk-pos-col {
+  width: 36px;
+  text-align: center;
+  padding-right: 4px !important;
+}
+
+.rk-pos-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/* Top 3 */
+.rk-gold   .rk-pos-badge { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
+.rk-silver .rk-pos-badge { background: #f1f5f9; color: #475569; border-color: #94a3b8; }
+.rk-bronze .rk-pos-badge { background: #fff7ed; color: #9a3412; border-color: #fb923c; }
+
+.rk-gold   { background: rgba(251,191,36,0.05)  !important; }
+.rk-silver { background: rgba(148,163,184,0.06) !important; }
+.rk-bronze { background: rgba(251,146,60,0.05)  !important; }
+
+.rk-gold:hover   { background: rgba(251,191,36,0.10)  !important; }
+.rk-silver:hover { background: rgba(148,163,184,0.11) !important; }
+.rk-bronze:hover { background: rgba(251,146,60,0.10)  !important; }
+
+/* % vittorie */
+.rk-pct-col {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+
+/* =========================
+   INTESTAZIONI ORDINABILI
+========================= */
+.rk-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.rk-sortable:hover {
+  color: var(--brand);
+}
+
+.rk-sortable--active {
+  color: var(--brand);
+}
+
+.rk-sort-label {
+  position: relative;
+  padding-right: 12px;
+  display: inline-block;
+}
+
+.rk-sort-label::before,
+.rk-sort-label::after {
+  content: '';
+  position: absolute;
+  right: 1px;
+  width: 0;
+  height: 0;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  opacity: 0.3;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.rk-sort-label::before {
+  top: calc(50% - 5px);
+  border-bottom: 4px solid currentColor;
+}
+
+.rk-sort-label::after {
+  top: calc(50% + 1px);
+  border-top: 4px solid currentColor;
+}
+
+.rk-sortable.rk-sortable--active.rk-sort-desc .rk-sort-label::before { opacity: 0; }
+.rk-sortable.rk-sortable--active.rk-sort-desc .rk-sort-label::after  { opacity: 1; border-top-color: var(--brand); }
+
+.rk-sortable.rk-sortable--active.rk-sort-asc .rk-sort-label::after  { opacity: 0; }
+.rk-sortable.rk-sortable--active.rk-sort-asc .rk-sort-label::before { opacity: 1; border-bottom-color: var(--brand); }
+
+
+/* =========================
    RESPONSIVE
 ========================= */
-
-/* Tablet */
 @media (min-width: 600px) {
-  .ranking-sport-tabs { gap: 8px; }
-  .ranking-tab        { padding: 9px 18px; font-size: 14px; }
-  .ranking-subtab     { padding: 7px 16px; font-size: 13px; }
-  .ranking-table      { font-size: 14px; }
-
-  .ranking-table thead th { padding: 10px 12px; }
-  .ranking-table tbody td { padding: 10px 12px; }
-
-  .ranking-pos-badge  { width: 26px; height: 26px; font-size: 12px; }
+  .rk-sport-tabs { gap: 8px; }
+  .rk-tab        { padding: 9px 18px; font-size: 14px; }
+  .rk-subtab     { padding: 7px 16px; font-size: 13px; }
+  .rk-table      { font-size: 14px; }
+  .rk-table thead th { padding: 10px 12px; }
+  .rk-table tbody td { padding: 10px 12px; }
+  .rk-pos-badge  { width: 26px; height: 26px; font-size: 12px; }
 }
-
-/* Desktop */
-@media (min-width: 960px) {
-  .ranking-team-ref { max-width: 180px; }
-}
-
 
 
 

@@ -1,6 +1,5 @@
 // ===============================
 // SIDEBAR NAVIGATION
-// (identica a standings.js)
 // ===============================
 
 const menuToggle = document.querySelector(".mobile-menu-toggle");
@@ -63,7 +62,6 @@ let currentSport   = 'calcio';
 let currentType    = 'teams';
 let currentOrderBy = 'pct_vittorie';
 
-// Cache in memoria: chiave = "sport__type__orderBy" → array di risultati
 const rankingCache = {};
 
 function cacheKey(sport, type, orderBy) {
@@ -100,8 +98,6 @@ function formatPct(val) {
   return `${n % 1 === 0 ? n : n.toFixed(1)}%`;
 }
 
-
-
 // ===============================
 // HELPER: hasDraws per sport
 // ===============================
@@ -110,25 +106,19 @@ function sportHasDraws(sport) {
 }
 
 
-
 // ===============================
 // PREFETCH BACKGROUND
-// Carica in background gli altri tab dopo che il default è già visibile.
-// Non tocca mai l'UI — scrive solo nella cache.
 // ===============================
 async function prefetchRankingInBackground() {
-  const sports = ['calcio', 'padel', 'beach_volley', 'scacchi'];
-  const types  = ['teams', 'players'];
-  const orderBy = 'pct_vittorie'; // prefetch solo il default orderBy
+  const sports  = ['calcio', 'padel', 'beach_volley', 'scacchi'];
+  const types   = ['teams', 'players'];
+  const orderBy = 'pct_vittorie';
 
   for (const sport of sports) {
     for (const type of types) {
-      // Skip scacchi teams (non esiste)
       if (sport === 'scacchi' && type === 'teams') continue;
 
       const key = cacheKey(sport, type, orderBy);
-
-      // Skip se già in cache (es. il default caricato da loadRanking)
       if (rankingCache[key]) continue;
 
       try {
@@ -136,22 +126,19 @@ async function prefetchRankingInBackground() {
           ? `${API_URLS.getRankingTeams}?sport=${encodeURIComponent(sport)}&orderBy=${encodeURIComponent(orderBy)}`
           : `${API_URLS.getRankingPlayers}?sport=${encodeURIComponent(sport)}&orderBy=${encodeURIComponent(orderBy)}`;
 
-        const res = await fetch(url);
-        if (!res.ok) continue; // fail silenzioso in background
+        const res  = await fetch(url);
+        if (!res.ok) continue;
 
         const data = await res.json();
         rankingCache[key] = Array.isArray(data) ? data : [];
-
       } catch {
-        // Prefetch fallito silenziosamente — non blocca nulla
+        // fail silenzioso
       }
 
-      // Piccola pausa tra un fetch e l'altro per non saturare la connessione
       await new Promise(r => setTimeout(r, 300));
     }
   }
 }
-
 
 
 // ===============================
@@ -159,10 +146,9 @@ async function prefetchRankingInBackground() {
 // ===============================
 document.addEventListener("DOMContentLoaded", async () => {
   initTabs();
-  await loadRanking(); // aspetta che il default sia visibile
-  prefetchRankingInBackground(); // poi parte in background senza await
+  await loadRanking();
+  prefetchRankingInBackground();
 });
-
 
 
 // ===============================
@@ -171,13 +157,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 function initTabs() {
 
   // Sport tabs
-  document.querySelectorAll(".ranking-tab").forEach(tab => {
+  document.querySelectorAll(".rk-tab").forEach(tab => {
     tab.addEventListener("click", () => {
-      document.querySelectorAll(".ranking-tab").forEach(t => {
-        t.classList.remove("active");
+      document.querySelectorAll(".rk-tab").forEach(t => {
+        t.classList.remove("rk-tab--active");
         t.setAttribute("aria-selected", "false");
       });
-      tab.classList.add("active");
+      tab.classList.add("rk-tab--active");
       tab.setAttribute("aria-selected", "true");
 
       currentSport = tab.dataset.sport;
@@ -186,40 +172,39 @@ function initTabs() {
     });
   });
 
-  // Subtabs (squadre / giocatori)
-  document.querySelectorAll(".ranking-subtab").forEach(tab => {
+  // Subtabs
+  document.querySelectorAll(".rk-subtab").forEach(tab => {
     tab.addEventListener("click", () => {
-      document.querySelectorAll(".ranking-subtab").forEach(t => {
-        t.classList.remove("active");
+      document.querySelectorAll(".rk-subtab").forEach(t => {
+        t.classList.remove("rk-subtab--active");
         t.setAttribute("aria-selected", "false");
       });
-      tab.classList.add("active");
+      tab.classList.add("rk-subtab--active");
       tab.setAttribute("aria-selected", "true");
 
-      currentType = tab.dataset.type;
+      currentType    = tab.dataset.type;
       currentOrderBy = 'pct_vittorie';
       loadRanking();
     });
   });
-
 }
+
 
 // ===============================
 // HANDLE SUBTABS VISIBILITY
-// Scacchi → mostra solo "Giocatori", nasconde "Squadre"
 // ===============================
 function handleSubtabsVisibility() {
-  const teamsSubtab   = document.querySelector('.ranking-subtab[data-type="teams"]');
-  const playersSubtab = document.querySelector('.ranking-subtab[data-type="players"]');
+  const teamsSubtab   = document.querySelector('.rk-subtab[data-type="teams"]');
+  const playersSubtab = document.querySelector('.rk-subtab[data-type="players"]');
 
   if (currentSport === 'scacchi') {
     if (teamsSubtab)   teamsSubtab.classList.add("hidden");
     if (playersSubtab) {
       playersSubtab.classList.remove("hidden");
-      playersSubtab.classList.add("active");
+      playersSubtab.classList.add("rk-subtab--active");
       playersSubtab.setAttribute("aria-selected", "true");
       if (teamsSubtab) {
-        teamsSubtab.classList.remove("active");
+        teamsSubtab.classList.remove("rk-subtab--active");
         teamsSubtab.setAttribute("aria-selected", "false");
       }
     }
@@ -228,28 +213,23 @@ function handleSubtabsVisibility() {
     if (teamsSubtab)   teamsSubtab.classList.remove("hidden");
     if (playersSubtab) playersSubtab.classList.remove("hidden");
 
-    // Rispecchia il currentType nei tab
-    document.querySelectorAll(".ranking-subtab").forEach(t => {
+    document.querySelectorAll(".rk-subtab").forEach(t => {
       const isActive = t.dataset.type === currentType;
-      t.classList.toggle("active", isActive);
+      t.classList.toggle("rk-subtab--active", isActive);
       t.setAttribute("aria-selected", String(isActive));
     });
   }
 }
 
 
-
-
-
-
 // ===============================
 // LOAD RANKING
 // ===============================
 async function loadRanking() {
-  const skeleton     = document.getElementById("ranking-skeleton");
-  const placeholder  = document.getElementById("ranking-placeholder");
-  const tableWrapper = document.getElementById("ranking-table-wrapper");
-  const tableTitle   = document.getElementById("ranking-table-title");
+  const skeleton     = document.getElementById("rk-skeleton");
+  const placeholder  = document.getElementById("rk-placeholder");
+  const tableWrapper = document.getElementById("rk-table-wrapper");
+  const tableTitle   = document.getElementById("rk-table-title");
 
   const key = cacheKey(currentSport, currentType, currentOrderBy);
 
@@ -260,8 +240,8 @@ async function loadRanking() {
     const sportLabel = getSportLabel(currentSport);
     const typeLabel  = currentType === 'teams' ? 'Ranking Squadre' : 'Ranking Giocatori';
     tableTitle.innerHTML = `
-      <span class="ranking-table-type">${typeLabel}</span>
-      <span class="ranking-table-sport">${sportLabel}</span>
+      <span class="rk-table-type">${typeLabel}</span>
+      <span class="rk-table-sport">${sportLabel}</span>
     `;
   }
 
@@ -284,7 +264,7 @@ async function loadRanking() {
       ? `${API_URLS.getRankingTeams}?sport=${encodeURIComponent(currentSport)}&orderBy=${encodeURIComponent(currentOrderBy)}`
       : `${API_URLS.getRankingPlayers}?sport=${encodeURIComponent(currentSport)}&orderBy=${encodeURIComponent(currentOrderBy)}`;
 
-    const res = await fetch(url);
+    const res  = await fetch(url);
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
 
@@ -308,18 +288,14 @@ async function loadRanking() {
 }
 
 
-
-
-
 // ===============================
 // RENDER RANKING TABLE
-// Con ordinamento cliccabile sulle intestazioni e ricerca
 // ===============================
 
 let tableSort = { field: null, dir: 'desc' };
 
 function renderRankingTable(data, sport, type) {
-  const container = document.getElementById("ranking-table-container");
+  const container = document.getElementById("rk-table-container");
   const isCalcio  = sport === 'calcio';
   const isPlayers = type === 'players';
 
@@ -350,12 +326,12 @@ function renderRankingTable(data, sport, type) {
     tbody.innerHTML = '';
     getSortedData(rows).forEach((row, index) => {
       const pos      = index + 1;
-      const posClass = pos === 1 ? 'rank-gold' : pos === 2 ? 'rank-silver' : pos === 3 ? 'rank-bronze' : '';
+      const posClass = pos === 1 ? 'rk-gold' : pos === 2 ? 'rk-silver' : pos === 3 ? 'rk-bronze' : '';
 
       let nameCellContent;
       if (isPlayers) {
         nameCellContent = `
-          <td class="team-cell">
+          <td class="rk-name-cell">
             <span class="team-name-text">${escapeHTML(row.player_name || '—')}</span>
           </td>
         `;
@@ -365,7 +341,7 @@ function renderRankingTable(data, sport, type) {
           ? `<img src="${escapeHTML(logo)}" alt="" class="team-logo-mini">`
           : `<span class="team-logo-mini-fallback">👥</span>`;
         nameCellContent = `
-          <td class="team-cell">
+          <td class="rk-name-cell">
             ${logoHTML}
             <span class="team-name-text">${escapeHTML(row.team_name || '—')}</span>
           </td>
@@ -380,12 +356,12 @@ function renderRankingTable(data, sport, type) {
       if (posClass) tr.classList.add(posClass);
 
       tr.innerHTML = `
-        <td class="ranking-pos-col">
-          <span class="ranking-pos-badge ${posClass}">${pos}</span>
+        <td class="rk-pos-col">
+          <span class="rk-pos-badge ${posClass}">${pos}</span>
         </td>
         ${nameCellContent}
         <td>${Number(row.presenze) || 0}</td>
-        <td class="pct-col">${formatPct(row.pct_vittorie)}</td>
+        <td class="rk-pct-col">${formatPct(row.pct_vittorie)}</td>
         ${golCells}
       `;
 
@@ -397,25 +373,26 @@ function renderRankingTable(data, sport, type) {
     table.querySelectorAll('th[data-sort]').forEach(th => {
       const field = th.dataset.sort;
       if (field === tableSort.field) {
-        th.classList.add('sort-active');
-        th.classList.toggle('sort-desc', tableSort.dir === 'desc');
-        th.classList.toggle('sort-asc',  tableSort.dir === 'asc');
+        th.classList.add('rk-sortable--active');
+        th.classList.toggle('rk-sort-desc', tableSort.dir === 'desc');
+        th.classList.toggle('rk-sort-asc',  tableSort.dir === 'asc');
       } else {
-        th.classList.remove('sort-active', 'sort-desc', 'sort-asc');
+        th.classList.remove('rk-sortable--active', 'rk-sort-desc', 'rk-sort-asc');
       }
     });
   }
 
+  // Costruisci tabella
   const table = document.createElement("table");
-  table.className = "standings-table ranking-table";
+  table.className = "rk-table";
 
   const nameHeader = isPlayers ? 'Giocatore' : 'Squadra';
 
   const colHeaders = columns.map(col => {
     if (col.sortable) {
       const isActive = col.key === tableSort.field;
-      const dirClass = isActive ? (tableSort.dir === 'desc' ? ' sort-desc' : ' sort-asc') : '';
-      return `<th data-sort="${col.key}" class="sortable-col${isActive ? ' sort-active' : ''}${dirClass}"><span class="sort-label">${col.label}</span></th>`;
+      const dirClass = isActive ? (tableSort.dir === 'desc' ? ' rk-sort-desc' : ' rk-sort-asc') : '';
+      return `<th data-sort="${col.key}" class="rk-sortable${isActive ? ' rk-sortable--active' : ''}${dirClass}"><span class="rk-sort-label">${col.label}</span></th>`;
     }
     return `<th>${col.label}</th>`;
   }).join('');
@@ -423,7 +400,7 @@ function renderRankingTable(data, sport, type) {
   table.innerHTML = `
     <thead>
       <tr>
-        <th class="ranking-pos-col">#</th>
+        <th class="rk-pos-col">#</th>
         <th>${nameHeader}</th>
         ${colHeaders}
       </tr>
@@ -431,6 +408,7 @@ function renderRankingTable(data, sport, type) {
     <tbody></tbody>
   `;
 
+  // Click intestazioni
   table.querySelectorAll('th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
       const field = th.dataset.sort;
@@ -440,8 +418,8 @@ function renderRankingTable(data, sport, type) {
         tableSort.field = field;
         tableSort.dir   = 'desc';
       }
-      // Applica sort tenendo conto del filtro di ricerca attivo
-      const query = searchInput ? normalize(searchInput.value) : '';
+      const currentInput = document.getElementById('rk-search-input');
+      const query = currentInput ? normalize(currentInput.value) : '';
       const filtered = query
         ? data.filter(row => normalize(isPlayers ? row.player_name : row.team_name).includes(query))
         : data;
@@ -456,14 +434,14 @@ function renderRankingTable(data, sport, type) {
   container.appendChild(table);
 
   // ── Ricerca ──────────────────────────────────────────────────────
-  const searchToggle = document.getElementById('ranking-search-toggle');
-  const searchBar    = document.getElementById('ranking-search-bar');
-  const searchInput  = document.getElementById('ranking-search-input');
+  const searchToggle = document.getElementById('rk-search-toggle');
+  const searchBar    = document.getElementById('rk-search-bar');
+  const searchInput  = document.getElementById('rk-search-input');
 
   searchInput.value = '';
   searchBar.classList.add('hidden');
 
-  // Rimuovi vecchi listener clonando i nodi
+  // Clona per rimuovere vecchi listener
   const newToggle = searchToggle.cloneNode(true);
   searchToggle.parentNode.replaceChild(newToggle, searchToggle);
   const newInput = searchInput.cloneNode(true);
@@ -492,9 +470,6 @@ function renderRankingTable(data, sport, type) {
     buildTbody(filtered);
   });
 }
-
-
-
 
 
 // ===============================
