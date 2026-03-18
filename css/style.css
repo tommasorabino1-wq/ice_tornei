@@ -1094,7 +1094,11 @@ section > .section-title {
 }
 
 .intro-box strong { color: var(--brand); font-weight: 600; }
-.intro-box p { margin: 0; }
+
+.intro-box p {
+  text-align: center;
+  margin: 2px;
+}
 
 .intro-title {
   font-size: 18px;
@@ -3570,6 +3574,112 @@ section > .section-title {
   color: var(--brand);
 }
 
+
+/* =========================
+   SEO MEGA SECTION (PREMIUM)
+========================= */
+
+.seo-mega-section {
+  width: 100%;
+}
+
+.seo-card {
+  width: 100%;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px 18px;
+  box-shadow: var(--shadow-md);
+}
+
+
+
+/* Glow decorativo */
+.seo-card::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  opacity: 0.4;
+  display: none;
+}
+
+.seo-main-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 auto 16px auto;
+  text-align: center;
+  width: fit-content;
+  display: block;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-main);
+}
+
+/* Body */
+.seo-body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Blocchi */
+.seo-block h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text-main);
+  text-align: center;
+}
+
+.seo-block p {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* Liste */
+.seo-block ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  text-align: center;
+}
+
+.seo-block li {
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: var(--text-main);
+  text-align: center;
+}
+
+.seo-block li::before {
+  content: "• ";
+  color: var(--text-main);
+}
+
+.seo-block + .seo-block {
+  border-top: 1px solid var(--border-soft);
+  padding-top: 16px;
+}
+
+/* CTA finale */
+.seo-cta {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.seo-cta strong {
+  color: var(--brand);
+}
 
 
 
