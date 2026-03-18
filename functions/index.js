@@ -366,7 +366,7 @@ async function sendTeamInfoRequestEmails(tournamentId) {
       return;
     }
 
-    const mailerUrl   = "https://script.google.com/macros/s/AKfycbyt5UdChl1gjka1jcqTqdpZXMZyNKKIvwVGmm6gkPutOsGe8qw5qip04RCLUajjSgve/exec";
+    const mailerUrl   = "https://script.google.com/macros/s/AKfycbw1fHkQCgL3NM74R7Ppf44NAGz4070qoZBZTv-vn9WXF-1Tq1CBsIE5fhlSpXYscfc1/exec";
     const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
     const emailPromises = subscriptionsSnapshot.docs.map(async (doc) => {
@@ -1030,9 +1030,10 @@ exports.onSubscriptionCreated = onDocumentCreated(
       const paymentConfig = {
         iban: "IT36T0200820097000105204736",
         paypalLink: `https://paypal.me/TommasoRabino/${amount}`,
+        satispayLink: "https://web.satispay.com/download/qrcode/S6Y-CON--3CE36B7D-DE23-4026-8995-5F35569E3CF4"
       };
 
-      const mailerUrl   = "https://script.google.com/macros/s/AKfycbxByIqXZ2jKlLbAEV5lCXRpGksnCu5i3Pa6nMMWzEgD0vkzF0ROz8hpzYbiLxfGMmx_aw/exec";
+      const mailerUrl   = "https://script.google.com/macros/s/AKfycbzPkdMmJAK_gNXeDiKr6Xa_5t0Ym82Zq4bPfzUDvW3I9oonD_Evv6My1lRCZbAMVwrIbQ/exec";
       const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
       const payload = {
@@ -1043,6 +1044,7 @@ exports.onSubscriptionCreated = onDocumentCreated(
         amount: amount,
         iban: paymentConfig.iban,
         paypalLink: paymentConfig.paypalLink,
+        satispayLink: paymentConfig.satispayLink,
         individual_or_team: individualOrTeam
       };
 
