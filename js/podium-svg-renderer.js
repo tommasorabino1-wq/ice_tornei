@@ -81,7 +81,7 @@
       .replace(/>/g, "&gt;");
   }
 
-  function shortenName(name, max = 18) {
+  function shortenName(name, max = 14) {
     if (!name) return "";
     if (name.length <= max) return name;
     return name.slice(0, max - 1) + "…";
