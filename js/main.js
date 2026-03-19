@@ -1,17 +1,16 @@
 // ===============================
 // SIDEBAR NAVIGATION
 // ===============================
-
-const menuToggle   = document.querySelector(".mobile-menu-toggle");
-const mainNav      = document.getElementById("main-navigation");
-const navOverlay   = document.getElementById("nav-overlay");
+const menuToggle = document.querySelector(".mobile-menu-toggle");
+const mainNav    = document.getElementById("main-navigation");
+const navOverlay = document.getElementById("nav-overlay");
 
 function openNav() {
   mainNav.classList.add("active");
   navOverlay.classList.add("active");
   menuToggle.classList.add("active");
   menuToggle.setAttribute("aria-expanded", "true");
-  document.body.style.overflow = "hidden"; // blocca scroll pagina
+  document.body.style.overflow = "hidden";
 }
 
 function closeNav() {
@@ -23,35 +22,39 @@ function closeNav() {
 }
 
 if (menuToggle && mainNav && navOverlay) {
-
-  // apri con hamburger
   menuToggle.addEventListener("click", () => {
     mainNav.classList.contains("active") ? closeNav() : openNav();
   });
-
-  // chiudi cliccando l'overlay
   navOverlay.addEventListener("click", closeNav);
-
-  // chiudi con ESC
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && mainNav.classList.contains("active")) {
-      closeNav();
-    }
+    if (e.key === "Escape" && mainNav.classList.contains("active")) closeNav();
   });
-
 }
 
 // ===============================
-// NAV DROPDOWN (TORNEI)
+// NAV DROPDOWN LIVELLO 1 (TORNEI)
 // ===============================
+const dropdownTornei = document.getElementById("dropdown-tornei");
+const toggleTornei   = dropdownTornei?.querySelector(":scope > .nav-dropdown-toggle");
 
-const dropdownToggle = document.querySelector(".nav-dropdown-toggle");
-const dropdown       = document.querySelector(".nav-dropdown");
+if (toggleTornei && dropdownTornei) {
+  toggleTornei.addEventListener("click", () => {
+    const isActive = dropdownTornei.classList.toggle("active");
+    toggleTornei.setAttribute("aria-expanded", String(isActive));
+  });
+}
 
-if (dropdownToggle && dropdown) {
-  dropdownToggle.addEventListener("click", () => {
-    const isActive = dropdown.classList.toggle("active");
-    dropdownToggle.setAttribute("aria-expanded", String(isActive));
+// ===============================
+// NAV SUBDROPDOWN LIVELLO 2 (CALCIO)
+// ===============================
+const subdropdownCalcio = document.getElementById("subdropdown-calcio");
+const toggleCalcio      = subdropdownCalcio?.querySelector(":scope > .nav-subdropdown-toggle");
+
+if (toggleCalcio && subdropdownCalcio) {
+  toggleCalcio.addEventListener("click", (e) => {
+    e.stopPropagation(); // evita che il click risalga al dropdown Tornei
+    const isActive = subdropdownCalcio.classList.toggle("active");
+    toggleCalcio.setAttribute("aria-expanded", String(isActive));
   });
 }
 

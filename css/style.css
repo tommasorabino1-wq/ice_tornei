@@ -362,6 +362,77 @@ body {
 }
 
 
+/* ========================= 
+   SUBDROPDOWN LIVELLO 2 (es. Calcio) 
+========================= */
+.nav-subdropdown {
+  position: relative;
+}
+
+.nav-subdropdown-toggle {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-soft);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* eredita stile dai link del dropdown padre */
+  padding: 13px 20px 13px 40px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.nav-subdropdown-toggle:hover {
+  background: var(--brand-soft);
+  color: var(--text-main);
+}
+
+/* freccia del subdropdown */
+.nav-subdropdown-toggle .nav-arrow {
+  width: 7px;
+  height: 7px;
+}
+
+.nav-subdropdown.active .nav-subdropdown-toggle .nav-arrow {
+  transform: rotate(-135deg);
+}
+
+/* menu del secondo livello */
+.nav-subdropdown-menu {
+  display: none;
+  flex-direction: column;
+  background: var(--surface-soft); /* leggermente più scuro del padre */
+}
+
+.nav-subdropdown.active .nav-subdropdown-menu {
+  display: flex;
+}
+
+/* link interni al subdropdown: rientro ulteriore */
+.nav-subdropdown-menu a {
+  padding: 11px 20px 11px 56px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-soft);
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nav-subdropdown-menu a:hover {
+  background: var(--brand-soft);
+  color: var(--text-main);
+}
+
+
 /* =========================
    SIDEBAR LEGAL LINKS
 ========================= */
