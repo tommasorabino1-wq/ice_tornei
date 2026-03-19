@@ -371,8 +371,6 @@ body {
   position: relative;
 }
 
-/* Il toggle di Calcio deve avere lo stesso padding dei link fratelli
-   (13px 20px) e NON ereditare il padding-left:40px del dropdown padre */
 .nav-subdropdown-toggle {
   width: 100%;
   text-align: left;
@@ -383,7 +381,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 13px 20px 13px 20px; /* uguale ai link fratelli, sovrascrive il 40px ereditato */
+  /* stesso stile dei link fratelli nel dropdown padre */
+  padding: 13px 20px;
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -397,22 +396,20 @@ body {
   color: var(--text-main);
 }
 
-/* Freccia del subdropdown:
-   - stato CHIUSO: rotate(45deg)
-   - deve ignorare la regola .nav-dropdown.active .nav-arrow che la girerebbe subito */
+/* freccia del subdropdown — stato CHIUSO (punta a destra/giù) */
 .nav-subdropdown-toggle .nav-arrow {
   width: 7px;
   height: 7px;
-  transform: rotate(45deg) !important; /* blocca l'ereditarietà dal dropdown padre */
+  transform: rotate(45deg); /* stesso stato "chiuso" del dropdown padre */
   transition: transform 0.25s ease;
 }
 
-/* Freccia — stato APERTO (solo quando subdropdown è .active) */
+/* freccia — stato APERTO */
 .nav-subdropdown.active .nav-subdropdown-toggle .nav-arrow {
-  transform: rotate(-135deg) !important;
+  transform: rotate(-135deg);
 }
 
-/* Menu del secondo livello */
+/* menu del secondo livello */
 .nav-subdropdown-menu {
   display: none;
   flex-direction: column;
@@ -423,9 +420,9 @@ body {
   display: flex;
 }
 
-/* Link interni al subdropdown: rientro visibile rispetto al toggle Calcio */
+/* link interni al subdropdown: rientro di secondo livello */
 .nav-subdropdown-menu a {
-  padding: 11px 20px 11px 44px; /* 44px crea il rientro di secondo livello */
+  padding: 11px 20px 11px 40px;
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.02em;
