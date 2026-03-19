@@ -2018,11 +2018,21 @@ function populateExtraFields(tournament) {
 function configureFormSteps(hasExtraFields) {
   const step2Indicator = document.querySelector('.form-step[data-step="2"]');
   const step3Indicator = document.querySelector('.form-step[data-step="3"]');
-  const step2Panel = document.querySelector('.form-step-panel[data-step="2"]');
-  const step3Panel = document.querySelector('.form-step-panel[data-step="3"]');
+  const step2Panel     = document.querySelector('.form-step-panel[data-step="2"]');
+  const step3Panel     = document.querySelector('.form-step-panel[data-step="3"]');
+
+  // Guard: se gli elementi non esistono nel DOM, esci silenziosamente
+  if (!step2Indicator || !step3Indicator || !step2Panel || !step3Panel) {
+    console.warn('configureFormSteps: elementi step non trovati nel DOM', {
+      step2Indicator, step3Indicator, step2Panel, step3Panel
+    });
+    totalSteps = 2;
+    currentStep = 1;
+    updateStepUI();
+    return;
+  }
 
   if (hasExtraFields) {
-    // Ripristina stato a 3 step (in caso di re-render)
     step2Indicator.style.display = "";
     step3Indicator.style.display = "";
     step2Panel.style.display = "";
@@ -2032,19 +2042,14 @@ function configureFormSteps(hasExtraFields) {
     step3Indicator.querySelector('.step-number').textContent = "3";
     totalSteps = 3;
   } else {
-    // 2 step: nascondi step 2 (preferenze)
     step2Indicator.style.display = "none";
     step2Panel.style.display = "none";
-
-    // Rinomina step 3 → step 2 nel DOM
     step3Indicator.querySelector('.step-number').textContent = "2";
     step3Indicator.dataset.step = "2";
     step3Panel.dataset.step = "2";
-
     totalSteps = 2;
   }
 
-  // ✅ Aggiorna la UI DOPO aver sistemato i data-step nel DOM
   currentStep = 1;
   updateStepUI();
 }
@@ -2513,8 +2518,10 @@ function updateStepUI() {
   const activeStep = document.querySelector(`.form-step[data-step="${currentStep}"]`);
   if (activeStep) activeStep.classList.add("active");
 
-  // Progress bar
-  progressFill.style.width = ((currentStep - 1) / (totalSteps - 1)) * 100 + "%";
+  // Progress bar — guard su totalSteps === 1 per evitare divisione per zero
+  if (totalSteps > 1) {
+    progressFill.style.width = ((currentStep - 1) / (totalSteps - 1)) * 100 + "%";
+  }
 
   // Pulsante indietro
   prevBtn.style.visibility = currentStep === 1 ? "hidden" : "visible";
@@ -2522,10 +2529,14 @@ function updateStepUI() {
   // Pulsante avanti
   nextBtn.style.display = currentStep === totalSteps ? "none" : "inline-flex";
 
-  window.scrollTo({
-    top: document.querySelector("#registration-form").offsetTop - 200,
-    behavior: "smooth"
-  });
+  // Scroll — solo se il form è visibile nel DOM
+  const formEl = document.querySelector("#registration-form");
+  if (formEl && formEl.offsetParent !== null) {
+    window.scrollTo({
+      top: formEl.offsetTop - 200,
+      behavior: "smooth"
+    });
+  }
 }
 
 nextBtn.addEventListener("click", async () => {
@@ -2596,15 +2607,13 @@ prevBtn.addEventListener("click", () => {
   }
 });
 
+
 // ── Inizializzazione minimale ────────────────────────────────────────────
-// Non chiamiamo updateStepUI() qui perché i data-step potrebbero non essere
-// ancora stati configurati da configureFormSteps (che gira dopo il fetch).
-// Mostriamo solo lo step 1 e nascondiamo gli altri in modo diretto.
 panels.forEach(panel => panel.classList.remove("active"));
 const firstPanel = document.querySelector('.form-step-panel[data-step="1"]');
 if (firstPanel) firstPanel.classList.add("active");
-prevBtn.style.visibility = "hidden";
-// nextBtn rimane visibile di default (il form ha sempre almeno 2 step)
+if (prevBtn) prevBtn.style.visibility = "hidden";
+if (nextBtn) nextBtn.style.display = "inline-flex";
 
 
 
