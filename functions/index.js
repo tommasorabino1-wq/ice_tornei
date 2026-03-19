@@ -366,7 +366,7 @@ async function sendTeamInfoRequestEmails(tournamentId) {
       return;
     }
 
-    const mailerUrl   = "https://script.google.com/macros/s/AKfycbw1fHkQCgL3NM74R7Ppf44NAGz4070qoZBZTv-vn9WXF-1Tq1CBsIE5fhlSpXYscfc1/exec";
+    const mailerUrl   = "https://script.google.com/macros/s/AKfycbzZCR67pfMZqESZrxAmTuGoJ4lUHCdY3czvsmZbuwuA3Kcor56eWSC-Q2r0p7FEDpVM/exec";
     const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
     const emailPromises = subscriptionsSnapshot.docs.map(async (doc) => {
@@ -1033,7 +1033,7 @@ exports.onSubscriptionCreated = onDocumentCreated(
         satispayLink: "https://web.satispay.com/download/qrcode/S6Y-CON--3CE36B7D-DE23-4026-8995-5F35569E3CF4"
       };
 
-      const mailerUrl   = "https://script.google.com/macros/s/AKfycbzMmXyyL-0CoN75ECJY_RF3_UdNXqUPulVtp-k7FgEv0LbjnFF5-fsX4ecc_nOaW0u6oQ/exec";
+      const mailerUrl   = "https://script.google.com/macros/s/AKfycbxVl6Yr1BhnUCS6rt9BAvRmm_fa4SYvacpEw-7-EyQ-3vtImJ-i9RrUbegPukh_lfgL7w/exec";
       const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
       const payload = {

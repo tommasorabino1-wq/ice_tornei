@@ -108,8 +108,6 @@ async function loadTeamInfo() {
     const isIndividual        = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
     const certificateRequired = toBool(tournamentData.certificate_required);
 
-    // FIX BUG 2: toNum su team_size_min e team_size_max per gestire
-    // sia numeri nativi sia stringhe numeriche da Firestore
     const teamSizeMin = toNum(tournamentData.team_size_min, 1);
     const teamSizeMax = toNum(tournamentData.team_size_max, 1);
 
@@ -163,22 +161,18 @@ function generatePlayerSections(min, max, isIndividual, certificateRequired) {
   banner.className = 'form-intro-banner';
 
   if (isIndividual && certificateRequired) {
-    // 2a
     banner.innerHTML = `
       <p>Carica il tuo <strong>certificato medico</strong> (Agonistico o Non Agonistico) per completare l'iscrizione.
       Puoi anche caricare un logo personale, ma è facoltativo.</p>`;
   } else if (isIndividual && !certificateRequired) {
-    // 2b
     banner.innerHTML = `
       <p>Per questo torneo non è richiesto nessun documento. Puoi caricare un <strong>logo personale</strong> opzionale,
       oppure inviare direttamente senza caricare nulla.</p>`;
   } else if (!isIndividual && certificateRequired) {
-    // 2c
     banner.innerHTML = `
       <p>Inserisci i <strong>nomi</strong> di tutti i giocatori e carica il rispettivo <strong>certificato medico</strong>
       (Agonistico o Non Agonistico). Il logo squadra è facoltativo.</p>`;
   } else {
-    // 2d
     banner.innerHTML = `
       <p>Inserisci i <strong>nomi</strong> di tutti i giocatori per completare la registrazione.
       Il logo squadra è facoltativo.</p>`;
@@ -208,7 +202,6 @@ function generatePlayerSections(min, max, isIndividual, certificateRequired) {
         ${teamData.team_name}
       </h3>
 
-      <!-- Nome non modificabile -->
       <div class="player-name-group">
         <label>Nome e Cognome</label>
         <input
@@ -219,7 +212,6 @@ function generatePlayerSections(min, max, isIndividual, certificateRequired) {
         >
       </div>
 
-      <!-- Certificato -->
       <div class="player-certificate-group">
         <label for="player-cert-1">Certificato Medico Agonistico o Non Agonistico <span class="required-asterisk">*</span></label>
         <p class="section-description">Formati accettati: PDF, JPG, PNG - max 10MB</p>
@@ -228,7 +220,6 @@ function generatePlayerSections(min, max, isIndividual, certificateRequired) {
             type="file"
             id="player-cert-1"
             accept="application/pdf,image/jpeg,image/jpg,image/png"
-            required
           >
           <span class="btn secondary">Seleziona file</span>
         </label>
@@ -252,10 +243,13 @@ function generatePlayerSections(min, max, isIndividual, certificateRequired) {
 
     const section = document.createElement('div');
     section.className = 'form-section';
+    section.id = `player-section-${i}`;
 
     const certBlock = certificateRequired ? `
-      <div class="player-certificate-group">
-        <label for="player-cert-${i}">Certificato Medico Agonistico o Non Agonistico${isRequired ? ' <span class="required-asterisk">*</span>' : ''}</label>
+      <div class="player-certificate-group" id="player-cert-group-${i}">
+        <label for="player-cert-${i}" id="player-cert-label-${i}">
+          Certificato Medico Agonistico o Non Agonistico${isRequired ? ' <span class="required-asterisk">*</span>' : ''}
+        </label>
         <p class="section-description">Formati accettati: PDF, JPG, PNG - max 10MB</p>
         <label class="file-upload-btn">
           <input
@@ -293,12 +287,39 @@ function generatePlayerSections(min, max, isIndividual, certificateRequired) {
     const nameInput = document.getElementById(`player-name-${i}`);
     nameInput.addEventListener('input', (e) => {
       playerData[i - 1].name = e.target.value.trim();
+
+      // FIX 2: se il giocatore è facoltativo e ha il certificato richiesto,
+      // rendere il certificato obbligatorio non appena viene inserito il nome
+      if (certificateRequired && !isRequired) {
+        updateCertificateRequirement(i);
+      }
     });
 
     if (certificateRequired) {
       const certInput = document.getElementById(`player-cert-${i}`);
       certInput.addEventListener('change', (e) => handleCertificateUpload(e, i - 1));
     }
+  }
+}
+
+// ===================================
+// FIX 2: Aggiorna obbligatorietà certificato
+// per giocatori facoltativi che hanno ricevuto un nome
+// ===================================
+function updateCertificateRequirement(playerIndex) {
+  const nameValue = playerData[playerIndex - 1].name;
+  const certInput = document.getElementById(`player-cert-${playerIndex}`);
+  const certLabel = document.getElementById(`player-cert-label-${playerIndex}`);
+  if (!certInput || !certLabel) return;
+
+  if (nameValue) {
+    // Nome inserito → certificato diventa obbligatorio
+    certInput.setAttribute('required', '');
+    certLabel.innerHTML = `Certificato Medico Agonistico o Non Agonistico <span class="required-asterisk">*</span>`;
+  } else {
+    // Nome rimosso → certificato torna facoltativo
+    certInput.removeAttribute('required');
+    certLabel.innerHTML = `Certificato Medico Agonistico o Non Agonistico`;
   }
 }
 
@@ -383,6 +404,51 @@ window.removeLogo = function() {
 };
 
 // ===================================
+// FIX 3: Mostra errori campi obbligatori mancanti
+// ===================================
+function highlightMissingFields() {
+  // Rimuovi errori precedenti
+  document.querySelectorAll('.field-error-msg').forEach(el => el.remove());
+  document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+
+  let firstError = null;
+
+  // Controlla tutti gli input required visibili
+  const requiredInputs = form.querySelectorAll('input[required]:not([disabled])');
+  requiredInputs.forEach(input => {
+    const isEmpty = input.type === 'file'
+      ? !input.files || input.files.length === 0
+      : !input.value.trim();
+
+    if (isEmpty) {
+      input.classList.add('input-error');
+
+      const msg = document.createElement('p');
+      msg.className = 'field-error-msg';
+      msg.textContent = input.type === 'file'
+        ? 'Carica il file richiesto.'
+        : 'Questo campo è obbligatorio.';
+
+      // Inserisci il messaggio dopo il genitore dell'input
+      // (per i file input il genitore è la <label class="file-upload-btn">)
+      const insertAfter = input.type === 'file'
+        ? input.closest('.player-certificate-group') || input.parentElement
+        : input.parentElement;
+
+      insertAfter.appendChild(msg);
+
+      if (!firstError) firstError = insertAfter;
+    }
+  });
+
+  if (firstError) {
+    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  return !firstError; // true = tutto ok
+}
+
+// ===================================
 // FORM SUBMIT
 // ===================================
 form.addEventListener('submit', async (e) => {
@@ -392,9 +458,13 @@ form.addEventListener('submit', async (e) => {
 
   const isIndividual        = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
   const certificateRequired = toBool(tournamentData.certificate_required);
-  // FIX BUG 2: toNum per confronto numerico affidabile
   const teamSizeMin         = toNum(tournamentData.team_size_min, 1);
 
+  // FIX 3: valida e mostra errori prima di procedere
+  const isValid = highlightMissingFields();
+  if (!isValid) return;
+
+  // Validazioni custom aggiuntive
   if (isIndividual && certificateRequired) {
     if (!playerData[0]?.certificateFile) {
       alert('Devi caricare il tuo certificato medico per completare la registrazione.');
@@ -488,6 +558,9 @@ form.addEventListener('submit', async (e) => {
 
     console.log('✅ Submit success');
     hideLoading();
+
+    // FIX 1: scroll in cima prima di mostrare il messaggio di successo
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     showSuccess();
 
   } catch (error) {
@@ -541,7 +614,6 @@ function showSuccess() {
   successState.classList.remove('hidden');
 }
 
-// FIX BUG 3: guard su null/undefined per evitare "null" o "undefined" in output
 function escapeHTML(str) {
   return String(str ?? '')
     .replace(/&/g,  '&amp;')
