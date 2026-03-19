@@ -1,3 +1,9 @@
+const admin = require('firebase-admin');
+const db = admin.firestore();
+
+
+
+
 // ===============================
 // HELPERS SAFE (per Firestore)
 // ===============================
