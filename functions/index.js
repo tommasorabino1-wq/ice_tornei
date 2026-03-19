@@ -1033,7 +1033,7 @@ exports.onSubscriptionCreated = onDocumentCreated(
         satispayLink: "https://web.satispay.com/download/qrcode/S6Y-CON--3CE36B7D-DE23-4026-8995-5F35569E3CF4"
       };
 
-      const mailerUrl   = "https://script.google.com/macros/s/AKfycbzPkdMmJAK_gNXeDiKr6Xa_5t0Ym82Zq4bPfzUDvW3I9oonD_Evv6My1lRCZbAMVwrIbQ/exec";
+      const mailerUrl   = "https://script.google.com/macros/s/AKfycbzMmXyyL-0CoN75ECJY_RF3_UdNXqUPulVtp-k7FgEv0LbjnFF5-fsX4ecc_nOaW0u6oQ/exec";
       const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
       const payload = {
