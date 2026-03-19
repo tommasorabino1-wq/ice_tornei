@@ -1995,18 +1995,23 @@ function populateExtraFields(tournament) {
     }
   }
 
+  // ✅ Salva riferimento al pannello di conferma PRIMA che configureFormSteps
+  // ne modifichi il data-step (da "3" a "2" nel caso senza campi extra)
+  const confirmPanel = document.querySelector('.form-step-panel[data-step="3"]');
+
   // Configura form a 2 o 3 step
   configureFormSteps(hasExtraFields);
 
-  // Note aggiuntive vanno nell'ultimo step (prima del checkbox regolamento)
-  const notesField = buildNotesField();
-  const lastStepPanel = hasExtraFields
-    ? document.querySelector('.form-step-panel[data-step="3"]')
-    : document.querySelector('.form-step-panel[data-step="2"]');
-  
-  // Inserisci le note PRIMA del div regulation-acceptance
-  const regulationDiv = lastStepPanel.querySelector('.regulation-acceptance');
-  lastStepPanel.insertBefore(notesField, regulationDiv);
+  // Note aggiuntive vanno nel pannello di conferma (ora potrebbe avere data-step="2")
+  if (confirmPanel) {
+    const notesField = buildNotesField();
+    const regulationDiv = confirmPanel.querySelector('.regulation-acceptance');
+    if (regulationDiv) {
+      confirmPanel.insertBefore(notesField, regulationDiv);
+    } else {
+      confirmPanel.appendChild(notesField);
+    }
+  }
 }
 
 
