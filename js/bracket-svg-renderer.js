@@ -16,6 +16,7 @@ const BOT_PAD         = 18;
 const THIRD_GAP_V     = 26;
 const THIRD_LABEL_GAP = 9;
 const CONN_OFFSET     = 12;
+const NAME_MAX_CHARS = 14;
 
 function matchH() { return MATCH_H * 2 + MATCH_GAP; }
 
@@ -88,6 +89,18 @@ function roundLabel(count) {
   return 'Round';
 }
 
+
+// ── Troncamento testo SVG ─────────────────────────────────────────
+function truncateText(text, maxChars) {
+  if (!text) return '';
+  if (text.length <= maxChars) return text;
+  return text.slice(0, maxChars - 1) + '…';
+}
+
+
+
+
+
 // ── Disegna una card match ────────────────────────────────────────
 function drawMatch(x, y, match, flip) {
   const mh     = matchH();
@@ -117,46 +130,48 @@ function drawMatch(x, y, match, flip) {
     const fi   = isTbd ? 'italic' : 'normal';
     const fs   = isTbd ? 9 : 10;
 
-    const nameX = x + MATCH_W / 2;
-    const scoreX = flip ? x + 10 : x + MATCH_W - 10;
+    // Troncamento nome: spazio netto ~87px, ~6px/char a font 10px Inter → 14 char max
+    const displayName = isTbd ? 'TBD' : truncateText(name || '', NAME_MAX_CHARS);
 
-    const nameAnchor = 'middle';
+    // Posizionamento: nome a sinistra, score a destra (o viceversa se flip)
+    const nameX      = flip ? x + 8 + (isWin ? 4 : 0) : x + 6 + (isWin ? 4 : 0);
+    const nameAnchor = 'start';
+    const scoreX     = flip ? x + 10 : x + MATCH_W - 10;
     const scoreAnchor = flip ? 'start' : 'end';
+
+    // Lo score è a destra sempre; il nome parte da sinistra con ancora 'start'
+    // Così evitiamo sovrapposizioni e il clipPath non serve più
+    const namePadL = isWin ? (flip ? x + MATCH_W - barW - 6 : x + barW + 6) : x + 6;
 
     let r = '';
     r += svgEl('rect', { x, y:rowY, width:MATCH_W, height:MATCH_H, rx:5, ry:5, fill:bg, stroke:brd, 'stroke-width':1, ...dash });
-    
+
     if (isWin) {
       const barX = flip ? x + MATCH_W - barW : x;
       r += svgEl('rect', { x:barX, y:rowY, width:barW, height:MATCH_H, rx:1, fill:C.winBar });
     }
-    
-    const clipId = `c${Math.round(x*10)}-${Math.round(rowY*10)}`;
-    const clipXs = flip ? x + 30 : x + 6;
-    const clipW  = MATCH_W - 42;
-    r += `<defs><clipPath id="${clipId}"><rect x="${clipXs}" y="${rowY}" width="${clipW}" height="${MATCH_H}"/></clipPath></defs>`;
-    r += svgEl('text', { 
-      x:nameX, 
-      y:rowY+MATCH_H/2+4, 
-      fill:nC, 
-      'font-size':fs, 
-      'font-weight':fw, 
-      'font-style':fi, 
-      'font-family':'Inter,sans-serif', 
-      'text-anchor':nameAnchor, 
-      'clip-path':`url(#${clipId})` 
-    }, isTbd ? 'TBD' : escH(name||''));
-    
-    r += svgEl('text', { 
-      x:scoreX, 
-      y:rowY+MATCH_H/2+4, 
-      fill:sC, 
-      'font-size':11, 
-      'font-weight':isWin?'800':'500', 
-      'font-family':'Inter,sans-serif', 
-      'text-anchor':scoreAnchor 
+
+    r += svgEl('text', {
+      x: namePadL,
+      y: rowY + MATCH_H / 2 + 4,
+      fill: nC,
+      'font-size': fs,
+      'font-weight': fw,
+      'font-style': fi,
+      'font-family': 'Inter,sans-serif',
+      'text-anchor': 'start'
+    }, escH(displayName));
+
+    r += svgEl('text', {
+      x: scoreX,
+      y: rowY + MATCH_H / 2 + 4,
+      fill: sC,
+      'font-size': 11,
+      'font-weight': isWin ? '800' : '500',
+      'font-family': 'Inter,sans-serif',
+      'text-anchor': scoreAnchor
     }, escH(score));
-    
+
     return r;
   };
 
