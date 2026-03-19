@@ -130,36 +130,44 @@ function drawMatch(x, y, match, flip) {
     const fi   = isTbd ? 'italic' : 'normal';
     const fs   = isTbd ? 9 : 10;
 
-    // Troncamento nome: spazio netto ~87px, ~6px/char a font 10px Inter → 14 char max
     const displayName = isTbd ? 'TBD' : truncateText(name || '', NAME_MAX_CHARS);
 
-    // Posizionamento: nome a sinistra, score a destra (o viceversa se flip)
-    const nameX      = flip ? x + 8 + (isWin ? 4 : 0) : x + 6 + (isWin ? 4 : 0);
-    const nameAnchor = 'start';
-    const scoreX     = flip ? x + 10 : x + MATCH_W - 10;
-    const scoreAnchor = flip ? 'start' : 'end';
+    const barW = 3;
 
-    // Lo score è a destra sempre; il nome parte da sinistra con ancora 'start'
-    // Così evitiamo sovrapposizioni e il clipPath non serve più
-    const namePadL = isWin ? (flip ? x + MATCH_W - barW - 6 : x + barW + 6) : x + 6;
+    // flip=true → card di sinistra: score a sinistra, nome a destra
+    // flip=false → card normali: nome a sinistra, score a destra
+    const scoreX      = flip ? x + barW + 6              : x + MATCH_W - 6;
+    const scoreAnchor = flip ? 'start'                   : 'end';
+    const nameX       = flip ? x + MATCH_W - barW - 6    : x + barW + 6;
+    const nameAnchor  = flip ? 'end'                     : 'start';
+
+    // Se winner, la barra è a destra nelle card flip, a sinistra nelle normali
+    const barX = flip ? x + MATCH_W - barW : x;
 
     let r = '';
     r += svgEl('rect', { x, y:rowY, width:MATCH_W, height:MATCH_H, rx:5, ry:5, fill:bg, stroke:brd, 'stroke-width':1, ...dash });
 
     if (isWin) {
-      const barX = flip ? x + MATCH_W - barW : x;
       r += svgEl('rect', { x:barX, y:rowY, width:barW, height:MATCH_H, rx:1, fill:C.winBar });
     }
 
+    // ClipPath per evitare overflow del nome
+    const clipId = `c${Math.round(x*10)}-${Math.round(rowY*10)}`;
+    // Area nome: esclude zona score (~22px) e barra (3px) + padding (4px)
+    const clipX = flip ? x + 22 : x + barW + 4;
+    const clipW = MATCH_W - 22 - barW - 4;
+    r += `<defs><clipPath id="${clipId}"><rect x="${clipX}" y="${rowY}" width="${clipW}" height="${MATCH_H}"/></clipPath></defs>`;
+
     r += svgEl('text', {
-      x: namePadL,
+      x: nameX,
       y: rowY + MATCH_H / 2 + 4,
       fill: nC,
       'font-size': fs,
       'font-weight': fw,
       'font-style': fi,
       'font-family': 'Inter,sans-serif',
-      'text-anchor': 'start'
+      'text-anchor': nameAnchor,
+      'clip-path': `url(#${clipId})`
     }, escH(displayName));
 
     r += svgEl('text', {
