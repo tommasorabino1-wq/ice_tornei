@@ -2026,7 +2026,6 @@ function configureFormSteps(hasExtraFields) {
   const step2Panel     = document.querySelector('.form-step-panel[data-step="2"]');
   const step3Panel     = document.querySelector('.form-step-panel[data-step="3"]');
 
-  // Guard: se gli elementi non esistono nel DOM, esci silenziosamente
   if (!step2Indicator || !step3Indicator || !step2Panel || !step3Panel) {
     console.warn('configureFormSteps: elementi step non trovati nel DOM', {
       step2Indicator, step3Indicator, step2Panel, step3Panel
@@ -2038,20 +2037,37 @@ function configureFormSteps(hasExtraFields) {
   }
 
   if (hasExtraFields) {
+    // STEP 2 = Preferenze
     step2Indicator.style.display = "";
+    step2Indicator.dataset.step = "2";
+
     step3Indicator.style.display = "";
+    step3Indicator.dataset.step = "3";
+    step3Indicator.querySelector('.step-number').textContent = "3";
+
     step2Panel.style.display = "";
     step2Panel.dataset.step = "2";
-    step3Indicator.dataset.step = "3";
+
+    step3Panel.style.display = "";
     step3Panel.dataset.step = "3";
-    step3Indicator.querySelector('.step-number').textContent = "3";
+
     totalSteps = 3;
   } else {
+    // Nascondi davvero lo step "Preferenze"
     step2Indicator.style.display = "none";
+    step2Indicator.dataset.step = "hidden";
+
     step2Panel.style.display = "none";
-    step3Indicator.querySelector('.step-number').textContent = "2";
+    step2Panel.dataset.step = "hidden";
+
+    // Lo step conferma diventa il nuovo step 2
+    step3Indicator.style.display = "";
     step3Indicator.dataset.step = "2";
+    step3Indicator.querySelector('.step-number').textContent = "2";
+
+    step3Panel.style.display = "";
     step3Panel.dataset.step = "2";
+
     totalSteps = 2;
   }
 
