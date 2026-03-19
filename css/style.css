@@ -328,7 +328,7 @@ body {
 
 /* link del dropdown */
 
-.nav-dropdown-menu a {
+.nav-dropdown-menu > a {
   padding: 13px 20px 13px 40px;
   font-size: 13px;
   font-weight: 500;
@@ -336,9 +336,12 @@ body {
   text-transform: none;
   border-bottom: 1px solid var(--border-soft);
   color: var(--text-muted);
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+  display: block;
 }
 
-.nav-dropdown-menu a:hover {
+.nav-dropdown-menu > a:hover {
   background: var(--brand-soft);
   color: var(--text-main);
 }
@@ -371,8 +374,7 @@ body {
   position: relative;
 }
 
-/* Il toggle di Calcio deve avere lo stesso padding dei link fratelli
-   (13px 20px) e NON ereditare il padding-left:40px del dropdown padre */
+/* Calcio: stesso padding dei link fratelli (40px a sinistra) */
 .nav-subdropdown-toggle {
   width: 100%;
   text-align: left;
@@ -383,7 +385,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 13px 20px 13px 20px; /* uguale ai link fratelli, sovrascrive il 40px ereditato */
+  padding: 13px 20px 13px 40px;
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -397,22 +399,20 @@ body {
   color: var(--text-main);
 }
 
-/* Freccia del subdropdown:
-   - stato CHIUSO: rotate(45deg)
-   - deve ignorare la regola .nav-dropdown.active .nav-arrow che la girerebbe subito */
+/* Freccia subdropdown — chiusa */
 .nav-subdropdown-toggle .nav-arrow {
   width: 7px;
   height: 7px;
-  transform: rotate(45deg) !important; /* blocca l'ereditarietà dal dropdown padre */
+  transform: rotate(45deg) !important;
   transition: transform 0.25s ease;
 }
 
-/* Freccia — stato APERTO (solo quando subdropdown è .active) */
+/* Freccia subdropdown — aperta */
 .nav-subdropdown.active .nav-subdropdown-toggle .nav-arrow {
   transform: rotate(-135deg) !important;
 }
 
-/* Menu del secondo livello */
+/* Menu secondo livello */
 .nav-subdropdown-menu {
   display: none;
   flex-direction: column;
@@ -423,9 +423,9 @@ body {
   display: flex;
 }
 
-/* Link interni al subdropdown: rientro visibile rispetto al toggle Calcio */
+/* Calcetto / Calcio a 7 / Calcio a 8: rientro ulteriore rispetto ai 40px di Calcio */
 .nav-subdropdown-menu a {
-  padding: 11px 20px 11px 44px; /* 44px crea il rientro di secondo livello */
+  padding: 11px 20px 11px 56px;
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -433,6 +433,7 @@ body {
   border-bottom: 1px solid var(--border-soft);
   text-decoration: none;
   transition: background 0.2s ease, color 0.2s ease;
+  display: block;
 }
 
 .nav-subdropdown-menu a:hover {
