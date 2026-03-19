@@ -2022,23 +2022,31 @@ function configureFormSteps(hasExtraFields) {
   const step3Panel = document.querySelector('.form-step-panel[data-step="3"]');
 
   if (hasExtraFields) {
-    // 3 step: mostra tutto normalmente
+    // Ripristina stato a 3 step (in caso di re-render)
     step2Indicator.style.display = "";
     step3Indicator.style.display = "";
-    step2Panel.dataset.active = "";
+    step2Panel.style.display = "";
+    step2Panel.dataset.step = "2";
+    step3Indicator.dataset.step = "3";
+    step3Panel.dataset.step = "3";
+    step3Indicator.querySelector('.step-number').textContent = "3";
     totalSteps = 3;
   } else {
-    // 2 step: nascondi step 2 (preferenze) e rinomina step 3 come step 2
+    // 2 step: nascondi step 2 (preferenze)
     step2Indicator.style.display = "none";
     step2Panel.style.display = "none";
-    
-    // Aggiorna il numero visivo dello step 3
+
+    // Rinomina step 3 → step 2 nel DOM
     step3Indicator.querySelector('.step-number').textContent = "2";
     step3Indicator.dataset.step = "2";
     step3Panel.dataset.step = "2";
-    
+
     totalSteps = 2;
   }
+
+  // ✅ Aggiorna la UI DOPO aver sistemato i data-step nel DOM
+  currentStep = 1;
+  updateStepUI();
 }
 
 
@@ -2488,7 +2496,6 @@ const nextBtn = document.querySelector(".step-next");
 const prevBtn = document.querySelector(".step-prev");
 
 function updateStepUI() {
-
   // Nascondi tutti i pannelli
   panels.forEach(panel => {
     panel.classList.remove("active");
@@ -2510,18 +2517,10 @@ function updateStepUI() {
   progressFill.style.width = ((currentStep - 1) / (totalSteps - 1)) * 100 + "%";
 
   // Pulsante indietro
-  if (currentStep === 1) {
-    prevBtn.style.visibility = "hidden";
-  } else {
-    prevBtn.style.visibility = "visible";
-  }
+  prevBtn.style.visibility = currentStep === 1 ? "hidden" : "visible";
 
   // Pulsante avanti
-  if (currentStep === totalSteps) {
-    nextBtn.style.display = "none";
-  } else {
-    nextBtn.style.display = "inline-flex";
-  }
+  nextBtn.style.display = currentStep === totalSteps ? "none" : "inline-flex";
 
   window.scrollTo({
     top: document.querySelector("#registration-form").offsetTop - 200,
@@ -2530,11 +2529,9 @@ function updateStepUI() {
 }
 
 nextBtn.addEventListener("click", async () => {
-
   const currentPanel = document.querySelector(`.form-step-panel[data-step="${currentStep}"]`);
   const requiredFields = currentPanel.querySelectorAll("[required]");
 
-  // ── Validazione campi obbligatori (invariata) ───────────────────────────
   let valid = true;
   requiredFields.forEach(field => {
     if (field.type === "checkbox") {
@@ -2549,7 +2546,6 @@ nextBtn.addEventListener("click", async () => {
     return;
   }
 
-  // ── ✅ NUOVO: Check nome squadra allo step 1 ────────────────────────────
   if (currentStep === 1 && tournamentId) {
     const teamNameInput = currentPanel.querySelector('[name="team_name"]');
 
@@ -2580,14 +2576,12 @@ nextBtn.addEventListener("click", async () => {
 
       } catch (err) {
         console.error("checkTeamName error:", err);
-        // Fail open: in caso di errore di rete lascia procedere
       } finally {
         nextBtn.disabled = false;
         nextBtn.textContent = originalText;
       }
     }
   }
-  // ── Fine check nome squadra ─────────────────────────────────────────────
 
   if (currentStep < totalSteps) {
     currentStep++;
@@ -2602,7 +2596,15 @@ prevBtn.addEventListener("click", () => {
   }
 });
 
-updateStepUI();
+// ── Inizializzazione minimale ────────────────────────────────────────────
+// Non chiamiamo updateStepUI() qui perché i data-step potrebbero non essere
+// ancora stati configurati da configureFormSteps (che gira dopo il fetch).
+// Mostriamo solo lo step 1 e nascondiamo gli altri in modo diretto.
+panels.forEach(panel => panel.classList.remove("active"));
+const firstPanel = document.querySelector('.form-step-panel[data-step="1"]');
+if (firstPanel) firstPanel.classList.add("active");
+prevBtn.style.visibility = "hidden";
+// nextBtn rimane visibile di default (il form ha sempre almeno 2 step)
 
 
 
