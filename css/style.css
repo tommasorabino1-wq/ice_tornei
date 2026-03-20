@@ -766,6 +766,7 @@ body {
   border-radius: 4px;
   cursor: pointer;
   min-width: 100px;
+  max-width: 220px;
   transition: background-color 0.2s ease;
 }
 
