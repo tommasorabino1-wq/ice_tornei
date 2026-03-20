@@ -2139,7 +2139,9 @@ section > .section-title {
   padding: 16px 18px;
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-  animation: fadeInWarning 0.25s ease;
+  animation: fadeInWarning 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: top left;
+  will-change: opacity, transform;
 }
 
 .duplicate-teamname-warning-title {
@@ -2201,11 +2203,11 @@ section > .section-title {
 @keyframes fadeInWarning {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(10px) scale(0.985);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
