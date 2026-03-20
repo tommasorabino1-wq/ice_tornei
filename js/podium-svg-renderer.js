@@ -381,13 +381,16 @@
       return;
     }
 
-    const sorted = [...standings].sort((a, b) => {
-      const rankA = (a.final_rank != null ? a.final_rank : a.rank_level) ?? 99;
-      const rankB = (b.final_rank != null ? b.final_rank : b.rank_level) ?? 99;
-      return rankA - rankB;
+    const standingsWithFinalRank = standings.filter(s => {
+      const r = Number(s.final_rank);
+      return Number.isFinite(r);
     });
 
-    const top3 = sorted.slice(0, 3);
+    const first  = standingsWithFinalRank.find(s => Number(s.final_rank) === 1) || null;
+    const second = standingsWithFinalRank.find(s => Number(s.final_rank) === 2) || null;
+    const third  = standingsWithFinalRank.find(s => Number(s.final_rank) === 3) || null;
+
+    const top3 = [first, second, third];
 
     const baseY = PODIUM_H - BOT_PAD;
     const svgH = PODIUM_H + LABEL_H + 60;
