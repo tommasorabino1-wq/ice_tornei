@@ -104,6 +104,7 @@ const teamsListContainer = document.getElementById("teams-list-container");
 
 // Select tornei
 const tournamentSelect = document.getElementById("tournament-select");
+let currentTournamentData = null;
 
 // ===============================
 // 3. API URLS (FIREBASE FUNCTIONS)
@@ -322,11 +323,6 @@ function renderTournament(tournament) {
 
   // Apply state & form behavior
   applyTournamentState(tournament);
-
-  if (tournament.status === "open") {
-    populateExtraFields(tournament);
-    handleFormSubmit(tournament);
-  }
 
   if (tournament.status === "open") {
     populateExtraFields(tournament);
@@ -2531,9 +2527,13 @@ function applyTeamNameCheckResult(checkData) {
   }
 
   if (checkData.duplicate_in_same_sport_other_tournament === true) {
+    const wasAlreadyConfirmed =
+      duplicateNameConfirmationState.needsConfirmation === true &&
+      duplicateNameConfirmationState.confirmed === true;
+
     duplicateNameConfirmationState = {
       needsConfirmation: true,
-      confirmed: false,
+      confirmed: wasAlreadyConfirmed,
       existingTournaments: Array.isArray(checkData.existing_tournaments)
         ? checkData.existing_tournaments
         : []
@@ -2541,7 +2541,12 @@ function applyTeamNameCheckResult(checkData) {
 
     renderDuplicateNameConfirmationBox(duplicateNameConfirmationState.existingTournaments);
 
-    showToast("Nome già presente in un altro torneo dello stesso sport: conferma oppure cambialo ⚠️");
+    // Se l'utente aveva già confermato, lo lasciamo proseguire
+    if (duplicateNameConfirmationState.confirmed) {
+      return true;
+    }
+
+    showToast("Nome già presente in un altro torneo dello stesso sport: conferma oppure cambia nome ⚠️");
     return false;
   }
 
