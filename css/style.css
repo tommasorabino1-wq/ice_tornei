@@ -2125,6 +2125,92 @@ section > .section-title {
 
 
 /* =========================
+   DUPLICATE TEAM NAME WARNING
+========================= */
+
+.duplicate-teamname-warning {
+  margin-top: 16px;
+}
+
+.duplicate-teamname-warning-inner {
+  background: rgba(255, 245, 245, 0.9);
+  border: 1px solid rgba(255, 80, 80, 0.25);
+  border-radius: 14px;
+  padding: 16px 18px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  animation: fadeInWarning 0.25s ease;
+}
+
+.duplicate-teamname-warning-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #d64545;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.duplicate-teamname-warning-text {
+  font-size: 0.9rem;
+  color: #444;
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+/* Lista tornei */
+.duplicate-teamname-warning-list {
+  margin: 8px 0 10px 16px;
+  padding: 0;
+}
+
+.duplicate-teamname-warning-list li {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+/* Checkbox */
+.duplicate-teamname-warning-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #333;
+  cursor: pointer;
+  user-select: none;
+}
+
+.duplicate-teamname-warning-checkbox input {
+  margin-top: 2px;
+  accent-color: #ff5a5a;
+  cursor: pointer;
+  transform: scale(1.1);
+}
+
+/* Hover effetto leggero */
+.duplicate-teamname-warning-checkbox:hover span {
+  color: #111;
+}
+
+/* =========================
+   ANIMAZIONE
+========================= */
+
+@keyframes fadeInWarning {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* =========================
    25. FORM STEP SYSTEM
 ========================= */
 .form-progress-wrapper { margin-bottom: 24px; }

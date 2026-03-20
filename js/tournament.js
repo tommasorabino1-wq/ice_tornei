@@ -328,6 +328,19 @@ function renderTournament(tournament) {
     handleFormSubmit(tournament);
   }
 
+  if (tournament.status === "open") {
+    populateExtraFields(tournament);
+    handleFormSubmit(tournament);
+
+    const teamNameInput = form?.querySelector('[name="team_name"]');
+    if (teamNameInput && !teamNameInput.dataset.duplicateNameListenerAttached) {
+      teamNameInput.addEventListener("input", () => {
+        resetDuplicateNameConfirmation();
+      });
+      teamNameInput.dataset.duplicateNameListenerAttached = "true";
+    }
+  }
+
   // Load + render teams list block
   loadAndRenderTeamsList(tournament);
 
@@ -2409,28 +2422,171 @@ function parseHoursSlots(range) {
 // 27. SUBMIT ISCRIZIONE (FIREBASE)
 // ===============================
 let isSubmitting = false;
+
+let duplicateNameConfirmationState = {
+  needsConfirmation: false,
+  confirmed: false,
+  existingTournaments: []
+};
+
+// ===============================
+// HELPER: reset warning stesso nome in altro torneo
+// ===============================
+function resetDuplicateNameConfirmation() {
+  duplicateNameConfirmationState = {
+    needsConfirmation: false,
+    confirmed: false,
+    existingTournaments: []
+  };
+
+  const existingBox = document.getElementById("duplicate-teamname-warning");
+  if (existingBox) existingBox.remove();
+}
+
+// ===============================
+// HELPER: render warning stesso nome in altro torneo
+// ===============================
+function renderDuplicateNameConfirmationBox(existingTournaments = []) {
+  const step1Panel = document.querySelector('.form-step-panel[data-step="1"]');
+  if (!step1Panel) return;
+
+  const existingBox = document.getElementById("duplicate-teamname-warning");
+  if (existingBox) existingBox.remove();
+
+  const isIndividual = currentTournamentData?.individual_or_team?.toLowerCase() === 'individual';
+
+  const wrapper = document.createElement("div");
+  wrapper.id = "duplicate-teamname-warning";
+  wrapper.className = "duplicate-teamname-warning";
+  
+  const tournamentsText = Array.isArray(existingTournaments) && existingTournaments.length > 0
+    ? `<ul class="duplicate-teamname-warning-list">
+         ${existingTournaments.map(t => `<li>${escapeHTML(t.tournament_name || t.tournament_id || "")}</li>`).join("")}
+       </ul>`
+    : "";
+
+  wrapper.innerHTML = `
+    <div class="duplicate-teamname-warning-inner">
+      <div class="duplicate-teamname-warning-title">
+        ⚠️ ${isIndividual ? "Nome già usato in un altro torneo dello stesso sport" : "Nome squadra già usato in un altro torneo dello stesso sport"}
+      </div>
+      <div class="duplicate-teamname-warning-text">
+        ${
+          isIndividual
+            ? "Abbiamo trovato questo nome in un altro torneo dello stesso sport. Se sei davvero tu e vuoi usare di nuovo questo nome, puoi confermarlo qui sotto. Altrimenti modifica il nome."
+            : "Abbiamo trovato una squadra con questo nome in un altro torneo dello stesso sport. Se siete davvero voi e volete usare di nuovo questo nome, potete confermarlo qui sotto. Altrimenti cambiate nome squadra."
+        }
+        ${tournamentsText}
+      </div>
+      <label class="duplicate-teamname-warning-checkbox">
+        <input type="checkbox" id="confirm-same-team-name-other-tournament">
+        <span>
+          ${
+            isIndividual
+              ? "Confermo che avevo già partecipato a un altro torneo dello stesso sport con questo stesso nome"
+              : "Confermo che la mia squadra aveva già partecipato a un altro torneo dello stesso sport con questo stesso nome"
+          }
+        </span>
+      </label>
+    </div>
+  `;
+
+  const teamNameField = step1Panel.querySelector('[name="team_name"]')?.closest("label, .form-field-wrapper, .field-optional") 
+    || step1Panel.querySelector('[name="team_name"]');
+
+  if (teamNameField && teamNameField.parentNode) {
+    teamNameField.parentNode.insertBefore(wrapper, teamNameField.nextSibling);
+  } else {
+    step1Panel.appendChild(wrapper);
+  }
+
+  const checkbox = wrapper.querySelector('#confirm-same-team-name-other-tournament');
+  if (checkbox) {
+    checkbox.checked = !!duplicateNameConfirmationState.confirmed;
+    checkbox.addEventListener('change', function () {
+      duplicateNameConfirmationState.confirmed = this.checked;
+    });
+  }
+}
+
+// ===============================
+// HELPER: applica risposta checkTeamName
+// ===============================
+function applyTeamNameCheckResult(checkData) {
+  if (!checkData || typeof checkData !== "object") {
+    resetDuplicateNameConfirmation();
+    return true;
+  }
+
+  if (checkData.exact_duplicate_in_same_tournament === true || checkData.available === false) {
+    resetDuplicateNameConfirmation();
+
+    const isIndividual = currentTournamentData?.individual_or_team?.toLowerCase() === 'individual';
+    showToast(
+      isIndividual
+        ? "Nome già in uso in questo torneo. Prova a modificarlo leggermente. ⚠️"
+        : "Nome squadra già in uso in questo torneo. Prova con un altro nome. ⚠️"
+    );
+    return false;
+  }
+
+  if (checkData.duplicate_in_same_sport_other_tournament === true) {
+    duplicateNameConfirmationState = {
+      needsConfirmation: true,
+      confirmed: false,
+      existingTournaments: Array.isArray(checkData.existing_tournaments)
+        ? checkData.existing_tournaments
+        : []
+    };
+
+    renderDuplicateNameConfirmationBox(duplicateNameConfirmationState.existingTournaments);
+
+    showToast("Nome già presente in un altro torneo dello stesso sport: conferma oppure cambialo ⚠️");
+    return false;
+  }
+
+  resetDuplicateNameConfirmation();
+  return true;
+}
+
+
  
 function handleFormSubmit(tournament) {
   const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
+
+  if (form.dataset.submitHandlerAttached === "true") return;
+  form.dataset.submitHandlerAttached = "true";
  
-  form.addEventListener("submit", function (e) {
+  form.addEventListener("submit", async function (e) {
     e.preventDefault();
  
     if (isSubmitting) return;
  
-    // ── Validazione checkbox regolamento ─────────────────────────────────
     const acceptRegulation = form.querySelector('input[name="accept_regulation"]');
     if (!acceptRegulation || !acceptRegulation.checked) {
       showToast("Devi accettare il regolamento per iscriverti ⚠️");
       return;
     }
+
+    const teamNameValue = form.querySelector('[name="team_name"]').value.trim();
+
+    // Se esiste warning stesso nome in altro torneo, serve checkbox spuntata
+    if (duplicateNameConfirmationState.needsConfirmation && !duplicateNameConfirmationState.confirmed) {
+      showToast(
+        isIndividual
+          ? "Conferma prima che si tratta davvero dello stesso nome usato da te in un altro torneo ⚠️"
+          : "Conferma prima che si tratta davvero dello stesso nome squadra usato in un altro torneo ⚠️"
+      );
+      return;
+    }
  
-    // ── Costruzione payload ───────────────────────────────────────────────
     const payload = {
       tournament_id: tournament.tournament_id,
-      team_name:     form.querySelector('[name="team_name"]').value.trim(),
+      team_name:     teamNameValue,
       email:         form.querySelector('[name="email"]').value.trim().toLowerCase(),
-      phone:         form.querySelector('[name="phone"]').value.trim()
+      phone:         form.querySelector('[name="phone"]').value.trim(),
+      confirm_same_team_name_other_tournament:
+        duplicateNameConfirmationState.needsConfirmation && duplicateNameConfirmationState.confirmed
     };
  
     const zoneInput = form.querySelector('[name="preferred_zone"]');
@@ -2443,7 +2599,6 @@ function handleFormSubmit(tournament) {
       payload.preferred_days = Array.from(daysChecked).map(cb => cb.value).join(", ");
     }
  
-    // ✅ hoursSelect letto dal DOM, non da variabile globale
     const hoursSelect = form.querySelector('[name="preferred_hours"]');
     if (hoursSelect && hoursSelect.value) {
       payload.preferred_hours = hoursSelect.value;
@@ -2454,7 +2609,6 @@ function handleFormSubmit(tournament) {
       payload.additional_notes = notesTextarea.value.trim();
     }
  
-    // ── Stato loading ─────────────────────────────────────────────────────
     isSubmitting = true;
  
     const submitBtn = form.querySelector('button[type="submit"]');
@@ -2465,51 +2619,81 @@ function handleFormSubmit(tournament) {
     submitBtn.disabled = true;
     inputs.forEach(input => input.disabled = true);
  
-    // ── Invio richiesta ───────────────────────────────────────────────────
-    fetch(API_URLS.submitSubscription, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    })
-      .then(res => res.text())
-      .then(response => {
-        const errorMessages = {
-          "TOURNAMENT_NOT_FOUND":         "Torneo non valido ❌",
-          "REGISTRATIONS_CLOSED":         "Le iscrizioni sono chiuse ⚠️",
-          "INVALID_DATA":                 "Dati mancanti o non validi ⚠️",
-          "DUPLICATE_TEAM":               isIndividual
-            ? "Questo nome è già iscritto a questo torneo. Prova ad aggiungere un secondo nome, un'iniziale o un soprannome (es. 'Mario R.' o 'MarioTheKing') ⚠️"
-            : "Una squadra con questo nome è già iscritta a questo torneo. Scegli un nome diverso ⚠️",
-          "DUPLICATE_EMAIL":              "Questa email è già stata utilizzata per questo torneo ⚠️",
-          "DUPLICATE":                    "Questa email è già iscritta ⚠️",
-          "DUPLICATE_TEAM_NAME_IN_SPORT": isIndividual
-            ? "Questo nome è già registrato in un torneo dello stesso sport. Prova ad aggiungere un secondo nome, un'iniziale o un soprannome (es. 'Mario R.' o 'MarioTheKing') ⚠️"
-            : "Una squadra con questo nome esiste già in un torneo dello stesso sport. Scegli un nome diverso ⚠️"
-        };
- 
-        if (errorMessages[response]) {
-          showToast(errorMessages[response]);
-          restoreForm();
-          return;
-        }
- 
-        if (response === "SUBSCRIPTION_SAVED") {
-          showToast("Iscrizione completata 🎉");
-          setTimeout(() => window.location.reload(), 1200);
-          return;
-        }
- 
-        console.error("Risposta inattesa:", response);
-        showToast("Errore inatteso ❌");
-        restoreForm();
-      })
-      .catch(err => {
-        console.error("Errore submit:", err);
-        showToast("Errore di connessione ❌");
-        restoreForm();
+    try {
+      const res = await fetch(API_URLS.submitSubscription, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       });
+
+      const contentType = res.headers.get("content-type") || "";
+      const isJson = contentType.includes("application/json");
+
+      let responseData;
+      if (isJson) {
+        responseData = await res.json();
+      } else {
+        responseData = await res.text();
+      }
+
+      // ===== SUCCESS =====
+      if (res.ok && responseData === "SUBSCRIPTION_SAVED") {
+        showToast("Iscrizione completata 🎉");
+        setTimeout(() => window.location.reload(), 1200);
+        return;
+      }
+
+      // ===== CASO SPECIALE: stesso nome in altro torneo stesso sport =====
+      if (
+        res.status === 409 &&
+        isJson &&
+        responseData?.error === "TEAM_NAME_ALREADY_USED_IN_OTHER_TOURNAMENT_SAME_SPORT" &&
+        responseData?.requires_confirmation === true
+      ) {
+        duplicateNameConfirmationState = {
+          needsConfirmation: true,
+          confirmed: false,
+          existingTournaments: Array.isArray(responseData.existing_tournaments)
+            ? responseData.existing_tournaments
+            : []
+        };
+
+        renderDuplicateNameConfirmationBox(duplicateNameConfirmationState.existingTournaments);
+        showToast("Conferma il riutilizzo del nome squadra prima di inviare l'iscrizione ⚠️");
+        restoreForm();
+        return;
+      }
+
+      // ===== ERRORI TESTUALI CLASSICI =====
+      const responseText = typeof responseData === "string" ? responseData : "";
+
+      const errorMessages = {
+        "TOURNAMENT_NOT_FOUND": "Torneo non valido ❌",
+        "REGISTRATIONS_CLOSED": "Le iscrizioni sono chiuse ⚠️",
+        "INVALID_DATA": "Dati mancanti o non validi ⚠️",
+        "DUPLICATE_TEAM": isIndividual
+          ? "Questo nome è già iscritto a questo torneo. Prova ad aggiungere un secondo nome, un'iniziale o un soprannome (es. 'Mario R.' o 'MarioTheKing') ⚠️"
+          : "Una squadra con questo nome è già iscritta a questo torneo. Scegli un nome diverso ⚠️",
+        "DUPLICATE_EMAIL": "Questa email è già stata utilizzata per questo torneo ⚠️",
+        "DUPLICATE": "Questa email è già iscritta ⚠️"
+      };
  
-    // ── Ripristino form ───────────────────────────────────────────────────
+      if (errorMessages[responseText]) {
+        showToast(errorMessages[responseText]);
+        restoreForm();
+        return;
+      }
+ 
+      console.error("Risposta inattesa:", responseData);
+      showToast("Errore inatteso ❌");
+      restoreForm();
+
+    } catch (err) {
+      console.error("Errore submit:", err);
+      showToast("Errore di connessione ❌");
+      restoreForm();
+    }
+ 
     function restoreForm() {
       isSubmitting = false;
       submitBtn.innerHTML = "Invia iscrizione";
@@ -2593,42 +2777,37 @@ nextBtn.addEventListener("click", async () => {
     return;
   }
 
-  if (currentStep === 1 && tournamentId) {
-    const teamNameInput = currentPanel.querySelector('[name="team_name"]');
+    if (currentStep === 1 && tournamentId) {
+      const teamNameInput = currentPanel.querySelector('[name="team_name"]');
 
-    if (teamNameInput && teamNameInput.value.trim()) {
-      const originalText = nextBtn.textContent;
-      nextBtn.disabled = true;
-      nextBtn.textContent = "Verifica...";
+      if (teamNameInput && teamNameInput.value.trim()) {
+        const originalText = nextBtn.textContent;
+        nextBtn.disabled = true;
+        nextBtn.textContent = "Verifica...";
 
-      try {
-        const checkUrl = `${API_URLS.checkTeamName}?team_name=${encodeURIComponent(teamNameInput.value.trim())}&tournament_id=${encodeURIComponent(tournamentId)}`;
-        const checkRes = await fetch(checkUrl);
+        try {
+          const checkUrl = `${API_URLS.checkTeamName}?team_name=${encodeURIComponent(teamNameInput.value.trim())}&tournament_id=${encodeURIComponent(tournamentId)}`;
+          const checkRes = await fetch(checkUrl);
 
-        if (!checkRes.ok) throw new Error(`HTTP error: ${checkRes.status}`);
+          if (!checkRes.ok) throw new Error(`HTTP error: ${checkRes.status}`);
 
-        const checkData = await checkRes.json();
+          const checkData = await checkRes.json();
+          const canProceed = applyTeamNameCheckResult(checkData);
 
-        if (!checkData.available) {
-          const isIndividual = currentTournamentData?.individual_or_team?.toLowerCase() === 'individual';
-          showToast(
-            isIndividual
-              ? "Nome già in uso. Prova a modificarlo leggermente. ⚠️"
-              : "Nome squadra già in uso. Prova con un altro nome. ⚠️"
-          );
+          if (!canProceed) {
+            nextBtn.disabled = false;
+            nextBtn.textContent = originalText;
+            return;
+          }
+
+        } catch (err) {
+          console.error("checkTeamName error:", err);
+        } finally {
           nextBtn.disabled = false;
           nextBtn.textContent = originalText;
-          return;
         }
-
-      } catch (err) {
-        console.error("checkTeamName error:", err);
-      } finally {
-        nextBtn.disabled = false;
-        nextBtn.textContent = originalText;
       }
     }
-  }
 
   if (currentStep < totalSteps) {
     currentStep++;
