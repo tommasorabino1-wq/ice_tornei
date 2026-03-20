@@ -273,10 +273,10 @@ async function generateFinalsIfReady(tournamentId) {
       byGroup[s.group_id].push(s);
     });
 
-    checkIntraGroupTies(byGroup, slots, standingsIsSetBased);
-
     const slots = toNumber(tournament.teams_in_final, 0);
     if (!slots || slots <= 0) throw new Error('E_INVALID_SLOTS');
+
+    checkIntraGroupTies(byGroup, slots, standingsIsSetBased);
 
     const byRankGlobal = {};
     Object.values(byGroup).forEach(group => {
