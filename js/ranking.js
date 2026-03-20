@@ -576,6 +576,7 @@ function renderRankingTable(data, sport, type) {
 }
 
 
+
 // ===============================
 // HELPER: Label leggibile per sport
 // ===============================

@@ -614,6 +614,7 @@ function showSuccess() {
   successState.classList.remove('hidden');
 }
 
+
 function escapeHTML(str) {
   return String(str ?? '')
     .replace(/&/g,  '&amp;')

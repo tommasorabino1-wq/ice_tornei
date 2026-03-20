@@ -328,12 +328,14 @@ function loadTournamentSelect() {
       if (!Array.isArray(tournaments)) throw new Error("Formato dati non valido");
 
       standingsTournamentSelect.innerHTML = `<option value="">Seleziona un torneo</option>`;
-      tournaments.forEach(t => {
-        const option = document.createElement("option");
-        option.value = t.tournament_id;
-        option.textContent = `${t.name} · ${t.date}`;
-        standingsTournamentSelect.appendChild(option);
-      });
+      tournaments
+        .filter(t => t.status !== "hidden")
+        .forEach(t => {
+          const option = document.createElement("option");
+          option.value = t.tournament_id;
+          option.textContent = `${t.name} · ${t.date}`;
+          standingsTournamentSelect.appendChild(option);
+        });
 
       standingsTournamentSelect.onchange = function () {
         if (!this.value) return;

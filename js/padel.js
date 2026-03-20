@@ -107,7 +107,8 @@ fetch(API_URL)
     }
 
     ALL_TOURNAMENTS = tournaments.filter(t =>
-      String(t.sport).toLowerCase() === "padel"
+      String(t.sport).toLowerCase() === "padel" &&
+      t.status !== "hidden"
     );
 
     const skeletons = container.querySelectorAll(".tournament-card.skeleton");
@@ -202,7 +203,7 @@ function renderTournaments(tournaments) {
       <div class="card-actions">
         ${
           iscrizioniAperte
-            ? `<a href="/regolamento?tournament_id=${t.tournament_id}#registration-form" class="btn primary">Iscriviti</a>`
+            ? `<a href="/regolamento?tournament_id=${t.tournament_id}" class="btn primary">Iscriviti</a>`
             : `<span class="btn primary disabled">Iscriviti</span>`
         }
         <a href="/regolamento?tournament_id=${t.tournament_id}" class="btn secondary">Dettagli</a>

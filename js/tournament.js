@@ -209,12 +209,14 @@ function renderGenericRegulation(tournaments) {
   // Reset select
   tournamentSelect.innerHTML = `<option value="">Seleziona un torneo</option>`;
 
-  tournaments.forEach(t => {
-    const option = document.createElement("option");
-    option.value = t.tournament_id;
-    option.textContent = `${t.name} · ${t.date}`;
-    tournamentSelect.appendChild(option);
-  });
+  tournaments
+    .filter(t => t.status !== "hidden")
+    .forEach(t => {
+      const option = document.createElement("option");
+      option.value = t.tournament_id;
+      option.textContent = `${t.name} · ${t.date}`;
+      tournamentSelect.appendChild(option);
+    });
 
   // Redirect su torneo
   tournamentSelect.onchange = function () {
