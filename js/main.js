@@ -117,7 +117,7 @@ fetch(API_URL)
       throw new Error("Formato dati non valido");
     }
 
-    ALL_TOURNAMENTS = tournaments;
+    ALL_TOURNAMENTS = tournaments.filter(t => t.status !== "hidden");
 
     const skeletons = container.querySelectorAll(".tournament-card.skeleton");
     skeletons.forEach(card => card.classList.add("fade-out"));
