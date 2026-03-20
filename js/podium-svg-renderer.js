@@ -381,9 +381,11 @@
       return;
     }
 
-    const sorted = [...standings].sort(
-      (a, b) => (a.rank_level || 99) - (b.rank_level || 99)
-    );
+    const sorted = [...standings].sort((a, b) => {
+      const rankA = (a.final_rank != null ? a.final_rank : a.rank_level) ?? 99;
+      const rankB = (b.final_rank != null ? b.final_rank : b.rank_level) ?? 99;
+      return rankA - rankB;
+    });
 
     const top3 = sorted.slice(0, 3);
 

@@ -477,6 +477,10 @@ async function propagateFinalsResult(tournamentId, completedMatchId) {
       console.log('ℹ️ No dependent matches found to update');
     }
 
+    // ← AGGIUNGI QUESTE DUE RIGHE
+    // Tenta aggiornamento rank finale (esce silenziosamente se non tutti i match sono giocati)
+    await updateFinalRankings(tournamentId);
+
   } catch (error) {
     console.error('❌ [ERROR] propagateFinalsResult failed:', error.message);
     throw error;
@@ -492,8 +496,102 @@ async function tryGenerateNextFinalRound(tournamentId) {
   console.log(`   Use propagateFinalsResult to populate team names as matches are played.`);
 }
 
+
+
+async function updateFinalRankings(tournamentId) {
+  try {
+    console.log(`🏅 [START] updateFinalRankings for ${tournamentId}`);
+
+    const finalsSnapshot = await db.collection('finals')
+      .where('tournament_id', '==', tournamentId)
+      .get();
+
+    if (finalsSnapshot.empty) {
+      console.log('⚠️ No finals found');
+      return;
+    }
+
+    const finals = finalsSnapshot.docs.map(doc => doc.data());
+
+    // Esce silenziosamente se non tutti i match sono ancora giocati
+    const allPlayed = finals.every(f => toBool(f.played));
+    if (!allPlayed) {
+      console.log('ℹ️ Not all finals matches played yet - skipping');
+      return;
+    }
+
+    const regularFinals = finals.filter(f => !toBool(f.is_third_place_match));
+    const maxRound = Math.max(...regularFinals.map(f => toNumber(f.round_id, 0)));
+
+    const finalMatch = regularFinals.find(f => toNumber(f.round_id, 0) === maxRound);
+    if (!finalMatch || !finalMatch.winner_team_id) {
+      console.log('⚠️ Final match not found or winner not set');
+      return;
+    }
+
+    const winner   = toStringSafe(finalMatch.winner_team_id);
+    const winnerIsA = winner !== '' && winner === toStringSafe(finalMatch.team_a);
+    const runnerUp  = toStringSafe(winnerIsA ? finalMatch.team_b : finalMatch.team_a);
+
+    // Scrive su final_rank, NON su rank_level (quello resta dei gironi)
+    const finalRankMap = {};
+    finalRankMap[winner]   = 1;
+    finalRankMap[runnerUp] = 2;
+
+    const thirdPlaceMatch = finals.find(f => toBool(f.is_third_place_match));
+
+    if (thirdPlaceMatch && thirdPlaceMatch.winner_team_id) {
+      const thirdWinner = toStringSafe(thirdPlaceMatch.winner_team_id);
+      const thirdIsA    = thirdWinner !== '' && thirdWinner === toStringSafe(thirdPlaceMatch.team_a);
+      const fourthPlace = toStringSafe(thirdIsA ? thirdPlaceMatch.team_b : thirdPlaceMatch.team_a);
+      finalRankMap[thirdWinner] = 3;
+      finalRankMap[fourthPlace] = 4;
+    } else {
+      // Nessuna finale 3/4: i due semifinalisti eliminati sono 3° ex-aequo
+      const semiMatches = regularFinals.filter(
+        f => toNumber(f.round_id, 0) === maxRound - 1
+      );
+      semiMatches.forEach(m => {
+        const mWinner = toStringSafe(m.winner_team_id);
+        const mIsA    = mWinner !== '' && mWinner === toStringSafe(m.team_a);
+        const loser   = toStringSafe(mIsA ? m.team_b : m.team_a);
+        if (loser && !finalRankMap[loser]) {
+          finalRankMap[loser] = 3;
+        }
+      });
+    }
+
+    console.log(`🏅 Final rank map:`, finalRankMap);
+
+    const batch = db.batch();
+    let updateCount = 0;
+
+    for (const [teamId, rank] of Object.entries(finalRankMap)) {
+      if (!teamId) continue;
+      const standingId  = `standings_${tournamentId}_${teamId}`;
+      const standingRef = db.collection('standings').doc(standingId);
+      batch.update(standingRef, { final_rank: rank });
+      console.log(`   ✓ ${teamId} → final_rank: ${rank}`);
+      updateCount++;
+    }
+
+    if (updateCount > 0) {
+      await batch.commit();
+      console.log(`✅ [SUCCESS] Updated final_rank for ${updateCount} teams`);
+    }
+
+  } catch (error) {
+    console.error('❌ [ERROR] updateFinalRankings failed:', error.message);
+    throw error;
+  }
+}
+
+
+
+
 module.exports = {
   generateFinalsIfReady,
   propagateFinalsResult,
+  updateFinalRankings,
   tryGenerateNextFinalRound,
 };
