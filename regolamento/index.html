@@ -44,15 +44,15 @@
   ========================================= -->
   <link rel="icon" href="/favicon.ico">
   <link rel="shortcut icon" href="/favicon.ico">
-  
+
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
-  
+
   <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png">
-  
+
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 
   <!-- ========================================
@@ -102,7 +102,6 @@
 </head>
 
 <body>
-
   <!-- ========================================
       SIDEBAR OVERLAY
   ======================================== -->
@@ -113,7 +112,6 @@
   ======================================== -->
   <header class="main-header" role="banner">
     <div class="main-header-container">
-
       <button class="mobile-menu-toggle" aria-label="Apri menu di navigazione" aria-expanded="false" aria-controls="main-navigation">
         <span></span>
         <span></span>
@@ -125,7 +123,6 @@
           <img src="/assets/logo.png" alt="Logo Tornei ICE" width="120" height="120">
         </a>
       </div>
-
     </div>
   </header>
 
@@ -133,17 +130,6 @@
       SIDEBAR NAV
   ========================================= -->
   <nav id="main-navigation" class="main-nav" aria-label="Navigazione principale">
-
-    <!-- LOGO -->
-    <div class="nav-sidebar-header">
-      <a href="/" class="nav-sidebar-logo" aria-label="Homepage Tornei ICE">
-        <img src="/assets/logo_nav.png" alt="Logo Tornei ICE" width="300" height="300">
-      </a>
-    </div>
-
-    <!-- NAV PRINCIPALE -->
-      <nav id="main-navigation" class="main-nav" aria-label="Navigazione principale">
-
     <!-- LOGO -->
     <div class="nav-sidebar-header">
       <a href="/" class="nav-sidebar-logo" aria-label="Homepage Tornei ICE">
@@ -153,7 +139,6 @@
 
     <!-- NAV PRINCIPALE -->
     <div class="nav-main-links">
-
       <div class="nav-item nav-dropdown" id="dropdown-tornei">
         <button class="nav-dropdown-toggle" aria-expanded="false" aria-controls="menu-tornei">
           Tornei
@@ -184,12 +169,10 @@
       <a href="/ranking">Ranking</a>
       <a href="/regolamento">Regolamento</a>
       <a href="/archivio-tornei/">Archivio Tornei</a>
-
     </div>
 
     <!-- LEGAL LINKS (BOTTOM SIDEBAR) -->
     <div class="nav-legal">
-
       <span class="nav-legal-title">Legal</span>
 
       <a href="/privacy-policy" aria-label="Apri la privacy policy">
@@ -203,53 +186,48 @@
       <a href="/termini-condizioni" aria-label="Apri i termini e condizioni">
         Termini e condizioni
       </a>
-
     </div>
-
   </nav>
 
-    <!-- ========================================
-        MAIN CONTENT (semantico)
-    ========================================= -->
-    <main class="container" role="main">
+  <!-- ========================================
+      MAIN CONTENT (semantico)
+  ========================================= -->
+  <main class="container" role="main">
+    <!-- BREADCRUMB -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span class="breadcrumb-separator">›</span>
+      <span id="breadcrumb-tournament">Regolamento</span>
+    </nav>
 
-      <!-- BREADCRUMB -->
-      <nav class="breadcrumb" aria-label="Breadcrumb">
-        <a href="/">Home</a>
-        <span class="breadcrumb-separator">›</span>
-        <span id="breadcrumb-tournament">Regolamento</span>
-      </nav>
+    <header class="page-header">
+      <h1 class="page-title page-title-box">
+        Regolamento Tornei ICE
+      </h1>
+    </header>
 
-      <header class="page-header">
-        <h1 class="page-title page-title-box">
-          Regolamento Tornei ICE
-        </h1>
-      </header>
-
-      <!-- =========================
-          REGOLAMENTO GENERICO
-          (visibile se NON c'è id)
-      ========================== -->
-      <section id="generic-regulation-section">
-
-        <!-- PAGE HEADER + FILTRO TORNEO -->
-        <div class="page-header">
-          
-          <!-- TOURNAMENT FILTER (INLINE) -->
-          <div class="sport-filter-inline">
-            <label for="tournament-select">Torneo</label>
-            <select id="tournament-select" aria-label="Seleziona un torneo per vederne il regolamento">
-              <option value="">Seleziona un torneo</option>
-            </select>
-          </div>
+    <!-- =========================
+        REGOLAMENTO GENERICO
+        (visibile se NON c'è id)
+    ========================== -->
+    <section id="generic-regulation-section">
+      <!-- PAGE HEADER + FILTRO TORNEO -->
+      <div class="page-header">
+        <!-- TOURNAMENT FILTER (INLINE) -->
+        <div class="sport-filter-inline">
+          <label for="tournament-select">Torneo</label>
+          <select id="tournament-select" aria-label="Seleziona un torneo per vederne il regolamento">
+            <option value="">Seleziona un torneo</option>
+          </select>
         </div>
+      </div>
 
       <!-- SEZIONE 1: MESSAGGIO SELEZIONE TORNEO -->
       <div class="generic-section-box select-tournament-box">
         <div class="select-prompt-icon">📋</div>
         <h2 class="generic-section-title">Regolamento e dettagli torneo</h2>
         <p class="select-prompt-text">
-          Seleziona un torneo dal menu in alto per visualizzare tutte le informazioni, 
+          Seleziona un torneo dal menu in alto per visualizzare tutte le informazioni,
           il regolamento specifico e il form di iscrizione.
         </p>
       </div>
@@ -257,18 +235,17 @@
       <!-- SEZIONE 2: PERCHÉ SCEGLIERE TORNEI ICE -->
       <div class="generic-section-box">
         <h3 class="generic-section-title">Perché scegliere Tornei ICE?</h3>
-        
+
         <div class="why-ice-grid">
-          
           <div class="why-ice-card">
             <div class="why-ice-icon">🎯</div>
             <h4>Organizzazione professionale</h4>
             <p>
-              Ogni torneo è curato nei minimi dettagli: calendari chiari, comunicazioni tempestive, 
+              Ogni torneo è curato nei minimi dettagli: calendari chiari, comunicazioni tempestive,
               prenotazione dei campi sempre a nostro carico. <br> Tu devi solo pensare a giocare e divertirti.
             </p>
           </div>
-          
+
           <div class="why-ice-card">
             <div class="why-ice-icon">💰</div>
             <h4>Montepremi reali e garantiti</h4>
@@ -277,25 +254,25 @@
               Tanto <strong>divertimento</strong>, premi simbolici, gadget e <strong>fotografi</strong> professionali per i tornei <em>Open</em>.
             </p>
           </div>
-          
+
           <div class="why-ice-card">
             <div class="why-ice-icon">❤️</div>
             <h4>Passione autentica</h4>
             <p>
-              Siamo un gruppo di ragazzi appassionati di sport che organizza tornei 
+              Siamo un gruppo di ragazzi appassionati di sport che organizza tornei
               per altri appassionati. Sappiamo cosa vuol dire giocare e divertirsi.
             </p>
           </div>
-          
+
           <div class="why-ice-card">
             <div class="why-ice-icon">🤝</div>
             <h4>Trasparenza e onestà</h4>
             <p>
-              Regole chiare, quote trasparenti, <strong>nessuna sorpresa</strong>. 
+              Regole chiare, quote trasparenti, <strong>nessuna sorpresa</strong>.
               Ti diciamo esattamente cosa aspettarti prima di iscriverti.
             </p>
           </div>
-          
+
           <div class="why-ice-card">
             <div class="why-ice-icon">📱</div>
             <h4>Comunicazione diretta</h4>
@@ -304,27 +281,23 @@
               Siamo <strong>sempre raggiungibili</strong> e pronti ad <strong>aiutarti</strong>.
             </p>
           </div>
-          
+
           <div class="why-ice-card">
             <div class="why-ice-icon">🏆</div>
             <h4>Divertimento garantito</h4>
             <p>
-              Il nostro obiettivo è farti vivere <strong>un'esperienza sportiva indimenticabile</strong>, 
+              Il nostro obiettivo è farti vivere <strong>un'esperienza sportiva indimenticabile</strong>,
               che tu vinca o meno. Lo sport è prima di tutto divertimento.
             </p>
           </div>
-          
         </div>
       </div>
-
     </section>
-
 
     <!-- =========================
         TORNEO SPECIFICO – SKELETON
     ========================== -->
     <section id="tournament-specific-skeleton" class="tournament-skeleton skeleton hidden">
-
       <!-- HEADER SKELETON -->
       <section class="tournament-header">
         <div class="tournament-title-row">
@@ -359,15 +332,12 @@
           <div class="team-chip team-chip--skeleton"><span class="team-chip-index">&nbsp;</span><span class="team-chip-name">&nbsp;</span></div>
         </div>
       </section>
-
     </section>
 
-
     <!-- =========================
-            TORNEO SPECIFICO – CONTENUTO
+        TORNEO SPECIFICO – CONTENUTO
     ========================== -->
     <section id="tournament-specific-section" class="hidden">
-
       <!-- 0. BANNER EVENTO (visibile solo se event_description è presente) -->
       <section id="tournament-event-banner" class="tournament-event-banner hidden">
         <!-- Popolato dinamicamente da JS -->
@@ -413,10 +383,8 @@
         </div>
       </section>
 
-
       <!-- 4. ISCRIZIONE -->
       <section class="tournament-registration-block">
-
         <h3>Iscrizione</h3>
         <p id="subscribe-message"></p>
 
@@ -429,12 +397,9 @@
         </div>
 
         <form id="registration-form">
-
           <!-- STEP PROGRESS -->
           <div class="form-progress-wrapper">
-
             <div class="form-steps">
-
               <div class="form-step active" data-step="1">
                 <span class="step-number">1</span>
                 <span class="step-label" id="form-step1-label">Dati squadra</span>
@@ -449,19 +414,15 @@
                 <span class="step-number">3</span>
                 <span class="step-label">Conferma</span>
               </div>
-
             </div>
 
             <div class="form-progress-bar">
               <div class="form-progress-fill"></div>
             </div>
-
           </div>
-
 
           <!-- STEP 1 -->
           <div class="form-step-panel active" data-step="1">
-
             <label>
               <span class="form-field-title" id="team-name-label">Nome squadra <span class="required-asterisk">*</span></span>
               <input type="text" name="team_name" required>
@@ -476,27 +437,19 @@
               <span class="form-field-title">Telefono <span class="required-asterisk">*</span></span>
               <input type="tel" name="phone" required>
             </label>
-
           </div>
-
 
           <!-- STEP 2 -->
           <div class="form-step-panel" data-step="2">
-
             <!-- CAMPI AGGIUNTIVI POPOLATI DA JS -->
             <div id="extra-fields-container"></div>
-
           </div>
-
 
           <!-- STEP 3 -->
           <div class="form-step-panel" data-step="3">
-
             <!-- CHECKBOX ACCETTAZIONE REGOLAMENTO -->
             <div class="form-field-wrapper regulation-acceptance">
-
               <label class="checkbox-acceptance">
-
                 <input type="checkbox" name="accept_regulation" required>
 
                 <span class="checkbox-label">
@@ -508,9 +461,7 @@
                   <strong>Regolamento specifico di questo torneo</strong>.
                   <span class="required-asterisk">*</span>
                 </span>
-
               </label>
-
             </div>
 
             <!-- NOTA CAMPI OBBLIGATORI -->
@@ -521,13 +472,10 @@
             <button type="submit" class="btn primary">
               Invia iscrizione
             </button>
-
           </div>
-
 
           <!-- NAVIGAZIONE STEP -->
           <div class="form-navigation">
-
             <button type="button" class="btn secondary step-prev">
               Indietro
             </button>
@@ -535,17 +483,12 @@
             <button type="button" class="btn primary step-next">
               Continua
             </button>
-
           </div>
-
         </form>
-
       </section>
-
 
       <!-- 5. REGOLAMENTO SPECIFICO -->
       <section class="tournament-specific-rules-block">
-
         <h3 class="rules-subtitle">
           Regolamento Torneo
         </h3>
@@ -553,15 +496,11 @@
         <div id="specific-court-rule" class="specific-rule-content">
           <!-- Popolato dinamicamente dal JS -->
         </div>
-
       </section>
-
 
       <!-- 6. SQUADRE ISCRITTE -->
       <section id="tournament-teams-section" class="tournament-teams-block hidden">
-
         <div class="teams-block-header">
-
           <h3 class="teams-block-title" id="teams-block-title">
             Squadre Iscritte
           </h3>
@@ -570,23 +509,17 @@
             <span class="meta-icon" id="teams-block-icon">👥</span>
             <span id="teams-list-count">0 / 0</span>
           </div>
-
         </div>
 
         <div id="teams-list-container" class="teams-chips-grid"></div>
-
       </section>
-
 
       <!-- 7. RIEPILOGO DEFINITIVO TORNEO -->
       <section id="tournament-final-summary-block" class="tournament-final-summary-block hidden">
         <h3>Struttura Definitiva</h3>
         <div id="tournament-final-summary-content"></div>
       </section>
-
-      
     </section>
-
   </main>
 
   <!-- ========================================
@@ -594,14 +527,12 @@
   ========================================= -->
   <footer class="site-footer" role="contentinfo">
     <div class="footer-container">
-
       <div class="footer-brand">
         <img src="/assets/logo.png" alt="Logo Tornei ICE" width="80" height="80" loading="lazy">
         <p>La tua piattaforma per tornei sportivi</p>
       </div>
 
       <div class="footer-content">
-
         <!-- CONTATTI -->
         <div class="footer-section footer-contacts">
           <h2>Contatti</h2>
@@ -634,21 +565,17 @@
           <a href="/cookie-policy">Cookie Policy</a>
           <a href="/termini-condizioni">Termini e condizioni</a>
         </div>
-
       </div>
 
       <div class="footer-bottom">
         <p>&copy; 2026 Tornei ICE. Tutti i diritti riservati.</p>
       </div>
-
     </div>
   </footer>
 
   <!-- COOKIE BANNER -->
   <div id="cookie-banner" class="cookie-banner hidden">
-
     <div class="cookie-banner-content">
-
       <p class="cookie-text">
         Utilizziamo cookie tecnici e di analisi per migliorare l'esperienza sul sito.
         Puoi accettare o rifiutare i cookie analitici.
@@ -659,9 +586,7 @@
         <button id="cookie-accept" class="btn primary">Accetta</button>
         <button id="cookie-reject" class="btn secondary">Rifiuta</button>
       </div>
-
     </div>
-
   </div>
 
   <!-- ========================================
@@ -669,6 +594,5 @@
   ========================================= -->
   <script src="/js/tournament.js" defer></script>
   <script src="/js/cookie-consent.js"></script>
-
 </body>
 </html>
