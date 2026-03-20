@@ -47,16 +47,29 @@ if (menuToggle && mainNav && navOverlay) {
 }
 
 // ===============================
-// NAV DROPDOWN (TORNEI)
+// NAV DROPDOWN LIVELLO 1 (TORNEI)
 // ===============================
+const dropdownTornei = document.getElementById("dropdown-tornei");
+const toggleTornei   = dropdownTornei?.querySelector(":scope > .nav-dropdown-toggle");
 
-const dropdownToggle = document.querySelector(".nav-dropdown-toggle");
-const dropdown       = document.querySelector(".nav-dropdown");
+if (toggleTornei && dropdownTornei) {
+  toggleTornei.addEventListener("click", () => {
+    const isActive = dropdownTornei.classList.toggle("active");
+    toggleTornei.setAttribute("aria-expanded", String(isActive));
+  });
+}
 
-if (dropdownToggle && dropdown) {
-  dropdownToggle.addEventListener("click", () => {
-    const isActive = dropdown.classList.toggle("active");
-    dropdownToggle.setAttribute("aria-expanded", String(isActive));
+// ===============================
+// NAV SUBDROPDOWN LIVELLO 2 (CALCIO)
+// ===============================
+const subdropdownCalcio = document.getElementById("subdropdown-calcio");
+const toggleCalcio      = subdropdownCalcio?.querySelector(":scope > .nav-subdropdown-toggle");
+
+if (toggleCalcio && subdropdownCalcio) {
+  toggleCalcio.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isActive = subdropdownCalcio.classList.toggle("active");
+    toggleCalcio.setAttribute("aria-expanded", String(isActive));
   });
 }
 

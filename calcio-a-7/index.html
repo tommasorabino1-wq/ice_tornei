@@ -218,21 +218,39 @@
     </div>
 
     <!-- NAV PRINCIPALE -->
+  <nav id="main-navigation" class="main-nav" aria-label="Navigazione principale">
+
+    <!-- LOGO -->
+    <div class="nav-sidebar-header">
+      <a href="/" class="nav-sidebar-logo" aria-label="Homepage Tornei ICE">
+        <img src="/assets/logo_nav.png" alt="Logo Tornei ICE - Tornei scacchi Torino" width="300" height="300">
+      </a>
+    </div>
+
+    <!-- NAV PRINCIPALE -->
     <div class="nav-main-links">
 
-      <div class="nav-item nav-dropdown">
-        <button class="nav-dropdown-toggle" aria-expanded="false">
+      <div class="nav-item nav-dropdown" id="dropdown-tornei">
+        <button class="nav-dropdown-toggle" aria-expanded="false" aria-controls="menu-tornei">
           Tornei
           <span class="nav-arrow"></span>
         </button>
-
-        <div class="nav-dropdown-menu">
+        <div class="nav-dropdown-menu" id="menu-tornei">
           <a href="/">🏆 Tutti gli sport</a>
           <a href="/padel/">🥎 Padel</a>
-          <a href="/calcio/">⚽ Calcio</a>
-          <a href="/calcetto/">⚽ Calcetto</a>
-          <a href="/calcio-a-7/">⚽ Calcio a 7</a>
-          <a href="/calcio-a-8/">⚽ Calcio a 8</a>
+
+          <div class="nav-item nav-subdropdown" id="subdropdown-calcio">
+            <button class="nav-subdropdown-toggle" aria-expanded="false" aria-controls="menu-calcio">
+              ⚽ Calcio
+              <span class="nav-arrow"></span>
+            </button>
+            <div class="nav-subdropdown-menu" id="menu-calcio">
+              <a href="/calcetto/">5️⃣ Calcetto</a>
+              <a href="/calcio-a-7/">7️⃣ Calcio a 7</a>
+              <a href="/calcio-a-8/">8️⃣ Calcio a 8</a>
+            </div>
+          </div>
+
           <a href="/beach-volley/">🏐 Beach Volley</a>
           <a href="/scacchi/">♟️ Scacchi</a>
         </div>
