@@ -191,78 +191,252 @@ function validateStandingsFlagsConsistency(standings) {
 
 
 // ===============================
-// HELPER: Seleziona qualificati in modo corretto
+// HELPER: Blocchi per rank nel singolo girone
 // ===============================
-function selectQualifiedTeams(byGroup, slots, standingsIsSetBased, standingsIsChess) {
-  const groups = Object.entries(byGroup);
-  const numGroups = groups.length;
+function buildRankBlocks(group) {
+  const byRank = {};
 
-  if (numGroups === 0) {
-    throw new Error('E_NO_GROUPS');
+  group.forEach(team => {
+    const rank = toNumber(team.rank_level, NaN);
+    if (!Number.isFinite(rank)) {
+      throw new Error('E_INVALID_STANDING_RANK');
+    }
+    if (!byRank[rank]) byRank[rank] = [];
+    byRank[rank].push(team);
+  });
+
+  return Object.keys(byRank)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .map(rank =>
+      byRank[rank].sort((a, b) =>
+        String(a.team_id).localeCompare(String(b.team_id))
+      )
+    );
+}
+
+
+// ===============================
+// HELPER: Selezioni ordinate di lunghezza k
+// ===============================
+function orderedSelections(items, k) {
+  if (k < 0 || k > items.length) return [];
+  if (k === 0) return [[]];
+
+  const results = [];
+  const used = new Array(items.length).fill(false);
+  const path = [];
+
+  function backtrack() {
+    if (path.length === k) {
+      results.push(path.slice());
+      return;
+    }
+
+    for (let i = 0; i < items.length; i++) {
+      if (used[i]) continue;
+      used[i] = true;
+      path.push(items[i]);
+      backtrack();
+      path.pop();
+      used[i] = false;
+    }
   }
 
-  const maxRankPresent = Math.max(
-    ...Object.values(byGroup).flat().map(s => toNumber(s.rank_level, 0))
-  );
+  backtrack();
+  return results;
+}
 
-  let qualified = [];
-  let remainingSlots = slots;
 
-  for (let rank = 1; rank <= maxRankPresent && remainingSlots > 0; rank++) {
-    const candidatesAtRank = [];
+// ===============================
+// HELPER: Tutti i possibili prefissi di classifica del girone
+// coerenti con i tie su rank_level
+// ===============================
+function generateGroupPrefixes(group, maxPositions, maxPrefixesPerGroup = 5000) {
+  const blocks = buildRankBlocks(group);
+  const targetLen = Math.min(maxPositions, group.length);
+  const prefixMap = new Map();
 
-    for (const [groupId, group] of groups) {
-      const sameRank = group.filter(s => toNumber(s.rank_level, 0) === rank);
-
-      if (sameRank.length > 1) {
-        // Questo rank è ambiguo DENTRO il girone.
-        // Blocchiamo solo se questo rank ci serve davvero per completare la griglia finals.
-        console.error(
-          `❌ Intra-group ambiguity at rank ${rank} in group ${groupId}: ${sameRank.map(t => t.team_name).join(', ')}`
-        );
-        throw new Error(`E_INTRA_GROUP_TIE_AT_USED_RANK_${rank}`);
-      }
-
-      if (sameRank.length === 1) {
-        candidatesAtRank.push(sameRank[0]);
-      }
+  function recurse(blockIndex, prefix) {
+    if (prefixMap.size > maxPrefixesPerGroup) {
+      throw new Error('E_TOO_MANY_TIE_PERMUTATIONS_IN_GROUP');
     }
 
-    if (candidatesAtRank.length === 0) {
+    if (prefix.length >= targetLen || blockIndex >= blocks.length) {
+      const finalPrefix = prefix.slice(0, targetLen);
+      const key = finalPrefix.map(t => toStringSafe(t.team_id)).join('|');
+      if (!prefixMap.has(key)) {
+        prefixMap.set(key, finalPrefix);
+      }
+      return;
+    }
+
+    const block = blocks[blockIndex];
+    const need = targetLen - prefix.length;
+    const take = Math.min(block.length, need);
+
+    const selections = orderedSelections(block, take);
+    for (const sel of selections) {
+      recurse(blockIndex + 1, prefix.concat(sel));
+    }
+  }
+
+  recurse(0, []);
+
+  if (prefixMap.size === 0) {
+    throw new Error('E_EMPTY_GROUP_PREFIXES');
+  }
+
+  return Array.from(prefixMap.values());
+}
+
+
+// ===============================
+// HELPER: Dato un ordine risolto per ogni girone,
+// applica la regola reale di qualificazione "per layer"
+// (posizione 1 di ogni girone, poi posizione 2, ecc.)
+// ===============================
+function qualifyFromResolvedGroupOrders(groupOrders, slots, standingsIsSetBased, standingsIsChess) {
+  const qualified = [];
+  let remaining = slots;
+
+  for (let position = 0; remaining > 0; position++) {
+    const candidates = groupOrders
+      .map(order => order[position])
+      .filter(Boolean);
+
+    if (candidates.length === 0) {
+      break;
+    }
+
+    if (candidates.length <= remaining) {
+      qualified.push(...candidates);
+      remaining -= candidates.length;
       continue;
     }
 
-    // Se tutto questo rank entra, non serve nessun controllo cross-group:
-    // stiamo prendendo tutti i rank-r disponibili.
-    if (candidatesAtRank.length <= remainingSlots) {
-      qualified = qualified.concat(candidatesAtRank);
-      remainingSlots -= candidatesAtRank.length;
-      continue;
-    }
-
-    // Qui invece questo rank entra solo in parte.
-    // Serve ordinare e verificare se il cutoff è ambiguo.
-    const sorted = sortCrossGroup(candidatesAtRank, standingsIsSetBased, standingsIsChess);
-    const A = sorted[remainingSlots - 1];
-    const B = sorted[remainingSlots];
+    const sorted = sortCrossGroup(candidates, standingsIsSetBased, standingsIsChess);
+    const A = sorted[remaining - 1];
+    const B = sorted[remaining];
 
     if (areEquivalentForCrossGroup(A, B, standingsIsSetBased, standingsIsChess)) {
       console.error(
-        `❌ Cross-group ambiguity at rank ${rank}, cutoff position ${remainingSlots}: ${A.team_name} vs ${B.team_name}`
+        `❌ Cross-group ambiguity at position ${position + 1}, cutoff ${remaining}: ${A.team_name} vs ${B.team_name}`
       );
-      throw new Error(`E_CROSS_GROUP_TIE_AT_RANK_${rank}`);
+      throw new Error(`E_CROSS_GROUP_TIE_AT_POSITION_${position + 1}`);
     }
 
-    qualified = qualified.concat(sorted.slice(0, remainingSlots));
-    remainingSlots = 0;
+    qualified.push(...sorted.slice(0, remaining));
+    remaining = 0;
   }
 
   if (qualified.length !== slots) {
     throw new Error(`E_NOT_ENOUGH_TEAMS qualified=${qualified.length} slots=${slots}`);
   }
 
-  const qualifiedIds = qualified.map(q => toStringSafe(q.team_id)).filter(Boolean);
+  return qualified;
+}
 
+
+// ===============================
+// HELPER: Ordine finale deterministico dei qualificati
+// per costruire il bracket senza dipendere da una permutazione casuale dei tie
+// ===============================
+function sortQualifiedForBracket(qualified, standingsIsSetBased, standingsIsChess) {
+  const byRank = {};
+
+  qualified.forEach(team => {
+    const rank = toNumber(team.rank_level, 999999);
+    if (!byRank[rank]) byRank[rank] = [];
+    byRank[rank].push(team);
+  });
+
+  const ordered = [];
+  const ranks = Object.keys(byRank).map(Number).sort((a, b) => a - b);
+
+  for (const rank of ranks) {
+    const teamsAtRank = byRank[rank];
+    const sorted = sortCrossGroup(teamsAtRank, standingsIsSetBased, standingsIsChess);
+    ordered.push(...sorted);
+  }
+
+  return ordered;
+}
+
+
+// ===============================
+// HELPER: Seleziona qualificati in modo robusto
+// Idea:
+// - genera tutte le risoluzioni locali dei tie nei soli posti rilevanti
+// - applica la logica reale di qualificazione
+// - se i qualificati possibili non sono univoci, blocca
+// ===============================
+function selectQualifiedTeams(byGroup, slots, standingsIsSetBased, standingsIsChess) {
+  const groups = Object.entries(byGroup)
+    .sort(([a], [b]) => String(a).localeCompare(String(b)));
+
+  if (groups.length === 0) {
+    throw new Error('E_NO_GROUPS');
+  }
+
+  const maxPositionsPerGroup = slots;
+  const maxTotalCombinations = 50000;
+
+  const groupPrefixOptions = groups.map(([groupId, group]) => ({
+    groupId,
+    options: generateGroupPrefixes(group, maxPositionsPerGroup),
+  }));
+
+  let exploredCombinations = 0;
+  const distinctQualifiedSetKeys = new Set();
+  let canonicalQualified = null;
+
+  function recurse(groupIndex, chosenOrders) {
+    if (groupIndex === groupPrefixOptions.length) {
+      exploredCombinations++;
+      if (exploredCombinations > maxTotalCombinations) {
+        throw new Error('E_TOO_MANY_TIE_SCENARIOS');
+      }
+
+      const qualified = qualifyFromResolvedGroupOrders(
+        chosenOrders,
+        slots,
+        standingsIsSetBased,
+        standingsIsChess
+      );
+
+      const setKey = qualified
+        .map(t => toStringSafe(t.team_id))
+        .sort()
+        .join('|');
+
+      if (!distinctQualifiedSetKeys.has(setKey)) {
+        distinctQualifiedSetKeys.add(setKey);
+
+        if (distinctQualifiedSetKeys.size > 1) {
+          console.error('❌ Ambiguous qualifiers across tie resolutions');
+          throw new Error('E_AMBIGUOUS_QUALIFIERS');
+        }
+
+        canonicalQualified = qualified;
+      }
+
+      return;
+    }
+
+    const { options } = groupPrefixOptions[groupIndex];
+    for (const order of options) {
+      recurse(groupIndex + 1, chosenOrders.concat([order]));
+    }
+  }
+
+  recurse(0, []);
+
+  if (!canonicalQualified || canonicalQualified.length !== slots) {
+    throw new Error(`E_NOT_ENOUGH_TEAMS qualified=${canonicalQualified ? canonicalQualified.length : 0} slots=${slots}`);
+  }
+
+  const qualifiedIds = canonicalQualified.map(q => toStringSafe(q.team_id)).filter(Boolean);
   if (qualifiedIds.length !== slots) {
     throw new Error('E_INVALID_QUALIFIED_TEAM_IDS');
   }
@@ -271,7 +445,7 @@ function selectQualifiedTeams(byGroup, slots, standingsIsSetBased, standingsIsCh
     throw new Error('E_DUPLICATE_QUALIFIED_TEAMS');
   }
 
-  return qualified;
+  return sortQualifiedForBracket(canonicalQualified, standingsIsSetBased, standingsIsChess);
 }
 
 
