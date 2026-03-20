@@ -1,7 +1,7 @@
 const admin = require('firebase-admin');
 const db = admin.firestore();
 
-
+const { FieldValue } = admin.firestore;
 
 // ===============================
 // HELPERS SAFE (per Firestore)
@@ -49,37 +49,42 @@ function normalizeForMatch(str) {
 // HELPER: Genera document ID sicuro per Firestore
 // ===============================
 function makeDocId(sport, name) {
-  const norm = normalizeKey(name).replace(/[^a-z0-9 _-]/g, '').replace(/\s/g, '_');
+  const norm = normalizeKey(name)
+    .replace(/[^a-z0-9 _-]/g, '')
+    .replace(/\s/g, '_');
   return `${sport}__${norm}`;
+}
+
+// ===============================
+// HELPER: Genera doc ID contributo torneo
+// ===============================
+function makeContributionDocId(tournamentId, entityDocId) {
+  return `${tournamentId}__${entityDocId}`;
 }
 
 // ===============================
 // HELPER: Determina V/P/S per team_a e team_b da un singolo match
 // ===============================
 function getMatchResult(match) {
-  // FIX BUG 2: played letto con toBool() per gestire sia boolean sia stringa "true"
   if (!toBool(match.played)) return null;
 
-  // FIX BUG 4: score_a/score_b letti con toNumberSafe che gestisce
-  // null, "null", stringhe vuote e valori non numerici
   const scoreA = toNumberSafe(match.score_a);
   const scoreB = toNumberSafe(match.score_b);
   if (scoreA === null || scoreB === null) return null;
 
   if (match.winner_team_id) {
-    // FIX BUG 3: confronto tramite toStringSafe su entrambi i lati
-    // per evitare falsi negativi da tipi misti (string vs number)
     const winnerIsA =
       toStringSafe(match.winner_team_id) !== '' &&
       toStringSafe(match.winner_team_id) === toStringSafe(match.team_a);
+
     return {
       resultA: winnerIsA ? 'win' : 'loss',
       resultB: winnerIsA ? 'loss' : 'win',
     };
   }
 
-  if (scoreA > scoreB) return { resultA: 'win',  resultB: 'loss' };
-  if (scoreA < scoreB) return { resultA: 'loss', resultB: 'win'  };
+  if (scoreA > scoreB) return { resultA: 'win', resultB: 'loss' };
+  if (scoreA < scoreB) return { resultA: 'loss', resultB: 'win' };
   return { resultA: 'draw', resultB: 'draw' };
 }
 
@@ -108,12 +113,7 @@ function normalizeSportFromTournament(sport) {
 }
 
 // ===============================
-// HELPER: Parsa point_system "3-1-0" → { win: 3, draw: 1, loss: 0 }
-// Fallback per sport se stringa assente o malformata:
-//   calcio        → 3-1-0
-//   padel         → 2-1-0
-//   beach_volley  → 2-1-0
-//   scacchi       → 1-0.5-0
+// HELPER: Parsa point_system "3-1-0"
 // ===============================
 function parsePointSystem(raw, sport) {
   const fallbacks = {
@@ -131,7 +131,7 @@ function parsePointSystem(raw, sport) {
     console.warn(`⚠️ [RANKING] point_system malformato: "${raw}" — uso fallback per ${sport}`);
   }
 
-  return fallbacks[sport] || fallbacks['calcio'];
+  return fallbacks[sport] || fallbacks.calcio;
 }
 
 // ===============================
@@ -140,16 +140,20 @@ function parsePointSystem(raw, sport) {
 function extractPlayers(teamDoc) {
   const players = [];
   let i = 1;
+
   while (true) {
     const key = `name_player_${i}`;
     if (!(key in teamDoc)) break;
+
     const name = teamDoc[key];
     if (name && typeof name === 'string' && name.trim()) {
       players.push(name.trim());
     }
+
     i++;
     if (i > 20) break;
   }
+
   return players;
 }
 
@@ -161,14 +165,21 @@ function pct(n, tot) {
 }
 
 // ===============================
+// HELPER: Arrotonda a 2 decimali
+// ===============================
+function round2(n) {
+  return Math.round((Number(n || 0)) * 100) / 100;
+}
+
+// ===============================
 // HELPER: Entry vuota per statistiche
 // ===============================
 function emptyStats(hasDraws, isCalcio) {
   return {
-    presenze:  0,
-    vittorie:  0,
+    presenze: 0,
+    vittorie: 0,
     sconfitte: 0,
-    punti:     0,
+    punti: 0,
     ...(hasDraws && { pareggi: 0 }),
     ...(isCalcio && { gol: 0 }),
   };
@@ -179,6 +190,7 @@ function emptyStats(hasDraws, isCalcio) {
 // ===============================
 function applyResult(stats, result, pointSystem) {
   stats.presenze++;
+
   if (result === 'win') {
     stats.vittorie++;
     stats.punti += pointSystem.win;
@@ -188,6 +200,138 @@ function applyResult(stats, result, pointSystem) {
   } else {
     stats.sconfitte++;
     stats.punti += pointSystem.loss;
+  }
+}
+
+// ===============================
+// HELPER: Elenco campi numerici aggregabili
+// ===============================
+function getNumericFields(hasDraws, isCalcio) {
+  return [
+    'presenze',
+    'vittorie',
+    'sconfitte',
+    'punti',
+    ...(hasDraws ? ['pareggi'] : []),
+    ...(isCalcio ? ['gol'] : []),
+  ];
+}
+
+// ===============================
+// HELPER: Converte stats in payload "contribution"
+// ===============================
+function serializeContributionBase(stats, hasDraws, isCalcio) {
+  return {
+    presenze: round2(stats.presenze || 0),
+    vittorie: round2(stats.vittorie || 0),
+    sconfitte: round2(stats.sconfitte || 0),
+    punti: round2(stats.punti || 0),
+    ...(hasDraws && { pareggi: round2(stats.pareggi || 0) }),
+    ...(isCalcio && { gol: round2(stats.gol || 0) }),
+  };
+}
+
+// ===============================
+// HELPER: Costruisce global doc assoluto
+// ===============================
+function buildGlobalRankingDoc({
+  baseDocId,
+  sport,
+  displayNameField,
+  displayNameValue,
+  normField,
+  normValue,
+  logo,
+  totals,
+  hasDraws,
+  isCalcio,
+}) {
+  const presenze   = round2(totals.presenze || 0);
+  const vittorie   = round2(totals.vittorie || 0);
+  const sconfitte  = round2(totals.sconfitte || 0);
+  const punti      = round2(totals.punti || 0);
+  const pareggi    = round2(totals.pareggi || 0);
+  const gol        = round2(totals.gol || 0);
+
+  return {
+    ranking_id: baseDocId,
+    [displayNameField]: displayNameValue,
+    [normField]: normValue,
+    sport,
+    presenze,
+    vittorie,
+    sconfitte,
+    punti,
+    punti_per_partita: presenze > 0 ? round2(punti / presenze) : 0,
+    pct_vittorie: pct(vittorie, presenze),
+    pct_sconfitte: pct(sconfitte, presenze),
+    updated_at: FieldValue.serverTimestamp(),
+    ...(hasDraws && {
+      pareggi,
+      pct_pareggi: pct(pareggi, presenze),
+    }),
+    ...(isCalcio && {
+      gol,
+      media_gol: presenze > 0 ? round2(gol / presenze) : 0,
+    }),
+    ...(logo ? { team_logo: logo } : {}),
+  };
+}
+
+// ===============================
+// HELPER: Estrae totale numerico da ranking/contribution doc
+// ===============================
+function readNumericTotals(docData, numericFields) {
+  const totals = {};
+  for (const field of numericFields) {
+    totals[field] = round2(toNumberSafe(docData?.[field], 0) || 0);
+  }
+  return totals;
+}
+
+// ===============================
+// HELPER: Somma vettoriale oldGlobal - oldContribution + newContribution
+// ===============================
+function computeUpdatedTotals(globalTotals, oldContributionTotals, newContributionTotals, numericFields) {
+  const out = {};
+  for (const field of numericFields) {
+    const value =
+      round2(globalTotals[field] || 0) -
+      round2(oldContributionTotals[field] || 0) +
+      round2(newContributionTotals[field] || 0);
+
+    out[field] = round2(Math.max(0, value));
+  }
+  return out;
+}
+
+// ===============================
+// HELPER: chunk array
+// ===============================
+function chunkArray(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
+
+// ===============================
+// HELPER: batch commit con chunk
+// ===============================
+async function commitInChunks(ops, chunkSize = 400) {
+  const chunks = chunkArray(ops, chunkSize);
+
+  for (const chunk of chunks) {
+    const batch = db.batch();
+    for (const op of chunk) {
+      if (op.type === 'set') {
+        batch.set(op.ref, op.data, op.options || {});
+      } else if (op.type === 'delete') {
+        batch.delete(op.ref);
+      }
+    }
+    await batch.commit();
   }
 }
 
@@ -207,29 +351,30 @@ async function updateRanking(tournamentId) {
 
     const tournament = tournamentDoc.data();
 
-    // sport (safe)
-    const sport = normalizeSportFromTournament(
-      toStringSafe(tournament.sport)
-    );
-
-    const isChess    = sport === 'scacchi';
-    const isCalcio   = sport === 'calcio';
-    const hasDraws   = isCalcio || isChess;
+    const sport = normalizeSportFromTournament(toStringSafe(tournament.sport));
+    const isChess = sport === 'scacchi';
+    const isCalcio = sport === 'calcio';
+    const hasDraws = isCalcio || isChess;
     const writeTeams = !isChess;
 
-    // FIX BUG 1: il campo in Firestore si chiama point_system_gironi, non point_system
-    const rawPointSystem = toStringSafe(tournament.point_system);
+    // supporta sia point_system_gironi che point_system
+    const rawPointSystem = toStringSafe(
+      tournament.point_system_gironi,
+      toStringSafe(tournament.point_system)
+    );
 
     const pointSystem = parsePointSystem(rawPointSystem, sport);
-    console.log(`📋 [RANKING] Sport: ${sport} | pointSystem: ${JSON.stringify(pointSystem)} | writeTeams: ${writeTeams}`);
 
-    // ── 2) Leggi tutti i match giocati (gironi + finals) ─────────────────────
+    console.log(
+      `📋 [RANKING] Sport: ${sport} | pointSystem: ${JSON.stringify(pointSystem)} | writeTeams: ${writeTeams}`
+    );
+
+    // ── 2) Leggi tutti i match del torneo (anche se zero played) ────────────
     const [matchesSnap, finalsSnap] = await Promise.all([
       db.collection('matches').where('tournament_id', '==', tournamentId).get(),
       db.collection('finals').where('tournament_id', '==', tournamentId).get(),
     ]);
 
-    // FIX BUG 2: filtro con toBool invece di === true
     const allMatches = [
       ...matchesSnap.docs.map(d => d.data()),
       ...finalsSnap.docs.map(d => d.data()),
@@ -237,12 +382,7 @@ async function updateRanking(tournamentId) {
 
     console.log(`📊 [RANKING] Played matches: ${allMatches.length}`);
 
-    if (allMatches.length === 0) {
-      console.log(`ℹ️ [RANKING] No played matches yet — nothing to update`);
-      return;
-    }
-
-    // ── 3) Leggi teams del torneo (per logo + giocatori) ─────────────────────
+    // ── 3) Leggi teams del torneo (per logo + giocatori) ────────────────────
     const teamsSnap = await db.collection('teams')
       .where('tournament_id', '==', tournamentId)
       .get();
@@ -253,8 +393,8 @@ async function updateRanking(tournamentId) {
       teamsMap[data.team_id] = data;
     });
 
-    // ── 4) Strutture di aggregazione ─────────────────────────────────────────
-    const teamStats   = {};
+    // ── 4) Ricalcola il SOLO contributo del torneo corrente ──────────────────
+    const teamStats = {};
     const playerStats = {};
     const scorerMatchKeyToPlayerNorm = {};
 
@@ -263,9 +403,9 @@ async function updateRanking(tournamentId) {
       if (!teamStats[norm]) {
         teamStats[norm] = {
           ...emptyStats(hasDraws, isCalcio),
-          team_name:      teamName,
+          team_name: teamName,
           team_name_norm: norm,
-          team_logo:      teamsMap[teamId]?.team_logo || null,
+          team_logo: teamsMap[teamId]?.team_logo || null,
         };
       } else {
         const newLogo = teamsMap[teamId]?.team_logo || null;
@@ -277,14 +417,14 @@ async function updateRanking(tournamentId) {
     }
 
     function ensurePlayer(playerName) {
-      const norm     = normalizeKey(playerName);
+      const norm = normalizeKey(playerName);
       const matchKey = normalizeForMatch(playerName);
       if (!norm) return null;
 
       if (!playerStats[norm]) {
         playerStats[norm] = {
           ...emptyStats(hasDraws, isCalcio),
-          player_name:      playerName,
+          player_name: playerName,
           player_name_norm: norm,
         };
       }
@@ -293,37 +433,35 @@ async function updateRanking(tournamentId) {
       return norm;
     }
 
-    // ── 5) Processa ogni match ───────────────────────────────────────────────
     for (const match of allMatches) {
       const result = getMatchResult(match);
       if (!result) continue;
 
       const { resultA, resultB } = result;
-      const teamAId   = toStringSafe(match.team_a);
-      const teamBId   = toStringSafe(match.team_b);
+      const teamAId = toStringSafe(match.team_a);
+      const teamBId = toStringSafe(match.team_b);
       const teamAName = toStringSafe(match.team_a_name) || teamAId;
       const teamBName = toStringSafe(match.team_b_name) || teamBId;
 
       if (!teamAId || !teamBId) continue;
 
-      // ── 5a) Ranking teams ──────────────────────────────────────────────────
       if (writeTeams) {
         const normA = ensureTeam(teamAId, teamAName);
         const normB = ensureTeam(teamBId, teamBName);
+
         applyResult(teamStats[normA], resultA, pointSystem);
         applyResult(teamStats[normB], resultB, pointSystem);
 
         if (isCalcio) {
-          // FIX BUG 4: toNumberSafe per gestire score come stringa o null/"null"
-          teamStats[normA].gol += toNumberSafe(match.score_a) ?? 0;
-          teamStats[normB].gol += toNumberSafe(match.score_b) ?? 0;
+          teamStats[normA].gol += toNumberSafe(match.score_a, 0) || 0;
+          teamStats[normB].gol += toNumberSafe(match.score_b, 0) || 0;
         }
       }
 
-      // ── 5b) Ranking players ────────────────────────────────────────────────
       if (isChess) {
         const normA = ensurePlayer(teamAName);
         const normB = ensurePlayer(teamBName);
+
         if (normA) applyResult(playerStats[normA], resultA, pointSystem);
         if (normB) applyResult(playerStats[normB], resultB, pointSystem);
 
@@ -344,7 +482,6 @@ async function updateRanking(tournamentId) {
           }
         }
 
-        // ── 5c) Gol giocatori (solo calcio) ───────────────────────────────────
         if (isCalcio) {
           for (const matchKey of parseScorers(match.scorers_a)) {
             const playerNorm = scorerMatchKeyToPlayerNorm[matchKey];
@@ -354,6 +491,7 @@ async function updateRanking(tournamentId) {
               console.warn(`⚠️ [RANKING] Scorer not matched: "${matchKey}" in match ${match.match_id}`);
             }
           }
+
           for (const matchKey of parseScorers(match.scorers_b)) {
             const playerNorm = scorerMatchKeyToPlayerNorm[matchKey];
             if (playerNorm && playerStats[playerNorm]) {
@@ -366,100 +504,295 @@ async function updateRanking(tournamentId) {
       }
     }
 
-    // ── 6) Leggi loghi esistenti su Firestore (keep-if-null logic) ───────────
-    const teamDocIds = Object.values(teamStats).map(s => makeDocId(sport, s.team_name_norm));
-
-    const existingTeamLogos = {};
-    if (writeTeams && teamDocIds.length > 0) {
-      const refs = teamDocIds.map(id => db.collection('ranking_teams').doc(id));
-      const docs = await db.getAll(...refs);
-      docs.forEach(doc => {
-        if (doc.exists) {
-          existingTeamLogos[doc.id] = doc.data().team_logo || null;
-        }
-      });
-    }
-
-    // ── 7) Scrivi su Firestore ───────────────────────────────────────────────
-    const batch = db.batch();
-    let writeCount = 0;
-
+    // ── 5) Costruisci nuove contribution map ────────────────────────────────
+    const newTeamContributions = {};
     if (writeTeams) {
       for (const [, stats] of Object.entries(teamStats)) {
-        const docId        = makeDocId(sport, stats.team_name_norm);
-        const ref          = db.collection('ranking_teams').doc(docId);
-        const resolvedLogo = stats.team_logo || existingTeamLogos[docId] || null;
+        const entityDocId = makeDocId(sport, stats.team_name_norm);
+        const contributionDocId = makeContributionDocId(tournamentId, entityDocId);
 
-        const docData = {
-          ranking_id:          docId,
-          team_name:           stats.team_name,
-          team_name_norm:      stats.team_name_norm,
+        newTeamContributions[contributionDocId] = {
+          contribution_id: contributionDocId,
+          tournament_id: tournamentId,
+          entity_doc_id: entityDocId,
           sport,
-          presenze:            stats.presenze,
-          vittorie:            stats.vittorie,
-          sconfitte:           stats.sconfitte,
-          punti:               stats.punti,
-          punti_per_partita:   stats.presenze > 0
-            ? Math.round((stats.punti / stats.presenze) * 100) / 100
-            : 0,
-          pct_vittorie:        pct(stats.vittorie,  stats.presenze),
-          pct_sconfitte:       pct(stats.sconfitte, stats.presenze),
-          updated_at:          admin.firestore.FieldValue.serverTimestamp(),
-          ...(hasDraws && {
-            pareggi:     stats.pareggi,
-            pct_pareggi: pct(stats.pareggi, stats.presenze),
-          }),
-          ...(isCalcio && {
-            gol:       stats.gol,
-            media_gol: stats.presenze > 0
-              ? Math.round((stats.gol / stats.presenze) * 100) / 100
-              : 0,
-          }),
-          ...(resolvedLogo !== null && { team_logo: resolvedLogo }),
+          team_name: stats.team_name,
+          team_name_norm: stats.team_name_norm,
+          team_logo: stats.team_logo || null,
+          ...serializeContributionBase(stats, hasDraws, isCalcio),
+          updated_at: FieldValue.serverTimestamp(),
         };
-
-        batch.set(ref, docData, { merge: true });
-        writeCount++;
       }
     }
 
+    const newPlayerContributions = {};
     for (const [, stats] of Object.entries(playerStats)) {
-      const docId = makeDocId(sport, stats.player_name_norm);
-      const ref   = db.collection('ranking_players').doc(docId);
+      const entityDocId = makeDocId(sport, stats.player_name_norm);
+      const contributionDocId = makeContributionDocId(tournamentId, entityDocId);
 
-      const docData = {
-        ranking_id:          docId,
-        player_name:         stats.player_name,
-        player_name_norm:    stats.player_name_norm,
+      newPlayerContributions[contributionDocId] = {
+        contribution_id: contributionDocId,
+        tournament_id: tournamentId,
+        entity_doc_id: entityDocId,
         sport,
-        presenze:            stats.presenze,
-        vittorie:            stats.vittorie,
-        sconfitte:           stats.sconfitte,
-        punti:               stats.punti,
-        punti_per_partita:   stats.presenze > 0
-          ? Math.round((stats.punti / stats.presenze) * 100) / 100
-          : 0,
-        pct_vittorie:        pct(stats.vittorie,  stats.presenze),
-        pct_sconfitte:       pct(stats.sconfitte, stats.presenze),
-        updated_at:          admin.firestore.FieldValue.serverTimestamp(),
-        ...(hasDraws && {
-          pareggi:     stats.pareggi,
-          pct_pareggi: pct(stats.pareggi, stats.presenze),
-        }),
-        ...(isCalcio && {
-          gol:       stats.gol,
-          media_gol: stats.presenze > 0
-            ? Math.round((stats.gol / stats.presenze) * 100) / 100
-            : 0,
-        }),
+        player_name: stats.player_name,
+        player_name_norm: stats.player_name_norm,
+        ...serializeContributionBase(stats, hasDraws, isCalcio),
+        updated_at: FieldValue.serverTimestamp(),
       };
-
-      batch.set(ref, docData, { merge: true });
-      writeCount++;
     }
 
-    await batch.commit();
-    console.log(`✅ [RANKING] Updated ${writeCount} docs for tournament ${tournamentId} (sport: ${sport})`);
+    // ── 6) Leggi contribution docs precedenti di questo torneo ───────────────
+    const [oldTeamContribSnap, oldPlayerContribSnap] = await Promise.all([
+      writeTeams
+        ? db.collection('ranking_team_contributions')
+            .where('tournament_id', '==', tournamentId)
+            .get()
+        : Promise.resolve({ docs: [] }),
+      db.collection('ranking_player_contributions')
+        .where('tournament_id', '==', tournamentId)
+        .get(),
+    ]);
+
+    const oldTeamContributions = {};
+    oldTeamContribSnap.docs.forEach(doc => {
+      oldTeamContributions[doc.id] = doc.data();
+    });
+
+    const oldPlayerContributions = {};
+    oldPlayerContribSnap.docs.forEach(doc => {
+      oldPlayerContributions[doc.id] = doc.data();
+    });
+
+    // ── 7) Determina entità toccate ──────────────────────────────────────────
+    const affectedTeamEntityIds = new Set();
+    if (writeTeams) {
+      for (const doc of Object.values(oldTeamContributions)) {
+        affectedTeamEntityIds.add(toStringSafe(doc.entity_doc_id));
+      }
+      for (const doc of Object.values(newTeamContributions)) {
+        affectedTeamEntityIds.add(toStringSafe(doc.entity_doc_id));
+      }
+    }
+
+    const affectedPlayerEntityIds = new Set();
+    for (const doc of Object.values(oldPlayerContributions)) {
+      affectedPlayerEntityIds.add(toStringSafe(doc.entity_doc_id));
+    }
+    for (const doc of Object.values(newPlayerContributions)) {
+      affectedPlayerEntityIds.add(toStringSafe(doc.entity_doc_id));
+    }
+
+    // ── 8) Leggi ranking globali attuali delle entità toccate ────────────────
+    async function getDocsMap(collectionName, ids) {
+      const out = {};
+      if (!ids.length) return out;
+
+      const refs = ids.map(id => db.collection(collectionName).doc(id));
+      const docs = await db.getAll(...refs);
+
+      docs.forEach(doc => {
+        out[doc.id] = doc.exists ? doc.data() : null;
+      });
+
+      return out;
+    }
+
+    const [currentGlobalTeamsMap, currentGlobalPlayersMap] = await Promise.all([
+      writeTeams
+        ? getDocsMap('ranking_teams', [...affectedTeamEntityIds])
+        : Promise.resolve({}),
+      getDocsMap('ranking_players', [...affectedPlayerEntityIds]),
+    ]);
+
+    // ── 9) Prepara operazioni batch ──────────────────────────────────────────
+    const ops = [];
+    const numericFields = getNumericFields(hasDraws, isCalcio);
+
+    // ===== TEAMS =====
+    if (writeTeams) {
+      for (const entityDocId of affectedTeamEntityIds) {
+        const currentGlobal = currentGlobalTeamsMap[entityDocId] || null;
+
+        const oldContrib = Object.values(oldTeamContributions).find(
+          d => toStringSafe(d.entity_doc_id) === entityDocId
+        ) || null;
+
+        const newContrib = Object.values(newTeamContributions).find(
+          d => toStringSafe(d.entity_doc_id) === entityDocId
+        ) || null;
+
+        const globalTotals = readNumericTotals(currentGlobal, numericFields);
+        const oldTotals = readNumericTotals(oldContrib, numericFields);
+        const newTotals = readNumericTotals(newContrib, numericFields);
+
+        const finalTotals = computeUpdatedTotals(
+          globalTotals,
+          oldTotals,
+          newTotals,
+          numericFields
+        );
+
+        const allZero = numericFields.every(f => round2(finalTotals[f] || 0) === 0);
+
+        const fallbackTeamName =
+          toStringSafe(newContrib?.team_name) ||
+          toStringSafe(oldContrib?.team_name) ||
+          toStringSafe(currentGlobal?.team_name);
+
+        const fallbackTeamNameNorm =
+          toStringSafe(newContrib?.team_name_norm) ||
+          toStringSafe(oldContrib?.team_name_norm) ||
+          toStringSafe(currentGlobal?.team_name_norm);
+
+        const resolvedLogo =
+          toStringSafe(newContrib?.team_logo) ||
+          toStringSafe(currentGlobal?.team_logo) ||
+          toStringSafe(oldContrib?.team_logo) ||
+          null;
+
+        const ref = db.collection('ranking_teams').doc(entityDocId);
+
+        if (allZero) {
+          ops.push({ type: 'delete', ref });
+        } else {
+          const docData = buildGlobalRankingDoc({
+            baseDocId: entityDocId,
+            sport,
+            displayNameField: 'team_name',
+            displayNameValue: fallbackTeamName,
+            normField: 'team_name_norm',
+            normValue: fallbackTeamNameNorm,
+            logo: resolvedLogo,
+            totals: finalTotals,
+            hasDraws,
+            isCalcio,
+          });
+
+          ops.push({
+            type: 'set',
+            ref,
+            data: docData,
+            options: { merge: true },
+          });
+        }
+      }
+
+      // write / delete contribution docs
+      const oldIds = new Set(Object.keys(oldTeamContributions));
+      const newIds = new Set(Object.keys(newTeamContributions));
+
+      for (const [docId, data] of Object.entries(newTeamContributions)) {
+        ops.push({
+          type: 'set',
+          ref: db.collection('ranking_team_contributions').doc(docId),
+          data,
+          options: { merge: true },
+        });
+      }
+
+      for (const oldId of oldIds) {
+        if (!newIds.has(oldId)) {
+          ops.push({
+            type: 'delete',
+            ref: db.collection('ranking_team_contributions').doc(oldId),
+          });
+        }
+      }
+    }
+
+    // ===== PLAYERS =====
+    for (const entityDocId of affectedPlayerEntityIds) {
+      const currentGlobal = currentGlobalPlayersMap[entityDocId] || null;
+
+      const oldContrib = Object.values(oldPlayerContributions).find(
+        d => toStringSafe(d.entity_doc_id) === entityDocId
+      ) || null;
+
+      const newContrib = Object.values(newPlayerContributions).find(
+        d => toStringSafe(d.entity_doc_id) === entityDocId
+      ) || null;
+
+      const globalTotals = readNumericTotals(currentGlobal, numericFields);
+      const oldTotals = readNumericTotals(oldContrib, numericFields);
+      const newTotals = readNumericTotals(newContrib, numericFields);
+
+      const finalTotals = computeUpdatedTotals(
+        globalTotals,
+        oldTotals,
+        newTotals,
+        numericFields
+      );
+
+      const allZero = numericFields.every(f => round2(finalTotals[f] || 0) === 0);
+
+      const fallbackPlayerName =
+        toStringSafe(newContrib?.player_name) ||
+        toStringSafe(oldContrib?.player_name) ||
+        toStringSafe(currentGlobal?.player_name);
+
+      const fallbackPlayerNameNorm =
+        toStringSafe(newContrib?.player_name_norm) ||
+        toStringSafe(oldContrib?.player_name_norm) ||
+        toStringSafe(currentGlobal?.player_name_norm);
+
+      const ref = db.collection('ranking_players').doc(entityDocId);
+
+      if (allZero) {
+        ops.push({ type: 'delete', ref });
+      } else {
+        const docData = buildGlobalRankingDoc({
+          baseDocId: entityDocId,
+          sport,
+          displayNameField: 'player_name',
+          displayNameValue: fallbackPlayerName,
+          normField: 'player_name_norm',
+          normValue: fallbackPlayerNameNorm,
+          logo: null,
+          totals: finalTotals,
+          hasDraws,
+          isCalcio,
+        });
+
+        ops.push({
+          type: 'set',
+          ref,
+          data: docData,
+          options: { merge: true },
+        });
+      }
+    }
+
+    // write / delete player contribution docs
+    {
+      const oldIds = new Set(Object.keys(oldPlayerContributions));
+      const newIds = new Set(Object.keys(newPlayerContributions));
+
+      for (const [docId, data] of Object.entries(newPlayerContributions)) {
+        ops.push({
+          type: 'set',
+          ref: db.collection('ranking_player_contributions').doc(docId),
+          data,
+          options: { merge: true },
+        });
+      }
+
+      for (const oldId of oldIds) {
+        if (!newIds.has(oldId)) {
+          ops.push({
+            type: 'delete',
+            ref: db.collection('ranking_player_contributions').doc(oldId),
+          });
+        }
+      }
+    }
+
+    // ── 10) Commit ───────────────────────────────────────────────────────────
+    await commitInChunks(ops, 350);
+
+    console.log(
+      `✅ [RANKING] Updated rankings incrementally for tournament ${tournamentId} (sport: ${sport}) | ops: ${ops.length}`
+    );
 
   } catch (error) {
     console.error('❌ [RANKING] updateRanking failed:', error);
