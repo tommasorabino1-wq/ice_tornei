@@ -41,7 +41,10 @@ function formatHasFinals(formatType) {
 // ===============================
 // HELPER: Controlla parità intra-girone nelle standings
 // ===============================
-function checkIntraGroupTies(byGroup, standingsIsSetBased) {
+function checkIntraGroupTies(byGroup, slots, standingsIsSetBased) {
+  const numGroups = Object.keys(byGroup).length;
+  const maxRelevantRank = Math.ceil(slots / numGroups) + 1;
+
   for (const [groupId, group] of Object.entries(byGroup)) {
     const byRank = {};
     group.forEach(s => {
@@ -50,6 +53,7 @@ function checkIntraGroupTies(byGroup, standingsIsSetBased) {
       byRank[rank].push(s);
     });
     for (const [rank, teams] of Object.entries(byRank)) {
+      if (Number(rank) > maxRelevantRank) continue;
       if (teams.length > 1) {
         console.error(`❌ Tie at rank ${rank} in group ${groupId}: ${teams.map(t => t.team_name).join(', ')}`);
         throw new Error('E6');
@@ -269,7 +273,7 @@ async function generateFinalsIfReady(tournamentId) {
       byGroup[s.group_id].push(s);
     });
 
-    checkIntraGroupTies(byGroup, standingsIsSetBased);
+    checkIntraGroupTies(byGroup, slots, standingsIsSetBased);
 
     const slots = toNumber(tournament.teams_in_final, 0);
     if (!slots || slots <= 0) throw new Error('E_INVALID_SLOTS');
