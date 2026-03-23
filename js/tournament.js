@@ -1033,10 +1033,8 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
 // 9d. BUILD AWARDS RULE (REGOLA 3)
 // ===============================
 function buildAwardsRule(tournament, ruleNumber) {
-  // FIX BUG 1: toBool per award
   const hasAward   = toBool(tournament.award);
   const awardPerc  = String(tournament.award_amount_perc || "NA");
-  // FIX BUG 4: toNum per price e teams_max
   const price      = toNum(tournament.price, 0);
   const teamsMax   = toNum(tournament.teams_max, 0);
   const mvpAward   = String(tournament.mvp_award || "none").toLowerCase();
@@ -1068,6 +1066,10 @@ function buildAwardsRule(tournament, ruleNumber) {
     guaranteeText = `I premi simbolici saranno consegnati a ${entityWinnersGeneric} al termine del torneo.`;
   }
 
+  // =====================================================
+  // MVP — se "none" non mostrare nulla
+  // =====================================================
+
   let mvpAwardText = "";
   if (mvpAward !== "none") {
     const mvpPrizes = [];
@@ -1081,11 +1083,7 @@ function buildAwardsRule(tournament, ruleNumber) {
         ? mvpPrizes[0]
         : mvpPrizes.slice(0, -1).join(", ") + " e " + mvpPrizes[mvpPrizes.length - 1];
       mvpAwardText = `Saranno inoltre assegnati premi individuali per: ${prizesList}.`;
-    } else {
-      mvpAwardText = `Non sono previsti premi individuali per questo torneo.`;
     }
-  } else {
-    mvpAwardText = `Non sono previsti premi individuali per questo torneo.`;
   }
 
   return `
@@ -1096,13 +1094,12 @@ function buildAwardsRule(tournament, ruleNumber) {
         <ul>
           <li><strong>Montepremi:</strong> ${mainAwardText}</li>
           <li><strong>Garanzia:</strong> ${guaranteeText}</li>
-          <li><strong>Premi individuali:</strong> ${mvpAwardText}</li>
+          ${mvpAwardText ? `<li><strong>Premi individuali:</strong> ${mvpAwardText}</li>` : ''}
         </ul>
       </div>
     </div>
   `;
 }
-
 
 
 
