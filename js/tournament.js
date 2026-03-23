@@ -2151,12 +2151,11 @@ function configureFormSteps(hasExtraFields) {
     });
     totalSteps = 2;
     currentStep = 1;
-    updateStepUI();
+    updateStepUI(true); // ← solo inizializzazione: niente scroll
     return;
   }
 
   if (hasExtraFields) {
-    // STEP 2 = Preferenze
     step2Indicator.style.display = "";
     step2Indicator.dataset.step = "2";
 
@@ -2172,14 +2171,12 @@ function configureFormSteps(hasExtraFields) {
 
     totalSteps = 3;
   } else {
-    // Nascondi davvero lo step "Preferenze"
     step2Indicator.style.display = "none";
     step2Indicator.dataset.step = "hidden";
 
     step2Panel.style.display = "none";
     step2Panel.dataset.step = "hidden";
 
-    // Lo step conferma diventa il nuovo step 2
     step3Indicator.style.display = "";
     step3Indicator.dataset.step = "2";
     step3Indicator.querySelector('.step-number').textContent = "2";
@@ -2191,7 +2188,7 @@ function configureFormSteps(hasExtraFields) {
   }
 
   currentStep = 1;
-  updateStepUI();
+  updateStepUI(true); // ← solo inizializzazione: niente scroll
 }
 
 
@@ -2820,17 +2817,14 @@ const progressFill = document.querySelector(".form-progress-fill");
 const nextBtn = document.querySelector(".step-next");
 const prevBtn = document.querySelector(".step-prev");
 
-function updateStepUI() {
-  // Nascondi tutti i pannelli
+function updateStepUI(skipScroll = false) {
   panels.forEach(panel => {
     panel.classList.remove("active");
   });
 
-  // Mostra il pannello corrente
   const activePanel = document.querySelector(`.form-step-panel[data-step="${currentStep}"]`);
   if (activePanel) activePanel.classList.add("active");
 
-  // Aggiorna indicatori step
   steps.forEach(step => {
     step.classList.remove("active");
   });
@@ -2838,24 +2832,21 @@ function updateStepUI() {
   const activeStep = document.querySelector(`.form-step[data-step="${currentStep}"]`);
   if (activeStep) activeStep.classList.add("active");
 
-  // Progress bar — guard su totalSteps === 1 per evitare divisione per zero
   if (totalSteps > 1) {
     progressFill.style.width = ((currentStep - 1) / (totalSteps - 1)) * 100 + "%";
   }
 
-  // Pulsante indietro
   prevBtn.style.visibility = currentStep === 1 ? "hidden" : "visible";
-
-  // Pulsante avanti
   nextBtn.style.display = currentStep === totalSteps ? "none" : "inline-flex";
 
-  // Scroll — solo se il form è visibile nel DOM
-  const formEl = document.querySelector("#registration-form");
-  if (formEl && formEl.offsetParent !== null) {
-    window.scrollTo({
-      top: formEl.offsetTop - 200,
-      behavior: "smooth"
-    });
+  if (!skipScroll) {
+    const formEl = document.querySelector("#registration-form");
+    if (formEl && formEl.offsetParent !== null) {
+      window.scrollTo({
+        top: formEl.offsetTop - 200,
+        behavior: "smooth"
+      });
+    }
   }
 }
 
