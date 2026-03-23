@@ -805,9 +805,9 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
 
   // --- Aperitivo ---
   const aperitivoMap = {
-    compreso_gironi:        `<p>La quota include un <strong>aperitivo</strong> per le partite della <strong>fase a gironi</strong>.</p>`,
-    compreso_finals:        `<p>La quota include un <strong>aperitivo</strong> per le partite delle <strong>fasi finali</strong>.</p>`,
-    compreso_gironi_finals: `<p>La quota include un <strong>aperitivo</strong> per tutte le partite del torneo.</p>`,
+    compreso_gironi:        `<p>La quota include un <strong>aperitivo</strong> durante le partite della <strong>fase a gironi</strong>.</p>`,
+    compreso_finals:        `<p>La quota include un <strong>aperitivo</strong> durante le partite delle <strong>fasi finali</strong>.</p>`,
+    compreso_gironi_finals: `<p>La quota include un <strong>aperitivo</strong> che potrà essere consumato prima, dopo o durante il torneo.</p>`,
   };
   const aperitivoText = aperitivoMap[aperitivoPrice] || null;
 
