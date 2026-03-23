@@ -489,15 +489,13 @@ function buildParticipantsInfoText(t) {
 // 7d. BUILD PRICE INFO TEXT
 // ===============================
 function buildPriceInfoText(t, isIndividual = false) {
-  // FIX BUG 4: toNum invece di || 0 per gestire price = 0
-  const price    = toNum(t.price, 0);
-  const perLabel = isIndividual ? 'a giocatore' : 'a squadra';
-
-  const courtPrice   = String(t.court_price   || "non_compreso").toLowerCase().trim();
-  const refereePrice = String(t.referee_price || "na").toLowerCase().trim();
+  const price          = toNum(t.price, 0);
+  const perLabel       = isIndividual ? 'a giocatore' : 'a squadra';
+  const courtPrice     = String(t.court_price     || "non_compreso").toLowerCase().trim();
+  const refereePrice   = String(t.referee_price   || "na").toLowerCase().trim();
+  const aperitivoPrice = String(t.aperitivo_price || "na").toLowerCase().trim();
 
   let courtText = "";
-
   switch (courtPrice) {
     case "compreso_gironi_finals":
       courtText = "Campi inclusi";
@@ -509,7 +507,7 @@ function buildPriceInfoText(t, isIndividual = false) {
       courtText = "Campi inclusi solo per la fase finale";
       break;
     case "na":
-      courtText = ""; // FIX BUG 6: scacchi/sport senza campo → nessun messaggio
+      courtText = "";
       break;
     case "non_compreso":
     default:
@@ -517,7 +515,6 @@ function buildPriceInfoText(t, isIndividual = false) {
   }
 
   let refereeText = "";
-
   if (refereePrice === "na") {
     refereeText = "";
   } else if (refereePrice === "non_compreso") {
@@ -526,7 +523,16 @@ function buildPriceInfoText(t, isIndividual = false) {
     refereeText = "arbitro incluso";
   }
 
-  const parts    = [courtText, refereeText].filter(Boolean);
+  let aperitivoText = "";
+  if (aperitivoPrice === "compreso_gironi_finals") {
+    aperitivoText = "aperitivo incluso";
+  } else if (aperitivoPrice === "compreso_gironi") {
+    aperitivoText = "aperitivo incluso (fase a gironi)";
+  } else if (aperitivoPrice === "compreso_finals") {
+    aperitivoText = "aperitivo incluso (fase finale)";
+  }
+
+  const parts    = [courtText, refereeText, aperitivoText].filter(Boolean);
   const infoText = parts.length > 0 ? ` · ${parts.join(", ")}` : "";
   return `€${price} ${perLabel}${infoText}`;
 }
@@ -784,11 +790,11 @@ function renderSpecificCourtRule(tournament) {
 // 9b. BUILD PRICE/COURT/REFEREE RULE (REGOLA 1)
 // ===============================
 function buildPriceCourtRefereeRule(tournament, ruleNumber) {
-  // FIX BUG 4: toNum per price
-  const price        = toNum(tournament.price, 0);
-  const courtPrice   = String(tournament.court_price   || "non_compreso").toLowerCase().trim();
-  const refereePrice = String(tournament.referee_price || "NA").toLowerCase().trim();
-  const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
+  const price          = toNum(tournament.price, 0);
+  const courtPrice     = String(tournament.court_price     || "non_compreso").toLowerCase().trim();
+  const refereePrice   = String(tournament.referee_price   || "NA").toLowerCase().trim();
+  const aperitivoPrice = String(tournament.aperitivo_price || "NA").toLowerCase().trim();
+  const isIndividual   = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
 
   const perLabel  = isIndividual ? 'a giocatore' : 'a squadra';
   let introText = `
@@ -797,12 +803,21 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
     </p>
   `;
 
+  // --- Aperitivo ---
+  const aperitivoMap = {
+    compreso_gironi:        `<p>La quota include un <strong>aperitivo</strong> per le partite della <strong>fase a gironi</strong>.</p>`,
+    compreso_finals:        `<p>La quota include un <strong>aperitivo</strong> per le partite delle <strong>fasi finali</strong>.</p>`,
+    compreso_gironi_finals: `<p>La quota include un <strong>aperitivo</strong> per tutte le partite del torneo.</p>`,
+  };
+  const aperitivoText = aperitivoMap[aperitivoPrice] || null;
+
   if (courtPrice === 'na') {
     const inclusionText = `
       <p>
         La quota include l'utilizzo della location per tutte le partite del torneo.
         Non sono previsti costi aggiuntivi per i partecipanti.
       </p>
+      ${aperitivoText || ''}
     `;
     return `
       <div class="specific-regulation-card">
@@ -893,6 +908,7 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
         <p><strong>Quota di iscrizione</strong></p>
         ${introText}
         ${inclusionText}
+        ${aperitivoText || ''}
       </div>
     </div>
   `;
@@ -1858,9 +1874,6 @@ function buildFacilitiesRule(tournament, ruleNumber) {
   const racket    = String(tournament.racket     || "na").toLowerCase();
   const sport     = String(tournament.sport      || "").toLowerCase();
   const boardCron = String(tournament.board_cron || "na").toLowerCase();
-  const foodBar   = String(tournament.food_bar   || "na").toLowerCase();
-  // FIX BUG 4: toNum per price
-  const price     = toNum(tournament.price, 0);
 
   const isRacketSport    = sport.includes("padel") || sport.includes("tennis");
   const ballTerminology  = isRacketSport ? "le palline" : "i palloni";
@@ -1875,12 +1888,6 @@ function buildFacilitiesRule(tournament, ruleNumber) {
     none: null
   };
   if (foodMap[food]) items.push(`<li><strong>Ristoro:</strong> ${foodMap[food]}</li>`);
-
-  if (foodBar !== "na" && foodBar !== "false" && !isNaN(Number(foodBar)) && price > 0) {
-    const foodBarPerc  = Number(foodBar);
-    const foodBarValue = Math.round(price * foodBarPerc / 100);
-    items.push(`<li><strong>Bar / Sala:</strong> Ogni partecipante potrà usufruire dei prodotti del bar/sala (drink, snack, ecc.) per un valore di <strong>€${foodBarValue}</strong> incluso nella quota di iscrizione.</li>`);
-  }
 
   if (palla !== "na") {
     const pallaMap = {

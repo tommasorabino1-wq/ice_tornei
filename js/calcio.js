@@ -270,18 +270,16 @@ function buildParticipantsInfoText(t) {
 }
 
 // ===============================
-// BUILD PRICE INFO
+// 7d. BUILD PRICE INFO TEXT
 // ===============================
 function buildPriceInfoText(t, isIndividual = false) {
-  // FIX BUG 2: toNum invece di || 0 per gestire price = 0 (torneo gratuito)
-  const price    = toNum(t.price, 0);
-  const perLabel = isIndividual ? "a giocatore" : "a squadra";
-
-  const courtPrice   = String(t.court_price   || "non_compreso").toLowerCase().trim();
-  const refereePrice = String(t.referee_price || "na").toLowerCase().trim();
+  const price          = toNum(t.price, 0);
+  const perLabel       = isIndividual ? 'a giocatore' : 'a squadra';
+  const courtPrice     = String(t.court_price     || "non_compreso").toLowerCase().trim();
+  const refereePrice   = String(t.referee_price   || "na").toLowerCase().trim();
+  const aperitivoPrice = String(t.aperitivo_price || "na").toLowerCase().trim();
 
   let courtText = "";
-
   switch (courtPrice) {
     case "compreso_gironi_finals":
       courtText = "Campi inclusi";
@@ -293,7 +291,7 @@ function buildPriceInfoText(t, isIndividual = false) {
       courtText = "Campi inclusi solo per la fase finale";
       break;
     case "na":
-      courtText = ""; // sport senza campo → nessun messaggio
+      courtText = "";
       break;
     case "non_compreso":
     default:
@@ -301,17 +299,24 @@ function buildPriceInfoText(t, isIndividual = false) {
   }
 
   let refereeText = "";
-
   if (refereePrice === "na") {
     refereeText = "";
   } else if (refereePrice === "non_compreso") {
-    refereeText = "Arbitro non incluso";
+    refereeText = "arbitro non incluso";
   } else {
-    refereeText = "Arbitro incluso";
+    refereeText = "arbitro incluso";
   }
 
-  // FIX: filter(Boolean) evita " · " trailing quando entrambe le parti sono vuote
-  const parts    = [courtText, refereeText].filter(Boolean);
+  let aperitivoText = "";
+  if (aperitivoPrice === "compreso_gironi_finals") {
+    aperitivoText = "aperitivo incluso";
+  } else if (aperitivoPrice === "compreso_gironi") {
+    aperitivoText = "aperitivo incluso (fase a gironi)";
+  } else if (aperitivoPrice === "compreso_finals") {
+    aperitivoText = "aperitivo incluso (fase finale)";
+  }
+
+  const parts    = [courtText, refereeText, aperitivoText].filter(Boolean);
   const infoText = parts.length > 0 ? ` · ${parts.join(", ")}` : "";
   return `€${price} ${perLabel}${infoText}`;
 }
