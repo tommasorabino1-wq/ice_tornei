@@ -1119,6 +1119,8 @@ function buildFormatTimeRangeRule(tournament, ruleNumber) {
   const entitySingular = isIndividual ? 'giocatore' : 'squadra';
   const entityPlural = isIndividual ? 'giocatori' : 'squadre';
   const entityWinner = isIndividual ? 'il giocatore' : 'la squadra';
+  const entityPluralArticle = isIndividual ? 'dei giocatori' : 'delle squadre';
+  const entityPluralLabel = isIndividual ? 'Partecipanti' : 'Squadre';
 
   // =====================================================
   // MAPPING ELEMENTI DEL FORMATO
@@ -1145,13 +1147,13 @@ function buildFormatTimeRangeRule(tournament, ruleNumber) {
     case "round_robin_finals":
       structureText = `Il torneo prevede una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.`;
       phaseDetailsText = `Sono previsti gironi all'italiana con sola andata, in cui ogni ${entitySingular} affronterà una sola volta gli altri del proprio gruppo. La fase finale prevede invece scontri diretti in gara unica, con passaggio del turno per il/la ${entitySingular} vincente.`;
-      teamsInfoText = `Il numero dei ${entityPlural} partecipanti, dei ${entityPlural} per girone e dei qualificati alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.`;
+      teamsInfoText = `Il numero ${entityPluralArticle} partecipanti, ${entityPluralArticle} per girone e dei qualificati alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.`;
       break;
 
     case "double_round_robin_finals":
       structureText = `Il torneo prevede una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.`;
       phaseDetailsText = `Sono previsti gironi all'italiana con andata e ritorno, in cui ogni ${entitySingular} affronterà due volte gli altri del proprio gruppo. La fase finale prevede invece scontri diretti in gara unica, con passaggio del turno per il/la ${entitySingular} vincente.`;
-      teamsInfoText = `Il numero dei ${entityPlural} partecipanti, dei ${entityPlural} per girone e dei qualificati alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.`;
+      teamsInfoText = `Il numero ${entityPluralArticle} partecipanti, ${entityPluralArticle} per girone e dei qualificati alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.`;
       break;
 
     default:
@@ -1173,13 +1175,12 @@ function buildFormatTimeRangeRule(tournament, ruleNumber) {
         <ul>
           <li><strong>Struttura:</strong> ${structureText}</li>
           <li><strong>Fasi:</strong> ${phaseDetailsText}</li>
-          <li><strong>${isIndividual ? 'Partecipanti' : 'Squadre'}:</strong> ${teamsInfoText}</li>
+          <li><strong>${entityPluralLabel}:</strong> ${teamsInfoText}</li>
         </ul>
       </div>
     </div>
   `;
 }
-
 
 
 
@@ -1356,73 +1357,172 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
 // 9g. BUILD MATCH FORMAT RULE (REGOLA 6)
 // ===============================
 function buildMatchFormatRule(tournament, ruleNumber) {
-  const formatType    = String(tournament.format_type        || "").toLowerCase();
-  const hasFinals     = formatType.includes("finals");
-  const sport         = String(tournament.sport              || "").toLowerCase();
-  const isIndividual  = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
+  const formatType        = String(tournament.format_type        || "").toLowerCase();
+  const hasFinals         = formatType.includes("finals");
+  const sport             = String(tournament.sport              || "").toLowerCase();
+  const isIndividual      = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
   const matchFormatGironi = String(tournament.match_format_gironi || "").toLowerCase();
   const matchFormatFinals = String(tournament.match_format_finals || "na").toLowerCase();
-  // FIX BUG 5: toNum per guaranteed_match
   const guaranteedMatch   = toNum(tournament.guaranteed_match, 0);
   const timeIncrement     = String(tournament.time_increment_seconds || "NA");
 
-  const isFootball      = sport.includes("calcio");
-  const isGameBasedSport = sport.includes("padel") || sport.includes("volley") || sport.includes("beach");
-  const isChess         = sport.includes("scacchi") || sport.includes("chess");
+  const isFootball      = /calcio|calcetto|futsal/i.test(sport);
+  const isPadel         = /padel/i.test(sport);
+  const isVolley        = /volley|beach/i.test(sport);
+  const isGameBasedSport = isPadel || isVolley;
+  const isChess         = /scacchi|chess/i.test(sport);
 
   const entitySingular = isIndividual ? 'giocatore' : 'squadra';
 
-  function buildChessFormatText(formatStr) {
-    const match = formatStr.match(/^1x(\d+)$/);
-    if (!match) return "da comunicare";
-    const minutes = Number(match[1]);
-    let timeControl = minutes < 3 ? "Bullet" : minutes <= 10 ? "Blitz" : minutes <= 60 ? "Rapid" : "Classical";
-    let text = `${minutes} minuti per giocatore (${timeControl})`;
+  // =====================================================
+  // HELPERS: PARSING DEL FORMATO NxM
+  // =====================================================
+
+  // Restituisce { periods, minutes } da stringhe come "1x30", "2x25", "3x20", ecc.
+  // Restituisce null se il formato non corrisponde.
+  function parseTimeFormat(str) {
+    const match = str.match(/^(\d+)x(\d+)$/);
+    if (!match) return null;
+    return { periods: Number(match[1]), minutes: Number(match[2]) };
+  }
+
+  // Restituisce { minMinutes } da stringhe come "1x30" per gli scacchi.
+  function parseChessFormat(str) {
+    const match = str.match(/^1x(\d+)$/);
+    if (!match) return null;
+    return { minutes: Number(match[1]) };
+  }
+
+  // =====================================================
+  // BUILDERS PER SPORT
+  // =====================================================
+
+  // --- CALCIO ---
+  // Gestisce qualsiasi formato NxM: "1x30", "2x25", "3x20", ecc.
+  function buildFootballFormatText(str) {
+    const parsed = parseTimeFormat(str);
+    if (!parsed) return "da comunicare";
+    const { periods, minutes } = parsed;
+    const total = periods * minutes;
+    if (periods === 1) {
+      return `un tempo unico da <strong>${minutes} minuti</strong> (al termine vince la squadra che ha segnato più gol)`;
+    } else {
+      return `${periods} tempi da <strong>${minutes} minuti</strong> ciascuno, per un totale di ${total} minuti (al termine vince la squadra che ha segnato più gol)`;
+    }
+  }
+
+  // --- SCACCHI ---
+  // Gestisce il formato "1xM" con eventuale incremento Fischer.
+  function buildChessFormatText(str) {
+    const parsed = parseChessFormat(str);
+    if (!parsed) return "da comunicare";
+    const { minutes } = parsed;
+    const timeControl = minutes < 3 ? "Bullet" : minutes <= 10 ? "Blitz" : minutes <= 60 ? "Rapid" : "Classical";
+    let text = `ogni giocatore avrà a disposizione <strong>${minutes} minuti</strong> di tempo (${timeControl})`;
     if (timeIncrement && timeIncrement !== "NA" && !isNaN(Number(timeIncrement))) {
-      text += ` con incremento Fischer di ${timeIncrement} secondi per mossa`;
+      text += ` con un incremento Fischer di <strong>${timeIncrement} secondi</strong> per mossa`;
     }
     return text;
   }
 
-  const isSetBasedGironi = ["1su1", "2su3", "3su5"].includes(matchFormatGironi);
-  const isSetBasedFinals = ["1su1", "2su3", "3su5"].includes(matchFormatFinals);
-  const winConditionText = isGameBasedSport ? "al termine, vince la squadra con più game vinti" : "al termine, vince la squadra in vantaggio";
+  // --- PADEL ---
+  // Formato time-based (NxM) → game-based; formato set-based (1su1, 2su3, 3su5).
+  function buildPadelFormatText(str) {
+    const parsed = parseTimeFormat(str);
+    if (parsed) {
+      const { periods, minutes } = parsed;
+      if (periods === 1) {
+        return `un tempo unico da <strong>${minutes} minuti</strong> (al termine vince la coppia con più game vinti)`;
+      } else {
+        return `${periods} tempi da <strong>${minutes} minuti</strong> ciascuno (al termine vince la coppia con più game vinti)`;
+      }
+    }
+    return buildSetBasedFormatText(str) || "da comunicare";
+  }
 
-  const matchFormatMap = {
-    "1x30": `un tempo unico da 30 minuti (${winConditionText})`,
-    "1x60": `un tempo unico da 60 minuti (${winConditionText})`,
-    "2x25": `due tempi da 25 minuti ciascuno (${winConditionText})`,
-    "2x30": `due tempi da 30 minuti ciascuno (${winConditionText})`,
-    "1x50": `un tempo unico da 50 minuti (${winConditionText})`,
-    "1su1": "set singolo (vince chi si aggiudica il set)",
-    "2su3": "due set su tre (vince chi si aggiudica per primo 2 set)",
-    "3su5": "tre set su cinque (vince chi si aggiudica per primo 3 set)"
-  };
+  // --- VOLLEY / BEACH VOLLEY ---
+  // Formato time-based (NxM) → point-based; formato set-based (1su1, 2su3, 3su5).
+  function buildVolleyFormatText(str) {
+    const parsed = parseTimeFormat(str);
+    if (parsed) {
+      const { periods, minutes } = parsed;
+      if (periods === 1) {
+        return `un tempo unico da <strong>${minutes} minuti</strong> (al termine vince la squadra con più punti segnati)`;
+      } else {
+        return `${periods} tempi da <strong>${minutes} minuti</strong> ciascuno (al termine vince la squadra con più punti segnati)`;
+      }
+    }
+    return buildSetBasedFormatText(str) || "da comunicare";
+  }
 
-  const matchFormatGironiText = isChess ? buildChessFormatText(matchFormatGironi) : (matchFormatMap[matchFormatGironi] || "da comunicare");
-  const matchFormatFinalsText = isChess ? buildChessFormatText(matchFormatFinals) : (matchFormatMap[matchFormatFinals] || "da comunicare");
+  // --- SET-BASED (condiviso tra padel e volley) ---
+  function buildSetBasedFormatText(str) {
+    const setMap = {
+      "1su1": "set singolo <strong>(vince chi si aggiudica il set)</strong>",
+      "2su3": "al meglio dei 3 set <strong>(vince chi si aggiudica per primo 2 set)</strong>",
+      "3su5": "al meglio dei 5 set <strong>(vince chi si aggiudica per primo 3 set)</strong>"
+    };
+    return setMap[str] || null;
+  }
+
+  // =====================================================
+  // DISPATCHER PRINCIPALE
+  // =====================================================
+
+  function buildFormatText(str) {
+    if (isChess)   return buildChessFormatText(str);
+    if (isFootball) return buildFootballFormatText(str);
+    if (isPadel)   return buildPadelFormatText(str);
+    if (isVolley)  return buildVolleyFormatText(str);
+    // Fallback generico
+    const parsed = parseTimeFormat(str);
+    if (parsed) {
+      const { periods, minutes } = parsed;
+      return periods === 1
+        ? `un tempo unico da <strong>${minutes} minuti</strong>`
+        : `${periods} tempi da <strong>${minutes} minuti</strong> ciascuno`;
+    }
+    return buildSetBasedFormatText(str) || "da comunicare";
+  }
+
+  // =====================================================
+  // NOTA AGGIUNTIVA SUL FORMATO (pareggi, patta, ecc.)
+  // =====================================================
+
+  function buildFormatNote(str) {
+    const isSetBased = ["1su1", "2su3", "3su5"].includes(str);
+    if (isChess) {
+      return ` <em>In caso di patta (pareggio), entrambi i giocatori ricevono 0,5 punti.</em>`;
+    }
+    if (isSetBased) {
+      return ` <em>In questo formato non sono previsti pareggi.</em>`;
+    }
+    return "";
+  }
+
+  // =====================================================
+  // TESTI FINALI
+  // =====================================================
+
+  const matchFormatGironiText = buildFormatText(matchFormatGironi);
+  const matchFormatFinalsText = buildFormatText(matchFormatFinals);
 
   let guaranteedText = guaranteedMatch > 0
-    ? `L'organizzazione garantisce a ogni ${entitySingular} iscritto un minimo di <strong>${guaranteedMatch} partite</strong>, indipendentemente dai risultati ottenuti.`
+    ? `L'organizzazione garantisce a ogni ${entitySingular} iscritto un minimo di <strong>${guaranteedMatch} ${guaranteedMatch === 1 ? 'partita' : 'partite'}</strong>, indipendentemente dai risultati ottenuti.`
     : `Il numero di partite dipenderà dal formato del torneo e dai risultati ottenuti.`;
 
   let gironiFormatText = hasFinals
-    ? `Le partite della fase a gironi si disputeranno con la seguente formula: <strong>${matchFormatGironiText}</strong>.`
-    : `Tutte le partite del torneo si disputeranno con la seguente formula: <strong>${matchFormatGironiText}</strong>.`;
-
-  if (isChess) {
-    gironiFormatText += ` <em>In caso di patta (pareggio), entrambi i giocatori ricevono 0.5 punti.</em>`;
-  } else if (isSetBasedGironi) {
-    gironiFormatText += ` <em>In questo formato non sono previsti pareggi.</em>`;
-  }
+    ? `Le partite della fase a gironi si disputeranno con la seguente formula: ${matchFormatGironiText}.`
+    : `Tutte le partite del torneo si disputeranno con la seguente formula: ${matchFormatGironiText}.`;
+  gironiFormatText += buildFormatNote(matchFormatGironi);
 
   let finalsFormatText = "";
   if (hasFinals) {
     if (matchFormatGironi === matchFormatFinals) {
       finalsFormatText = `Le partite delle fasi finali si disputeranno con la <strong>stessa formula</strong> della fase a gironi.`;
     } else if (matchFormatFinals !== "na") {
-      finalsFormatText = `Le partite delle fasi finali si disputeranno con la seguente formula: <strong>${matchFormatFinalsText}</strong>.`;
-      if (!isChess && isSetBasedFinals) finalsFormatText += ` <em>In questo formato non sono previsti pareggi.</em>`;
+      finalsFormatText = `Le partite delle fasi finali si disputeranno con la seguente formula: ${matchFormatFinalsText}.`;
+      finalsFormatText += buildFormatNote(matchFormatFinals);
     } else {
       finalsFormatText = `Il formato delle partite delle fasi finali sarà comunicato al termine della fase a gironi.`;
     }
@@ -1430,22 +1530,23 @@ function buildMatchFormatRule(tournament, ruleNumber) {
     finalsFormatText = `Non essendo prevista una fase finale, tutte le partite seguiranno il formato sopra indicato.`;
   }
 
+  // --- FORFEIT ---
   let forfeitResultText = "";
   if (isChess) {
     forfeitResultText = `una sconfitta a tavolino con punteggio <strong>0</strong> per il ${entitySingular} assente`;
   } else if (isFootball) {
     forfeitResultText = "una sconfitta a tavolino per <strong>3-0</strong>";
-  } else if (isGameBasedSport) {
-    forfeitResultText = isSetBasedGironi
+  } else if (isPadel || isVolley) {
+    const isSetBased = ["1su1", "2su3", "3su5"].includes(matchFormatGironi);
+    forfeitResultText = isSetBased
       ? "una sconfitta a tavolino per <strong>2 set a 0</strong> (6-0, 6-0)"
       : "una sconfitta a tavolino per <strong>6 game a 0</strong>";
   } else {
     forfeitResultText = "una sconfitta a tavolino secondo il regolamento del torneo";
   }
 
-  const forfeitText = isChess
-    ? `In assenza di preavviso, la mancata presentazione di un ${entitySingular} ad una partita comporterà ${forfeitResultText}.`
-    : `In assenza di preavviso, la mancata presentazione di una ${entitySingular} ad una partita comporterà ${forfeitResultText}.`;
+  const articleEntity = isChess || isIndividual ? `un ${entitySingular}` : `una ${entitySingular}`;
+  const forfeitText = `In assenza di preavviso, la mancata presentazione di ${articleEntity} ad una partita comporterà ${forfeitResultText}.`;
 
   return `
     <div class="specific-regulation-card">
@@ -1590,6 +1691,29 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   const entityPlural = isIndividual ? 'giocatori' : 'squadre';
 
   // =====================================================
+  // PARSING POINT SYSTEM
+  // =====================================================
+
+  // Formato atteso: "vittoria-pareggio-sconfitta" (e.g., "3-1-0", "2-1-0", "1-0.5-0")
+  function parsePointSystem(str) {
+    const parts = String(str || "").split("-");
+    if (parts.length !== 3) return null;
+    const win  = Number(parts[0]);
+    const draw = Number(parts[1]);
+    const loss = Number(parts[2]);
+    if ([win, draw, loss].some(isNaN)) return null;
+    return { win, draw, loss };
+  }
+
+  const pointSystem = parsePointSystem(tournament.point_system);
+  const drawPoints  = pointSystem ? pointSystem.draw : null;
+
+  // Testo punti pareggio da inserire inline: "1 punto", "0.5 punti", ecc.
+  const drawPointsText = drawPoints !== null
+    ? `<strong>${drawPoints} ${drawPoints === 1 ? 'punto' : 'punti'}</strong> a ciascuna ${entitySingular}`
+    : `i punti previsti dal regolamento a ciascuna ${entitySingular}`;
+
+  // =====================================================
   // DETERMINA SE È FORMATO A SET
   // =====================================================
 
@@ -1602,11 +1726,11 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   // =====================================================
 
   const tieMatchMap = {
-    "tie_accettato": `il pareggio è un risultato valido e verrà assegnato 1 punto a ciascuna ${entitySingular}`,
-    "moneta": `in caso di parità al termine del tempo regolamentare, il vincitore sarà deciso tramite lancio della moneta`,
-    "rigori": `in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato ai calci di rigore`,
-    "tiebreak": `in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato con un tiebreak decisivo`,
-    "spareggio": `in caso di parità al termine del tempo regolamentare, si procederà con un tempo supplementare di spareggio`
+    "tie_accettato": `il pareggio è un risultato valido: verranno assegnati ${drawPointsText}`,
+    "moneta":        `in caso di parità al termine del tempo regolamentare, il vincitore sarà deciso tramite lancio della moneta`,
+    "rigori":        `in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato ai calci di rigore`,
+    "tiebreak":      `in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato con un tiebreak decisivo`,
+    "spareggio":     `in caso di parità al termine del tempo regolamentare, si procederà con una partita supplementare di spareggio`
   };
 
   // =====================================================
@@ -1654,33 +1778,6 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   }
 
   // =====================================================
-  // NOTA GENERALE
-  // =====================================================
-
-  let noteText;
-
-  if (isChess) {
-
-    noteText = `<strong>Nota:</strong> la patta è un risultato regolare negli scacchi e contribuisce alla classifica con 0.5 punti per ciascun ${entitySingular}. Nelle fasi finali sarà invece sempre necessario determinare un vincitore.`;
-
-  } else if (isSetBasedGironi && (!hasFinals || isSetBasedFinals)) {
-
-    noteText = `<strong>Nota:</strong> il formato a set non consente risultati di pareggio.`;
-
-  } else if (tieMatchGironi === "tie_accettato" && hasFinals && tieMatchFinals !== "tie_accettato") {
-
-    noteText = `<strong>Nota:</strong> mentre nella fase a gironi il pareggio è ammesso, nelle fasi finali sarà sempre necessario determinare un vincitore.`;
-
-  } else if (tieMatchGironi !== "tie_accettato") {
-
-    noteText = `<strong>Nota:</strong> ogni partita dovrà avere un vincitore, salvo diversa indicazione per la fase a gironi.`;
-
-  } else {
-
-    noteText = `<strong>Nota:</strong> il pareggio è ammesso nei casi sopra indicati e contribuisce alla classifica secondo il sistema punti previsto.`;
-  }
-
-  // =====================================================
   // OUTPUT
   // =====================================================
 
@@ -1692,13 +1789,11 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
         <ul>
           <li><strong>Fase gironi:</strong> ${gironiTieText}</li>
           <li><strong>Fase finale:</strong> ${finalsTieText}</li>
-          <li>${noteText}</li>
         </ul>
       </div>
     </div>
   `;
 }
-
 
 
 
