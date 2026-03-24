@@ -149,6 +149,11 @@ if (tournamentId) {
   genericSection.classList.add("hidden");
   tournamentSkeleton.classList.remove("hidden");
   tournamentSection.classList.add("hidden");
+
+  // Nascondi il titolo generico "Regolamento Tornei ICE" quando si è su un torneo specifico
+  const pageTitle = document.querySelector(".page-title.page-title-box");
+  if (pageTitle) pageTitle.classList.add("hidden");
+
 } else {
   genericSection.classList.remove("hidden");
   tournamentSkeleton.classList.add("hidden");
