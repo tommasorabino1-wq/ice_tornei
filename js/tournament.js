@@ -1330,6 +1330,14 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     return `Torneo Stagionale · Le ${entityPlural} disputeranno indicativamente una partita a settimana.`;
   }
 
+  function buildPhaseSeasonalDurationText() {
+    return `Stagionale · Le ${entityPlural} disputeranno indicativamente una partita a settimana.`;
+  }
+
+  function buildPhaseDailyFinalsDurationText() {
+    return `Giornaliera · La fase finale si svolgerà in un'unica giornata conclusiva.`;
+  }
+
   function buildSeasonalBothPhasesDurationText() {
     return `Torneo Stagionale · Le ${entityPlural} disputeranno indicativamente una partita a settimana, sia durante la fase a gironi sia durante la fase finale.`;
   }
@@ -1370,7 +1378,6 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
 
   // -------------------------------
   // SCENARIO 1: FINALI + FIXED_FINALS
-  // sottoliste annidate
   // -------------------------------
   if (isFixedFinals) {
     const gironiWhereWhen = buildFlexibleWhereWhenText();
@@ -1394,8 +1401,8 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
       items.push(`
         <li><strong>Durata:</strong>
           <ul>
-            <li><strong>Fase a gironi:</strong> Torneo Stagionale · Le ${entityPlural} disputeranno indicativamente una partita a settimana.</li>
-            <li><strong>Fase finale:</strong> Torneo Giornaliero · La fase finale si svolgerà in un'unica giornata conclusiva.</li>
+            <li><strong>Fase a gironi:</strong> ${buildPhaseSeasonalDurationText()}</li>
+            <li><strong>Fase finale:</strong> ${buildPhaseDailyFinalsDurationText()}</li>
           </ul>
         </li>
       `);
@@ -1430,7 +1437,6 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     } else {
       items.push(`<li><strong>Dove e quando:</strong> ${whereWhenText}</li>`);
 
-      // Se giornaliero e tutto fixed, mostriamo solo dove e quando
       if (!isShort) {
         if (!hasFinals) {
           items.push(`<li><strong>Durata:</strong> ${buildSimpleSeasonalDurationText()}</li>`);
@@ -1438,8 +1444,8 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
           items.push(`
             <li><strong>Durata:</strong>
               <ul>
-                <li><strong>Fase a gironi:</strong> Torneo Stagionale · Le ${entityPlural} disputeranno indicativamente una partita a settimana.</li>
-                <li><strong>Fase finale:</strong> Torneo Giornaliero · La fase finale si svolgerà in un'unica giornata conclusiva.</li>
+                <li><strong>Fase a gironi:</strong> ${buildPhaseSeasonalDurationText()}</li>
+                <li><strong>Fase finale:</strong> ${buildPhaseDailyFinalsDurationText()}</li>
               </ul>
             </li>
           `);
@@ -1466,14 +1472,13 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
       if (isShort) {
         items.push(`<li><strong>Durata:</strong> ${buildSimpleDailyDurationText()}</li>`);
       } else if (!hasFinals) {
-        // solo gironi: mid e long uguali
         items.push(`<li><strong>Durata:</strong> ${buildSimpleSeasonalDurationText()}</li>`);
       } else if (isMid) {
         items.push(`
           <li><strong>Durata:</strong>
             <ul>
-              <li><strong>Fase a gironi:</strong> Torneo Stagionale · Le ${entityPlural} disputeranno indicativamente una partita a settimana.</li>
-              <li><strong>Fase finale:</strong> Torneo Giornaliero · La fase finale si svolgerà in un'unica giornata conclusiva.</li>
+              <li><strong>Fase a gironi:</strong> ${buildPhaseSeasonalDurationText()}</li>
+              <li><strong>Fase finale:</strong> ${buildPhaseDailyFinalsDurationText()}</li>
             </ul>
           </li>
         `);
@@ -1512,7 +1517,6 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     </div>
   `;
 }
-
 
 
 
