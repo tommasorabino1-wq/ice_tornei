@@ -1294,9 +1294,9 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
 
   function buildSchedulingModeFixedAllText() {
     if (isIndividual) {
-      return `La sede, il giorno e l'orario di tutte le partite del torneo sono prestabiliti dall'organizzazione e comunicati in anticipo ai partecipanti.`;
+      return `La sede, il giorno e l'orario di tutte le partite del torneo sono prestabiliti dall'organizzazione.`;
     }
-    return `I campi, i giorni e gli orari di tutte le partite del torneo sono prestabiliti dall'organizzazione e comunicati in anticipo alle squadre.`;
+    return `I campi, i giorni e gli orari di tutte le partite del torneo sono prestabiliti dall'organizzazione.`;
   }
 
   function buildSchedulingModeFlexibleText() {
