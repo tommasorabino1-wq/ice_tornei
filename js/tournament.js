@@ -758,115 +758,126 @@ function renderSpecificCourtRule(tournament) {
 // 9b. BUILD PRICE/COURT/REFEREE RULE (REGOLA 1)
 // ===============================
 function buildPriceCourtRefereeRule(tournament, ruleNumber) {
-  const price          = toNum(tournament.price, 0);
-  const courtPrice     = String(tournament.court_price     || "non_compreso").toLowerCase().trim();
-  const refereePrice   = String(tournament.referee_price   || "NA").toLowerCase().trim();
-  const aperitivoPrice = String(tournament.aperitivo_price || "NA").toLowerCase().trim();
-  const isIndividual   = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
+  const price = toNum(tournament.price, 0);
 
-  const perLabel  = isIndividual ? 'a giocatore' : 'a squadra';
-  let introText = `
+  const isIndividual =
+    String(tournament.individual_or_team || "team").toLowerCase().trim() === "individual";
+  const perLabel = isIndividual ? "a giocatore" : "a squadra";
+
+  const courtTypeRaw = String(tournament.court_type || "court").toLowerCase().trim();
+  const courtType = courtTypeRaw === "bar" ? "bar" : "court";
+
+  const courtPrice = String(tournament.court_price || "NA").toLowerCase().trim();
+  const refereePrice = String(tournament.referee_price || "NA").toLowerCase().trim();
+  const aperitivoPrice = String(tournament.aperitivo_price || "NA").toLowerCase().trim();
+
+  const courtIncludedLabel =
+    courtType === "bar" ? "il costo della location" : "il costo dei campi";
+
+  const introText = `
     <p>
       La quota di iscrizione per questo torneo è di <strong>€${price} ${perLabel}</strong>.
     </p>
   `;
 
-  // --- Aperitivo ---
-  const aperitivoMap = {
-    compreso_gironi:        `<p>La quota include un <strong>aperitivo</strong> durante le partite della <strong>fase a gironi</strong>.</p>`,
-    compreso_finals:        `<p>La quota include un <strong>aperitivo</strong> durante le partite delle <strong>fasi finali</strong>.</p>`,
-    compreso_gironi_finals: `<p>La quota include un <strong>aperitivo</strong> che potrà essere consumato prima, dopo o durante il torneo.</p>`,
-  };
-  const aperitivoText = aperitivoMap[aperitivoPrice] || null;
+  function getIncludedPart(type, value) {
+    if (value === "na") return null;
 
-  if (courtPrice === 'na') {
-    const inclusionText = `
-      <p>
-        La quota include l'utilizzo della location per tutte le partite del torneo.
-        Non sono previsti costi aggiuntivi per i partecipanti.
-      </p>
-      ${aperitivoText || ''}
-    `;
-    return `
-      <div class="specific-regulation-card">
-        <div class="specific-regulation-icon">${ruleNumber}</div>
-        <div class="specific-regulation-content">
-          <p><strong>Quota di iscrizione</strong></p>
-          ${introText}
-          ${inclusionText}
-        </div>
-      </div>
-    `;
+    if (type === "court") {
+      switch (value) {
+        case "compreso_gironi":
+          return `${courtIncludedLabel} per le partite della <strong>fase a gironi</strong>`;
+        case "compreso_finals":
+          return `${courtIncludedLabel} per le partite delle <strong>fasi finali</strong>`;
+        case "compreso_gironi_finals":
+          return `${courtIncludedLabel} per tutte le partite del torneo`;
+        case "non_compreso":
+        default:
+          return null;
+      }
+    }
+
+    if (type === "referee") {
+      switch (value) {
+        case "compreso_gironi":
+          return `il compenso arbitrale per le partite della <strong>fase a gironi</strong>`;
+        case "compreso_finals":
+          return `il compenso arbitrale per le partite delle <strong>fasi finali</strong>`;
+        case "compreso_gironi_finals":
+          return `il compenso arbitrale per tutte le partite del torneo`;
+        case "non_compreso":
+        default:
+          return null;
+      }
+    }
+
+    if (type === "aperitivo") {
+      switch (value) {
+        case "compreso_gironi":
+          return `un <strong>aperitivo offerto</strong> durante la <strong>fase a gironi</strong>`;
+        case "compreso_finals":
+          return `un <strong>aperitivo offerto</strong> durante le <strong>fasi finali</strong>`;
+        case "compreso_gironi_finals":
+          return `un <strong>aperitivo offerto</strong>, che sarà possibile consumare prima o dopo il torneo`;
+        case "non_compreso":
+        default:
+          return null;
+      }
+    }
+
+    return null;
   }
 
-  const comboKey = `${courtPrice}__${refereePrice}`;
+  function joinWithSemicolons(parts) {
+    return parts.filter(Boolean).join("; ");
+  }
+
+  const includedParts = [
+    getIncludedPart("court", courtPrice),
+    getIncludedPart("referee", refereePrice),
+    getIncludedPart("aperitivo", aperitivoPrice),
+  ].filter(Boolean);
 
   let inclusionText = "";
 
-  switch (comboKey) {
-    case "compreso_gironi_finals__na":
-      inclusionText = `<p>La quota include la <strong>prenotazione dei campi</strong> per tutte le partite del torneo, sia durante la fase a gironi che durante le fasi finali. Le squadre non dovranno sostenere alcun costo aggiuntivo per l'utilizzo delle strutture sportive.</p>`;
-      break;
-    case "compreso_gironi__na":
-      inclusionText = `<p>La quota include la <strong>prenotazione dei campi per le partite della fase a gironi</strong>. Per le eventuali partite delle fasi finali, le squadre partecipanti dovranno <strong>dividere equamente</strong> il costo del campo.</p>`;
-      break;
-    case "compreso_finals__na":
-      inclusionText = `<p>La quota include la <strong>prenotazione dei campi per le partite delle fasi finali</strong>. Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> il costo del campo presso la struttura sportiva prenotata.</p>`;
-      break;
-    case "non_compreso__na":
-      inclusionText = `<p>La quota <strong>non include</strong> il costo dei campi. Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> il costo del campo presso la struttura sportiva prenotata.</p>`;
-      break;
-    case "compreso_gironi_finals__compreso_gironi_finals":
-      inclusionText = `<p>La quota include sia la <strong>prenotazione dei campi</strong> che il <strong>costo dell'arbitro</strong> per tutte le partite del torneo, sia durante la fase a gironi che durante le fasi finali.</p><p>Le squadre non dovranno sostenere alcun costo aggiuntivo.</p>`;
-      break;
-    case "non_compreso__non_compreso":
-      inclusionText = `<p>La quota <strong>non include</strong> né il costo dei campi né il compenso arbitrale.</p><p>Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> sia il costo del campo che il compenso dell'arbitro.</p>`;
-      break;
-    case "compreso_gironi_finals__compreso_gironi":
-      inclusionText = `<p>La quota include la <strong>prenotazione dei campi</strong> per tutte le partite del torneo (sia fase a gironi che fasi finali).</p><p>Il <strong>costo dell'arbitro</strong> è incluso solo per le partite della <strong>fase a gironi</strong>. Per le partite delle fasi finali, le squadre dovranno <strong>dividere equamente</strong> il compenso arbitrale.</p>`;
-      break;
-    case "compreso_gironi_finals__compreso_finals":
-      inclusionText = `<p>La quota include la <strong>prenotazione dei campi</strong> per tutte le partite del torneo (sia fase a gironi che fasi finali).</p><p>Il <strong>costo dell'arbitro</strong> è incluso solo per le partite delle <strong>fasi finali</strong>. Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> il compenso arbitrale.</p>`;
-      break;
-    case "compreso_gironi_finals__non_compreso":
-      inclusionText = `<p>La quota include la <strong>prenotazione dei campi</strong> per tutte le partite del torneo (sia fase a gironi che fasi finali).</p><p>La quota <strong>non include</strong> il compenso arbitrale. Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> il costo dell'arbitro.</p>`;
-      break;
-    case "compreso_gironi__compreso_gironi_finals":
-      inclusionText = `<p>La quota include la <strong>prenotazione dei campi</strong> solo per le partite della <strong>fase a gironi</strong>. Per le partite delle fasi finali, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.</p><p>Il <strong>costo dell'arbitro</strong> è invece incluso per tutte le partite del torneo (sia fase a gironi che fasi finali).</p>`;
-      break;
-    case "compreso_gironi__compreso_gironi":
-      inclusionText = `<p>La quota include sia la <strong>prenotazione dei campi</strong> che il <strong>costo dell'arbitro</strong> per le partite della <strong>fase a gironi</strong>.</p><p>Per le partite delle fasi finali, le squadre dovranno <strong>dividere equamente</strong> sia il costo del campo che il compenso arbitrale.</p>`;
-      break;
-    case "compreso_gironi__compreso_finals":
-      inclusionText = `<p>La quota include la <strong>prenotazione dei campi</strong> per le partite della <strong>fase a gironi</strong>, e il <strong>costo dell'arbitro</strong> per le partite delle <strong>fasi finali</strong>.</p><p>Per le partite dei gironi, le squadre dovranno dividere il compenso arbitrale. Per le partite delle finali, dovranno dividere il costo del campo.</p>`;
-      break;
-    case "compreso_gironi__non_compreso":
-      inclusionText = `<p>La quota include la <strong>prenotazione dei campi</strong> solo per le partite della <strong>fase a gironi</strong>. Per le partite delle fasi finali, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.</p><p>La quota <strong>non include</strong> il compenso arbitrale. Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> il costo dell'arbitro.</p>`;
-      break;
-    case "compreso_finals__compreso_gironi_finals":
-      inclusionText = `<p>La quota include la <strong>prenotazione dei campi</strong> solo per le partite delle <strong>fasi finali</strong>. Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.</p><p>Il <strong>costo dell'arbitro</strong> è invece incluso per tutte le partite del torneo (sia fase a gironi che fasi finali).</p>`;
-      break;
-    case "compreso_finals__compreso_gironi":
-      inclusionText = `<p>La quota include la <strong>prenotazione dei campi</strong> per le partite delle <strong>fasi finali</strong>, e il <strong>costo dell'arbitro</strong> per le partite della <strong>fase a gironi</strong>.</p><p>Per le partite dei gironi, le squadre dovranno dividere il costo del campo. Per le partite delle finali, dovranno dividere il compenso arbitrale.</p>`;
-      break;
-    case "compreso_finals__compreso_finals":
-      inclusionText = `<p>La quota include sia la <strong>prenotazione dei campi</strong> che il <strong>costo dell'arbitro</strong> per le partite delle <strong>fasi finali</strong>.</p><p>Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> sia il costo del campo che il compenso arbitrale.</p>`;
-      break;
-    case "compreso_finals__non_compreso":
-      inclusionText = `<p>La quota include la <strong>prenotazione dei campi</strong> solo per le partite delle <strong>fasi finali</strong>. Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.</p><p>La quota <strong>non include</strong> il compenso arbitrale. Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> il costo dell'arbitro.</p>`;
-      break;
-    case "non_compreso__compreso_gironi_finals":
-      inclusionText = `<p>La quota <strong>non include</strong> il costo dei campi. Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.</p><p>La quota include invece il <strong>costo dell'arbitro</strong> per tutte le partite del torneo (sia fase a gironi che fasi finali).</p>`;
-      break;
-    case "non_compreso__compreso_gironi":
-      inclusionText = `<p>La quota <strong>non include</strong> il costo dei campi. Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.</p><p>Il <strong>costo dell'arbitro</strong> è incluso solo per le partite della <strong>fase a gironi</strong>. Per le partite delle fasi finali, le squadre dovranno <strong>dividere equamente</strong> anche il compenso arbitrale.</p>`;
-      break;
-    case "non_compreso__compreso_finals":
-      inclusionText = `<p>La quota <strong>non include</strong> il costo dei campi. Per ogni partita, le squadre dovranno <strong>dividere equamente</strong> il costo del campo.</p><p>Il <strong>costo dell'arbitro</strong> è incluso solo per le partite delle <strong>fasi finali</strong>. Per le partite della fase a gironi, le squadre dovranno <strong>dividere equamente</strong> anche il compenso arbitrale.</p>`;
-      break;
-    default:
-      inclusionText = `<p>I dettagli su cosa è incluso nella quota (campi, arbitro) saranno comunicati prima dell'inizio del torneo.</p>`;
-      break;
+  if (includedParts.length > 0) {
+    inclusionText = `
+      <p>
+        La quota di iscrizione comprende ${joinWithSemicolons(includedParts)}.
+      </p>
+    `;
+  } else {
+    inclusionText = `
+      <p>
+        La quota di iscrizione non comprende servizi o prestazioni aggiuntive rispetto alla sola partecipazione al torneo.
+      </p>
+    `;
+  }
+
+  const extraNotes = [];
+
+  if (courtPrice === "non_compreso") {
+    if (courtType === "bar") {
+      extraNotes.push(
+        `<p>La quota di iscrizione <strong>non comprende il costo della location</strong>, che resterà a carico dei partecipanti secondo le modalità comunicate dall'organizzazione.</p>`
+      );
+    } else {
+      extraNotes.push(
+        `<p>La quota di iscrizione <strong>non comprende il costo dei campi</strong>. Per le partite disputate, tale costo resterà a carico dei partecipanti secondo le modalità comunicate dall'organizzazione.</p>`
+      );
+    }
+  }
+
+  if (refereePrice === "non_compreso") {
+    extraNotes.push(
+      `<p>La quota di iscrizione <strong>non comprende il compenso arbitrale</strong>, che resterà a carico dei partecipanti secondo le modalità comunicate dall'organizzazione.</p>`
+    );
+  }
+
+  if (aperitivoPrice === "non_compreso") {
+    extraNotes.push(
+      `<p>La quota di iscrizione <strong>non comprende aperitivi o consumazioni offerte</strong>.</p>`
+    );
   }
 
   return `
@@ -876,7 +887,7 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
         <p><strong>Quota di iscrizione</strong></p>
         ${introText}
         ${inclusionText}
-        ${aperitivoText || ''}
+        ${extraNotes.join("")}
       </div>
     </div>
   `;
