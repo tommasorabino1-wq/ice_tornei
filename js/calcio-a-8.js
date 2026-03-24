@@ -154,6 +154,8 @@ fetch(API_URL)
     container.innerHTML = "<p>Errore nel caricamento dei tornei. Riprova più tardi.</p>";
   });
 
+
+  
 // ===============================
 // RENDER CARD TORNEI
 // ===============================
@@ -170,7 +172,6 @@ function renderTournaments(tournaments) {
   };
 
   tournaments.sort((a, b) => {
-    // FIX BUG 5: fallback a 99 per status non mappati → evita NaN
     const pa = statusPriority[a.status] ?? 99;
     const pb = statusPriority[b.status] ?? 99;
     return pa - pb;
@@ -179,7 +180,7 @@ function renderTournaments(tournaments) {
   container.innerHTML = "";
 
   if (tournaments.length === 0) {
-    container.innerHTML = "<p class='placeholder'>Nessun torneo di calcetto disponibile al momento.</p>";
+    container.innerHTML = "<p class='placeholder'>Nessun torneo di calcio a 8 disponibile al momento.</p>";
     return;
   }
 
@@ -189,27 +190,32 @@ function renderTournaments(tournaments) {
     card.className = "tournament-card";
     card.dataset.id = t.tournament_id;
 
-    if (t.status === "finished") {
-      card.classList.add("finished");
-    }
+    if (t.status === "finished") card.classList.add("finished");
 
     const statusLabel      = buildStatusLabel(t.status);
     const iscrizioniAperte = t.status === "open";
     const isIndividual     = String(t.individual_or_team || "team").toLowerCase() === "individual";
 
-    const row1 = `${t.sport} · ${t.location} · ${t.date}`;
-    const row2 = buildParticipantsInfoText(t);
-    const row3 = buildPriceInfoText(t, isIndividual);
-    const row4 = buildAwardInfoText(t);
-    const row5 = buildFormatInfoText(t);
-    const row6 = buildTimeRangeInfoText(t);
-    const row7 = buildCourtSchedulingModeText(t);
-    const row8 = buildCourtDaysHoursRangeText(t);
+    const rowPrice        = buildPriceInfoText(t);
+    const rowLocation     = buildLocationInfoText(t);
+    const rowDateLines    = buildDateInfoText(t);   // array: 1 o 2 stringhe
+    const rowParticipants = buildParticipantsInfoText(t);
+    const rowAward        = buildAwardInfoText(t);
+    const rowFormat       = buildFormatInfoText(t);
 
-    // FIX BUG 2: toNum per teams_current e teams_max
-    const teamsCurrent = toNum(t.teams_current, 0);
-    const teamsMax     = toNum(t.teams_max, 0);
-    const row9 = `${teamsCurrent} / ${teamsMax} squadre iscritte`;
+    const teamsCurrent      = toNum(t.teams_current, 0);
+    const teamsMax          = toNum(t.teams_max, 0);
+    const participantsLabel = isIndividual ? "giocatori iscritti" : "squadre iscritte";
+    const rowSignups        = `${teamsCurrent} / ${teamsMax} ${participantsLabel}`;
+
+    const dateRowsHTML = rowDateLines.length === 2
+      ? `
+        <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
+        <div class="card-info-row"><span class="row-icon">🕒</span><span><strong>Disponibilità:</strong> ${rowDateLines[1]}</span></div>
+      `
+      : `
+        <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
+      `;
 
     card.innerHTML = `
       <div class="card-header">
@@ -219,15 +225,13 @@ function renderTournaments(tournaments) {
 
       <div class="card-body">
         <div class="card-info-rows">
-          <div class="card-info-row"><span class="row-icon">⚽</span><span><strong>Sport, Luogo, Data:</strong> ${escapeHTML(row1)}</span></div>
-          <div class="card-info-row"><span class="row-icon">👥</span><span><strong>Partecipanti:</strong> ${row2}</span></div>
-          <div class="card-info-row"><span class="row-icon">💰</span><span><strong>Iscrizione:</strong> ${row3}</span></div>
-          <div class="card-info-row"><span class="row-icon">🏆</span><span><strong>Montepremi:</strong> ${row4}</span></div>
-          <div class="card-info-row"><span class="row-icon">📋</span><span><strong>Formato:</strong> ${row5}</span></div>
-          <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Durata:</strong> ${row6}</span></div>
-          <div class="card-info-row"><span class="row-icon">🥅</span><span><strong>Gestione campi e orari:</strong> ${row7}</span></div>
-          <div class="card-info-row"><span class="row-icon">🕒</span><span><strong>Giorni e fasce orarie disponibili:</strong> ${row8}</span></div>
-          <div class="card-info-row"><span class="row-icon">✅</span><span><strong>Iscritti:</strong> ${row9}</span></div>
+          <div class="card-info-row"><span class="row-icon">💰</span><span><strong>Quota:</strong> ${rowPrice}</span></div>
+          <div class="card-info-row"><span class="row-icon">📍</span><span><strong>Luogo:</strong> ${rowLocation}</span></div>
+          ${dateRowsHTML}
+          <div class="card-info-row"><span class="row-icon">👥</span><span><strong>Partecipanti:</strong> ${rowParticipants}</span></div>
+          <div class="card-info-row"><span class="row-icon">🏆</span><span><strong>Montepremi:</strong> ${rowAward}</span></div>
+          <div class="card-info-row"><span class="row-icon">📋</span><span><strong>Formato:</strong> ${rowFormat}</span></div>
+          <div class="card-info-row"><span class="row-icon">✅</span><span><strong>Iscritti:</strong> ${rowSignups}</span></div>
         </div>
       </div>
 
@@ -248,6 +252,7 @@ function renderTournaments(tournaments) {
   animateCards();
 }
 
+
 // ===============================
 // BUILD STATUS LABEL
 // ===============================
@@ -263,6 +268,139 @@ function buildStatusLabel(status) {
   };
   return labels[status] || String(status || '').toUpperCase();
 }
+
+
+// ===============================
+// BUILD PRICE INFO TEXT
+// ===============================
+function buildPriceInfoText(t) {
+  const isIndividual   = String(t.individual_or_team || 'team').toLowerCase() === 'individual';
+  const price          = toNum(t.price, 0);
+  const perLabel       = isIndividual ? 'a giocatore' : 'a squadra';
+  const courtPrice     = String(t.court_price     || "non_compreso").toLowerCase().trim();
+  const refereePrice   = String(t.referee_price   || "na").toLowerCase().trim();
+  const aperitivoPrice = String(t.aperitivo_price || "na").toLowerCase().trim();
+
+  const courtMap = {
+    compreso_gironi_finals: "Campi inclusi",
+    compreso_gironi:        "Campi inclusi (solo gironi)",
+    compreso_finals:        "Campi inclusi (solo finali)",
+    non_compreso:           "Campi non inclusi",
+    na:                     ""
+  };
+  const courtText = courtMap[courtPrice] ?? "Campi non inclusi";
+
+  let refereeText = "";
+  if      (refereePrice === "compreso_gironi_finals") refereeText = "Arbitro incluso";
+  else if (refereePrice === "compreso_gironi")        refereeText = "Arbitro incluso (solo gironi)";
+  else if (refereePrice === "compreso_finals")        refereeText = "Arbitro incluso (solo finali)";
+  else if (refereePrice === "non_compreso")           refereeText = "Arbitro non incluso";
+
+  let aperitivoText = "";
+  if      (aperitivoPrice === "compreso_gironi_finals") aperitivoText = "Aperitivo incluso";
+  else if (aperitivoPrice === "compreso_gironi")        aperitivoText = "Aperitivo incluso (solo gironi)";
+  else if (aperitivoPrice === "compreso_finals")        aperitivoText = "Aperitivo incluso (solo finali)";
+
+  const extras     = [courtText, refereeText, aperitivoText].filter(Boolean);
+  const extrasText = extras.length > 0 ? ` · ${extras.join(" · ")}` : "";
+  return `€${price} ${perLabel}${extrasText}`;
+}
+
+
+// ===============================
+// BUILD LOCATION INFO TEXT
+// ===============================
+function buildLocationInfoText(t) {
+  const location   = escapeHTML(String(t.location || "").trim());
+  const fixed      = String(t.fixed_court_days_hours || "false").toLowerCase().trim();
+  const courtLabel = fixed === "fixed_all" ? "Campo prestabilito" : "Campi a scelta";
+  return `${location} · ${courtLabel}`;
+}
+
+
+// ===============================
+// BUILD DATE INFO TEXT
+// Restituisce un array di 1 o 2 stringhe.
+// 2 stringhe solo nel caso b2 (fixed_all + mid/long).
+// ===============================
+function buildDateInfoText(t) {
+  const fixed     = String(t.fixed_court_days_hours || "false").toLowerCase().trim();
+  const timeRange = String(t.time_range || "").toLowerCase().trim();
+  const date      = escapeHTML(String(t.date || "").trim());
+
+  const durationLabel = timeRange === "short" ? "Giornaliero" : "Stagionale";
+
+  const daysRaw = String(t.available_days || "").toLowerCase().trim();
+
+  const dayLabels = {
+    lun:  "Lunedì",
+    mar:  "Martedì",
+    mart: "Martedì",
+    mer:  "Mercoledì",
+    merc: "Mercoledì",
+    gio:  "Giovedì",
+    giov: "Giovedì",
+    ven:  "Venerdì",
+    sab:  "Sabato",
+    dom:  "Domenica"
+  };
+
+  const shortRangeLabels = {
+    "lun-dom": "Tutti i giorni",
+    "lun-ven": "Lun-Ven",
+    "sab-dom": "Weekend",
+    "ven-dom": "Ven-Dom"
+  };
+
+  function parseDays(raw) {
+    if (!raw) return "";
+    if (shortRangeLabels[raw]) return shortRangeLabels[raw];
+    if (raw.includes("-")) {
+      const [start, end] = raw.split("-");
+      const s = dayLabels[start];
+      const e = dayLabels[end];
+      if (s && e) return `${s}-${e}`;
+    }
+    return dayLabels[raw] || "";
+  }
+
+  const hoursRaw = String(t.available_hours || "").toLowerCase().trim();
+
+  function parseHours(raw) {
+    if (!raw || !raw.includes("-")) return "";
+    const [startH, endH] = raw.split("-");
+    const s = Number(startH);
+    const e = Number(endH);
+    if (isNaN(s) || isNaN(e)) return "";
+    return `${String(s).padStart(2, "0")}:00-${String(e).padStart(2, "0")}:00`;
+  }
+
+  const daysText  = parseDays(daysRaw);
+  const hoursText = parseHours(hoursRaw);
+
+  // Caso a: fixed = "false" o "fixed_finals" + time_range = "mid" o "long"
+  if ((fixed === "false" || fixed === "fixed_finals") && (timeRange === "mid" || timeRange === "long")) {
+    const parts = [durationLabel, daysText, hoursText, "Giorni e orari a scelta"].filter(Boolean);
+    return [parts.join(" · ")];
+  }
+
+  // Caso b1: fixed = "fixed_all" + time_range = "short"
+  if (fixed === "fixed_all" && timeRange === "short") {
+    const parts = [durationLabel, date, hoursText, "Giorni e orari prestabiliti"].filter(Boolean);
+    return [parts.join(" · ")];
+  }
+
+  // Caso b2: fixed = "fixed_all" + time_range = "mid" o "long" → 2 righe
+  if (fixed === "fixed_all" && (timeRange === "mid" || timeRange === "long")) {
+    const row1 = [durationLabel, date].filter(Boolean).join(" · ");
+    const row2 = [daysText, hoursText, "Giorni e orari prestabiliti"].filter(Boolean).join(" · ");
+    return [row1, row2];
+  }
+
+  // Fallback
+  return [durationLabel];
+}
+
 
 // ===============================
 // BUILD PARTICIPANTS INFO
@@ -295,71 +433,16 @@ function buildParticipantsInfoText(t) {
   return parts.join(" · ");
 }
 
-// ===============================
-// 7d. BUILD PRICE INFO TEXT
-// ===============================
-function buildPriceInfoText(t, isIndividual = false) {
-  const price          = toNum(t.price, 0);
-  const perLabel       = isIndividual ? 'a giocatore' : 'a squadra';
-  const courtPrice     = String(t.court_price     || "non_compreso").toLowerCase().trim();
-  const refereePrice   = String(t.referee_price   || "na").toLowerCase().trim();
-  const aperitivoPrice = String(t.aperitivo_price || "na").toLowerCase().trim();
-
-  let courtText = "";
-  switch (courtPrice) {
-    case "compreso_gironi_finals":
-      courtText = "Campi inclusi";
-      break;
-    case "compreso_gironi":
-      courtText = "Campi inclusi solo per la fase a gironi";
-      break;
-    case "compreso_finals":
-      courtText = "Campi inclusi solo per la fase finale";
-      break;
-    case "na":
-      courtText = "";
-      break;
-    case "non_compreso":
-    default:
-      courtText = "Campi non inclusi";
-  }
-
-  let refereeText = "";
-  if (refereePrice === "na") {
-    refereeText = "";
-  } else if (refereePrice === "non_compreso") {
-    refereeText = "arbitro non incluso";
-  } else {
-    refereeText = "arbitro incluso";
-  }
-
-  let aperitivoText = "";
-  if (aperitivoPrice === "compreso_gironi_finals") {
-    aperitivoText = "aperitivo incluso";
-  } else if (aperitivoPrice === "compreso_gironi") {
-    aperitivoText = "aperitivo incluso (fase a gironi)";
-  } else if (aperitivoPrice === "compreso_finals") {
-    aperitivoText = "aperitivo incluso (fase finale)";
-  }
-
-  const parts    = [courtText, refereeText, aperitivoText].filter(Boolean);
-  const infoText = parts.length > 0 ? ` · ${parts.join(", ")}` : "";
-  return `€${price} ${perLabel}${infoText}`;
-}
 
 // ===============================
 // BUILD AWARD INFO
 // ===============================
 function buildAwardInfoText(t) {
-  // FIX BUG 1: toBool gestisce boolean nativo, stringa "true"/"false", numero 1/0
   const hasAward = toBool(t.award);
 
-  if (!hasAward) {
-    return "Premi simbolici";
-  }
+  if (!hasAward) return "Premi simbolici";
 
   const perc     = t.award_amount_perc;
-  // FIX BUG 3: toNum invece di Number() || 0
   const price    = toNum(t.price, 0);
   const teamsMax = toNum(t.teams_max, 0);
 
@@ -371,6 +454,7 @@ function buildAwardInfoText(t) {
 
   return "Montepremi garantito";
 }
+
 
 // ===============================
 // BUILD FORMAT INFO
@@ -384,98 +468,17 @@ function buildFormatInfoText(t) {
   };
 
   const formatText = formatMap[t.format_type] || "Formato da definire";
-  // FIX BUG 4: toNum per gestire guaranteed_match come stringa numerica o 0
   const guaranteed = toNum(t.guaranteed_match, 0);
 
-  if (guaranteed > 0) {
-    return `${formatText} · ${guaranteed} partite garantite`;
-  }
+  if (guaranteed > 0) return `${formatText} · ${guaranteed} partite garantite`;
 
   return formatText;
 }
 
-// ===============================
-// BUILD TIME RANGE INFO
-// ===============================
-function buildTimeRangeInfoText(t) {
-  const timeMap = {
-    short: "Torneo giornaliero",
-    mid:   "Una partita a settimana per gironi · Finali in un giorno",
-    long:  "Una partita a settimana per gironi e finali"
-  };
 
-  return timeMap[String(t.time_range || '').toLowerCase()] || "Durata da definire";
-}
 
-// ===============================
-// BUILD COURT SCHEDULING MODE
-// ===============================
-function buildCourtSchedulingModeText(t) {
-  const fixed = String(t.fixed_court_days_hours || "false").toLowerCase();
 
-  const fixedMap = {
-    "false":        "A scelta per tutte le partite",
-    "fixed_finals": "A scelta (Gironi) · Prestabiliti (Finali)",
-    "fixed_all":    "Prestabiliti per tutte le partite"
-  };
 
-  return fixedMap[fixed] || "A scelta per tutte le partite";
-}
-
-// ===============================
-// BUILD COURT DAYS & HOURS RANGE
-// ===============================
-function buildCourtDaysHoursRangeText(t) {
-
-  const daysRaw  = String(t.available_days  || "").toLowerCase().trim();
-  const hoursRaw = String(t.available_hours || "").toLowerCase().trim();
-
-  const parts = [];
-
-  const dayLabels = {
-    lun:  "Lunedì",
-    mar:  "Martedì",
-    mer:  "Mercoledì",
-    gio:  "Giovedì",
-    giov: "Giovedì",
-    ven:  "Venerdì",
-    sab:  "Sabato",
-    dom:  "Domenica"
-  };
-
-  if (daysRaw.includes("-")) {
-    const [start, end] = daysRaw.split("-");
-
-    if      (daysRaw === "lun-dom") parts.push("Tutti i giorni");
-    else if (daysRaw === "lun-ven") parts.push("Lun-Ven");
-    else if (daysRaw === "sab-dom") parts.push("Weekend");
-    else if (daysRaw === "ven-dom") parts.push("Ven-Dom");
-    else if (dayLabels[start] && dayLabels[end]) {
-      parts.push(`${dayLabels[start]} - ${dayLabels[end]}`);
-    }
-  } else if (dayLabels[daysRaw]) {
-    parts.push(dayLabels[daysRaw]);
-  }
-
-  if (hoursRaw && hoursRaw.includes("-")) {
-    const [startHour, endHour] = hoursRaw.split("-");
-
-    const formatHour = (h) => {
-      const hourNumber = Number(h);
-      if (isNaN(hourNumber)) return null;
-      return `${hourNumber.toString().padStart(2, "0")}:00`;
-    };
-
-    const formattedStart = formatHour(startHour);
-    const formattedEnd   = formatHour(endHour);
-
-    if (formattedStart && formattedEnd) {
-      parts.push(`${formattedStart}-${formattedEnd}`);
-    }
-  }
-
-  return parts.join(" · ");
-}
 
 // ===============================
 // ESCAPE HTML
