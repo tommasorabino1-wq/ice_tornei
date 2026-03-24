@@ -780,8 +780,16 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
     </p>
   `;
 
-  function getIncludedPart(type, value) {
-    if (value === "na") return null;
+  function joinWithCommaAndE(parts) {
+    const clean = parts.filter(Boolean);
+    if (clean.length === 0) return "";
+    if (clean.length === 1) return clean[0];
+    if (clean.length === 2) return `${clean[0]} e ${clean[1]}`;
+    return `${clean.slice(0, -1).join(", ")} e ${clean[clean.length - 1]}`;
+  }
+
+  function getIncludedService(type, value) {
+    if (value === "na" || value === "non_compreso") return null;
 
     if (type === "court") {
       switch (value) {
@@ -791,7 +799,6 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
           return `${courtIncludedLabel} per le partite delle <strong>fasi finali</strong>`;
         case "compreso_gironi_finals":
           return `${courtIncludedLabel} per tutte le partite del torneo`;
-        case "non_compreso":
         default:
           return null;
       }
@@ -805,21 +812,6 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
           return `il compenso arbitrale per le partite delle <strong>fasi finali</strong>`;
         case "compreso_gironi_finals":
           return `il compenso arbitrale per tutte le partite del torneo`;
-        case "non_compreso":
-        default:
-          return null;
-      }
-    }
-
-    if (type === "aperitivo") {
-      switch (value) {
-        case "compreso_gironi":
-          return `un <strong>aperitivo offerto</strong> durante la <strong>fase a gironi</strong>`;
-        case "compreso_finals":
-          return `un <strong>aperitivo offerto</strong> durante le <strong>fasi finali</strong>`;
-        case "compreso_gironi_finals":
-          return `un <strong>aperitivo offerto</strong>, che sarà possibile consumare prima o dopo il torneo`;
-        case "non_compreso":
         default:
           return null;
       }
@@ -828,25 +820,44 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
     return null;
   }
 
-  function joinWithSemicolons(parts) {
-    return parts.filter(Boolean).join("; ");
+  function getAperitivoIncludedText(value) {
+    switch (value) {
+      case "compreso_gironi":
+        return `La quota di iscrizione comprende inoltre un <strong>aperitivo offerto</strong> durante la <strong>fase a gironi</strong>.`;
+      case "compreso_finals":
+        return `La quota di iscrizione comprende inoltre un <strong>aperitivo offerto</strong> durante le <strong>fasi finali</strong>.`;
+      case "compreso_gironi_finals":
+        return `La quota di iscrizione comprende inoltre un <strong>aperitivo offerto</strong>, che potrà essere consumato prima o dopo il torneo.`;
+      default:
+        return null;
+    }
   }
 
-  const includedParts = [
-    getIncludedPart("court", courtPrice),
-    getIncludedPart("referee", refereePrice),
-    getIncludedPart("aperitivo", aperitivoPrice),
+  const includedServices = [
+    getIncludedService("court", courtPrice),
+    getIncludedService("referee", refereePrice),
   ].filter(Boolean);
 
   let inclusionText = "";
 
-  if (includedParts.length > 0) {
-    inclusionText = `
+  if (includedServices.length > 0) {
+    inclusionText += `
       <p>
-        La quota di iscrizione comprende ${joinWithSemicolons(includedParts)}.
+        La quota di iscrizione comprende ${joinWithCommaAndE(includedServices)}.
       </p>
     `;
-  } else {
+  }
+
+  const aperitivoIncludedText = getAperitivoIncludedText(aperitivoPrice);
+  if (aperitivoIncludedText) {
+    inclusionText += `
+      <p>
+        ${aperitivoIncludedText}
+      </p>
+    `;
+  }
+
+  if (!inclusionText.trim()) {
     inclusionText = `
       <p>
         La quota di iscrizione non comprende servizi o prestazioni aggiuntive rispetto alla sola partecipazione al torneo.
