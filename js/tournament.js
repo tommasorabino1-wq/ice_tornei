@@ -1301,16 +1301,16 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
 
   function buildSchedulingModeFlexibleText() {
     if (isIndividual) {
-      return `La sede, il giorno e l'orario delle partite saranno definiti progressivamente dall'organizzazione nel corso del torneo, tenendo conto delle preferenze espresse dai partecipanti in fase di iscrizione.`;
+      return `Le sedi delle partite verranno prenotate dall'organizzazione di volta in volta, tenendo conto delle preferenze espresse dai partecipanti in fase di iscrizione e nel rispetto dei vincoli su zona, giorni e orari delle partite indicati sotto.`;
     }
-    return `I campi, i giorni e gli orari delle partite saranno definiti progressivamente dall'organizzazione nel corso del torneo, tenendo conto delle preferenze espresse dalle squadre in fase di iscrizione.`;
+    return `I campi delle partite verranno prenotati dall'organizzazione di volta in volta, tenendo conto delle preferenze espresse dalle squadre in fase di iscrizione e nel rispetto dei vincoli su zona, giorni e orari delle partite indicati sotto.`;
   }
 
   function buildSchedulingModeFixedFinalsGironiText() {
     if (isIndividual) {
-      return `Per la fase a gironi, sede, giorno e orario delle partite saranno definiti progressivamente dall'organizzazione, tenendo conto delle preferenze espresse dai partecipanti in fase di iscrizione.`;
+      return `Per la fase a gironi, le sedi delle partite verranno prenotate dall'organizzazione di volta in volta, tenendo conto delle preferenze espresse dai partecipanti in fase di iscrizione e nel rispetto dei vincoli su zona, giorni e orari delle partite indicati sotto.`;
     }
-    return `Per la fase a gironi, campi, giorni e orari delle partite saranno definiti progressivamente dall'organizzazione, tenendo conto delle preferenze espresse dalle squadre in fase di iscrizione.`;
+    return `Per la fase a gironi, campi delle partite verranno prenotati dall'organizzazione di volta in volta, tenendo conto delle preferenze espresse dalle squadre in fase di iscrizione e nel rispetto dei vincoli su zona, giorni e orari delle partite indicati sotto.`;
   }
 
   function buildSchedulingModeFixedFinalsFinalsText() {
