@@ -913,7 +913,7 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
   const gender       = String(tournament.gender      || "open").toLowerCase();
   const age          = String(tournament.age         || "open").toLowerCase();
   const expertise    = String(tournament.expertise   || "open").toLowerCase();
-  const maxCategory  = String(tournament.max_category|| "NA").toLowerCase();
+  const maxCategory  = String(tournament.max_category|| "NA").trim();
   // FIX BUG 7: toNum per team_size_min e team_size_max
   const teamSizeMin  = toNum(tournament.team_size_min, 0);
   const teamSizeMax  = toNum(tournament.team_size_max, 0);
@@ -928,30 +928,43 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
     "mixed_female_allowed":{ team: "miste o femminili", individual: "qualsiasi genere", teamRestriction: "Ogni squadra deve essere mista (almeno un uomo e una donna) oppure composta da sole donne. Non sono ammesse squadre composte da soli uomini.", individualRestriction: null }
   };
 
-  const ageMap = {
-    "open":     { text: "qualsiasi età", teamRestriction: null, individualRestriction: null },
-    "under_18": { text: "Under 18", teamRestriction: "Tutti i componenti della squadra devono avere meno di 18 anni alla data di inizio del torneo.", individualRestriction: "Il partecipante deve avere meno di 18 anni alla data di inizio del torneo." },
-    "over_35":  { text: "Over 35",  teamRestriction: "Tutti i componenti della squadra devono avere almeno 35 anni alla data di inizio del torneo.", individualRestriction: "Il partecipante deve avere almeno 35 anni alla data di inizio del torneo." }
-  };
+  let ageData = { text: "qualsiasi età", teamRestriction: null, individualRestriction: null };
+  if (age !== "open") {
+    const underMatch = age.match(/^under_(\d+)$/);
+    const overMatch  = age.match(/^over_(\d+)$/);
+
+    if (underMatch) {
+      const ageValue = underMatch[1];
+      ageData = {
+        text: `Under ${ageValue}`,
+        teamRestriction: `Tutti i componenti della squadra devono avere meno di ${ageValue} anni alla data di inizio del torneo.`,
+        individualRestriction: `Il partecipante deve avere meno di ${ageValue} anni alla data di inizio del torneo.`
+      };
+    } else if (overMatch) {
+      const ageValue = overMatch[1];
+      ageData = {
+        text: `Over ${ageValue}`,
+        teamRestriction: `Tutti i componenti della squadra devono avere almeno ${ageValue} anni alla data di inizio del torneo.`,
+        individualRestriction: `Il partecipante deve avere almeno ${ageValue} anni alla data di inizio del torneo.`
+      };
+    }
+  }
 
   const expertiseMap = {
     "open":   { teamIntro: "aperto a giocatori e squadre di qualsiasi livello", individualIntro: "aperto a giocatori di qualsiasi livello", description: "È pensato per chi vuole divertirsi e mettersi in gioco in un contesto amatoriale." },
     "expert": { teamIntro: "rivolto a giocatori esperti con un livello di gioco medio-alto", individualIntro: "rivolto a giocatori esperti con un livello di gioco medio-alto", description: "Si consiglia la partecipazione solo a chi ha esperienza agonistica o un buon livello tecnico." }
   };
 
-  const genderData   = genderMap[gender]    || genderMap["open"];
-  const ageData      = ageMap[age]          || ageMap["open"];
+  const genderData    = genderMap[gender] || genderMap["open"];
   const expertiseData = expertiseMap[expertise] || expertiseMap["open"];
 
   let categoryRestriction = null;
-  if (maxCategory && maxCategory !== "na") {
-    if (maxCategory.startsWith("elo_")) {
-      const eloValue = maxCategory.replace("elo_", "");
+  if (maxCategory && maxCategory.toLowerCase() !== "na") {
+    if (maxCategory.toLowerCase().startsWith("elo_")) {
+      const eloValue = maxCategory.replace(/^elo_/i, "");
       categoryRestriction = `Al fine di evitare squilibri, sono ammessi esclusivamente giocatori con un punteggio ELO pari o inferiore a ${eloValue}.`;
-    } else if (maxCategory === "prima_categoria") {
-      categoryRestriction = "Al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in Prima Categoria o categorie inferiori.";
-    } else if (maxCategory === "eccellenza") {
-      categoryRestriction = "Al fine di evitare squilibri, sono ammessi esclusivamente giocatori tesserati in Eccellenza o categorie inferiori.";
+    } else {
+      categoryRestriction = `Al fine di evitare squilibri, sono ammessi esclusivamente giocatori di ${maxCategory} o inferiore.`;
     }
   }
 
@@ -1026,7 +1039,6 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
     </div>
   `;
 }
-
 
 
 
