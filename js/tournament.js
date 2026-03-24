@@ -2170,8 +2170,8 @@ function configureFormSteps(hasExtraFields) {
 // 20b. CHECK IF SINGLE DAY
 // ===============================
 function isSingleDay(days) {
-  const singleDays = ["lun", "mar", "mer", "gio", "giov", "ven", "sab", "dom"];
-  return singleDays.includes(days.toLowerCase());
+  const singleDays = ["lun", "mar", "mart", "mer", "merc", "gio", "giov", "ven", "sab", "dom"];
+  return singleDays.includes(days.toLowerCase().trim());
 }
 
 // ===============================
@@ -2323,29 +2323,54 @@ function buildHoursField(availableHours) {
 // ===============================
 function parseDaysRange(range) {
   const allDays = [
-    { value: "lun", label: "Lunedì" },
-    { value: "mar", label: "Martedì" },
-    { value: "mer", label: "Mercoledì" },
-    { value: "gio", label: "Giovedì" },
-    { value: "ven", label: "Venerdì" },
-    { value: "sab", label: "Sabato" },
-    { value: "dom", label: "Domenica" }
+    { value: "lun",  label: "Lunedì"    },
+    { value: "mar",  label: "Martedì"   },
+    { value: "mer",  label: "Mercoledì" },
+    { value: "gio",  label: "Giovedì"   },
+    { value: "ven",  label: "Venerdì"   },
+    { value: "sab",  label: "Sabato"    },
+    { value: "dom",  label: "Domenica"  }
   ];
 
-  const rangeLower = range.toLowerCase();
+  // Mappa sinonimi → indice in allDays
+  const dayIndex = {
+    lun:  0,
+    mar:  1, mart: 1,
+    mer:  2, merc: 2,
+    gio:  3, giov: 3,
+    ven:  4,
+    sab:  5,
+    dom:  6
+  };
 
-  switch (rangeLower) {
-    case "lun-ven":
-      return allDays.slice(0, 5); // Lunedì - Venerdì
-    case "sab-dom":
-      return allDays.slice(5, 7); // Sabato - Domenica
-    case "ven-dom":
-      return allDays.slice(4, 7); // Venerdì - Domenica
-    case "lun-dom":
-      return allDays; // Tutti i giorni
-    default:
-      return allDays;
+  // Shortcut per range comuni
+  const shortcuts = {
+    "lun-dom": allDays,
+    "lun-ven": allDays.slice(0, 5),
+    "sab-dom": allDays.slice(5, 7),
+    "ven-dom": allDays.slice(4, 7)
+  };
+
+  const raw = range.toLowerCase().trim();
+
+  if (shortcuts[raw]) return shortcuts[raw];
+
+  // Range generico: "lun-giov", "mer-dom", "lun-merc", ecc.
+  if (raw.includes("-")) {
+    const [start, end] = raw.split("-");
+    const si = dayIndex[start];
+    const ei = dayIndex[end];
+    if (si !== undefined && ei !== undefined && ei >= si) {
+      return allDays.slice(si, ei + 1);
+    }
   }
+
+  // Giorno singolo (fallback difensivo — normalmente intercettato da isSingleDay)
+  const idx = dayIndex[raw];
+  if (idx !== undefined) return [allDays[idx]];
+
+  // Fallback: tutti i giorni
+  return allDays;
 }
 
 // ===============================
