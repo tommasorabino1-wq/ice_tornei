@@ -282,11 +282,27 @@ async function loadStandingsPage(tournamentId) {
 // RENDER STANDINGS HEADER
 // ===============================
 function renderStandingsHeader(tournament) {
-  const titleEl = document.getElementById("standings-tournament-title");
+  const titleEl    = document.getElementById("standings-tournament-title");
   const subtitleEl = document.getElementById("standings-tournament-subtitle");
+  const badgeEl    = document.getElementById("standings-tournament-badge");
 
-  if (titleEl) titleEl.textContent = tournament.name;
+  if (titleEl)    titleEl.textContent = tournament.name;
   if (subtitleEl) subtitleEl.textContent = `${tournament.location} · ${tournament.date} · ${tournament.sport}`;
+
+  if (badgeEl) {
+    const statusLabels = {
+      open:            "ISCRIZIONI APERTE",
+      wip:             "IN DEFINIZIONE",
+      live:            "IN CORSO",
+      final_phase:     "FASE FINALE",
+      full:            "COMPLETO",
+      needs_attention: "IN DEFINIZIONE",
+      finished:        "CONCLUSO"
+    };
+    const status = String(tournament.status || "").toLowerCase();
+    badgeEl.textContent = statusLabels[status] || status.toUpperCase();
+    badgeEl.className = `badge ${status}`;
+  }
 
   // ===============================
   // BREADCRUMB UPDATE
@@ -311,6 +327,11 @@ document.addEventListener("DOMContentLoaded", () => {
     standingsSelectSection.classList.add("hidden");
     standingsSpecificSection.classList.remove("hidden");
     document.querySelector(".standings-results-box-fullwidth")?.classList.add("loading");
+
+    // Nascondi il titolo generico "Classifiche Tornei ICE" quando si è su un torneo specifico
+    const pageTitle = document.querySelector(".page-title.page-title-box");
+    if (pageTitle) pageTitle.classList.add("hidden");
+
     loadStandingsPage(tournamentId);
   } else {
     standingsSelectSection.classList.remove("hidden");
