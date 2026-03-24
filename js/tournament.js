@@ -1194,29 +1194,39 @@ function buildFormatTimeRangeRule(tournament, ruleNumber) {
 // 9f. BUILD COURT/DAYS/HOURS RULE (REGOLA 5)
 // ===============================
 function buildCourtDaysHoursRule(tournament, ruleNumber) {
-
-  const fixed = String(tournament.fixed_court_days_hours || "false").toLowerCase();
+  const fixed = String(tournament.fixed_court_days_hours || "false").toLowerCase().trim();
   const daysRaw = String(tournament.available_days || "").toLowerCase().trim();
   const hoursRaw = String(tournament.available_hours || "").toLowerCase().trim();
-  const location = String(tournament.location || "");
-  const formatType = String(tournament.format_type || "").toLowerCase();
-  const timeRange = String(tournament.time_range || "").toLowerCase();
-  const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
+  const location = String(tournament.location || "").trim();
+  const dateText = String(tournament.date || "").trim();
+  const formatType = String(tournament.format_type || "").toLowerCase().trim();
+  const timeRange = String(tournament.time_range || "").toLowerCase().trim();
+  const courtType = String(tournament.court_type || "court").toLowerCase().trim();
+  const isIndividual =
+    String(tournament.individual_or_team || "team").toLowerCase().trim() === "individual";
 
   const hasFinals = formatType.includes("finals");
+  const isShort = timeRange === "short";
+  const isMid = timeRange === "mid";
+  const isLong = timeRange === "long";
 
-  const venueLabel = isIndividual ? 'location' : 'campi';
-  const venueLabelCap = isIndividual ? 'Location' : 'Campi';
-  const entityPlural = isIndividual ? 'partecipanti' : 'squadre';
+  const isFixedAll = fixed === "fixed_all";
+  const isFixedFinals = fixed === "fixed_finals" && hasFinals;
+  const isFlexible = fixed === "false";
 
-  // =====================================================
-  // GIORNI DINAMICI
-  // =====================================================
+  const entityPlural = isIndividual ? "partecipanti" : "squadre";
+  const qualifiedPlural = isIndividual ? "i partecipanti qualificati" : "le squadre qualificate";
+  const venuePlural = courtType === "bar" ? "location" : "campi";
+  const venueSingular = courtType === "bar" ? "location" : "campo";
 
+  // ===============================
+  // HELPERS
+  // ===============================
   const dayLabels = {
     lun: "lunedì",
     mar: "martedì",
     mer: "mercoledì",
+    merc: "mercoledì",
     gio: "giovedì",
     giov: "giovedì",
     ven: "venerdì",
@@ -1224,118 +1234,271 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     dom: "domenica"
   };
 
-  let daysText = "";
+  function parseDays(value) {
+    const v = String(value || "").toLowerCase().trim();
+    if (!v) return "";
 
-  if (daysRaw === "lun-dom") {
-    daysText = "qualsiasi giorno della settimana";
-  } else if (daysRaw === "lun-ven") {
-    daysText = "dal lunedì al venerdì";
-  } else if (daysRaw === "sab-dom") {
-    daysText = "nel weekend (sabato e domenica)";
-  } else if (daysRaw === "ven-dom") {
-    daysText = "dal venerdì alla domenica";
-  } else if (daysRaw.includes("-")) {
-    const [start, end] = daysRaw.split("-");
-    if (dayLabels[start] && dayLabels[end]) {
-      daysText = `dal ${dayLabels[start]} al ${dayLabels[end]}`;
+    if (v === "lun-dom") return "dal lunedì alla domenica";
+    if (v === "lun-ven") return "dal lunedì al venerdì";
+    if (v === "sab-dom") return "nel weekend (sabato e domenica)";
+    if (v === "ven-dom") return "dal venerdì alla domenica";
+
+    if (v.includes("-")) {
+      const [start, end] = v.split("-").map(s => s.trim());
+      if (dayLabels[start] && dayLabels[end]) {
+        return `dal ${dayLabels[start]} al ${dayLabels[end]}`;
+      }
     }
-  } else if (dayLabels[daysRaw]) {
-    daysText = `il ${dayLabels[daysRaw]}`;
+
+    if (dayLabels[v]) return `il ${dayLabels[v]}`;
+
+    return "";
   }
 
-  // =====================================================
-  // ORARI DINAMICI
-  // =====================================================
+  function parseHours(value) {
+    const v = String(value || "").toLowerCase().trim();
+    if (!v || !v.includes("-")) return "";
 
-  let hoursText = "";
-
-  if (hoursRaw.includes("-")) {
-    const [start, end] = hoursRaw.split("-");
+    const [start, end] = v.split("-").map(s => s.trim());
 
     const formatHour = (h) => {
       const n = Number(h);
-      if (isNaN(n)) return null;
-      return `${n.toString().padStart(2, "0")}:00`;
+      if (isNaN(n)) return "";
+      return `${String(n).padStart(2, "0")}:00`;
     };
 
     const startFormatted = formatHour(start);
     const endFormatted = formatHour(end);
 
-    if (startFormatted && endFormatted) {
-      hoursText = `tra le ${startFormatted} e le ${endFormatted}`;
+    if (!startFormatted || !endFormatted) return "";
+    return `tra le ${startFormatted} e le ${endFormatted}`;
+  }
+
+  function wrapStrong(text) {
+    return text ? `<strong>${text}</strong>` : "";
+  }
+
+  function joinWithComma(parts) {
+    return parts.filter(Boolean).join(", ");
+  }
+
+  function getFixedVenueIntro() {
+    if (courtType === "bar") {
+      return "presso";
+    }
+    return isIndividual ? "presso" : "presso il centro sportivo";
+  }
+
+  function buildFlexibleWhereWhenText() {
+    const daysText = parseDays(daysRaw);
+    const hoursText = parseHours(hoursRaw);
+
+    const mainParts = [
+      location ? wrapStrong(location) : "",
+      daysText ? wrapStrong(daysText) : "",
+      hoursText ? wrapStrong(hoursText) : ""
+    ];
+
+    const mainText = joinWithComma(mainParts);
+    const startDateText = dateText ? ` a partire da ${wrapStrong(dateText)}` : "";
+
+    if (!mainText) return "";
+
+    return `Le partite potranno essere disputate esclusivamente a ${mainText}${startDateText}.`;
+  }
+
+  function buildFixedWhereWhenText() {
+    const hoursText = parseHours(hoursRaw);
+
+    const parts = [
+      location ? wrapStrong(location) : "",
+      dateText ? wrapStrong(dateText) : "",
+      hoursText ? wrapStrong(hoursText) : ""
+    ];
+
+    const fullText = joinWithComma(parts);
+    if (!fullText) return "";
+
+    return `Tutte le partite del torneo verranno disputate ${getFixedVenueIntro()} ${fullText}.`;
+  }
+
+  function buildSimpleDailyDurationText() {
+    return `Torneo Giornaliero · Tutte le partite del torneo si disputeranno in un'unica giornata.`;
+  }
+
+  function buildSimpleSeasonalDurationText() {
+    return `Torneo Stagionale · Le ${entityPlural} disputeranno indicativamente una partita a settimana.`;
+  }
+
+  function buildSeasonalBothPhasesDurationText() {
+    return `Torneo Stagionale · Le ${entityPlural} disputeranno indicativamente una partita a settimana, sia durante la fase a gironi sia durante la fase finale.`;
+  }
+
+  function buildFlexibleBookingText(scopeText = "del torneo") {
+    return `L'organizzazione prenoterà i ${venuePlural} per tutte le partite ${scopeText}, tenendo conto delle preferenze espresse dalle ${entityPlural} in fase di iscrizione riguardo a zona, giorni e orari e nel rispetto dei vincoli indicati sopra.`;
+  }
+
+  function buildFixedBookingText(scopeText = "del torneo") {
+    return `${capitalizeFirst(venueSingular)}, data e orari delle partite ${scopeText} sono prestabiliti dall'organizzazione e indicati sopra.`;
+  }
+
+  function buildFinalsDeferredWhereWhenText() {
+    return `${capitalizeFirst(venueSingular)}, data e orari delle partite della fase finale saranno comunicati dall'organizzazione al termine della fase a gironi e definiti in accordo con ${qualifiedPlural}.`;
+  }
+
+  function buildFinalsDeferredBookingText() {
+    return `${capitalizeFirst(venueSingular)}, data e orari delle partite della fase finale saranno comunicati dall'organizzazione al termine della fase a gironi e definiti in accordo con ${qualifiedPlural}.`;
+  }
+
+  function buildFallbackItems() {
+    return [
+      `<li><strong>Dove e quando:</strong> Ulteriori dettagli su luogo, giorni e orari delle partite saranno comunicati prima dell'inizio del torneo.</li>`,
+      `<li><strong>Durata:</strong> La durata e la distribuzione delle partite saranno comunicate prima dell'inizio del torneo.</li>`,
+      `<li><strong>Prenotazione ${venuePlural}:</strong> L'organizzazione gestirà direttamente la prenotazione ${courtType === "bar" ? "delle location" : "dei campi"}. Le modalità operative saranno comunicate a breve.</li>`
+    ];
+  }
+
+  function capitalizeFirst(text) {
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  // ===============================
+  // COSTRUZIONE VOCI
+  // ===============================
+  let items = [];
+
+  // -------------------------------
+  // SCENARIO 1: FINALI + FIXED_FINALS
+  // sottoliste annidate
+  // -------------------------------
+  if (isFixedFinals) {
+    const gironiWhereWhen = buildFlexibleWhereWhenText();
+    const finaliWhereWhen = buildFinalsDeferredWhereWhenText();
+
+    const whereWhenSubItems = [];
+    if (gironiWhereWhen) {
+      whereWhenSubItems.push(`<li><strong>Fase a gironi:</strong> ${gironiWhereWhen}</li>`);
+    }
+    whereWhenSubItems.push(`<li><strong>Fase finale:</strong> ${finaliWhereWhen}</li>`);
+
+    items.push(`
+      <li><strong>Dove e quando:</strong>
+        <ul>
+          ${whereWhenSubItems.join("")}
+        </ul>
+      </li>
+    `);
+
+    if (isMid) {
+      items.push(`
+        <li><strong>Durata:</strong>
+          <ul>
+            <li><strong>Fase a gironi:</strong> Torneo Stagionale · Le ${entityPlural} disputeranno indicativamente una partita a settimana.</li>
+            <li><strong>Fase finale:</strong> Torneo Giornaliero · La fase finale si svolgerà in un'unica giornata conclusiva.</li>
+          </ul>
+        </li>
+      `);
+    } else if (isLong) {
+      items.push(`
+        <li><strong>Durata:</strong> ${buildSeasonalBothPhasesDurationText()}</li>
+      `);
+    } else if (isShort) {
+      items.push(`
+        <li><strong>Durata:</strong> ${buildSimpleDailyDurationText()}</li>
+      `);
+    }
+
+    items.push(`
+      <li><strong>Prenotazione ${venuePlural}:</strong>
+        <ul>
+          <li><strong>Fase a gironi:</strong> ${buildFlexibleBookingText("della fase a gironi")}</li>
+          <li><strong>Fase finale:</strong> ${buildFinalsDeferredBookingText()}</li>
+        </ul>
+      </li>
+    `);
+  }
+
+  // -------------------------------
+  // SCENARIO 2: TUTTO FIXED
+  // -------------------------------
+  else if (isFixedAll) {
+    const whereWhenText = buildFixedWhereWhenText();
+
+    if (!whereWhenText) {
+      items = buildFallbackItems();
+    } else {
+      items.push(`<li><strong>Dove e quando:</strong> ${whereWhenText}</li>`);
+
+      // Se giornaliero e tutto fixed, mostriamo solo dove e quando
+      if (!isShort) {
+        if (!hasFinals) {
+          items.push(`<li><strong>Durata:</strong> ${buildSimpleSeasonalDurationText()}</li>`);
+        } else if (isMid) {
+          items.push(`
+            <li><strong>Durata:</strong>
+              <ul>
+                <li><strong>Fase a gironi:</strong> Torneo Stagionale · Le ${entityPlural} disputeranno indicativamente una partita a settimana.</li>
+                <li><strong>Fase finale:</strong> Torneo Giornaliero · La fase finale si svolgerà in un'unica giornata conclusiva.</li>
+              </ul>
+            </li>
+          `);
+        } else if (isLong) {
+          items.push(`<li><strong>Durata:</strong> ${buildSeasonalBothPhasesDurationText()}</li>`);
+        }
+
+        items.push(`<li><strong>Prenotazione ${venuePlural}:</strong> ${buildFixedBookingText()}</li>`);
+      }
     }
   }
 
-  const officialConstraints = `a <strong>${location}</strong>, <strong>${daysText}</strong>, <strong>${hoursText}</strong>`;
+  // -------------------------------
+  // SCENARIO 3: TUTTO FLESSIBILE
+  // -------------------------------
+  else if (isFlexible) {
+    const whereWhenText = buildFlexibleWhereWhenText();
 
-  // =====================================================
-  // DURATA TORNEO
-  // =====================================================
+    if (!whereWhenText) {
+      items = buildFallbackItems();
+    } else {
+      items.push(`<li><strong>Dove e quando:</strong> ${whereWhenText}</li>`);
 
-  let durationText = "";
+      if (isShort) {
+        items.push(`<li><strong>Durata:</strong> ${buildSimpleDailyDurationText()}</li>`);
+      } else if (!hasFinals) {
+        // solo gironi: mid e long uguali
+        items.push(`<li><strong>Durata:</strong> ${buildSimpleSeasonalDurationText()}</li>`);
+      } else if (isMid) {
+        items.push(`
+          <li><strong>Durata:</strong>
+            <ul>
+              <li><strong>Fase a gironi:</strong> Torneo Stagionale · Le ${entityPlural} disputeranno indicativamente una partita a settimana.</li>
+              <li><strong>Fase finale:</strong> Torneo Giornaliero · La fase finale si svolgerà in un'unica giornata conclusiva.</li>
+            </ul>
+          </li>
+        `);
+      } else if (isLong) {
+        items.push(`<li><strong>Durata:</strong> ${buildSeasonalBothPhasesDurationText()}</li>`);
+      }
 
-  switch (timeRange) {
-
-    case "short":
-      durationText = hasFinals
-        ? `Il torneo si svolgerà interamente in un'unica giornata, con fase a gironi e fase finale nello stesso giorno.`
-        : `Il torneo si svolgerà interamente in un'unica giornata.`;
-      break;
-
-    case "mid":
-      durationText = hasFinals
-        ? `La fase a gironi si disputerà su più settimane (indicativamente una partita a settimana), mentre la fase finale si svolgerà in un'unica giornata conclusiva.`
-        : `Il torneo si disputerà su più settimane (indicativamente una partita a settimana).`;
-      break;
-
-    case "long":
-      durationText = hasFinals
-        ? `Sia la fase a gironi che la fase finale si disputeranno su più settimane (indicativamente una partita a settimana).`
-        : `Il torneo si disputerà su più settimane (indicativamente una partita a settimana).`;
-      break;
-
-    default:
-      durationText = `La durata e la distribuzione delle partite saranno comunicate prima dell'inizio del torneo.`;
+      items.push(`<li><strong>Prenotazione ${venuePlural}:</strong> ${buildFlexibleBookingText()}</li>`);
+    }
   }
 
-  // =====================================================
-  // ORGANIZZAZIONE
-  // =====================================================
-
-  let organizationText = "";
-
-  if (fixed === "false") {
-    organizationText = hasFinals
-      ? `I ${venueLabel} per le partite del torneo (sia fase a gironi che fase finale) saranno prenotati dall'organizzazione di volta in volta, considerando le preferenze riguardo a zona, giorni e orari espresse dai ${entityPlural} in fase di iscrizione. Tutte le partite si svolgeranno comunque ${officialConstraints}.`
-      : `I ${venueLabel} per le partite del torneo saranno prenotati dall'organizzazione di volta in volta, considerando le preferenze riguardo a zona, giorni e orari espresse dai ${entityPlural} in fase di iscrizione. Tutte le partite si svolgeranno comunque ${officialConstraints}.`;
-  }
-
-  else if (fixed === "fixed_all") {
-    organizationText = hasFinals
-      ? `I ${venueLabel}, giorni e orari di tutte le partite del torneo (sia fase a gironi che fase finale) saranno prestabiliti dall'organizzazione e comunicati in anticipo ai ${entityPlural}. Tutte le partite si svolgeranno ${officialConstraints}.`
-      : `I ${venueLabel}, giorni e orari di tutte le partite del torneo saranno prestabiliti dall'organizzazione e comunicati in anticipo ai ${entityPlural}. Tutte le partite si svolgeranno ${officialConstraints}.`;
-  }
-
-  else if (fixed === "fixed_finals" && hasFinals) {
-    organizationText = `
-      <ul>
-        <li><strong>Fase a gironi:</strong> I ${venueLabel} per le partite della fase a gironi saranno prenotati dall'organizzazione di volta in volta, considerando le preferenze riguardo a zona, giorni e orari espresse dai ${entityPlural} in fase di iscrizione.</li>
-        <li><strong>Fase finale:</strong> I ${venueLabel}, giorni e orari delle partite della fase finale saranno prestabiliti dall'organizzazione e comunicati ai ${entityPlural} qualificati al termine della fase a gironi.</li>
-      </ul>
-      Tutte le partite si svolgeranno comunque ${officialConstraints}.
-    `;
-  }
-
+  // -------------------------------
+  // SCENARIO 4: FALLBACK
+  // -------------------------------
   else {
-    organizationText = `Le modalità organizzative saranno comunicate prima dell'inizio del torneo. Le partite si svolgeranno ${officialConstraints}.`;
+    items = buildFallbackItems();
   }
 
-  // =====================================================
-  // OUTPUT
-  // =====================================================
+  if (!items.length) {
+    items = buildFallbackItems();
+  }
 
-  const cardTitle = isIndividual ? 'Location, giorni, orari e calendario' : 'Campi, giorni, orari e calendario';
-  const bookingLabel = isIndividual ? "L'organizzazione delle partite sarà a carico dell'organizzazione." : "La prenotazione dei campi sarà sempre a carico dell'organizzazione.";
+  const cardTitle = isIndividual
+    ? "Sede di gioco, giorni, orari e calendario"
+    : "Campi, giorni, orari e calendario";
 
   return `
     <div class="specific-regulation-card">
@@ -1343,8 +1506,7 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
       <div class="specific-regulation-content">
         <p><strong>${cardTitle}</strong></p>
         <ul>
-          <li><strong>Durata:</strong> ${durationText}</li>
-          <li><strong>Organizzazione partite:</strong> ${bookingLabel} ${organizationText}</li>
+          ${items.join("")}
         </ul>
       </div>
     </div>
