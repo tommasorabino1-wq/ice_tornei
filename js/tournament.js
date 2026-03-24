@@ -1055,7 +1055,7 @@ function buildAwardsRule(tournament, ruleNumber) {
   const awardPerc  = String(tournament.award_amount_perc || "NA");
   const price      = toNum(tournament.price, 0);
   const teamsMax   = toNum(tournament.teams_max, 0);
-  const mvpAward   = String(tournament.mvp_award || "none").toLowerCase();
+  const mvpAward   = String(tournament.mvp_award || "none").trim();
   const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
 
   const entityWinners        = isIndividual ? 'i primi 3 classificati' : 'le prime 3 squadre classificate';
@@ -1085,23 +1085,12 @@ function buildAwardsRule(tournament, ruleNumber) {
   }
 
   // =====================================================
-  // MVP — se "none" non mostrare nulla
+  // MVP / premi individuali — se "none" o "NA" non mostrare nulla
   // =====================================================
 
   let mvpAwardText = "";
-  if (mvpAward !== "none") {
-    const mvpPrizes = [];
-    if (mvpAward.includes("mvp"))        mvpPrizes.push("Miglior Giocatore (MVP)");
-    if (mvpAward.includes("scorer"))     mvpPrizes.push("Capocannoniere");
-    if (mvpAward.includes("goalkeeper")) mvpPrizes.push("Miglior Portiere");
-    if (mvpAward.includes("fairplay"))   mvpPrizes.push("Premio Fair Play");
-
-    if (mvpPrizes.length > 0) {
-      const prizesList = mvpPrizes.length === 1
-        ? mvpPrizes[0]
-        : mvpPrizes.slice(0, -1).join(", ") + " e " + mvpPrizes[mvpPrizes.length - 1];
-      mvpAwardText = `Saranno inoltre assegnati premi individuali per: ${prizesList}.`;
-    }
+  if (mvpAward && mvpAward.toLowerCase() !== "none" && mvpAward.toLowerCase() !== "na") {
+    mvpAwardText = `Saranno inoltre assegnati premi individuali per: ${mvpAward}.`;
   }
 
   return `
