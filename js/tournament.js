@@ -1407,13 +1407,13 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     items.push(`
       <li><strong>Dove e quando:</strong>
         <ul>
-          <li><strong>Organizzazione di campi, giorni e orari:</strong>
+          <li><strong>Organizzazione:</strong>
             <ul>
               <li><strong>Fase a gironi:</strong> ${buildSchedulingModeFixedFinalsGironiText()}</li>
               <li><strong>Fase finale:</strong> ${buildSchedulingModeFixedFinalsFinalsText()}</li>
             </ul>
           </li>
-          <li><strong>Vincoli di zona, giorni e orari:</strong>
+          <li><strong>Zona, giorni e orari:</strong>
             <ul>
               ${gironiConstraints ? `<li><strong>Fase a gironi:</strong> ${gironiConstraints}</li>` : ""}
               <li><strong>Fase finale:</strong> ${finaliConstraints}</li>
@@ -1455,8 +1455,8 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
       items.push(`
         <li><strong>Dove e quando:</strong>
           <ul>
-            <li><strong>Organizzazione di campi, giorni e orari:</strong> ${buildSchedulingModeFixedAllText()}</li>
-            <li><strong>Vincoli di zona, giorni e orari:</strong> ${fixedConstraints}</li>
+            <li><strong>Organizzazione:</strong> ${buildSchedulingModeFixedAllText()}</li>
+            <li><strong>Zona, giorni e orari:</strong> ${fixedConstraints}</li>
           </ul>
         </li>
       `);
@@ -1492,8 +1492,8 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
       items.push(`
         <li><strong>Dove e quando:</strong>
           <ul>
-            <li><strong>Organizzazione di campi, giorni e orari:</strong> ${buildSchedulingModeFlexibleText()}</li>
-            <li><strong>Vincoli di zona, giorni e orari:</strong> ${flexibleConstraints}</li>
+            <li><strong>Organizzazione:</strong> ${buildSchedulingModeFlexibleText()}</li>
+            <li><strong>Zona, giorni e orari:</strong> ${flexibleConstraints}</li>
           </ul>
         </li>
       `);
