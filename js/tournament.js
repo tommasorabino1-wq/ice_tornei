@@ -345,7 +345,6 @@ function renderTournament(tournament) {
 }
 
 
-
 // ===============================
 // RENDER EVENT BANNER
 // ===============================
@@ -369,7 +368,6 @@ function renderEventBanner(tournament) {
 }
 
 
-
 // ===============================
 // SANITIZE EVENT HTML
 // ===============================
@@ -381,14 +379,11 @@ function sanitizeEventHTML(html) {
 
   function sanitizeNode(node) {
     if (node.nodeType === Node.TEXT_NODE) return node.cloneNode();
-
     if (node.nodeType !== Node.ELEMENT_NODE) return null;
-
     if (!allowedTags.has(node.tagName)) return null;
 
     const clean = document.createElement(node.tagName);
 
-    // Permetti solo class che iniziano con "ev-"
     if (node.hasAttribute('class')) {
       const safeClasses = node.getAttribute('class')
         .split(' ')
@@ -422,34 +417,38 @@ function renderTournamentInfoRows(tournament) {
   const container = document.getElementById("tournament-info-rows");
   if (!container) return;
 
-  const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
-
-  const row1 = `${tournament.sport} · ${tournament.location} · ${tournament.date}`;
-  const row2 = buildParticipantsInfoText(tournament);
-  const row3 = buildPriceInfoText(tournament, isIndividual);
-  const row4 = buildAwardInfoText(tournament);
-  const row5 = buildFormatInfoText(tournament);
-  const row6 = buildTimeRangeInfoText(tournament);
-  const row7 = buildCourtSchedulingModeText(tournament);
-  const row8 = buildCourtDaysHoursRangeText(tournament);
-
-  // FIX BUG 9: toNum per teams_current e teams_max
-  const teamsCurrent      = toNum(tournament.teams_current, 0);
-  const teamsMax          = toNum(tournament.teams_max, 0);
-  const participantsLabel = isIndividual ? 'giocatori iscritti' : 'squadre iscritte';
+  const isIndividual      = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
   const participantsIcon  = isIndividual ? '👤' : '👥';
-  const row9 = `${teamsCurrent} / ${teamsMax} ${participantsLabel}`;
+  const participantsLabel = isIndividual ? 'giocatori iscritti' : 'squadre iscritte';
+
+  const rowPrice        = buildPriceInfoText(tournament);
+  const rowLocation     = buildLocationInfoText(tournament);
+  const rowDateLines    = buildDateInfoText(tournament);   // array: 1 o 2 stringhe
+  const rowParticipants = buildParticipantsInfoText(tournament);
+  const rowAward        = buildAwardInfoText(tournament);
+  const rowFormat       = buildFormatInfoText(tournament);
+
+  const teamsCurrent = toNum(tournament.teams_current, 0);
+  const teamsMax     = toNum(tournament.teams_max, 0);
+  const rowSignups   = `${teamsCurrent} / ${teamsMax} ${participantsLabel}`;
+
+  const dateRowsHTML = rowDateLines.length === 2
+    ? `
+      <div class="info-row"><span class="info-row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
+      <div class="info-row"><span class="info-row-icon">🕒</span><span><strong>Disponibilità:</strong> ${rowDateLines[1]}</span></div>
+    `
+    : `
+      <div class="info-row"><span class="info-row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
+    `;
 
   container.innerHTML = `
-    <div class="info-row"><span class="info-row-icon">🏐</span><span><strong>Sport, Luogo, Data:</strong> ${escapeHTML(row1)}</span></div>
-    <div class="info-row"><span class="info-row-icon">${participantsIcon}</span><span><strong>Partecipanti:</strong> ${row2}</span></div>
-    <div class="info-row"><span class="info-row-icon">💰</span><span><strong>Iscrizione:</strong> ${row3}</span></div>
-    <div class="info-row"><span class="info-row-icon">🏆</span><span><strong>Montepremi:</strong> ${row4}</span></div>
-    <div class="info-row"><span class="info-row-icon">📋</span><span><strong>Formato:</strong> ${row5}</span></div>
-    <div class="info-row"><span class="info-row-icon">📅</span><span><strong>Durata:</strong> ${row6}</span></div>
-    <div class="info-row"><span class="info-row-icon">🥅</span><span><strong>Gestione campi e orari:</strong> ${row7}</span></div>
-    <div class="info-row"><span class="info-row-icon">🕒</span><span><strong>Giorni e fasce orarie disponibili:</strong> ${row8}</span></div>
-    <div class="info-row"><span class="info-row-icon">✅</span><span><strong>Iscritti:</strong> ${row9}</span></div>
+    <div class="info-row"><span class="info-row-icon">💰</span><span><strong>Quota:</strong> ${rowPrice}</span></div>
+    <div class="info-row"><span class="info-row-icon">📍</span><span><strong>Luogo:</strong> ${rowLocation}</span></div>
+    ${dateRowsHTML}
+    <div class="info-row"><span class="info-row-icon">${participantsIcon}</span><span><strong>Partecipanti:</strong> ${rowParticipants}</span></div>
+    <div class="info-row"><span class="info-row-icon">🏆</span><span><strong>Montepremi:</strong> ${rowAward}</span></div>
+    <div class="info-row"><span class="info-row-icon">📋</span><span><strong>Formato:</strong> ${rowFormat}</span></div>
+    <div class="info-row"><span class="info-row-icon">✅</span><span><strong>Iscritti:</strong> ${rowSignups}</span></div>
   `;
 }
 
@@ -485,73 +484,148 @@ function buildParticipantsInfoText(t) {
   return parts.join(" · ");
 }
 
+
 // ===============================
 // 7d. BUILD PRICE INFO TEXT
 // ===============================
-function buildPriceInfoText(t, isIndividual = false) {
+function buildPriceInfoText(t) {
+  const isIndividual   = String(t.individual_or_team || 'team').toLowerCase() === 'individual';
   const price          = toNum(t.price, 0);
   const perLabel       = isIndividual ? 'a giocatore' : 'a squadra';
   const courtPrice     = String(t.court_price     || "non_compreso").toLowerCase().trim();
   const refereePrice   = String(t.referee_price   || "na").toLowerCase().trim();
   const aperitivoPrice = String(t.aperitivo_price || "na").toLowerCase().trim();
 
-  let courtText = "";
-  switch (courtPrice) {
-    case "compreso_gironi_finals":
-      courtText = "Campi inclusi";
-      break;
-    case "compreso_gironi":
-      courtText = "Campi inclusi solo per la fase a gironi";
-      break;
-    case "compreso_finals":
-      courtText = "Campi inclusi solo per la fase finale";
-      break;
-    case "na":
-      courtText = "";
-      break;
-    case "non_compreso":
-    default:
-      courtText = "Campi non inclusi";
-  }
+  const courtMap = {
+    compreso_gironi_finals: "Campi inclusi",
+    compreso_gironi:        "Campi inclusi (solo gironi)",
+    compreso_finals:        "Campi inclusi (solo finali)",
+    non_compreso:           "Campi non inclusi",
+    na:                     ""
+  };
+  const courtText = courtMap[courtPrice] ?? "Campi non inclusi";
 
   let refereeText = "";
-  if (refereePrice === "na") {
-    refereeText = "";
-  } else if (refereePrice === "non_compreso") {
-    refereeText = "arbitro non incluso";
-  } else {
-    refereeText = "arbitro incluso";
-  }
+  if      (refereePrice === "compreso_gironi_finals") refereeText = "Arbitro incluso";
+  else if (refereePrice === "compreso_gironi")        refereeText = "Arbitro incluso (solo gironi)";
+  else if (refereePrice === "compreso_finals")        refereeText = "Arbitro incluso (solo finali)";
+  else if (refereePrice === "non_compreso")           refereeText = "Arbitro non incluso";
 
   let aperitivoText = "";
-  if (aperitivoPrice === "compreso_gironi_finals") {
-    aperitivoText = "aperitivo incluso";
-  } else if (aperitivoPrice === "compreso_gironi") {
-    aperitivoText = "aperitivo incluso (fase a gironi)";
-  } else if (aperitivoPrice === "compreso_finals") {
-    aperitivoText = "aperitivo incluso (fase finale)";
-  }
+  if      (aperitivoPrice === "compreso_gironi_finals") aperitivoText = "Aperitivo incluso";
+  else if (aperitivoPrice === "compreso_gironi")        aperitivoText = "Aperitivo incluso (solo gironi)";
+  else if (aperitivoPrice === "compreso_finals")        aperitivoText = "Aperitivo incluso (solo finali)";
 
-  const parts    = [courtText, refereeText, aperitivoText].filter(Boolean);
-  const infoText = parts.length > 0 ? ` · ${parts.join(", ")}` : "";
-  return `€${price} ${perLabel}${infoText}`;
+  const extras     = [courtText, refereeText, aperitivoText].filter(Boolean);
+  const extrasText = extras.length > 0 ? ` · ${extras.join(" · ")}` : "";
+  return `€${price} ${perLabel}${extrasText}`;
 }
 
 
+// ===============================
+// 7e. BUILD LOCATION INFO TEXT
+// ===============================
+function buildLocationInfoText(t) {
+  const location   = escapeHTML(String(t.location || "").trim());
+  const fixed      = String(t.fixed_court_days_hours || "false").toLowerCase().trim();
+  const courtLabel = fixed === "fixed_all" ? "Campo prestabilito" : "Campi a scelta";
+  return `${location} · ${courtLabel}`;
+}
+
 
 // ===============================
-// 7e. BUILD AWARD INFO TEXT
+// 7f. BUILD DATE INFO TEXT
+// Restituisce un array di 1 o 2 stringhe.
+// 2 stringhe solo nel caso b2 (fixed_all + mid/long).
 // ===============================
-function buildAwardInfoText(t) {
-  // FIX BUG 1: toBool gestisce boolean nativo, stringa "true"/"false", numero 1/0
-  const hasAward = toBool(t.award);
+function buildDateInfoText(t) {
+  const fixed     = String(t.fixed_court_days_hours || "false").toLowerCase().trim();
+  const timeRange = String(t.time_range || "").toLowerCase().trim();
+  const date      = escapeHTML(String(t.date || "").trim());
 
-  if (!hasAward) {
-    return "Premi simbolici";
+  const durationLabel = timeRange === "short" ? "Giornaliero" : "Stagionale";
+
+  const daysRaw = String(t.available_days || "").toLowerCase().trim();
+
+  const dayLabels = {
+    lun:  "Lunedì",
+    mar:  "Martedì",
+    mart: "Martedì",
+    mer:  "Mercoledì",
+    merc: "Mercoledì",
+    gio:  "Giovedì",
+    giov: "Giovedì",
+    ven:  "Venerdì",
+    sab:  "Sabato",
+    dom:  "Domenica"
+  };
+
+  const shortRangeLabels = {
+    "lun-dom": "Tutti i giorni",
+    "lun-ven": "Lun-Ven",
+    "sab-dom": "Weekend",
+    "ven-dom": "Ven-Dom"
+  };
+
+  function parseDays(raw) {
+    if (!raw) return "";
+    if (shortRangeLabels[raw]) return shortRangeLabels[raw];
+    if (raw.includes("-")) {
+      const [start, end] = raw.split("-");
+      const s = dayLabels[start];
+      const e = dayLabels[end];
+      if (s && e) return `${s}-${e}`;
+    }
+    return dayLabels[raw] || "";
   }
 
+  const hoursRaw = String(t.available_hours || "").toLowerCase().trim();
+
+  function parseHours(raw) {
+    if (!raw || !raw.includes("-")) return "";
+    const [startH, endH] = raw.split("-");
+    const s = Number(startH);
+    const e = Number(endH);
+    if (isNaN(s) || isNaN(e)) return "";
+    return `${String(s).padStart(2, "0")}:00-${String(e).padStart(2, "0")}:00`;
+  }
+
+  const daysText  = parseDays(daysRaw);
+  const hoursText = parseHours(hoursRaw);
+
+  // Caso a: fixed = "false" o "fixed_finals" + time_range = "mid" o "long"
+  if ((fixed === "false" || fixed === "fixed_finals") && (timeRange === "mid" || timeRange === "long")) {
+    const parts = [durationLabel, daysText, hoursText, "Giorni e orari a scelta"].filter(Boolean);
+    return [parts.join(" · ")];
+  }
+
+  // Caso b1: fixed = "fixed_all" + time_range = "short"
+  if (fixed === "fixed_all" && timeRange === "short") {
+    const parts = [durationLabel, date, hoursText, "Giorni e orari prestabiliti"].filter(Boolean);
+    return [parts.join(" · ")];
+  }
+
+  // Caso b2: fixed = "fixed_all" + time_range = "mid" o "long" → 2 righe
+  if (fixed === "fixed_all" && (timeRange === "mid" || timeRange === "long")) {
+    const row1 = [durationLabel, date].filter(Boolean).join(" · ");
+    const row2 = [daysText, hoursText, "Giorni e orari prestabiliti"].filter(Boolean).join(" · ");
+    return [row1, row2];
+  }
+
+  // Fallback
+  return [durationLabel];
+}
+
+
+// ===============================
+// 7g. BUILD AWARD INFO TEXT
+// ===============================
+function buildAwardInfoText(t) {
+  const hasAward = toBool(t.award);
+
+  if (!hasAward) return "Premi simbolici";
+
   const perc     = t.award_amount_perc;
-  // FIX BUG 4: toNum invece di Number() || 0
   const price    = toNum(t.price, 0);
   const teamsMax = toNum(t.teams_max, 0);
 
@@ -565,10 +639,8 @@ function buildAwardInfoText(t) {
 }
 
 
-
-
 // ===============================
-// 7f. BUILD FORMAT INFO TEXT
+// 7h. BUILD FORMAT INFO TEXT
 // ===============================
 function buildFormatInfoText(t) {
   const formatMap = {
@@ -579,120 +651,11 @@ function buildFormatInfoText(t) {
   };
 
   const formatText = formatMap[t.format_type] || "Formato da definire";
-  // FIX BUG 5: toNum per gestire guaranteed_match come stringa numerica
   const guaranteed = toNum(t.guaranteed_match, 0);
 
-  if (guaranteed > 0) {
-    return `${formatText} · ${guaranteed} partite garantite`;
-  }
+  if (guaranteed > 0) return `${formatText} · ${guaranteed} partite garantite`;
 
   return formatText;
-}
-
-// ===============================
-// 7g. BUILD TIME RANGE INFO TEXT
-// ===============================
-function buildTimeRangeInfoText(t) {
-  const timeMap = {
-    short: "Torneo giornaliero",
-    mid:   "Una partita a settimana per gironi · Finali in un giorno",
-    long:  "Una partita a settimana per gironi e finali"
-  };
-
-  return timeMap[String(t.time_range || '').toLowerCase()] || "Durata da definire";
-}
-
-// ===============================
-// 7h. BUILD COURT SCHEDULING MODE TEXT
-// ===============================
-function buildCourtSchedulingModeText(t) {
-  const fixed = String(t.fixed_court_days_hours || "false").toLowerCase();
-
-  const fixedMap = {
-    "false": "A scelta per tutte le partite",
-    "fixed_finals": "A scelta (Gironi) · Prestabiliti (Finali)",
-    "fixed_all": "Prestabiliti per tutte le partite"
-  };
-
-  return fixedMap[fixed] || "A scelta per tutte le partite";
-}
-
-
-// ===============================
-// 7i. BUILD COURT DAYS & HOURS RANGE TEXT
-// ===============================
-function buildCourtDaysHoursRangeText(t) {
-
-  const daysRaw = String(t.available_days || "").toLowerCase().trim();
-  const hoursRaw = String(t.available_hours || "").toLowerCase().trim();
-
-  const parts = [];
-
-  // =====================================================
-  // GIORNI
-  // =====================================================
-
-  const dayLabels = {
-    lun: "Lunedì",
-    mar: "Martedì",
-    mer: "Mercoledì",
-    gio: "Giovedì",
-    giov: "Giovedì",
-    ven: "Venerdì",
-    sab: "Sabato",
-    dom: "Domenica"
-  };
-
-  if (daysRaw.includes("-")) {
-
-    // Range (es. lun-ven, sab-dom, ven-dom, lun-dom)
-    const [start, end] = daysRaw.split("-");
-
-    if (daysRaw === "lun-dom") {
-      parts.push("Tutti i giorni");
-    } 
-    else if (daysRaw === "lun-ven") {
-      parts.push("Lun-Ven");
-    } 
-    else if (daysRaw === "sab-dom") {
-      parts.push("Weekend");
-    } 
-    else if (daysRaw === "ven-dom") {
-      parts.push("Ven-Dom");
-    } 
-    else if (dayLabels[start] && dayLabels[end]) {
-      parts.push(`${dayLabels[start]} - ${dayLabels[end]}`);
-    }
-
-  } else if (dayLabels[daysRaw]) {
-
-    // Giorno singolo
-    parts.push(dayLabels[daysRaw]);
-  }
-
-  // =====================================================
-  // ORARI (DINAMICI)
-  // =====================================================
-
-  if (hoursRaw && hoursRaw.includes("-")) {
-
-    const [startHour, endHour] = hoursRaw.split("-");
-
-    const formatHour = (h) => {
-      const hourNumber = Number(h);
-      if (isNaN(hourNumber)) return null;
-      return `${hourNumber.toString().padStart(2, "0")}:00`;
-    };
-
-    const formattedStart = formatHour(startHour);
-    const formattedEnd = formatHour(endHour);
-
-    if (formattedStart && formattedEnd) {
-      parts.push(`${formattedStart}-${formattedEnd}`);
-    }
-  }
-
-  return parts.join(" · ");
 }
 
 

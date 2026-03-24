@@ -211,21 +211,23 @@ function renderTournaments(tournaments) {
 
     if (t.status === "finished") card.classList.add("finished");
 
-    const statusLabel      = buildStatusLabel(t.status);
-    const iscrizioniAperte = t.status === "open";
+    const statusLabel       = buildStatusLabel(t.status);
+    const iscrizioniAperte  = t.status === "open";
+    const isIndividual      = String(t.individual_or_team || 'team').toLowerCase() === 'individual';
 
-    const rowPrice        = buildPriceInfoText(t);
-    const rowLocation     = buildLocationInfoText(t);
-    const rowDateLines    = buildDateInfoText(t);   // array: 1 o 2 stringhe
-    const rowParticipants = buildParticipantsInfoText(t);
-    const rowAward        = buildAwardInfoText(t);
-    const rowFormat       = buildFormatInfoText(t);
+    const rowPrice          = buildPriceInfoText(t);
+    const rowLocation       = buildLocationInfoText(t);
+    const rowDateLines      = buildDateInfoText(t);   // array: 1 o 2 stringhe
+    const rowParticipants   = buildParticipantsInfoText(t);
+    const rowAward          = buildAwardInfoText(t);
+    const rowFormat         = buildFormatInfoText(t);
 
-    const teamsCurrent = toNum(t.teams_current, 0);
-    const teamsMax     = toNum(t.teams_max, 0);
-    const rowSignups   = `${teamsCurrent} / ${teamsMax} squadre iscritte`;
+    const teamsCurrent      = toNum(t.teams_current, 0);
+    const teamsMax          = toNum(t.teams_max, 0);
+    const participantsIcon  = isIndividual ? "👤" : "👥";
+    const participantsLabel = isIndividual ? "giocatori iscritti" : "squadre iscritte";
+    const rowSignups        = `${teamsCurrent} / ${teamsMax} ${participantsLabel}`;
 
-    // Riga 3: 1 riga (label "Data") oppure 2 righe (label "Data" + "Disponibilità")
     const dateRowsHTML = rowDateLines.length === 2
       ? `
         <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
@@ -246,7 +248,7 @@ function renderTournaments(tournaments) {
           <div class="card-info-row"><span class="row-icon">💰</span><span><strong>Quota:</strong> ${rowPrice}</span></div>
           <div class="card-info-row"><span class="row-icon">📍</span><span><strong>Luogo:</strong> ${rowLocation}</span></div>
           ${dateRowsHTML}
-          <div class="card-info-row"><span class="row-icon">👥</span><span><strong>Partecipanti:</strong> ${rowParticipants}</span></div>
+          <div class="card-info-row"><span class="row-icon">${participantsIcon}</span><span><strong>Partecipanti:</strong> ${rowParticipants}</span></div>
           <div class="card-info-row"><span class="row-icon">🏆</span><span><strong>Montepremi:</strong> ${rowAward}</span></div>
           <div class="card-info-row"><span class="row-icon">📋</span><span><strong>Formato:</strong> ${rowFormat}</span></div>
           <div class="card-info-row"><span class="row-icon">✅</span><span><strong>Iscritti:</strong> ${rowSignups}</span></div>
