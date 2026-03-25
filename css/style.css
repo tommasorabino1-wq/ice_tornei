@@ -2819,6 +2819,7 @@ section > .section-title {
   padding: 3px 10px;
   border-radius: 999px;
   margin-bottom: 14px;
+  text-align: center;
 }
 
 .ev-body {
