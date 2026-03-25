@@ -1452,16 +1452,18 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     if (!fixedConstraints) {
       items = buildFallbackItems();
     } else {
-      items.push(`
-        <li><strong>Dove e quando:</strong>
-          <ul>
-            <li><strong>Organizzazione:</strong> ${buildSchedulingModeFixedAllText()}</li>
-            <li><strong>Zona, giorni e orari:</strong> ${fixedConstraints}</li>
-          </ul>
-        </li>
-      `);
+      if (isShort) {
+        items.push(`<li><strong>Dove e quando:</strong> ${fixedConstraints}</li>`);
+      } else {
+        items.push(`
+          <li><strong>Dove e quando:</strong>
+            <ul>
+              <li><strong>Organizzazione:</strong> ${buildSchedulingModeFixedAllText()}</li>
+              <li><strong>Zona, giorni e orari:</strong> ${fixedConstraints}</li>
+            </ul>
+          </li>
+        `);
 
-      if (!isShort) {
         if (!hasFinals) {
           items.push(`<li><strong>Durata:</strong> ${buildSimpleSeasonalDurationText()}</li>`);
         } else if (isMid) {
