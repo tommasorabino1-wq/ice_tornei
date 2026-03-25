@@ -1288,7 +1288,6 @@ section > .section-title {
   color: var(--brand-hover);
 }
 
-
 /* =========================
    17. TOURNAMENT LIST & CARDS (Homepage)
 ========================= */
@@ -1356,7 +1355,7 @@ section > .section-title {
 }
 
 .tournament-card h3 {
-  font-size: 20px;
+  font-size: 20px;       /* ripristinato */
   line-height: 1.35;
   margin: 0;
   font-weight: 700;
@@ -1394,7 +1393,7 @@ section > .section-title {
   flex-shrink: 0;
   width: 20px;
   text-align: center;
-  font-size: 15px;
+  font-size: 13px;       /* ridotto da 15px */
   color: var(--brand);
   line-height: 1.4;
 }
@@ -1408,7 +1407,7 @@ section > .section-title {
 }
 
 .card-primary-label {
-  font-size: 11px;
+  font-size: 9px;        /* ridotto da 11px */
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1417,27 +1416,19 @@ section > .section-title {
 }
 
 .card-primary-value {
-  font-size: 14px;
+  font-size: 12px;       /* ridotto da 14px */
   line-height: 1.4;
   font-weight: 700;
   color: var(--text-main);
 }
 
 .card-primary-subvalue {
-  font-size: 12px;
+  font-size: 10px;       /* ridotto da 12px */
   line-height: 1.4;
   color: var(--text-muted);
 }
 
-.primary-price {
-  background: var(--brand-soft);
-  border-color: var(--brand-soft-border);
-  box-shadow: 0 2px 10px rgba(176, 138, 90, 0.08);
-}
-
-.primary-price .card-primary-value {
-  font-size: 15px;
-}
+/* Rimosso .primary-price — quota usa lo stesso stile di luogo e data */
 
 /* =========================
    SECONDARY INFO
@@ -1457,7 +1448,7 @@ section > .section-title {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 12px;
+  font-size: 12px;       /* ripristinato */
   color: var(--text-muted);
   line-height: 1.5;
   background: var(--surface-soft);
@@ -1475,7 +1466,7 @@ section > .section-title {
   flex-shrink: 0;
   width: 18px;
   text-align: center;
-  font-size: 14px;
+  font-size: 14px;       /* ripristinato */
   color: var(--brand);
 }
 

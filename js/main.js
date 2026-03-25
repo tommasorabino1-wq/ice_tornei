@@ -259,7 +259,7 @@ function renderTournaments(tournaments) {
 
       <div class="card-body">
         <div class="card-primary-info">
-          <div class="card-primary-item primary-price">
+          <div class="card-primary-item">
             <span class="row-icon">💰</span>
             <div class="card-primary-text">
               <span class="card-primary-label">Quota</span>
