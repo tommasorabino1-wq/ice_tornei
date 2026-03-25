@@ -2196,7 +2196,7 @@ function buildFacilitiesRule(tournament, ruleNumber) {
 // ===============================
 function buildRefundRule(ruleNumber) {
 
-  const refundIntro = `Faremo <strong>sempre</strong> tutto il possibile per garantire che il torneo si svolga senza problemi. Ma nel caso in cui, per qualsiasi motivazione, il torneo venga annullato, l'organizzazione <strong>rimborserà l'intera quota di iscrizione</strong> a tutti i partecipanti.`; 
+  const refundIntro = `Faremo <strong>sempre</strong> tutto il possibile per garantire che il torneo si svolga senza problemi. Ma nel caso in cui, per qualsiasi motivazione, il torneo venga annullato (anche a torneo in corso), l'organizzazione <strong>rimborserà l'intera quota di iscrizione</strong> a tutti i partecipanti.`; 
 
   const refundDetails = `Il rimborso avverrà <strong>entro 24 ore</strong> dall'annullamento, utilizzando lo stesso metodo di pagamento tramite cui è stata effettuata l'iscrizione.`; 
 
