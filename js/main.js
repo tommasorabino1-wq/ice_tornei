@@ -246,14 +246,33 @@ function renderTournaments(tournaments) {
       </div>
 
       <div class="card-body">
-        <div class="card-info-rows">
-          <div class="card-info-row"><span class="row-icon">💰</span><span><strong>Quota:</strong> ${rowPrice}</span></div>
-          <div class="card-info-row"><span class="row-icon">📍</span><span><strong>Luogo:</strong> ${rowLocation}</span></div>
-          ${dateRowsHTML}
-          <div class="card-info-row"><span class="row-icon">${participantsIcon}</span><span><strong>Partecipanti:</strong> ${rowParticipants}</span></div>
-          <div class="card-info-row"><span class="row-icon">🏆</span><span><strong>Montepremi:</strong> ${rowAward}</span></div>
-          <div class="card-info-row"><span class="row-icon">📋</span><span><strong>Formato:</strong> ${rowFormat}</span></div>
-          <div class="card-info-row"><span class="row-icon">✅</span><span><strong>Iscritti:</strong> ${rowSignups}</span></div>
+        <div class="card-primary-info">
+          <div class="card-primary-item primary-price">
+            <span class="row-icon">💰</span>
+            <div class="card-primary-text">
+              <span class="card-primary-label">Quota</span>
+              <span class="card-primary-value">${rowPrice}</span>
+            </div>
+          </div>
+
+          <div class="card-primary-item primary-location">
+            <span class="row-icon">📍</span>
+            <div class="card-primary-text">
+              <span class="card-primary-label">Luogo</span>
+              <span class="card-primary-value">${rowLocation}</span>
+            </div>
+          </div>
+
+          ${primaryDateHTML}
+        </div>
+
+        <div class="card-secondary-info">
+          <div class="card-info-rows">
+            <div class="card-info-row"><span class="row-icon">${participantsIcon}</span><span><strong>Partecipanti:</strong> ${rowParticipants}</span></div>
+            <div class="card-info-row"><span class="row-icon">🏆</span><span><strong>Montepremi:</strong> ${rowAward}</span></div>
+            <div class="card-info-row"><span class="row-icon">📋</span><span><strong>Formato:</strong> ${rowFormat}</span></div>
+            <div class="card-info-row"><span class="row-icon">✅</span><span><strong>Iscritti:</strong> ${rowSignups}</span></div>
+          </div>
         </div>
       </div>
 
