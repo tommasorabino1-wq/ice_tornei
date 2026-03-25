@@ -428,7 +428,7 @@ function renderTournamentInfoRows(tournament) {
 
   const rowPrice        = buildPriceInfoText(tournament);
   const rowLocation     = buildLocationInfoText(tournament);
-  const rowDateLines    = buildDateInfoText(tournament);   // array: 1 o 2 stringhe
+  const rowDateLines    = buildDateInfoText(tournament);
   const rowParticipants = buildParticipantsInfoText(tournament);
   const rowAward        = buildAwardInfoText(tournament);
   const rowFormat       = buildFormatInfoText(tournament);
@@ -447,13 +447,13 @@ function renderTournamentInfoRows(tournament) {
     `;
 
   container.innerHTML = `
-    <div class="info-row"><span class="info-row-icon">💰</span><span><strong>Quota:</strong> ${rowPrice}</span></div>
-    <div class="info-row"><span class="info-row-icon">📍</span><span><strong>Luogo:</strong> ${rowLocation}</span></div>
+    <div class="card-info-row"><span class="row-icon">💰</span><span><strong>Quota:</strong> ${rowPrice}</span></div>
+    <div class="card-info-row"><span class="row-icon">📍</span><span><strong>Luogo:</strong> ${rowLocation}</span></div>
     ${dateRowsHTML}
-    <div class="info-row"><span class="info-row-icon">${participantsIcon}</span><span><strong>Partecipanti:</strong> ${rowParticipants}</span></div>
-    <div class="info-row"><span class="info-row-icon">🏆</span><span><strong>Montepremi:</strong> ${rowAward}</span></div>
-    <div class="info-row"><span class="info-row-icon">📋</span><span><strong>Formato:</strong> ${rowFormat}</span></div>
-    <div class="info-row"><span class="info-row-icon">✅</span><span><strong>Iscritti:</strong> ${rowSignups}</span></div>
+    <div class="card-info-row"><span class="row-icon">${participantsIcon}</span><span><strong>Partecipanti:</strong> ${rowParticipants}</span></div>
+    <div class="card-info-row"><span class="row-icon">🏆</span><span><strong>Montepremi:</strong> ${rowAward}</span></div>
+    <div class="card-info-row"><span class="row-icon">📋</span><span><strong>Formato:</strong> ${rowFormat}</span></div>
+    <div class="card-info-row"><span class="row-icon">✅</span><span><strong>Iscritti:</strong> ${rowSignups}</span></div>
   `;
 }
 
@@ -1218,7 +1218,7 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   const qualifiedPlural = isIndividual ? "i partecipanti qualificati" : "le squadre qualificate";
   const venuePlural = courtType === "bar" ? "location" : "campi";
   const venueSingular = courtType === "bar" ? "location" : "campo";
-  const placeLabel = courtType === "bar" ? "la location" : "il centro sportivo";
+  const placePrefix = courtType === "bar" ? "presso" : "presso il centro sportivo";
 
   // ===============================
   // HELPERS
@@ -1350,7 +1350,7 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     const mainText = joinWithComma(parts);
     if (!mainText) return "";
 
-    return `Tutte le partite del torneo verranno disputate presso ${placeLabel} ${mainText}.`;
+    return `Tutte le partite del torneo verranno disputate ${placePrefix} ${mainText}.`;
   }
 
   function buildDeferredFinalsConstraintsText() {
@@ -1453,7 +1453,13 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
       items = buildFallbackItems();
     } else {
       if (isShort) {
-        items.push(`<li><strong>Dove e quando:</strong> ${fixedConstraints}</li>`);
+        const singleLineText = buildFixedAllSingleLineText();
+
+        if (!singleLineText) {
+          items = buildFallbackItems();
+        } else {
+          items.push(`<li><strong>Dove e quando:</strong> ${singleLineText}</li>`);
+        }
       } else {
         items.push(`
           <li><strong>Dove e quando:</strong>
@@ -1590,6 +1596,18 @@ function buildMatchFormatRule(tournament, ruleNumber) {
     const match = str.match(/^1x(\d+)$/);
     if (!match) return null;
     return { minutes: Number(match[1]) };
+  }
+
+  // helper per riga singola solo se giornaliero e tutto fisso
+  function buildFixedAllSingleLineText() {
+    const schedulingText = buildSchedulingModeFixedAllText();
+    const constraintsText = buildFixedConstraintsText();
+
+    if (schedulingText && constraintsText) {
+      return `${schedulingText} ${constraintsText}`;
+    }
+
+    return schedulingText || constraintsText || "";
   }
 
   // =====================================================
