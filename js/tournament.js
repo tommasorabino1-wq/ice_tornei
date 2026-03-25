@@ -438,13 +438,13 @@ function renderTournamentInfoRows(tournament) {
   const rowSignups   = `${teamsCurrent} / ${teamsMax} ${participantsLabel}`;
 
   const dateRowsHTML = rowDateLines.length === 2
-  ? `
-    <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
-    <div class="card-info-row"><span class="row-icon">🕒</span><span><strong>Disponibilità:</strong> ${rowDateLines[1]}</span></div>
-  `
-  : `
-    <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
-  `;
+    ? `
+      <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
+      <div class="card-info-row"><span class="row-icon">🕒</span><span><strong>Disponibilità:</strong> ${rowDateLines[1]}</span></div>
+    `
+    : `
+      <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
+    `;
 
   container.innerHTML = `
     <div class="info-row"><span class="info-row-icon">💰</span><span><strong>Quota:</strong> ${rowPrice}</span></div>
