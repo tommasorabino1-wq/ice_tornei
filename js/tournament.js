@@ -690,21 +690,21 @@ function renderSpecificCourtRule(tournament) {
   // REGOLA 1: Quota di iscrizione, costo campi e arbitro
   rules.push(buildPriceCourtRefereeRule(tournament, ruleNumber));
   ruleNumber++;
+
+  // REGOLA 2: Campi, giorni e orari
+  rules.push(buildCourtDaysHoursRule(tournament, ruleNumber));
+  ruleNumber++;
   
-  // REGOLA 2: Partecipanti
+  // REGOLA 3: Partecipanti
   rules.push(buildParticipantsRequirementsRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 3: Premi
+  // REGOLA 4: Premi
   rules.push(buildAwardsRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 4: Formato
+  // REGOLA 5: Formato
   rules.push(buildFormatTimeRangeRule(tournament, ruleNumber));
-  ruleNumber++;
-  
-  // REGOLA 5: Campi, giorni e orari
-  rules.push(buildCourtDaysHoursRule(tournament, ruleNumber));
   ruleNumber++;
   
   // REGOLA 6: Formato partite
@@ -906,310 +906,9 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
 
 
 
-// ===============================
-// 9c. BUILD PARTICIPANTS REQUIREMENTS RULE (REGOLA 2)
-// ===============================
-function buildParticipantsRequirementsRule(tournament, ruleNumber) {
-  const gender       = String(tournament.gender      || "open").toLowerCase();
-  const age          = String(tournament.age         || "open").toLowerCase();
-  const expertise    = String(tournament.expertise   || "open").toLowerCase();
-  const maxCategory  = String(tournament.max_category|| "NA").trim();
-  // FIX BUG 7: toNum per team_size_min e team_size_max
-  const teamSizeMin  = toNum(tournament.team_size_min, 0);
-  const teamSizeMax  = toNum(tournament.team_size_max, 0);
-  const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
-  const fideRated    = String(tournament.fide_rated  || "NA").toLowerCase();
-
-  const genderMap = {
-    "open":                { team: "qualsiasi composizione (maschili, femminili o miste)", individual: "qualsiasi genere", teamRestriction: null, individualRestriction: null },
-    "only_male":           { team: "soli uomini", individual: "uomini", teamRestriction: "Possono partecipare esclusivamente squadre composte da soli uomini.", individualRestriction: "Possono partecipare esclusivamente giocatori di genere maschile." },
-    "only_female":         { team: "sole donne", individual: "donne", teamRestriction: "Possono partecipare esclusivamente squadre composte da sole donne.", individualRestriction: "Possono partecipare esclusivamente giocatrici di genere femminile." },
-    "mixed_strict":        { team: "miste", individual: "qualsiasi genere", teamRestriction: "Ogni squadra deve essere obbligatoriamente mista, composta da almeno un uomo e almeno una donna.", individualRestriction: null },
-    "mixed_female_allowed":{ team: "miste o femminili", individual: "qualsiasi genere", teamRestriction: "Ogni squadra deve essere mista (almeno un uomo e una donna) oppure composta da sole donne. Non sono ammesse squadre composte da soli uomini.", individualRestriction: null }
-  };
-
-  let ageData = { text: "qualsiasi età", teamRestriction: null, individualRestriction: null };
-  if (age !== "open") {
-    const underMatch = age.match(/^under_(\d+)$/);
-    const overMatch  = age.match(/^over_(\d+)$/);
-
-    if (underMatch) {
-      const ageValue = underMatch[1];
-      ageData = {
-        text: `Under ${ageValue}`,
-        teamRestriction: `Tutti i componenti della squadra devono avere meno di ${ageValue} anni alla data di inizio del torneo.`,
-        individualRestriction: `Il partecipante deve avere meno di ${ageValue} anni alla data di inizio del torneo.`
-      };
-    } else if (overMatch) {
-      const ageValue = overMatch[1];
-      ageData = {
-        text: `Over ${ageValue}`,
-        teamRestriction: `Tutti i componenti della squadra devono avere almeno ${ageValue} anni alla data di inizio del torneo.`,
-        individualRestriction: `Il partecipante deve avere almeno ${ageValue} anni alla data di inizio del torneo.`
-      };
-    }
-  }
-
-  const expertiseMap = {
-    "open":   { teamIntro: "aperto a giocatori e squadre di qualsiasi livello", individualIntro: "aperto a giocatori di qualsiasi livello", description: "È pensato per chi vuole divertirsi e mettersi in gioco in un contesto amatoriale." },
-    "expert": { teamIntro: "rivolto a giocatori esperti con un livello di gioco medio-alto", individualIntro: "rivolto a giocatori esperti con un livello di gioco medio-alto", description: "Si consiglia la partecipazione solo a chi ha esperienza agonistica o un buon livello tecnico." }
-  };
-
-  const genderData    = genderMap[gender] || genderMap["open"];
-  const expertiseData = expertiseMap[expertise] || expertiseMap["open"];
-
-  let categoryRestriction = null;
-  if (maxCategory && maxCategory.toLowerCase() !== "na") {
-    if (maxCategory.toLowerCase().startsWith("elo_")) {
-      const eloValue = maxCategory.replace(/^elo_/i, "");
-      categoryRestriction = `Al fine di evitare squilibri, sono ammessi esclusivamente giocatori con un punteggio ELO pari o inferiore a ${eloValue}.`;
-    } else {
-      categoryRestriction = `Al fine di evitare squilibri, sono ammessi esclusivamente giocatori di ${maxCategory} o inferiore.`;
-    }
-  }
-
-  let genderAgeText = "";
-  if (isIndividual) {
-    const genderPart = genderData.individual || "qualsiasi genere";
-    const genderRestr = genderData.individualRestriction;
-    const ageRestr    = ageData.individualRestriction;
-    if (!genderRestr && !ageRestr) {
-      genderAgeText = `Possono partecipare giocatori di ${genderPart} e di ${ageData.text}.`;
-    } else if (genderRestr && !ageRestr) {
-      genderAgeText = `${genderRestr} Non ci sono limiti di età per i partecipanti.`;
-    } else if (!genderRestr && ageRestr) {
-      genderAgeText = `Possono partecipare giocatori di ${genderPart}, ma il torneo è riservato a partecipanti ${ageData.text}. ${ageRestr}`;
-    } else {
-      genderAgeText = `${genderRestr} Il torneo è inoltre riservato a partecipanti ${ageData.text}: ${ageRestr.toLowerCase()}`;
-    }
-  } else {
-    const genderRestr = genderData.teamRestriction;
-    const ageRestr    = ageData.teamRestriction;
-    if (gender === "open" && age === "open") {
-      genderAgeText = `Possono partecipare squadre di ${genderData.team} e giocatori di ${ageData.text}.`;
-    } else if (gender === "open" && age !== "open") {
-      genderAgeText = `Possono partecipare squadre di ${genderData.team}, ma il torneo è riservato a giocatori ${ageData.text}. ${ageRestr}`;
-    } else if (gender !== "open" && age === "open") {
-      genderAgeText = `${genderRestr} Non ci sono limiti di età per i partecipanti.`;
-    } else {
-      genderAgeText = `${genderRestr} Il torneo è riservato a giocatori ${ageData.text}: ${ageRestr.toLowerCase()}`;
-    }
-  }
-
-  const expertiseIntro = isIndividual ? expertiseData.individualIntro : expertiseData.teamIntro;
-  let expertiseText = `Questo torneo è ${expertiseIntro}. ${expertiseData.description}`;
-  if (categoryRestriction) expertiseText += ` ${categoryRestriction}`;
-
-  let teamSizeText = "";
-  if (!isIndividual) {
-    if (teamSizeMin > 0 && teamSizeMax > 0) {
-      if (teamSizeMin === teamSizeMax) {
-        teamSizeText = `Ogni squadra deve essere composta da esattamente ${teamSizeMin} giocatori.`;
-      } else {
-        teamSizeText = `Ogni squadra deve essere composta da un minimo di ${teamSizeMin} e un massimo di ${teamSizeMax} giocatori.`;
-      }
-    } else if (teamSizeMin > 0) {
-      teamSizeText = `Ogni squadra deve essere composta da almeno ${teamSizeMin} giocatori.`;
-    } else if (teamSizeMax > 0) {
-      teamSizeText = `Ogni squadra può essere composta da un massimo di ${teamSizeMax} giocatori.`;
-    } else {
-      teamSizeText = `Il numero di giocatori per squadra sarà comunicato prima dell'inizio del torneo.`;
-    }
-  }
-
-  let fideText = "";
-  if (fideRated === "true") {
-    fideText = `Questo torneo è <strong>omologato FIDE</strong>. I risultati saranno registrati ufficialmente e influenzeranno il punteggio ELO dei partecipanti.`;
-  } else if (fideRated === "false") {
-    fideText = `Questo torneo <strong>non è omologato FIDE</strong>. I risultati non influenzeranno il punteggio ELO ufficiale dei partecipanti.`;
-  }
-
-  return `
-    <div class="specific-regulation-card">
-      <div class="specific-regulation-icon">${ruleNumber}</div>
-      <div class="specific-regulation-content">
-        <p><strong>Chi può partecipare</strong></p>
-        <ul>
-          <li><strong>Composizione e età:</strong> ${genderAgeText}</li>
-          <li><strong>Livello:</strong> ${expertiseText}</li>
-          ${!isIndividual ? `<li><strong>Numero giocatori:</strong> ${teamSizeText}</li>` : ''}
-          ${fideText ? `<li><strong>Omologazione FIDE:</strong> ${fideText}</li>` : ''}
-        </ul>
-      </div>
-    </div>
-  `;
-}
-
-
-
-
-
-
-
 
 // ===============================
-// 9d. BUILD AWARDS RULE (REGOLA 3)
-// ===============================
-function buildAwardsRule(tournament, ruleNumber) {
-  const hasAward   = toBool(tournament.award);
-  const awardPerc  = String(tournament.award_amount_perc || "NA");
-  const price      = toNum(tournament.price, 0);
-  const teamsMax   = toNum(tournament.teams_max, 0);
-  const mvpAward   = String(tournament.mvp_award || "none").trim();
-  const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
-
-  const entityWinners        = isIndividual ? 'i primi 3 classificati' : 'le prime 3 squadre classificate';
-  const entityWinnersGeneric = isIndividual ? 'i vincitori' : 'le squadre vincitrici';
-  const entityCount          = isIndividual ? 'giocatori iscritti' : 'squadre iscritte';
-
-  let mainAwardText = "";
-  if (hasAward) {
-    if (awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc)) && price > 0 && teamsMax > 0) {
-      const percValue  = Number(awardPerc) / 100;
-      const totalPrize = Math.round(teamsMax * price * percValue);
-      mainAwardText = `È previsto un montepremi pari a <strong>€${totalPrize}</strong>, che sarà suddiviso tra ${entityWinners}.`;
-    } else {
-      mainAwardText = `È previsto un montepremi per ${entityWinnersGeneric}. L'importo e la suddivisione saranno comunicati prima dell'inizio del torneo.`;
-    }
-  } else {
-    mainAwardText = `Essendo un torneo aperto a giocatori di qualsiasi livello, al fine di evitare squilibri, sono previsti esclusivamente premi simbolici (coppe, medaglie, gadget e altri riconoscimenti) per ${entityWinnersGeneric}.`;
-  }
-
-  let guaranteeText = "";
-  if (hasAward && awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc)) && price > 0 && teamsMax > 0) {
-    guaranteeText = `Il montepremi è garantito al raggiungimento di ${teamsMax} ${entityCount}. In ogni caso, anche nella rara eventualità in cui non si raggiungesse il numero previsto, il premio rimarrà comunque almeno uguale al ${awardPerc}% delle quote di iscrizione totali.`;
-  } else if (hasAward) {
-    guaranteeText = `Le condizioni per l'erogazione del montepremi saranno comunicate prima dell'inizio del torneo.`;
-  } else {
-    guaranteeText = `I premi simbolici saranno consegnati a ${entityWinnersGeneric} al termine del torneo.`;
-  }
-
-  // =====================================================
-  // MVP / premi individuali — se "none" o "NA" non mostrare nulla
-  // =====================================================
-
-    let mvpAwardText = "";
-    if (mvpAward && mvpAward.toLowerCase() !== "none" && mvpAward.toLowerCase() !== "na") {
-      const awardsList = mvpAward
-        .split("||")
-        .map(item => item.trim())
-        .filter(Boolean);
-
-      if (awardsList.length > 0) {
-        mvpAwardText = `
-          <ul>
-            ${awardsList.map(item => `<li>${item}</li>`).join("")}
-          </ul>
-        `;
-      }
-    }
-
-  return `
-    <div class="specific-regulation-card">
-      <div class="specific-regulation-icon">${ruleNumber}</div>
-      <div class="specific-regulation-content">
-        <p><strong>Premi e riconoscimenti</strong></p>
-        <ul>
-          <li><strong>Montepremi:</strong> ${mainAwardText}</li>
-          <li><strong>Garanzia:</strong> ${guaranteeText}</li>
-          ${mvpAwardText ? `<li><strong>Premi individuali:</strong> ${mvpAwardText}</li>` : ''}
-        </ul>
-      </div>
-    </div>
-  `;
-}
-
-
-
-
-
-
-// ===============================
-// 9e. BUILD FORMAT RULE (REGOLA 4)
-// ===============================
-function buildFormatTimeRangeRule(tournament, ruleNumber) {
-  const formatType = String(tournament.format_type || "").toLowerCase();
-  const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
-
-  const entitySingular = isIndividual ? 'giocatore' : 'squadra';
-  const entityPlural = isIndividual ? 'giocatori' : 'squadre';
-  const entityWinner = isIndividual ? 'il giocatore' : 'la squadra';
-  const entityPluralArticle = isIndividual ? 'dei giocatori' : 'delle squadre';
-  const entityPluralLabel = isIndividual ? 'Partecipanti' : 'Squadre';
-
-  const entityEach = isIndividual ? 'ogni giocatore' : 'ogni squadra';
-  const entityOthers = isIndividual ? 'gli altri partecipanti' : 'le altre squadre';
-  const entityOthersGroup = isIndividual ? 'gli altri partecipanti del proprio gruppo' : 'le altre squadre del proprio gruppo';
-  const entityWinnerDirect = isIndividual ? 'il giocatore vincente' : 'la squadra vincente';
-  const entityDeclaredWinner = isIndividual
-    ? 'sarà proclamato vincitore del torneo'
-    : 'sarà proclamata vincitrice del torneo';
-
-  // =====================================================
-  // MAPPING ELEMENTI DEL FORMATO
-  // =====================================================
-
-  let structureText = "";
-  let phaseDetailsText = "";
-  let teamsInfoText = "";
-
-  switch (formatType) {
-
-    case "round_robin":
-      structureText = `Il torneo prevede un <strong>girone unico all'italiana con partite di sola andata</strong>, in cui ${entityEach} affronterà una sola volta ${entityOthers}.`;
-      phaseDetailsText = `Non essendo prevista una fase finale, ${entityWinner} che chiuderà il girone al primo posto ${entityDeclaredWinner}.`;
-      teamsInfoText = `Il numero definitivo di ${entityPlural} partecipanti sarà comunicato alla chiusura delle iscrizioni, garantendo comunque il numero minimo di partite previsto.`;
-      break;
-
-    case "double_round_robin":
-      structureText = `Il torneo prevede un <strong>girone unico all'italiana con partite di andata e ritorno</strong>, in cui ${entityEach} affronterà due volte ${entityOthers}.`;
-      phaseDetailsText = `Non essendo prevista una fase finale, ${entityWinner} che chiuderà il girone al primo posto ${entityDeclaredWinner}.`;
-      teamsInfoText = `Il numero definitivo di ${entityPlural} partecipanti sarà comunicato alla chiusura delle iscrizioni, garantendo comunque il numero minimo di partite previsto.`;
-      break;
-
-    case "round_robin_finals":
-      structureText = `Il torneo prevede una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.`;
-      phaseDetailsText = `Sono previsti gironi all'italiana con sola andata, in cui ${entityEach} affronterà una sola volta ${entityOthersGroup}. La fase finale prevede invece scontri diretti in gara unica, con passaggio del turno per ${entityWinnerDirect}.`;
-      teamsInfoText = `Il numero ${entityPluralArticle} partecipanti, ${entityPluralArticle} per girone e dei qualificati alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.`;
-      break;
-
-    case "double_round_robin_finals":
-      structureText = `Il torneo prevede una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.`;
-      phaseDetailsText = `Sono previsti gironi all'italiana con andata e ritorno, in cui ${entityEach} affronterà due volte ${entityOthersGroup}. La fase finale prevede invece scontri diretti in gara unica, con passaggio del turno per ${entityWinnerDirect}.`;
-      teamsInfoText = `Il numero ${entityPluralArticle} partecipanti, ${entityPluralArticle} per girone e dei qualificati alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.`;
-      break;
-
-    default:
-      structureText = `Il formato dettagliato del torneo sarà comunicato prima dell'inizio delle partite.`;
-      phaseDetailsText = `Le informazioni sulle fasi del torneo saranno disponibili alla chiusura delle iscrizioni.`;
-      teamsInfoText = `Il numero definitivo di ${entityPlural} partecipanti sarà comunicato alla chiusura delle iscrizioni.`;
-      break;
-  }
-
-  // =====================================================
-  // OUTPUT FINALE
-  // =====================================================
-
-  return `
-    <div class="specific-regulation-card">
-      <div class="specific-regulation-icon">${ruleNumber}</div>
-      <div class="specific-regulation-content">
-        <p><strong>Formato del torneo</strong></p>
-        <ul>
-          <li><strong>Struttura:</strong> ${structureText}</li>
-          <li><strong>Fasi:</strong> ${phaseDetailsText}</li>
-          <li><strong>${entityPluralLabel}:</strong> ${teamsInfoText}</li>
-        </ul>
-      </div>
-    </div>
-  `;
-}
-
-
-
-
-// ===============================
-// 9f. BUILD COURT/DAYS/HOURS RULE (REGOLA 5)
+// 9c. BUILD COURT/DAYS/HOURS RULE (REGOLA 2)
 // ===============================
 function buildCourtDaysHoursRule(tournament, ruleNumber) {
   const fixed = String(tournament.fixed_court_days_hours || "false").toLowerCase().trim();
@@ -1580,6 +1279,315 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
 
 
 // ===============================
+// 9d. BUILD PARTICIPANTS REQUIREMENTS RULE (REGOLA 3)
+// ===============================
+function buildParticipantsRequirementsRule(tournament, ruleNumber) {
+  const gender       = String(tournament.gender      || "open").toLowerCase();
+  const age          = String(tournament.age         || "open").toLowerCase();
+  const expertise    = String(tournament.expertise   || "open").toLowerCase();
+  const maxCategory  = String(tournament.max_category|| "NA").trim();
+  // FIX BUG 7: toNum per team_size_min e team_size_max
+  const teamSizeMin  = toNum(tournament.team_size_min, 0);
+  const teamSizeMax  = toNum(tournament.team_size_max, 0);
+  const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
+  const fideRated    = String(tournament.fide_rated  || "NA").toLowerCase();
+
+  const genderMap = {
+    "open":                { team: "qualsiasi composizione (maschili, femminili o miste)", individual: "qualsiasi genere", teamRestriction: null, individualRestriction: null },
+    "only_male":           { team: "soli uomini", individual: "uomini", teamRestriction: "Possono partecipare esclusivamente squadre composte da soli uomini.", individualRestriction: "Possono partecipare esclusivamente giocatori di genere maschile." },
+    "only_female":         { team: "sole donne", individual: "donne", teamRestriction: "Possono partecipare esclusivamente squadre composte da sole donne.", individualRestriction: "Possono partecipare esclusivamente giocatrici di genere femminile." },
+    "mixed_strict":        { team: "miste", individual: "qualsiasi genere", teamRestriction: "Ogni squadra deve essere obbligatoriamente mista, composta da almeno un uomo e almeno una donna.", individualRestriction: null },
+    "mixed_female_allowed":{ team: "miste o femminili", individual: "qualsiasi genere", teamRestriction: "Ogni squadra deve essere mista (almeno un uomo e una donna) oppure composta da sole donne. Non sono ammesse squadre composte da soli uomini.", individualRestriction: null }
+  };
+
+  let ageData = { text: "qualsiasi età", teamRestriction: null, individualRestriction: null };
+  if (age !== "open") {
+    const underMatch = age.match(/^under_(\d+)$/);
+    const overMatch  = age.match(/^over_(\d+)$/);
+
+    if (underMatch) {
+      const ageValue = underMatch[1];
+      ageData = {
+        text: `Under ${ageValue}`,
+        teamRestriction: `Tutti i componenti della squadra devono avere meno di ${ageValue} anni alla data di inizio del torneo.`,
+        individualRestriction: `Il partecipante deve avere meno di ${ageValue} anni alla data di inizio del torneo.`
+      };
+    } else if (overMatch) {
+      const ageValue = overMatch[1];
+      ageData = {
+        text: `Over ${ageValue}`,
+        teamRestriction: `Tutti i componenti della squadra devono avere almeno ${ageValue} anni alla data di inizio del torneo.`,
+        individualRestriction: `Il partecipante deve avere almeno ${ageValue} anni alla data di inizio del torneo.`
+      };
+    }
+  }
+
+  const expertiseMap = {
+    "open":   { teamIntro: "aperto a giocatori e squadre di qualsiasi livello", individualIntro: "aperto a giocatori di qualsiasi livello", description: "È pensato per chi vuole divertirsi e mettersi in gioco in un contesto amatoriale." },
+    "expert": { teamIntro: "rivolto a giocatori esperti con un livello di gioco medio-alto", individualIntro: "rivolto a giocatori esperti con un livello di gioco medio-alto", description: "Si consiglia la partecipazione solo a chi ha esperienza agonistica o un buon livello tecnico." }
+  };
+
+  const genderData    = genderMap[gender] || genderMap["open"];
+  const expertiseData = expertiseMap[expertise] || expertiseMap["open"];
+
+  let categoryRestriction = null;
+  if (maxCategory && maxCategory.toLowerCase() !== "na") {
+    if (maxCategory.toLowerCase().startsWith("elo_")) {
+      const eloValue = maxCategory.replace(/^elo_/i, "");
+      categoryRestriction = `Al fine di evitare squilibri, sono ammessi esclusivamente giocatori con un punteggio ELO pari o inferiore a ${eloValue}.`;
+    } else {
+      categoryRestriction = `Al fine di evitare squilibri, sono ammessi esclusivamente giocatori di ${maxCategory} o inferiore.`;
+    }
+  }
+
+  let genderAgeText = "";
+  if (isIndividual) {
+    const genderPart = genderData.individual || "qualsiasi genere";
+    const genderRestr = genderData.individualRestriction;
+    const ageRestr    = ageData.individualRestriction;
+    if (!genderRestr && !ageRestr) {
+      genderAgeText = `Possono partecipare giocatori di ${genderPart} e di ${ageData.text}.`;
+    } else if (genderRestr && !ageRestr) {
+      genderAgeText = `${genderRestr} Non ci sono limiti di età per i partecipanti.`;
+    } else if (!genderRestr && ageRestr) {
+      genderAgeText = `Possono partecipare giocatori di ${genderPart}, ma il torneo è riservato a partecipanti ${ageData.text}. ${ageRestr}`;
+    } else {
+      genderAgeText = `${genderRestr} Il torneo è inoltre riservato a partecipanti ${ageData.text}: ${ageRestr.toLowerCase()}`;
+    }
+  } else {
+    const genderRestr = genderData.teamRestriction;
+    const ageRestr    = ageData.teamRestriction;
+    if (gender === "open" && age === "open") {
+      genderAgeText = `Possono partecipare squadre di ${genderData.team} e giocatori di ${ageData.text}.`;
+    } else if (gender === "open" && age !== "open") {
+      genderAgeText = `Possono partecipare squadre di ${genderData.team}, ma il torneo è riservato a giocatori ${ageData.text}. ${ageRestr}`;
+    } else if (gender !== "open" && age === "open") {
+      genderAgeText = `${genderRestr} Non ci sono limiti di età per i partecipanti.`;
+    } else {
+      genderAgeText = `${genderRestr} Il torneo è riservato a giocatori ${ageData.text}: ${ageRestr.toLowerCase()}`;
+    }
+  }
+
+  const expertiseIntro = isIndividual ? expertiseData.individualIntro : expertiseData.teamIntro;
+  let expertiseText = `Questo torneo è ${expertiseIntro}. ${expertiseData.description}`;
+  if (categoryRestriction) expertiseText += ` ${categoryRestriction}`;
+
+  let teamSizeText = "";
+  if (!isIndividual) {
+    if (teamSizeMin > 0 && teamSizeMax > 0) {
+      if (teamSizeMin === teamSizeMax) {
+        teamSizeText = `Ogni squadra deve essere composta da esattamente ${teamSizeMin} giocatori.`;
+      } else {
+        teamSizeText = `Ogni squadra deve essere composta da un minimo di ${teamSizeMin} e un massimo di ${teamSizeMax} giocatori.`;
+      }
+    } else if (teamSizeMin > 0) {
+      teamSizeText = `Ogni squadra deve essere composta da almeno ${teamSizeMin} giocatori.`;
+    } else if (teamSizeMax > 0) {
+      teamSizeText = `Ogni squadra può essere composta da un massimo di ${teamSizeMax} giocatori.`;
+    } else {
+      teamSizeText = `Il numero di giocatori per squadra sarà comunicato prima dell'inizio del torneo.`;
+    }
+  }
+
+  let fideText = "";
+  if (fideRated === "true") {
+    fideText = `Questo torneo è <strong>omologato FIDE</strong>. I risultati saranno registrati ufficialmente e influenzeranno il punteggio ELO dei partecipanti.`;
+  } else if (fideRated === "false") {
+    fideText = `Questo torneo <strong>non è omologato FIDE</strong>. I risultati non influenzeranno il punteggio ELO ufficiale dei partecipanti.`;
+  }
+
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Chi può partecipare</strong></p>
+        <ul>
+          <li><strong>Composizione e età:</strong> ${genderAgeText}</li>
+          <li><strong>Livello:</strong> ${expertiseText}</li>
+          ${!isIndividual ? `<li><strong>Numero giocatori:</strong> ${teamSizeText}</li>` : ''}
+          ${fideText ? `<li><strong>Omologazione FIDE:</strong> ${fideText}</li>` : ''}
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+
+
+
+
+
+
+
+// ===============================
+// 9e. BUILD AWARDS RULE (REGOLA 4)
+// ===============================
+function buildAwardsRule(tournament, ruleNumber) {
+  const hasAward   = toBool(tournament.award);
+  const awardPerc  = String(tournament.award_amount_perc || "NA");
+  const price      = toNum(tournament.price, 0);
+  const teamsMax   = toNum(tournament.teams_max, 0);
+  const mvpAward   = String(tournament.mvp_award || "none").trim();
+  const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
+
+  const entityWinners        = isIndividual ? 'i primi 3 classificati' : 'le prime 3 squadre classificate';
+  const entityWinnersGeneric = isIndividual ? 'i vincitori' : 'le squadre vincitrici';
+  const entityCount          = isIndividual ? 'giocatori iscritti' : 'squadre iscritte';
+
+  let mainAwardText = "";
+  if (hasAward) {
+    if (awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc)) && price > 0 && teamsMax > 0) {
+      const percValue  = Number(awardPerc) / 100;
+      const totalPrize = Math.round(teamsMax * price * percValue);
+      mainAwardText = `È previsto un montepremi pari a <strong>€${totalPrize}</strong>, che sarà suddiviso tra ${entityWinners}.`;
+    } else {
+      mainAwardText = `È previsto un montepremi per ${entityWinnersGeneric}. L'importo e la suddivisione saranno comunicati prima dell'inizio del torneo.`;
+    }
+  } else {
+    mainAwardText = `Essendo un torneo aperto a giocatori di qualsiasi livello, al fine di evitare squilibri, sono previsti esclusivamente premi simbolici (coppe, medaglie, gadget e altri riconoscimenti) per ${entityWinnersGeneric}.`;
+  }
+
+  let guaranteeText = "";
+  if (hasAward && awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc)) && price > 0 && teamsMax > 0) {
+    guaranteeText = `Il montepremi è garantito al raggiungimento di ${teamsMax} ${entityCount}. In ogni caso, anche nella rara eventualità in cui non si raggiungesse il numero previsto, il premio rimarrà comunque almeno uguale al ${awardPerc}% delle quote di iscrizione totali.`;
+  } else if (hasAward) {
+    guaranteeText = `Le condizioni per l'erogazione del montepremi saranno comunicate prima dell'inizio del torneo.`;
+  } else {
+    guaranteeText = `I premi simbolici saranno consegnati a ${entityWinnersGeneric} al termine del torneo.`;
+  }
+
+  // =====================================================
+  // MVP / premi individuali — se "none" o "NA" non mostrare nulla
+  // =====================================================
+
+    let mvpAwardText = "";
+    if (mvpAward && mvpAward.toLowerCase() !== "none" && mvpAward.toLowerCase() !== "na") {
+      const awardsList = mvpAward
+        .split("||")
+        .map(item => item.trim())
+        .filter(Boolean);
+
+      if (awardsList.length > 0) {
+        mvpAwardText = `
+          <ul>
+            ${awardsList.map(item => `<li>${item}</li>`).join("")}
+          </ul>
+        `;
+      }
+    }
+
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Premi e riconoscimenti</strong></p>
+        <ul>
+          <li><strong>Montepremi:</strong> ${mainAwardText}</li>
+          <li><strong>Garanzia:</strong> ${guaranteeText}</li>
+          ${mvpAwardText ? `<li><strong>Premi individuali:</strong> ${mvpAwardText}</li>` : ''}
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+
+
+
+
+
+// ===============================
+// 9f. BUILD FORMAT RULE (REGOLA 5)
+// ===============================
+function buildFormatTimeRangeRule(tournament, ruleNumber) {
+  const formatType = String(tournament.format_type || "").toLowerCase();
+  const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
+
+  const entitySingular = isIndividual ? 'giocatore' : 'squadra';
+  const entityPlural = isIndividual ? 'giocatori' : 'squadre';
+  const entityWinner = isIndividual ? 'il giocatore' : 'la squadra';
+  const entityPluralArticle = isIndividual ? 'dei giocatori' : 'delle squadre';
+  const entityPluralLabel = isIndividual ? 'Partecipanti' : 'Squadre';
+
+  const entityEach = isIndividual ? 'ogni giocatore' : 'ogni squadra';
+  const entityOthers = isIndividual ? 'gli altri partecipanti' : 'le altre squadre';
+  const entityOthersGroup = isIndividual ? 'gli altri partecipanti del proprio gruppo' : 'le altre squadre del proprio gruppo';
+  const entityWinnerDirect = isIndividual ? 'il giocatore vincente' : 'la squadra vincente';
+  const entityDeclaredWinner = isIndividual
+    ? 'sarà proclamato vincitore del torneo'
+    : 'sarà proclamata vincitrice del torneo';
+
+  // =====================================================
+  // MAPPING ELEMENTI DEL FORMATO
+  // =====================================================
+
+  let structureText = "";
+  let phaseDetailsText = "";
+  let teamsInfoText = "";
+
+  switch (formatType) {
+
+    case "round_robin":
+      structureText = `Il torneo prevede un <strong>girone unico all'italiana con partite di sola andata</strong>, in cui ${entityEach} affronterà una sola volta ${entityOthers}.`;
+      phaseDetailsText = `Non essendo prevista una fase finale, ${entityWinner} che chiuderà il girone al primo posto ${entityDeclaredWinner}.`;
+      teamsInfoText = `Il numero definitivo di ${entityPlural} partecipanti sarà comunicato alla chiusura delle iscrizioni, garantendo comunque il numero minimo di partite previsto.`;
+      break;
+
+    case "double_round_robin":
+      structureText = `Il torneo prevede un <strong>girone unico all'italiana con partite di andata e ritorno</strong>, in cui ${entityEach} affronterà due volte ${entityOthers}.`;
+      phaseDetailsText = `Non essendo prevista una fase finale, ${entityWinner} che chiuderà il girone al primo posto ${entityDeclaredWinner}.`;
+      teamsInfoText = `Il numero definitivo di ${entityPlural} partecipanti sarà comunicato alla chiusura delle iscrizioni, garantendo comunque il numero minimo di partite previsto.`;
+      break;
+
+    case "round_robin_finals":
+      structureText = `Il torneo prevede una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.`;
+      phaseDetailsText = `Sono previsti gironi all'italiana con sola andata, in cui ${entityEach} affronterà una sola volta ${entityOthersGroup}. La fase finale prevede invece scontri diretti in gara unica, con passaggio del turno per ${entityWinnerDirect}.`;
+      teamsInfoText = `Il numero ${entityPluralArticle} partecipanti, ${entityPluralArticle} per girone e dei qualificati alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.`;
+      break;
+
+    case "double_round_robin_finals":
+      structureText = `Il torneo prevede una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.`;
+      phaseDetailsText = `Sono previsti gironi all'italiana con andata e ritorno, in cui ${entityEach} affronterà due volte ${entityOthersGroup}. La fase finale prevede invece scontri diretti in gara unica, con passaggio del turno per ${entityWinnerDirect}.`;
+      teamsInfoText = `Il numero ${entityPluralArticle} partecipanti, ${entityPluralArticle} per girone e dei qualificati alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.`;
+      break;
+
+    default:
+      structureText = `Il formato dettagliato del torneo sarà comunicato prima dell'inizio delle partite.`;
+      phaseDetailsText = `Le informazioni sulle fasi del torneo saranno disponibili alla chiusura delle iscrizioni.`;
+      teamsInfoText = `Il numero definitivo di ${entityPlural} partecipanti sarà comunicato alla chiusura delle iscrizioni.`;
+      break;
+  }
+
+  // =====================================================
+  // OUTPUT FINALE
+  // =====================================================
+
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Formato del torneo</strong></p>
+        <ul>
+          <li><strong>Struttura:</strong> ${structureText}</li>
+          <li><strong>Fasi:</strong> ${phaseDetailsText}</li>
+          <li><strong>${entityPluralLabel}:</strong> ${teamsInfoText}</li>
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+
+
+
+
+
+
+
+
+
+
+// ===============================
 // 9g. BUILD MATCH FORMAT RULE (REGOLA 6)
 // ===============================
 function buildMatchFormatRule(tournament, ruleNumber) {
@@ -1882,11 +1890,11 @@ function buildStandingsRule(tournament, ruleNumber) {
   let crossGroupText;
   if (hasFinals) {
     if (isChess) {
-      crossGroupText = `Per confrontare ${entityPlural} di gironi diversi (es. migliori secondi), in caso di parità di punti si useranno (in ordine di priorità):<ul style="margin-top:8px;margin-bottom:0;padding-left:20px;"><li><strong>Punti totali</strong> nel girone</li><li><strong>Sorteggio</strong> in caso di parità persistente</li></ul>`;
+      crossGroupText = `Per confrontare ${entityPlural} di gironi diversi (es. per determinare migliori secondi), in caso di parità di punti si useranno (in ordine di priorità):<ul style="margin-top:8px;margin-bottom:0;padding-left:20px;"><li><strong>Punti totali</strong> nel girone</li><li><strong>Sorteggio</strong> in caso di parità persistente</li></ul>`;
     } else if (isSetBased) {
-      crossGroupText = `Per confrontare ${entityPlural} di gironi diversi (es. migliori seconde), in caso di parità di punti si useranno (in ordine di priorità):<ul style="margin-top:8px;margin-bottom:0;padding-left:20px;"><li><strong>Differenza set</strong></li><li><strong>Set vinti</strong></li><li><strong>Differenza game</strong></li><li><strong>Game vinti</strong></li></ul>`;
+      crossGroupText = `Per confrontare ${entityPlural} di gironi diversi (es. per determinare migliori seconde), in caso di parità di punti si useranno (in ordine di priorità):<ul style="margin-top:8px;margin-bottom:0;padding-left:20px;"><li><strong>Differenza set</strong></li><li><strong>Set vinti</strong></li><li><strong>Differenza game</strong></li><li><strong>Game vinti</strong></li></ul>`;
     } else {
-      crossGroupText = `Per confrontare ${entityPlural} di gironi diversi (es. migliori seconde), in caso di parità di punti si useranno (in ordine di priorità):<ul style="margin-top:8px;margin-bottom:0;padding-left:20px;"><li><strong>${capitalizeFirst(terminology.diffLabel)}</strong></li><li><strong>${capitalizeFirst(terminology.forLabel)}</strong></li></ul>`;
+      crossGroupText = `Per confrontare ${entityPlural} di gironi diversi (es. per determinare migliori seconde), in caso di parità di punti si useranno (in ordine di priorità):<ul style="margin-top:8px;margin-bottom:0;padding-left:20px;"><li><strong>${capitalizeFirst(terminology.diffLabel)}</strong></li><li><strong>${capitalizeFirst(terminology.forLabel)}</strong></li></ul>`;
     }
   } else {
     crossGroupText = `Essendo un girone unico, non sarà necessario confrontare ${entityPlural} di gironi diversi.`;
