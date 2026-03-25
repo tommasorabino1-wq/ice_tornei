@@ -217,12 +217,12 @@ async function loadStandingsPage(tournamentId) {
     }
 
     TOURNAMENT_STATUS              = String(t?.status || '').toLowerCase() || null;
+    if (TOURNAMENT_STATUS === "hidden") TOURNAMENT_STATUS = "finished";
     TOURNAMENT_FORMAT              = String(t?.format_type || '').toLowerCase() || null;
     TOURNAMENT_SPORT               = getMatchProfile(t?.sport, t?.match_format_gironi).normalizedSport;
     TOURNAMENT_IS_INDIVIDUAL       = String(t?.individual_or_team || '').toLowerCase() === 'individual';
     TOURNAMENT_MATCH_FORMAT_GIRONI = String(t?.match_format_gironi || '').toLowerCase();
     TOURNAMENT_MATCH_FORMAT_FINALS = String(t?.match_format_finals || '').toLowerCase();
-    // FIX BUG 1: toBool per gestire sia boolean nativo sia stringa "true"
     TOURNAMENT_HAS_3X4             = toBool(t?.['3_4_posto']);
 
     const tournamentProfile = getMatchProfile(t?.sport, t?.match_format_gironi);
