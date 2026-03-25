@@ -2792,7 +2792,6 @@ section > .section-title {
   box-shadow: 0 0 24px var(--brand-glow-soft), var(--shadow-md);
   position: relative;
   overflow: hidden;
-  text-align: center; /* Centra il contenuto del banner */
 }
 
 /* Alone decorativo in alto a destra */
@@ -2810,23 +2809,27 @@ section > .section-title {
 }
 
 .ev-badge {
-  display: inline-block;
+  display: block;
+  text-align: center;
   background: var(--brand);
   color: #000;
-  font-size: 12px; /* Aumentato il font */
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 6px 15px; /* Aumentato il padding per ingrandirlo */
+  padding: 6px 15px;
   border-radius: 999px;
   margin-bottom: 14px;
-  text-align: center; /* Centra il testo nel badge */
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .ev-body {
   font-size: 14px;
   line-height: 1.65;
   color: var(--text-main);
+  text-align: left;
 }
 
 /* Paragrafi intro */
