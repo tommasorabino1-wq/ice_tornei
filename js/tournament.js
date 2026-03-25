@@ -1088,10 +1088,21 @@ function buildAwardsRule(tournament, ruleNumber) {
   // MVP / premi individuali — se "none" o "NA" non mostrare nulla
   // =====================================================
 
-  let mvpAwardText = "";
-  if (mvpAward && mvpAward.toLowerCase() !== "none" && mvpAward.toLowerCase() !== "na") {
-    mvpAwardText = `Saranno inoltre assegnati premi individuali per: ${mvpAward}.`;
-  }
+    let mvpAwardText = "";
+    if (mvpAward && mvpAward.toLowerCase() !== "none" && mvpAward.toLowerCase() !== "na") {
+      const awardsList = mvpAward
+        .split("||")
+        .map(item => item.trim())
+        .filter(Boolean);
+
+      if (awardsList.length > 0) {
+        mvpAwardText = `
+          <ul>
+            ${awardsList.map(item => `<li>${item}</li>`).join("")}
+          </ul>
+        `;
+      }
+    }
 
   return `
     <div class="specific-regulation-card">
