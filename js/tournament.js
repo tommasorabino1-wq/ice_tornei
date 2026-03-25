@@ -737,11 +737,15 @@ function renderSpecificCourtRule(tournament) {
     ruleNumber++;
   }
 
-  // REGOLA 12: Comunicazioni ufficiali (sempre mostrata)
+  // REGOLA 12: Rimborso in caso di annullamento del torneo
+  rules.push(buildRefundRule(ruleNumber));
+  ruleNumber++;
+
+  // REGOLA 13: Comunicazioni ufficiali (sempre mostrata)
   rules.push(buildCommunicationsRule(tournament, ruleNumber));
   ruleNumber++;
   
-  // REGOLA 13: Rimborsi e spostamenti (sempre mostrata)
+  // REGOLA 14: Rimborsi e spostamenti (sempre mostrata)
   rules.push(buildFairPlayAndFlexibilityRule(ruleNumber));
   ruleNumber++;
   
@@ -751,6 +755,9 @@ function renderSpecificCourtRule(tournament) {
     </div>
   `;
 }
+
+
+
 
 
 
@@ -2184,10 +2191,37 @@ function buildFacilitiesRule(tournament, ruleNumber) {
 
 
 
+// ===============================
+// 9m. BUILD REFUND RULE (RIMBORSI)
+// ===============================
+function buildRefundRule(ruleNumber) {
+
+  const refundIntro = `Nel caso in cui il torneo venga annullato per qualunque motivo, l'organizzazione si impegna a rimborsare l'intera quota di iscrizione a tutti i partecipanti.`; 
+
+  const refundDetails = `Il rimborso avverrà entro 24 ore dall'annullamento, utilizzando lo stesso metodo di pagamento tramite cui è stata effettuata l'iscrizione.`; 
+
+  const finalText = `Ci scusiamo per qualsiasi inconveniente e faremo tutto il possibile per garantire che il torneo si svolga senza problemi, ma nel caso in cui si renda necessario un annullamento, i rimborsi saranno gestiti in modo rapido e completo.`; 
+
+  return `
+    <div class="specific-regulation-card">
+      <div class="specific-regulation-icon">${ruleNumber}</div>
+      <div class="specific-regulation-content">
+        <p><strong>Rimborso in caso di annullamento del torneo</strong></p>
+        <ul>
+          <li>${refundIntro}</li>
+          <li>${refundDetails}</li>
+          <li>${finalText}</li>
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+
 
 
 // ===============================
-// 9m. BUILD COMMUNICATIONS RULE
+// 9n. BUILD COMMUNICATIONS RULE
 // ===============================
 function buildCommunicationsRule(tournament, ruleNumber) {
   const isIndividual       = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
@@ -2240,7 +2274,7 @@ function buildCommunicationsRule(tournament, ruleNumber) {
 
 
 // ===============================
-// 9n. BUILD REFUNDS & MATCH MANAGEMENT RULE
+// 9o. BUILD REFUNDS & MATCH MANAGEMENT RULE
 // ===============================
 function buildFairPlayAndFlexibilityRule(ruleNumber) {
 
