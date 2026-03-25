@@ -1048,7 +1048,7 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     ];
 
     const mainText = joinWithComma(parts);
-    const dateSuffix = dateText ? ` a partire da ${wrapStrong(dateText)}` : "";
+    const dateSuffix = dateText ? ` a partire da ${wrapStrong(dateText)}` : "il ";
 
     if (!mainText) return "";
 
