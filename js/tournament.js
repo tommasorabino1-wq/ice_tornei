@@ -1950,14 +1950,13 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   const tieMatchFinals = String(tournament.tie_match_finals_criteria || "").toLowerCase();
 
   const isChess = sport.includes("scacchi") || sport.includes("chess");
+
   const entitySingular = isIndividual ? 'giocatore' : 'squadra';
-  const entityPlural = isIndividual ? 'giocatori' : 'squadre';
 
   // =====================================================
   // PARSING POINT SYSTEM
   // =====================================================
 
-  // Formato atteso: "vittoria-pareggio-sconfitta" (e.g., "3-1-0", "2-1-0", "1-0.5-0")
   function parsePointSystem(str) {
     const parts = String(str || "").split("-");
     if (parts.length !== 3) return null;
@@ -1971,13 +1970,12 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   const pointSystem = parsePointSystem(tournament.point_system);
   const drawPoints  = pointSystem ? pointSystem.draw : null;
 
-  // Testo punti pareggio da inserire inline: "1 punto", "0.5 punti", ecc.
   const drawPointsText = drawPoints !== null
     ? `<strong>${drawPoints} ${drawPoints === 1 ? 'punto' : 'punti'}</strong> a ciascuna ${entitySingular}`
     : `i punti previsti dal regolamento a ciascuna ${entitySingular}`;
 
   // =====================================================
-  // DETERMINA SE È FORMATO A SET
+  // FORMATO A SET
   // =====================================================
 
   const setFormats = ["1su1", "2su3", "3su5"];
@@ -1985,15 +1983,15 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   const isSetBasedFinals = setFormats.includes(matchFormatFinals);
 
   // =====================================================
-  // MAPPING BASE
+  // MAPPING BASE (RISCRITTO PIÙ NATURALE)
   // =====================================================
 
   const tieMatchMap = {
-    "tie_accettato": `il pareggio è un risultato valido: verranno assegnati ${drawPointsText}`,
-    "moneta":        `in caso di parità al termine del tempo regolamentare, il vincitore sarà deciso tramite lancio della moneta`,
-    "rigori":        `in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato ai calci di rigore`,
-    "tiebreak":      `in caso di parità al termine del tempo regolamentare, il vincitore verrà determinato con un tiebreak decisivo`,
-    "spareggio":     `in caso di parità al termine del tempo regolamentare, si procederà con una partita supplementare di spareggio`
+    "tie_accettato": `il pareggio è considerato un risultato valido: verranno assegnati ${drawPointsText}`,
+    "moneta":        `in caso di parità al termine del tempo regolamentare, il vincitore sarà determinato tramite lancio della moneta`,
+    "rigori":        `in caso di parità al termine del tempo regolamentare, si procederà ai calci di rigore`,
+    "tiebreak":      `in caso di parità al termine del tempo regolamentare, si disputerà un tiebreak decisivo`,
+    "spareggio":     `in caso di parità al termine del tempo regolamentare, si disputerà una partita supplementare di spareggio`
   };
 
   // =====================================================
@@ -2003,11 +2001,11 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   let gironiTieText;
 
   if (isChess) {
-    gironiTieText = `La patta è un risultato regolare. In caso di patta, a ciascun ${entitySingular} vengono assegnati <strong>0.5 punti</strong>.`;
+    gironiTieText = `La patta è un risultato valido: in caso di pareggio, a ciascun ${entitySingular} vengono assegnati <strong>0,5 punti</strong>.`;
   } else if (isSetBasedGironi) {
-    gironiTieText = `Non essendo previsti pareggi in questo formato (a set), ogni partita determinerà automaticamente una ${entitySingular} vincitrice.`;
+    gironiTieText = `Il formato a set non prevede pareggi: ogni partita determina sempre una ${entitySingular} vincitrice.`;
   } else {
-    const text = tieMatchMap[tieMatchGironi] || "la modalità di gestione sarà comunicata dall'organizzazione";
+    const text = tieMatchMap[tieMatchGironi] || "la modalità di gestione delle parità sarà comunicata dall'organizzazione";
     gironiTieText = `${text}.`;
   }
 
@@ -2019,20 +2017,20 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
 
   if (!hasFinals) {
 
-    finalsTieText = `Non essendo prevista una fase finale, la regola sopra indicata si applica a tutte le partite.`;
+    finalsTieText = `Non essendo prevista una fase finale, la regola sopra indicata si applica a tutte le partite del torneo.`;
 
   } else if (isChess) {
 
     const text = tieMatchMap[tieMatchFinals] || "la modalità sarà comunicata dall'organizzazione";
-    finalsTieText = `Nelle fasi finali è necessario determinare un vincitore: ${text}.`;
+    finalsTieText = `Nelle fasi finali è sempre necessario determinare un vincitore: ${text}.`;
 
   } else if (isSetBasedFinals) {
 
-    finalsTieText = `Anche nelle fasi finali, il formato a set non prevede pareggi: ogni partita determinerà una ${entitySingular} vincitrice.`;
+    finalsTieText = `Anche nelle fasi finali, il formato a set non prevede pareggi: ogni partita determina una ${entitySingular} vincitrice.`;
 
   } else if (tieMatchGironi === tieMatchFinals) {
 
-    finalsTieText = `Durante le fasi finali si applicherà la <strong>stessa regola</strong> prevista per la fase a gironi.`;
+    finalsTieText = `Nelle fasi finali si applica la <strong>stessa regola</strong> prevista per la fase a gironi.`;
 
   } else {
 
@@ -2048,15 +2046,16 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
     <div class="specific-regulation-card">
       <div class="specific-regulation-icon">${ruleNumber}</div>
       <div class="specific-regulation-content">
-        <p><strong>Gestione dei pareggi in partita</strong></p>
+        <p><strong>Gestione dei pareggi</strong></p>
         <ul>
-          <li><strong>Fase gironi:</strong> ${gironiTieText}</li>
-          <li><strong>Fase finale:</strong> ${finalsTieText}</li>
+          <li><strong>Fase a gironi:</strong> ${gironiTieText}</li>
+          <li><strong>Fasi finali:</strong> ${finalsTieText}</li>
         </ul>
       </div>
     </div>
   `;
 }
+
 
 
 
