@@ -173,7 +173,7 @@ function renderTournaments(tournaments) {
   sorted.forEach(t => {
 
     const card = document.createElement("div");
-    card.className = "tournament-card finished"; // sempre stile "finished" per i passati
+    card.className = "tournament-card";
     card.dataset.id = t.tournament_id;
 
     const isIndividual = String(t.individual_or_team || 'team').toLowerCase() === 'individual';
