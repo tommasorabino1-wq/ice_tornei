@@ -1954,7 +1954,7 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   const entitySingular = isIndividual ? 'giocatore' : 'squadra';
 
   // =====================================================
-  // PARSING POINT SYSTEM
+  // PARSING SISTEMA PUNTI
   // =====================================================
 
   function parsePointSystem(str) {
@@ -1971,8 +1971,8 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   const drawPoints  = pointSystem ? pointSystem.draw : null;
 
   const drawPointsText = drawPoints !== null
-    ? `<strong>${drawPoints} ${drawPoints === 1 ? 'punto' : 'punti'}</strong> a ciascuna ${entitySingular}`
-    : `i punti previsti dal regolamento a ciascuna ${entitySingular}`;
+    ? `<strong>${drawPoints} ${drawPoints === 1 ? 'punto' : 'punti'}</strong> per ogni ${entitySingular}`
+    : `i punti previsti dal regolamento per ogni ${entitySingular}`;
 
   // =====================================================
   // FORMATO A SET
@@ -1983,13 +1983,13 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   const isSetBasedFinals = setFormats.includes(matchFormatFinals);
 
   // =====================================================
-  // MAPPING BASE (RISCRITTO PIÙ NATURALE)
+  // MAPPING BASE (RISCRITTO IN MODO PIÙ NATURALE)
   // =====================================================
 
   const tieMatchMap = {
-    "tie_accettato": `il pareggio è considerato un risultato valido: verranno assegnati ${drawPointsText}`,
+    "tie_accettato": `il pareggio è un risultato valido: verranno assegnati ${drawPointsText}`,
     "moneta":        `in caso di parità al termine del tempo regolamentare, il vincitore sarà determinato tramite lancio della moneta`,
-    "rigori":        `in caso di parità al termine del tempo regolamentare, si procederà ai calci di rigore`,
+    "rigori":        `in caso di parità al termine del tempo regolamentare, si procederà con i calci di rigore`,
     "tiebreak":      `in caso di parità al termine del tempo regolamentare, si disputerà un tiebreak decisivo`,
     "spareggio":     `in caso di parità al termine del tempo regolamentare, si disputerà una partita supplementare di spareggio`
   };
@@ -2001,11 +2001,11 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   let gironiTieText;
 
   if (isChess) {
-    gironiTieText = `La patta è un risultato valido: in caso di pareggio, a ciascun ${entitySingular} vengono assegnati <strong>0,5 punti</strong>.`;
+    gironiTieText = `La patta è un risultato valido: in caso di pareggio, a ciascun ${entitySingular} verranno assegnati <strong>0,5 punti</strong>.`;
   } else if (isSetBasedGironi) {
     gironiTieText = `Il formato a set non prevede pareggi: ogni partita determina sempre una ${entitySingular} vincitrice.`;
   } else {
-    const text = tieMatchMap[tieMatchGironi] || "la modalità di gestione delle parità sarà comunicata dall'organizzazione";
+    const text = tieMatchMap[tieMatchGironi] || "la modalità di gestione dei pareggi sarà comunicata dall'organizzazione";
     gironiTieText = `${text}.`;
   }
 
@@ -2016,24 +2016,15 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
   let finalsTieText;
 
   if (!hasFinals) {
-
-    finalsTieText = `Non essendo prevista una fase finale, la regola sopra indicata si applica a tutte le partite del torneo.`;
-
+    finalsTieText = `Poiché non è prevista una fase finale, la regola sopra descritta si applica a tutte le partite del torneo.`;
   } else if (isChess) {
-
     const text = tieMatchMap[tieMatchFinals] || "la modalità sarà comunicata dall'organizzazione";
-    finalsTieText = `Nelle fasi finali è sempre necessario determinare un vincitore: ${text}.`;
-
+    finalsTieText = `Nelle fasi finali è necessario determinare un vincitore: ${text}.`;
   } else if (isSetBasedFinals) {
-
     finalsTieText = `Anche nelle fasi finali, il formato a set non prevede pareggi: ogni partita determina una ${entitySingular} vincitrice.`;
-
   } else if (tieMatchGironi === tieMatchFinals) {
-
-    finalsTieText = `Nelle fasi finali si applica la <strong>stessa regola</strong> prevista per la fase a gironi.`;
-
+    finalsTieText = `Nelle fasi finali si applicherà la <strong>stessa regola</strong> prevista per la fase a gironi.`;
   } else {
-
     const text = tieMatchMap[tieMatchFinals] || "la modalità sarà comunicata dall'organizzazione";
     finalsTieText = `${text}.`;
   }
@@ -2055,7 +2046,6 @@ function buildMatchTiebreakersRule(tournament, ruleNumber) {
     </div>
   `;
 }
-
 
 
 
