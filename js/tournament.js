@@ -1453,7 +1453,10 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
       items = buildFallbackItems();
     } else {
       if (isShort) {
-        const singleLineText = buildFixedAllSingleLineText();
+        const schedulingText = buildSchedulingModeFixedAllText();
+        const singleLineText = schedulingText && fixedConstraints
+          ? `${schedulingText} ${fixedConstraints}`
+          : schedulingText || fixedConstraints || "";
 
         if (!singleLineText) {
           items = buildFallbackItems();
