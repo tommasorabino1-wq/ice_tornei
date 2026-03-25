@@ -1137,6 +1137,14 @@ function buildFormatTimeRangeRule(tournament, ruleNumber) {
   const entityPluralArticle = isIndividual ? 'dei giocatori' : 'delle squadre';
   const entityPluralLabel = isIndividual ? 'Partecipanti' : 'Squadre';
 
+  const entityEach = isIndividual ? 'ogni giocatore' : 'ogni squadra';
+  const entityOthers = isIndividual ? 'gli altri partecipanti' : 'le altre squadre';
+  const entityOthersGroup = isIndividual ? 'gli altri partecipanti del proprio gruppo' : 'le altre squadre del proprio gruppo';
+  const entityWinnerDirect = isIndividual ? 'il giocatore vincente' : 'la squadra vincente';
+  const entityDeclaredWinner = isIndividual
+    ? 'sarà proclamato vincitore del torneo'
+    : 'sarà proclamata vincitrice del torneo';
+
   // =====================================================
   // MAPPING ELEMENTI DEL FORMATO
   // =====================================================
@@ -1148,26 +1156,26 @@ function buildFormatTimeRangeRule(tournament, ruleNumber) {
   switch (formatType) {
 
     case "round_robin":
-      structureText = `Il torneo prevede un <strong>girone unico all'italiana con partite di sola andata</strong>, in cui ogni ${entitySingular} affronterà una sola volta tutti gli altri partecipanti.`;
-      phaseDetailsText = `Non essendo prevista una fase finale, ${entityWinner} che chiuderà il girone al primo posto sarà proclamato/a vincitore/vincitrice del torneo.`;
+      structureText = `Il torneo prevede un <strong>girone unico all'italiana con partite di sola andata</strong>, in cui ${entityEach} affronterà una sola volta ${entityOthers}.`;
+      phaseDetailsText = `Non essendo prevista una fase finale, ${entityWinner} che chiuderà il girone al primo posto ${entityDeclaredWinner}.`;
       teamsInfoText = `Il numero definitivo di ${entityPlural} partecipanti sarà comunicato alla chiusura delle iscrizioni, garantendo comunque il numero minimo di partite previsto.`;
       break;
 
     case "double_round_robin":
-      structureText = `Il torneo prevede un <strong>girone unico all'italiana con partite di andata e ritorno</strong>, in cui ogni ${entitySingular} affronterà due volte tutti gli altri partecipanti.`;
-      phaseDetailsText = `Non essendo prevista una fase finale, ${entityWinner} che chiuderà il girone al primo posto sarà proclamato/a vincitore/vincitrice del torneo.`;
+      structureText = `Il torneo prevede un <strong>girone unico all'italiana con partite di andata e ritorno</strong>, in cui ${entityEach} affronterà due volte ${entityOthers}.`;
+      phaseDetailsText = `Non essendo prevista una fase finale, ${entityWinner} che chiuderà il girone al primo posto ${entityDeclaredWinner}.`;
       teamsInfoText = `Il numero definitivo di ${entityPlural} partecipanti sarà comunicato alla chiusura delle iscrizioni, garantendo comunque il numero minimo di partite previsto.`;
       break;
 
     case "round_robin_finals":
       structureText = `Il torneo prevede una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.`;
-      phaseDetailsText = `Sono previsti gironi all'italiana con sola andata, in cui ogni ${entitySingular} affronterà una sola volta gli altri del proprio gruppo. La fase finale prevede invece scontri diretti in gara unica, con passaggio del turno per il/la ${entitySingular} vincente.`;
+      phaseDetailsText = `Sono previsti gironi all'italiana con sola andata, in cui ${entityEach} affronterà una sola volta ${entityOthersGroup}. La fase finale prevede invece scontri diretti in gara unica, con passaggio del turno per ${entityWinnerDirect}.`;
       teamsInfoText = `Il numero ${entityPluralArticle} partecipanti, ${entityPluralArticle} per girone e dei qualificati alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.`;
       break;
 
     case "double_round_robin_finals":
       structureText = `Il torneo prevede una <strong>fase a gironi</strong>, seguita da una <strong>fase finale ad eliminazione diretta</strong>.`;
-      phaseDetailsText = `Sono previsti gironi all'italiana con andata e ritorno, in cui ogni ${entitySingular} affronterà due volte gli altri del proprio gruppo. La fase finale prevede invece scontri diretti in gara unica, con passaggio del turno per il/la ${entitySingular} vincente.`;
+      phaseDetailsText = `Sono previsti gironi all'italiana con andata e ritorno, in cui ${entityEach} affronterà due volte ${entityOthersGroup}. La fase finale prevede invece scontri diretti in gara unica, con passaggio del turno per ${entityWinnerDirect}.`;
       teamsInfoText = `Il numero ${entityPluralArticle} partecipanti, ${entityPluralArticle} per girone e dei qualificati alla fase finale sarà definito alla chiusura delle iscrizioni, garantendo in ogni caso il numero minimo di partite previsto.`;
       break;
 
@@ -1196,7 +1204,6 @@ function buildFormatTimeRangeRule(tournament, ruleNumber) {
     </div>
   `;
 }
-
 
 
 
