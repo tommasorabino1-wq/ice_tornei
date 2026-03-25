@@ -437,25 +437,13 @@ function renderTournamentInfoRows(tournament) {
   const teamsMax     = toNum(tournament.teams_max, 0);
   const rowSignups   = `${teamsCurrent} / ${teamsMax} ${participantsLabel}`;
 
-  const primaryDateHTML = rowDateLines.length === 2
+  const dateRowsHTML = rowDateLines.length === 2
   ? `
-    <div class="card-primary-item primary-date">
-      <span class="row-icon">📅</span>
-      <div class="card-primary-text">
-        <span class="card-primary-label">Data</span>
-        <span class="card-primary-value">${rowDateLines[0]}</span>
-        <span class="card-primary-subvalue">Disponibilità: ${rowDateLines[1]}</span>
-      </div>
-    </div>
+    <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
+    <div class="card-info-row"><span class="row-icon">🕒</span><span><strong>Disponibilità:</strong> ${rowDateLines[1]}</span></div>
   `
   : `
-    <div class="card-primary-item primary-date">
-      <span class="row-icon">📅</span>
-      <div class="card-primary-text">
-        <span class="card-primary-label">Data</span>
-        <span class="card-primary-value">${rowDateLines[0]}</span>
-      </div>
-    </div>
+    <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
   `;
 
   container.innerHTML = `
