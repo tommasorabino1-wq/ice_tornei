@@ -2208,7 +2208,6 @@ function buildRefundRule(ruleNumber) {
         <ul>
           <li>${refundIntro}</li>
           <li>${refundDetails}</li>
-          <li>${finalText}</li>
         </ul>
       </div>
     </div>
