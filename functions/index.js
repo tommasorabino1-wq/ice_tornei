@@ -1080,6 +1080,13 @@ exports.onSubscriptionCreated = onDocumentCreated(
     const subscription   = event.data.data();
     const subscriptionId = event.params.subscriptionId;
 
+    // ===============================
+    // 🔇 INVIO EMAIL PAGAMENTO TEMPORANEAMENTE DISATTIVATO
+    // ===============================
+    console.log(`📭 Payment email disabled — skipping for subscription ${subscriptionId}`);
+    return null;
+
+    // --- CODICE DISATTIVATO ---
     // FIX BUG 3: toBooleanSafe + confronto stringa normalizzato
     // per evitare reinvii se il campo ha casing diverso o tipo diverso
     if (toBooleanSafe(subscription.emailStatus) ||
