@@ -354,9 +354,26 @@ function buildPriceInfoText(t) {
   else if (aperitivoPrice === "compreso_gironi")        aperitivoText = "Aperitivo incluso (solo gironi)";
   else if (aperitivoPrice === "compreso_finals")        aperitivoText = "Aperitivo incluso (solo finali)";
 
-  const extras    = [courtText, refereeText, aperitivoText].filter(Boolean);
+  const extras     = [courtText, refereeText, aperitivoText].filter(Boolean);
   const extrasText = extras.length > 0 ? ` · ${extras.join(" · ")}` : "";
-  return `€${price} ${perLabel}${extrasText}`;
+
+  // ── Sconto referral ──────────────────────────────────────────────────────
+  let discountText = "";
+  const discountRaw = String(t.discount || "false").trim();
+  if (discountRaw !== "false") {
+    const parts = discountRaw.split(";").map(s => s.trim());
+    if (parts.length === 2 && !isNaN(Number(parts[0])) && !isNaN(Number(parts[1]))) {
+      const d1 = Number(parts[0]);
+      const d2 = Number(parts[1]);
+      const entity       = isIndividual ? 'giocatore' : 'squadra';
+      const entityPlural = isIndividual ? 'giocatori' : 'squadre';
+      const label1 = d1 === 0 ? "gratis" : `€${d1}`;
+      const label2 = d2 === 0 ? "gratis" : `€${d2}`;
+      discountText = ` · Porti 1 ${entity}: ${label1} · Porti 2 ${entityPlural}: ${label2}`;
+    }
+  }
+
+  return `€${price} ${perLabel}${extrasText}${discountText}`;
 }
 
 

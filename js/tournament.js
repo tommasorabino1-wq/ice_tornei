@@ -523,7 +523,24 @@ function buildPriceInfoText(t) {
 
   const extras     = [courtText, refereeText, aperitivoText].filter(Boolean);
   const extrasText = extras.length > 0 ? ` · ${extras.join(" · ")}` : "";
-  return `€${price} ${perLabel}${extrasText}`;
+
+  // ── Sconto referral ──────────────────────────────────────────────────────
+  let discountText = "";
+  const discountRaw = String(t.discount || "false").trim();
+  if (discountRaw !== "false") {
+    const parts = discountRaw.split(";").map(s => s.trim());
+    if (parts.length === 2 && !isNaN(Number(parts[0])) && !isNaN(Number(parts[1]))) {
+      const d1 = Number(parts[0]);
+      const d2 = Number(parts[1]);
+      const entity = isIndividual ? 'giocatore' : 'squadra';
+      const entityPlural = isIndividual ? 'giocatori' : 'squadre';
+      const label1 = d1 === 0 ? "gratis" : `€${d1}`;
+      const label2 = d2 === 0 ? "gratis" : `€${d2}`;
+      discountText = ` · Porti 1 ${entity}: ${label1} · Porti 2 ${entityPlural}: ${label2}`;
+    }
+  }
+
+  return `€${price} ${perLabel}${extrasText}${discountText}`;
 }
 
 
@@ -781,10 +798,33 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
   const courtIncludedLabel =
     courtType === "bar" ? "il costo della location" : "il costo dei campi";
 
+  // ── Sconto referral ──────────────────────────────────────────────────────
+  let discountParagraph = "";
+  const discountRaw = String(tournament.discount || "false").trim();
+  if (discountRaw !== "false") {
+    const parts = discountRaw.split(";").map(s => s.trim());
+    if (parts.length === 2 && !isNaN(Number(parts[0])) && !isNaN(Number(parts[1]))) {
+      const d1 = Number(parts[0]);
+      const d2 = Number(parts[1]);
+      const entity        = isIndividual ? "un altro giocatore" : "un'altra squadra";
+      const entityTwo     = isIndividual ? "altri due giocatori" : "altre due squadre";
+      const label1 = d1 === 0 ? "<strong>gratis</strong>" : `solo <strong>€${d1}</strong>`;
+      const label2 = d2 === 0 ? "<strong>gratis</strong>" : `solo <strong>€${d2}</strong>`;
+      discountParagraph = `
+        <p>
+          È prevista una <strong>riduzione della quota per chi porta altri partecipanti</strong>:
+          se convinci ${entity} a iscriversi, la tua quota scende a ${label1};
+          se ne porti ${entityTwo}, partecipi ${label2}.
+        </p>
+      `;
+    }
+  }
+
   const introText = `
     <p>
       La quota di iscrizione per questo torneo è di <strong>€${price} ${perLabel}</strong>.
     </p>
+    ${discountParagraph}
   `;
 
   function joinWithCommaAndE(parts) {
