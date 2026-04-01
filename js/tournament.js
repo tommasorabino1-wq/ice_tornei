@@ -427,6 +427,7 @@ function renderTournamentInfoRows(tournament) {
   const participantsLabel = isIndividual ? 'giocatori iscritti' : 'squadre iscritte';
 
   const rowPrice        = buildPriceInfoText(tournament);
+  const rowDiscount     = buildDiscountInfoText(tournament);
   const rowLocation     = buildLocationInfoText(tournament);
   const rowDateLines    = buildDateInfoText(tournament);
   const rowParticipants = buildParticipantsInfoText(tournament);
@@ -446,8 +447,13 @@ function renderTournamentInfoRows(tournament) {
       <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
     `;
 
+  const discountRowHTML = rowDiscount
+    ? `<div class="card-info-row"><span class="row-icon">🏷️</span><span><strong>Sconti:</strong> ${rowDiscount}</span></div>`
+    : "";
+
   container.innerHTML = `
     <div class="card-info-row"><span class="row-icon">💰</span><span><strong>Quota:</strong> ${rowPrice}</span></div>
+    ${discountRowHTML}
     <div class="card-info-row"><span class="row-icon">📍</span><span><strong>Luogo:</strong> ${rowLocation}</span></div>
     ${dateRowsHTML}
     <div class="card-info-row"><span class="row-icon">${participantsIcon}</span><span><strong>Partecipanti:</strong> ${rowParticipants}</span></div>
@@ -493,6 +499,9 @@ function buildParticipantsInfoText(t) {
 // ===============================
 // 7d. BUILD PRICE INFO TEXT
 // ===============================
+// ===============================
+// 7d. BUILD PRICE INFO TEXT
+// ===============================
 function buildPriceInfoText(t) {
   const isIndividual   = String(t.individual_or_team || 'team').toLowerCase() === 'individual';
   const price          = toNum(t.price, 0);
@@ -524,23 +533,29 @@ function buildPriceInfoText(t) {
   const extras     = [courtText, refereeText, aperitivoText].filter(Boolean);
   const extrasText = extras.length > 0 ? ` · ${extras.join(" · ")}` : "";
 
-  // ── Sconto referral ──────────────────────────────────────────────────────
-  let discountText = "";
-  const discountRaw = String(t.discount || "false").trim();
-  if (discountRaw !== "false") {
-    const parts = discountRaw.split(";").map(s => s.trim());
-    if (parts.length === 2 && !isNaN(Number(parts[0])) && !isNaN(Number(parts[1]))) {
-      const d1 = Number(parts[0]);
-      const d2 = Number(parts[1]);
-      const entity = isIndividual ? 'giocatore' : 'squadra';
-      const entityPlural = isIndividual ? 'giocatori' : 'squadre';
-      const label1 = d1 === 0 ? "gratis" : `€${d1}`;
-      const label2 = d2 === 0 ? "gratis" : `€${d2}`;
-      discountText = ` · Porti 1 ${entity}: ${label1} · Porti 2 ${entityPlural}: ${label2}`;
-    }
-  }
+  return `€${price} ${perLabel}${extrasText}`;
+}
 
-  return `€${price} ${perLabel}${extrasText}${discountText}`;
+
+// ===============================
+// 7d2. BUILD DISCOUNT INFO TEXT
+// ===============================
+function buildDiscountInfoText(t) {
+  const discountRaw = String(t.discount || "false").trim();
+  if (discountRaw === "false") return "";
+
+  const parts = discountRaw.split(";").map(s => s.trim());
+  if (parts.length !== 2 || isNaN(Number(parts[0])) || isNaN(Number(parts[1]))) return "";
+
+  const isIndividual = String(t.individual_or_team || 'team').toLowerCase() === 'individual';
+  const d1 = Number(parts[0]);
+  const d2 = Number(parts[1]);
+  const entity       = isIndividual ? 'giocatore' : 'squadra';
+  const entityPlural = isIndividual ? 'giocatori' : 'squadre';
+  const label1 = d1 === 0 ? "gratis" : `€${d1}`;
+  const label2 = d2 === 0 ? "gratis" : `€${d2}`;
+
+  return `Porti 1 ${entity}: ${label1} · Porti 2 ${entityPlural}: ${label2}`;
 }
 
 
