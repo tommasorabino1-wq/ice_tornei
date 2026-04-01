@@ -250,8 +250,16 @@ function renderTournaments(tournaments) {
         </div>
       `;
 
-    const discountRowHTML = rowDiscount
-      ? `<div class="card-info-row"><span class="row-icon">🏷️</span><span><strong>Sconti:</strong> ${rowDiscount}</span></div>`
+    const discountPrimaryHTML = rowDiscount
+      ? `
+        <div class="card-primary-item">
+          <span class="row-icon">🏷️</span>
+          <div class="card-primary-text">
+            <span class="card-primary-label">Sconti</span>
+            <span class="card-primary-value">${rowDiscount}</span>
+          </div>
+        </div>
+      `
       : "";
 
     card.innerHTML = `
@@ -272,6 +280,8 @@ function renderTournaments(tournaments) {
             </div>
           </div>
 
+          ${discountPrimaryHTML}
+
           <div class="card-primary-item primary-location">
             <span class="row-icon">📍</span>
             <div class="card-primary-text">
@@ -289,7 +299,6 @@ function renderTournaments(tournaments) {
             <div class="card-info-row"><span class="row-icon">🏆</span><span><strong>Montepremi:</strong> ${rowAward}</span></div>
             <div class="card-info-row"><span class="row-icon">📋</span><span><strong>Formato:</strong> ${rowFormat}</span></div>
             <div class="card-info-row"><span class="row-icon">✅</span><span><strong>Iscritti:</strong> ${rowSignups}</span></div>
-            ${discountRowHTML}
           </div>
         </div>
       </div>
