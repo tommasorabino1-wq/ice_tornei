@@ -828,7 +828,7 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
       discountParagraph = `
         <p>
           È prevista una <strong>riduzione della quota per chi porta altri partecipanti</strong>:
-          se porti ${entity}, paghi solo ${label1};
+          se porti ${entity}, paghi ${label1};
           se ne porti ${entityTwo}, è tutto ${label2}.
         </p>
       `;
