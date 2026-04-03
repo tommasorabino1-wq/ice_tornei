@@ -383,21 +383,42 @@ function buildPriceInfoText(t) {
 // BUILD DISCOUNT INFO TEXT
 // ===============================
 function buildDiscountInfoText(t) {
-  const discountRaw = String(t.discount || "false").trim();
-  if (discountRaw === "false") return "";
+  const raw = t?.discount;
 
-  const parts = discountRaw.split(";").map(s => s.trim());
-  if (parts.length !== 2 || isNaN(Number(parts[0])) || isNaN(Number(parts[1]))) return "";
+  if (raw === undefined || raw === null) return "";
 
-  const isIndividual = String(t.individual_or_team || 'team').toLowerCase() === 'individual';
+  const discountRaw = String(raw).trim();
+  if (!discountRaw || discountRaw.toLowerCase() === "false") return "";
+
+  const parts = discountRaw
+    .split(";")
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  // Ammessi solo:
+  // 1) "25"
+  // 2) "25; 0"
+  // 3) "25; 12"
+  if (parts.length !== 1 && parts.length !== 2) return "";
+  if (parts.some(p => isNaN(Number(p)))) return "";
+
+  const isIndividual = String(t.individual_or_team || "team").toLowerCase() === "individual";
+
+  const entity = isIndividual ? "giocatore" : "squadra";
+  const entityPlural = isIndividual ? "giocatori" : "squadre";
+
+  const formatPrice = (value) => Number(value) === 0 ? "gratis" : `€${Number(value)}`;
+
   const d1 = Number(parts[0]);
-  const d2 = Number(parts[1]);
-  const entity       = isIndividual ? 'giocatore' : 'squadra';
-  const entityPlural = isIndividual ? 'giocatori' : 'squadre';
-  const label1 = d1 === 0 ? "gratis" : `€${d1}`;
-  const label2 = d2 === 0 ? "gratis" : `€${d2}`;
 
-  return `Porti 1 ${entity}: ${label1} · Porti 2 ${entityPlural}: ${label2}`;
+  // Caso: "25"
+  if (parts.length === 1) {
+    return `Porti 1 ${entity}: ${formatPrice(d1)}`;
+  }
+
+  // Caso: "25; 0" oppure "25; 12"
+  const d2 = Number(parts[1]);
+  return `Porti 1 ${entity}: ${formatPrice(d1)} · Porti 2 ${entityPlural}: ${formatPrice(d2)}`;
 }
 
 

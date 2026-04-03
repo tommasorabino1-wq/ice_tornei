@@ -541,21 +541,43 @@ function buildPriceInfoText(t) {
 // 7d2. BUILD DISCOUNT INFO TEXT
 // ===============================
 function buildDiscountInfoText(t) {
-  const discountRaw = String(t.discount || "false").trim();
-  if (discountRaw === "false") return "";
+  const raw = t?.discount;
 
-  const parts = discountRaw.split(";").map(s => s.trim());
-  if (parts.length !== 2 || isNaN(Number(parts[0])) || isNaN(Number(parts[1]))) return "";
+  if (raw === undefined || raw === null) return "";
+
+  const discountRaw = String(raw).trim();
+  if (!discountRaw || discountRaw.toLowerCase() === "false") return "";
+
+  const parts = discountRaw
+    .split(";")
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  // Ammessi:
+  // "25"
+  // "25; 0"
+  // "25; 12"
+  if (parts.length !== 1 && parts.length !== 2) return "";
+  if (parts.some(p => isNaN(Number(p)))) return "";
 
   const isIndividual = String(t.individual_or_team || 'team').toLowerCase() === 'individual';
-  const d1 = Number(parts[0]);
-  const d2 = Number(parts[1]);
-  const entity       = isIndividual ? 'giocatore' : 'squadra';
-  const entityPlural = isIndividual ? 'giocatori' : 'squadre';
-  const label1 = d1 === 0 ? "gratis" : `€${d1}`;
-  const label2 = d2 === 0 ? "gratis" : `€${d2}`;
 
-  return `Porti 1 ${entity}: ${label1} · Porti 2 ${entityPlural}: ${label2}`;
+  const entity = isIndividual ? 'giocatore' : 'squadra';
+  const entityPlural = isIndividual ? 'giocatori' : 'squadre';
+
+  const formatPrice = (value) => Number(value) === 0 ? "gratis" : `€${Number(value)}`;
+
+  const d1 = Number(parts[0]);
+
+  // Caso: "25"
+  if (parts.length === 1) {
+    return `Porti 1 ${entity}: ${formatPrice(d1)}`;
+  }
+
+  // Caso: "25; 0" oppure "25; 12"
+  const d2 = Number(parts[1]);
+
+  return `Porti 1 ${entity}: ${formatPrice(d1)} · Porti 2 ${entityPlural}: ${formatPrice(d2)}`;
 }
 
 
@@ -815,23 +837,50 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
 
   // ── Sconto referral ──────────────────────────────────────────────────────
   let discountParagraph = "";
-  const discountRaw = String(tournament.discount || "false").trim();
-  if (discountRaw !== "false") {
-    const parts = discountRaw.split(";").map(s => s.trim());
-    if (parts.length === 2 && !isNaN(Number(parts[0])) && !isNaN(Number(parts[1]))) {
-      const d1 = Number(parts[0]);
-      const d2 = Number(parts[1]);
-      const entity        = isIndividual ? "un altro giocatore" : "un'altra squadra";
-      const entityTwo     = isIndividual ? "altri due giocatori" : "altre due squadre";
-      const label1 = d1 === 0 ? "<strong>gratis</strong>" : `solo <strong>€${d1}</strong>`;
-      const label2 = d2 === 0 ? "<strong>gratis</strong>" : `solo <strong>€${d2}</strong>`;
-      discountParagraph = `
-        <p>
-          È prevista una <strong>riduzione della quota per chi porta altri partecipanti</strong>:
-          se porti ${entity}, paghi ${label1};
-          se porti ${entityTwo}, è tutto ${label2}.
-        </p>
-      `;
+  const rawDiscount = tournament?.discount;
+
+  if (rawDiscount !== undefined && rawDiscount !== null) {
+    const discountRaw = String(rawDiscount).trim();
+
+    if (discountRaw && discountRaw.toLowerCase() !== "false") {
+      const parts = discountRaw
+        .split(";")
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      if (
+        (parts.length === 1 || parts.length === 2) &&
+        parts.every(p => !isNaN(Number(p)))
+      ) {
+        const d1 = Number(parts[0]);
+        const entity1 = isIndividual ? "un altro giocatore" : "un'altra squadra";
+        const label1 = d1 === 0 ? "<strong>gratis</strong>" : `solo <strong>€${d1}</strong>`;
+
+        // Caso: "25"
+        if (parts.length === 1) {
+          discountParagraph = `
+            <p>
+              È prevista una <strong>riduzione della quota per chi porta altri partecipanti</strong>:
+              se porti ${entity1}, paghi ${label1}.
+            </p>
+          `;
+        }
+
+        // Caso: "25; 0" oppure "25; 12"
+        if (parts.length === 2) {
+          const d2 = Number(parts[1]);
+          const entity2 = isIndividual ? "altri due giocatori" : "altre due squadre";
+          const label2 = d2 === 0 ? "<strong>gratis</strong>" : `solo <strong>€${d2}</strong>`;
+
+          discountParagraph = `
+            <p>
+              È prevista una <strong>riduzione della quota per chi porta altri partecipanti</strong>:
+              se porti ${entity1}, paghi ${label1};
+              se porti ${entity2}, paghi ${label2}.
+            </p>
+          `;
+        }
+      }
     }
   }
 
