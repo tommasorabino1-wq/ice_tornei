@@ -3138,6 +3138,17 @@ function handleFormSubmit(tournament) {
 
       // ===== SUCCESS =====
       if (res.ok && responseData === "SUBSCRIPTION_SAVED") {
+        
+        // 🔥 TRACCIAMENTO META PIXEL: Iscrizione Completata
+        if (typeof fbq === 'function') {
+          fbq('track', 'CompleteRegistration', {
+            content_name: tournament.name,
+            content_category: tournament.sport,
+            value: toNum(tournament.price, 0),
+            currency: 'EUR'
+          });
+        }
+
         showToast("Iscrizione completata 🎉");
         setTimeout(() => window.location.reload(), 1200);
         return;
@@ -3269,6 +3280,16 @@ nextBtn.addEventListener("click", async () => {
   if (!valid) {
     showToast("Compila tutti i campi obbligatori ⚠️");
     return;
+  }
+
+  // 🔥 TRACCIAMENTO META PIXEL: Inizio compilazione (Step 1 superato)
+  if (currentStep === 1) {
+    if (typeof fbq === 'function') {
+      fbq('track', 'InitiateCheckout', {
+        content_name: currentTournamentData?.name,
+        content_category: currentTournamentData?.sport
+      });
+    }
   }
 
     if (currentStep === 1 && tournamentId) {
