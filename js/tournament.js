@@ -3141,7 +3141,7 @@ function handleFormSubmit(tournament) {
         
         // 🔥 TRACCIAMENTO META PIXEL: Iscrizione Completata
         if (typeof fbq === 'function') {
-          fbq('track', 'CompleteRegistration', {
+          fbq('track', 'Subscribe', {
             content_name: tournament.name,
             content_category: tournament.sport,
             value: toNum(tournament.price, 0),
