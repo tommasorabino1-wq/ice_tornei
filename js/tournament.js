@@ -1476,22 +1476,33 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
 // 9d. BUILD PARTICIPANTS REQUIREMENTS RULE (REGOLA 3)
 // ===============================
 function buildParticipantsRequirementsRule(tournament, ruleNumber) {
-  const gender       = String(tournament.gender      || "open").toLowerCase();
-  const age          = String(tournament.age         || "open").toLowerCase();
-  const expertise    = String(tournament.expertise   || "open").toLowerCase();
-  const maxCategory  = String(tournament.max_category|| "NA").trim();
-  // FIX BUG 7: toNum per team_size_min e team_size_max
+  const gender       = String(tournament.gender       || "open").toLowerCase();
+  const age          = String(tournament.age          || "open").toLowerCase();
+  const expertise    = String(tournament.expertise    || "open").toLowerCase();
+  const maxCategory  = String(tournament.max_category || "NA").trim();
+  const sport        = String(tournament.sport        || "").toLowerCase(); // 1. Leggiamo lo sport
+  
   const teamSizeMin  = toNum(tournament.team_size_min, 0);
   const teamSizeMax  = toNum(tournament.team_size_max, 0);
   const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
-  const fideRated    = String(tournament.fide_rated  || "NA").toLowerCase();
+  const fideRated    = String(tournament.fide_rated   || "NA").toLowerCase();
+
+  // 2. Logica specifica per il Calcio Open
+  const isCalcio = sport.includes("calcio");
+  const isOpen = gender === "open";
 
   const genderMap = {
-    "open":                { team: "qualsiasi composizione (maschili, femminili o miste)", individual: "qualsiasi genere", teamRestriction: null, individualRestriction: null },
-    "only_male":           { team: "soli uomini", individual: "uomini", teamRestriction: "Possono partecipare esclusivamente squadre composte da soli uomini.", individualRestriction: "Possono partecipare esclusivamente giocatori di genere maschile." },
-    "only_female":         { team: "sole donne", individual: "donne", teamRestriction: "Possono partecipare esclusivamente squadre composte da sole donne.", individualRestriction: "Possono partecipare esclusivamente giocatrici di genere femminile." },
-    "mixed_strict":        { team: "miste", individual: "qualsiasi genere", teamRestriction: "Ogni squadra deve essere obbligatoriamente mista, composta da almeno un uomo e almeno una donna.", individualRestriction: null },
-    "mixed_female_allowed":{ team: "miste o femminili", individual: "qualsiasi genere", teamRestriction: "Ogni squadra deve essere mista (almeno un uomo e una donna) oppure composta da sole donne. Non sono ammesse squadre composte da soli uomini.", individualRestriction: null }
+    "open": { 
+      // Se è calcio, usiamo una frase più generica per evitare l'effetto "torneo femminile"
+      team: isCalcio ? "composizione libera" : "qualsiasi composizione (maschili, femminili o miste)", 
+      individual: "qualsiasi genere", 
+      teamRestriction: null, 
+      individualRestriction: null 
+    },
+    "only_male": { team: "soli uomini", individual: "uomini", teamRestriction: "Possono partecipare esclusivamente squadre composte da soli uomini.", individualRestriction: "Possono partecipare esclusivamente giocatori di genere maschile." },
+    "only_female": { team: "sole donne", individual: "donne", teamRestriction: "Possono partecipare esclusivamente squadre composte da sole donne.", individualRestriction: "Possono partecipare esclusivamente giocatrici di genere femminile." },
+    "mixed_strict": { team: "miste", individual: "qualsiasi genere", teamRestriction: "Ogni squadra deve essere obbligatoriamente mista, composta da almeno un uomo e almeno una donna.", individualRestriction: null },
+    "mixed_female_allowed": { team: "miste o femminili", individual: "qualsiasi genere", teamRestriction: "Ogni squadra deve essere mista (almeno un uomo e una donna) oppure composta da sole donne. Non sono ammesse squadre composte da soli uomini.", individualRestriction: null }
   };
 
   let ageData = { text: "qualsiasi età", teamRestriction: null, individualRestriction: null };
@@ -1551,10 +1562,14 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
   } else {
     const genderRestr = genderData.teamRestriction;
     const ageRestr    = ageData.teamRestriction;
-    if (gender === "open" && age === "open") {
-      genderAgeText = `Possono partecipare squadre di ${genderData.team} e giocatori di ${ageData.text}.`;
-    } else if (gender === "open" && age !== "open") {
-      genderAgeText = `Possono partecipare squadre di ${genderData.team}, ma il torneo è riservato a giocatori ${ageData.text}. ${ageRestr}`;
+    
+    if (isOpen && age === "open") {
+      // Modifica specifica per Calcio Open: usiamo "composizione libera" invece di elencare i generi
+      const label = isCalcio ? "composizione libera" : genderData.team;
+      genderAgeText = `Possono partecipare squadre di ${label} e giocatori di ${ageData.text}.`;
+    } else if (isOpen && age !== "open") {
+      const label = isCalcio ? "composizione libera" : genderData.team;
+      genderAgeText = `Possono partecipare squadre di ${label}, ma il torneo è riservato a giocatori ${ageData.text}. ${ageRestr}`;
     } else if (gender !== "open" && age === "open") {
       genderAgeText = `${genderRestr} Non ci sono limiti di età per i partecipanti.`;
     } else {
@@ -1605,7 +1620,6 @@ function buildParticipantsRequirementsRule(tournament, ruleNumber) {
     </div>
   `;
 }
-
 
 
 
