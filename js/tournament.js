@@ -1634,7 +1634,7 @@ function buildAwardsRule(tournament, ruleNumber) {
     splitData = awardSplit.split(";").map(s => s.trim()).filter(s => s !== "" && !isNaN(Number(s)));
   }
 
-  // Costruzione della dicitura sui premiati (es: "i primi 2 classificati")
+  // Costruzione della dicitura sui premiati
   const numWinners = splitData.length;
   let entityWinners = "";
   if (numWinners > 0) {
@@ -1651,7 +1651,6 @@ function buildAwardsRule(tournament, ruleNumber) {
       
       let detailText = "";
       if (numWinners > 0) {
-        // Crea il dettaglio discorsivo: (1° €500, 2° €250...)
         const details = splitData.map((amount, index) => `${index + 1}° €${amount}`).join(", ");
         detailText = ` (${details})`;
       }
@@ -1664,9 +1663,12 @@ function buildAwardsRule(tournament, ruleNumber) {
     mainAwardText = `Essendo un torneo aperto a giocatori di qualsiasi livello, al fine di evitare squilibri, sono previsti esclusivamente premi simbolici (coppe, medaglie, gadget e altri riconoscimenti) per ${entityWinnersGeneric}.`;
   }
 
+  // =====================================================
+  // LOGICA GARANZIA AGGIORNATA
+  // =====================================================
   let guaranteeText = "";
   if (hasAward && awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc)) && price > 0 && teamsMax > 0) {
-    guaranteeText = `Il montepremi è garantito al raggiungimento di ${teamsMax} ${entityCount}. In ogni caso, anche nella rara eventualità in cui non si raggiungesse il numero previsto, il premio rimarrà comunque almeno uguale al ${awardPerc}% delle quote di iscrizione totali.`;
+    guaranteeText = `L'importo indicato è calcolato su un numero di <strong>${teamsMax} ${entityCount}</strong>. Qualora il numero finale di partecipanti dovesse variare, il montepremi verrà proporzionalmente adeguato (sia in eccesso che in difetto), garantendo in ogni caso un valore complessivo pari al <strong>${awardPerc}%</strong> delle quote di iscrizione totali.`;
   } else if (hasAward) {
     guaranteeText = `Le condizioni per l'erogazione del montepremi saranno comunicate prima dell'inizio del torneo.`;
   } else {
