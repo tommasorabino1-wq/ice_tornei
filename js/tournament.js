@@ -848,6 +848,9 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
   const courtPrice = String(tournament.court_price || "NA").toLowerCase().trim();
   const refereePrice = String(tournament.referee_price || "NA").toLowerCase().trim();
   const aperitivoPrice = String(tournament.aperitivo_price || "NA").toLowerCase().trim();
+  
+  // Recupero variabile pranzo/cena
+  const mealPrice = String(tournament.pranzo_cena_price || "NA").toLowerCase().trim();
 
   const courtIncludedLabel =
     courtType === "bar" ? "il costo della location" : "il costo dei campi";
@@ -961,6 +964,26 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
     }
   }
 
+  // NUOVA FUNZIONE PER PRANZO/CENA
+  function getMealIncludedText(value) {
+    switch (value) {
+      case "pranzo_compreso_gironi":
+        return `La quota include inoltre il <strong>pranzo offerto</strong> durante la <strong>fase a gironi</strong>.`;
+      case "pranzo_compreso_finals":
+        return `La quota include inoltre il <strong>pranzo offerto</strong> durante le <strong>fasi finali</strong>.`;
+      case "pranzo_compreso_gironi_finals":
+        return `La quota include inoltre il <strong>pranzo offerto</strong> per l'intera durata del torneo.`;
+      case "cena_compreso_gironi":
+        return `La quota include inoltre la <strong>cena offerta</strong> durante la <strong>fase a gironi</strong>.`;
+      case "cena_compreso_finals":
+        return `La quota include inoltre la <strong>cena offerta</strong> durante le <strong>fasi finali</strong>.`;
+      case "cena_compreso_gironi_finals":
+        return `La quota include inoltre la <strong>cena offerta</strong> per l'intera durata del torneo.`;
+      default:
+        return null;
+    }
+  }
+
   const includedServices = [
     getIncludedService("court", courtPrice),
     getIncludedService("referee", refereePrice),
@@ -981,6 +1004,16 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
     inclusionText += `
       <p>
         ${aperitivoIncludedText}
+      </p>
+    `;
+  }
+
+  // AGGIUNTA TESTO PASTI
+  const mealIncludedText = getMealIncludedText(mealPrice);
+  if (mealIncludedText) {
+    inclusionText += `
+      <p>
+        ${mealIncludedText}
       </p>
     `;
   }
@@ -1031,7 +1064,6 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
     </div>
   `;
 }
-
 
 
 
