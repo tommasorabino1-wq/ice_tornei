@@ -1217,14 +1217,24 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
 
   function buildFixedConstraintsText() {
     const hoursText = parseHours(hoursRaw);
+    
+    // Costruiamo i pezzi singolarmente per avere controllo sulle congiunzioni
+    const locationPart = location ? wrapStrong(location) : "";
+    const datePart = dateText ? `il ${wrapStrong(dateText)}` : "";
+    const hoursPart = hoursText ? hoursText : "";
 
-    const parts = [
-      location ? wrapStrong(location) : "",
-      dateText ? wrapStrong(dateText) : "",
-      hoursText ? wrapStrong(hoursText) : ""
-    ];
+    // Uniamo location e data con una virgola, poi aggiungiamo l'orario
+    let mainText = "";
+    if (locationPart && datePart) {
+      mainText = `${locationPart}, ${datePart}`;
+    } else {
+      mainText = locationPart || datePart || "";
+    }
 
-    const mainText = joinWithComma(parts);
+    if (hoursPart) {
+      mainText += mainText ? `, ${hoursPart}` : hoursPart;
+    }
+
     if (!mainText) return "";
 
     return `Tutte le partite del torneo verranno disputate ${placePrefix} ${mainText}.`;
