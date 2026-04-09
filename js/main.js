@@ -545,22 +545,33 @@ function buildDateInfoText(t) {
 function buildParticipantsInfoText(t) {
   const parts = [];
 
+  // 1. GENERE
   const genderMap = {
-    only_male:            "Solo ragazzi",
-    only_female:          "Solo ragazze",
-    mixed_strict:         "Misto obbligatorio",
-    mixed_female_allowed: "Misto o femminile",
-    open:                 "Aperto a tutti"
+    only_male:             "Solo ragazzi",
+    only_female:           "Solo ragazze",
+    mixed_strict:          "Misto obbligatorio",
+    mixed_female_allowed:  "Misto o femminile",
+    open:                  "Aperto a tutti"
   };
   parts.push(genderMap[String(t.gender || 'open').toLowerCase()] || "Aperto a tutti");
 
-  const ageMap = {
-    under_18: "Under 18",
-    over_35:  "Over 35",
-    open:     "Tutte le età"
-  };
-  parts.push(ageMap[String(t.age || 'open').toLowerCase()] || "Tutte le età");
+  // 2. ETÀ (DINAMICA)
+  const ageRaw = String(t.age || 'open').toLowerCase().trim();
+  let ageText = "Tutte le età";
 
+  if (ageRaw !== "open") {
+    const underMatch = ageRaw.match(/^under_(\d+)$/);
+    const overMatch  = ageRaw.match(/^over_(\d+)$/);
+
+    if (underMatch) {
+      ageText = `Under ${underMatch[1]}`;
+    } else if (overMatch) {
+      ageText = `Over ${overMatch[1]}`;
+    }
+  }
+  parts.push(ageText);
+
+  // 3. LIVELLO
   const expertiseMap = {
     open:   "Livello amatoriale",
     expert: "Livello agonistico"
