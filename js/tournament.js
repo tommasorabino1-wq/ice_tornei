@@ -2345,10 +2345,10 @@ function buildFacilitiesRule(tournament, ruleNumber) {
     const mealMap = {
       pranzo_compreso_gironi:        "Pranzo offerto dall'organizzazione durante la fase a gironi.",
       pranzo_compreso_finals:        "Pranzo offerto dall'organizzazione durante la fase finale.",
-      pranzo_compreso_gironi_finals: "Pranzo offerto dall'organizzazione per tutta la durata del torneo.",
+      pranzo_compreso_gironi_finals: "Pranzo offerto dall'organizzazione durante il torneo.",
       cena_compreso_gironi:          "Cena offerta dall'organizzazione durante la fase a gironi.",
       cena_compreso_finals:          "Cena offerta dall'organizzazione durante la fase finale.",
-      cena_compreso_gironi_finals:   "Cena offerta dall'organizzazione per tutta la durata del torneo."
+      cena_compreso_gironi_finals:   "Cena offerta dall'organizzazione durante il torneo."
     };
     foodText = mealMap[pranzoCenaPrice] || null;
   } 
