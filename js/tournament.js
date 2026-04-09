@@ -496,9 +496,7 @@ function buildParticipantsInfoText(t) {
 }
 
 
-// ===============================
-// 7d. BUILD PRICE INFO TEXT
-// ===============================
+
 // ===============================
 // 7d. BUILD PRICE INFO TEXT
 // ===============================
@@ -509,6 +507,9 @@ function buildPriceInfoText(t) {
   const courtPrice     = String(t.court_price     || "non_compreso").toLowerCase().trim();
   const refereePrice   = String(t.referee_price   || "na").toLowerCase().trim();
   const aperitivoPrice = String(t.aperitivo_price || "na").toLowerCase().trim();
+  
+  // Nuova variabile per il pasto
+  const mealPrice      = String(t.pranzo_cena_price || "na").toLowerCase().trim();
 
   const courtMap = {
     compreso_gironi_finals: "Campi inclusi",
@@ -530,7 +531,23 @@ function buildPriceInfoText(t) {
   else if (aperitivoPrice === "compreso_gironi")        aperitivoText = "Aperitivo incluso (solo gironi)";
   else if (aperitivoPrice === "compreso_finals")        aperitivoText = "Aperitivo incluso (solo finali)";
 
-  const extras     = [courtText, refereeText, aperitivoText].filter(Boolean);
+  // ===============================
+  // LOGICA PRANZO / CENA
+  // ===============================
+  const mealMap = {
+    pranzo_compreso_gironi:        "Pranzo incluso (solo gironi)",
+    pranzo_compreso_finals:        "Pranzo incluso (solo finali)",
+    pranzo_compreso_gironi_finals: "Pranzo incluso",
+    cena_compreso_gironi:          "Cena inclusa (solo gironi)",
+    cena_compreso_finals:          "Cena inclusa (solo finali)",
+    cena_compreso_gironi_finals:   "Cena inclusa",
+    non_compreso:                  "",
+    na:                            ""
+  };
+  const mealText = mealMap[mealPrice] || "";
+
+  // Aggiunto mealText all'array degli extra
+  const extras     = [courtText, refereeText, aperitivoText, mealText].filter(Boolean);
   const extrasText = extras.length > 0 ? ` · ${extras.join(" · ")}` : "";
 
   return `€${price} ${perLabel}${extrasText}`;
