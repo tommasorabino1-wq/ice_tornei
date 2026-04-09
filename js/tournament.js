@@ -968,17 +968,17 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
   function getMealIncludedText(value) {
     switch (value) {
       case "pranzo_compreso_gironi":
-        return `La quota include inoltre un <strong>pranzo offerto</strong> durante le partite della <strong>fase a gironi</strong>.`;
+        return `Nella quota di iscrizione è inoltre <strong>incluso il pranzo</strong>, che verrà offerto dall'organizzazione durante le partite della <strong>fase a gironi</strong>.`;
       case "pranzo_compreso_finals":
-        return `La quota include inoltre un <strong>pranzo offerto</strong> durante le partite delle <strong>fasi finali</strong>.`;
+        return `Nella quota di iscrizione è inoltre <strong>incluso il pranzo</strong>, che verrà offerto dall'organizzazione durante le partite della <strong>fase finale</strong>.`;
       case "pranzo_compreso_gironi_finals":
-        return `La quota include inoltre un <strong>pranzo offerto</strong> durante il torneo.`;
+        return `Nella quota di iscrizione è inoltre <strong>incluso il pranzo</strong>, che verrà offerto dall'organizzazione durante il torneo.`;
       case "cena_compreso_gironi":
-        return `La quota include inoltre una <strong>cena offerta</strong> durante le partite della <strong>fase a gironi</strong>.`;
+        return `Nella quota di iscrizione è inoltre <strong>inclusa la cena</strong>, che verrà offerta dall'organizzazione durante le partite della <strong>fase a gironi</strong>.`;
       case "cena_compreso_finals":
-        return `La quota include inoltre una <strong>cena offerta</strong> durante le partite delle <strong>fasi finali</strong>.`;
+        return `Nella quota di iscrizione è inoltre <strong>inclusa la cena</strong>, che verrà offerta dall'organizzazione durante le partite della <strong>fase finale</strong>.`;
       case "cena_compreso_gironi_finals":
-        return `La quota include inoltre una <strong>cena offerta</strong> durante il torneo.`;
+        return `Nella quota di iscrizione è inoltre <strong>inclusa la cena</strong>, che verrà offerta dall'organizzazione durante il torneo.`;
       default:
         return null;
     }
