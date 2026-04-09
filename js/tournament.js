@@ -2267,27 +2267,55 @@ function buildInsuranceRule(tournament, ruleNumber) {
 // 9l. BUILD FACILITIES RULE (REGOLA 11)
 // ===============================
 function buildFacilitiesRule(tournament, ruleNumber) {
-  const food      = String(tournament.food       || "none").toLowerCase();
-  const upsell    = String(tournament.upsell     || "none").toLowerCase();
-  const palla     = String(tournament.palla      || "false").toLowerCase();
-  const racket    = String(tournament.racket     || "na").toLowerCase();
-  const sport     = String(tournament.sport      || "").toLowerCase();
-  const boardCron = String(tournament.board_cron || "na").toLowerCase();
+  const food           = String(tournament.food           || "none").toLowerCase();
+  const upsell         = String(tournament.upsell         || "none").toLowerCase();
+  const palla          = String(tournament.palla          || "false").toLowerCase();
+  const racket         = String(tournament.racket         || "na").toLowerCase();
+  const sport          = String(tournament.sport          || "").toLowerCase();
+  const boardCron      = String(tournament.board_cron     || "na").toLowerCase();
+  const pranzoCenaPrice = String(tournament.pranzo_cena_price || "na").toLowerCase().trim();
 
   const isRacketSport    = sport.includes("padel") || sport.includes("tennis");
   const ballTerminology  = isRacketSport ? "le palline" : "i palloni";
 
   const items = [];
 
-  const foodMap = {
-    all_all:       "Pranzo/Cena offerto dall'organizzazione durante il torneo.",
-    all_finals:    "Pranzo/Cena offerto dall'organizzazione durante la fase finale del torneo.",
-    partial_all:   "Snack e bevande offerte dall'organizzazione durante il torneo.",
-    partial_finals:"Snack e bevande offerte dall'organizzazione durante la fase finale del torneo.",
-    none: null
-  };
-  if (foodMap[food]) items.push(`<li><strong>Ristoro:</strong> ${foodMap[food]}</li>`);
+  // ===============================
+  // GESTIONE RISTORO (LOGICA PRECEDENZA)
+  // ===============================
+  let foodText = null;
 
+  // 1. Controlliamo se pranzo_cena_price ha un valore valido
+  if (pranzoCenaPrice !== "na" && pranzoCenaPrice !== "non_compreso") {
+    const mealMap = {
+      pranzo_compreso_gironi:        "Pranzo offerto dall'organizzazione durante la fase a gironi.",
+      pranzo_compreso_finals:        "Pranzo offerto dall'organizzazione durante la fase finale.",
+      pranzo_compreso_gironi_finals: "Pranzo offerto dall'organizzazione per tutta la durata del torneo.",
+      cena_compreso_gironi:          "Cena offerta dall'organizzazione durante la fase a gironi.",
+      cena_compreso_finals:          "Cena offerta dall'organizzazione durante la fase finale.",
+      cena_compreso_gironi_finals:   "Cena offerta dall'organizzazione per tutta la durata del torneo."
+    };
+    foodText = mealMap[pranzoCenaPrice] || null;
+  } 
+  // 2. Se non c'è pranzo_cena_price, usiamo la vecchia variabile food
+  else {
+    const foodMap = {
+      all_all:        "Pranzo/Cena offerto dall'organizzazione durante il torneo.",
+      all_finals:     "Pranzo/Cena offerto dall'organizzazione durante la fase finale del torneo.",
+      partial_all:    "Snack e bevande offerte dall'organizzazione durante il torneo.",
+      partial_finals: "Snack e bevande offerte dall'organizzazione durante la fase finale del torneo.",
+      none: null
+    };
+    foodText = foodMap[food] || null;
+  }
+
+  if (foodText) {
+    items.push(`<li><strong>Ristoro:</strong> ${foodText}</li>`);
+  }
+
+  // ===============================
+  // ALTRI SERVIZI
+  // ===============================
   if (palla !== "na") {
     const pallaMap = {
       true_all:    `L'organizzazione fornirà <strong>${ballTerminology}</strong> per tutte le partite del torneo.`,
@@ -2315,11 +2343,11 @@ function buildFacilitiesRule(tournament, ruleNumber) {
   }
 
   const upsellMap = {
-    kit_all:        { kit: "Durante il torneo, sarà possibile acquistare un kit sportivo ufficiale \"Tornei ICE\" a prezzo di costo.", photo: null },
-    kit_finals:     { kit: "Durante le partite della fase finale, sarà possibile acquistare un kit sportivo ufficiale \"Tornei ICE\" a prezzo di costo.", photo: null },
-    photo_all:      { kit: null, photo: "Durante tutte le partite del torneo, saranno presenti fotografi ufficiali. Foto e video delle partite saranno resi disponibili gratuitamente a tutti i partecipanti." },
-    photo_finals:   { kit: null, photo: "Durante le partite della fase finale, saranno presenti fotografi ufficiali. Foto e video delle partite saranno resi disponibili gratuitamente a tutti i partecipanti." },
-    kit_photo_all:  { kit: "Durante il torneo, sarà possibile acquistare un kit sportivo ufficiale \"Tornei ICE\" a prezzo di costo.", photo: "Durante tutte le partite del torneo, saranno presenti fotografi ufficiali. Foto e video delle partite saranno resi disponibili gratuitamente a tutti i partecipanti." },
+    kit_all:         { kit: "Durante il torneo, sarà possibile acquistare un kit sportivo ufficiale \"Tornei ICE\" a prezzo di costo.", photo: null },
+    kit_finals:      { kit: "Durante le partite della fase finale, sarà possibile acquistare un kit sportivo ufficiale \"Tornei ICE\" a prezzo di costo.", photo: null },
+    photo_all:       { kit: null, photo: "Durante tutte le partite del torneo, saranno presenti fotografi ufficiali. Foto e video delle partite saranno resi disponibili gratuitamente a tutti i partecipanti." },
+    photo_finals:    { kit: null, photo: "Durante le partite della fase finale, saranno presenti fotografi ufficiali. Foto e video delle partite saranno resi disponibili gratuitamente a tutti i partecipanti." },
+    kit_photo_all:   { kit: "Durante il torneo, sarà possibile acquistare un kit sportivo ufficiale \"Tornei ICE\" a prezzo di costo.", photo: "Durante tutte le partite del torneo, saranno presenti fotografi ufficiali. Foto e video delle partite saranno resi disponibili gratuitamente a tutti i partecipanti." },
     kit_photo_finals:{ kit: "Durante le partite della fase finale, sarà possibile acquistare un kit sportivo ufficiale \"Tornei ICE\" a prezzo di costo.", photo: "Durante le partite della fase finale, saranno presenti fotografi ufficiali. Foto e video delle partite saranno resi disponibili gratuitamente a tutti i partecipanti." },
     none: { kit: null, photo: null }
   };
@@ -2339,7 +2367,6 @@ function buildFacilitiesRule(tournament, ruleNumber) {
     </div>
   `;
 }
-
 
 
 
