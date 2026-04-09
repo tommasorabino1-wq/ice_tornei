@@ -968,17 +968,17 @@ function buildPriceCourtRefereeRule(tournament, ruleNumber) {
   function getMealIncludedText(value) {
     switch (value) {
       case "pranzo_compreso_gironi":
-        return `La quota include inoltre il <strong>pranzo offerto</strong> durante la <strong>fase a gironi</strong>.`;
+        return `La quota include inoltre un <strong>pranzo offerto</strong> durante le partite della <strong>fase a gironi</strong>.`;
       case "pranzo_compreso_finals":
-        return `La quota include inoltre il <strong>pranzo offerto</strong> durante le <strong>fasi finali</strong>.`;
+        return `La quota include inoltre un <strong>pranzo offerto</strong> durante le partite delle <strong>fasi finali</strong>.`;
       case "pranzo_compreso_gironi_finals":
-        return `La quota include inoltre il <strong>pranzo offerto</strong> per l'intera durata del torneo.`;
+        return `La quota include inoltre un <strong>pranzo offerto</strong> durante il torneo.`;
       case "cena_compreso_gironi":
-        return `La quota include inoltre la <strong>cena offerta</strong> durante la <strong>fase a gironi</strong>.`;
+        return `La quota include inoltre una <strong>cena offerta</strong> durante le partite della <strong>fase a gironi</strong>.`;
       case "cena_compreso_finals":
-        return `La quota include inoltre la <strong>cena offerta</strong> durante le <strong>fasi finali</strong>.`;
+        return `La quota include inoltre una <strong>cena offerta</strong> durante le partite delle <strong>fasi finali</strong>.`;
       case "cena_compreso_gironi_finals":
-        return `La quota include inoltre la <strong>cena offerta</strong> per l'intera durata del torneo.`;
+        return `La quota include inoltre una <strong>cena offerta</strong> durante il torneo.`;
       default:
         return null;
     }
