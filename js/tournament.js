@@ -701,17 +701,41 @@ function buildAwardInfoText(t) {
 
   if (!hasAward) return "Premi simbolici";
 
-  const perc     = t.award_amount_perc;
-  const price    = toNum(t.price, 0);
-  const teamsMax = toNum(t.teams_max, 0);
+  const perc      = t.award_amount_perc;
+  const price     = toNum(t.price, 0);
+  const teamsMax  = toNum(t.teams_max, 0);
+  const awardSplit = String(t.award_split || "").trim();
 
+  let totalPrizeText = "";
+
+  // 1. Calcolo del Montepremi Totale (come prima)
   if (perc && perc !== "NA" && !isNaN(Number(perc)) && price > 0 && teamsMax > 0) {
     const percValue  = Number(perc) / 100;
     const totalPrize = Math.round(teamsMax * price * percValue);
-    return `€${totalPrize}`;
+    totalPrizeText = `€${totalPrize}`;
+  } else {
+    totalPrizeText = "Montepremi garantito";
   }
 
-  return "Montepremi garantito";
+  // 2. Gestione award_split
+  if (awardSplit && awardSplit !== "NA" && awardSplit.toLowerCase() !== "false") {
+    // Dividiamo la stringa "500; 250; 150" in un array di numeri
+    const prizes = awardSplit
+      .split(";")
+      .map(s => s.trim())
+      .filter(s => s !== "" && !isNaN(Number(s)));
+
+    if (prizes.length > 0) {
+      // Formattiamo i premi: "1° 500€, 2° 250€, 3° 150€"
+      const splitText = prizes
+        .map((amount, index) => `${index + 1}° €${amount}`)
+        .join(", ");
+
+      return `${totalPrizeText} · ${splitText}`;
+    }
+  }
+
+  return totalPrizeText;
 }
 
 
