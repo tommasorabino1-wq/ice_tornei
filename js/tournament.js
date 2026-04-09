@@ -1668,7 +1668,7 @@ function buildAwardsRule(tournament, ruleNumber) {
   // =====================================================
   let guaranteeText = "";
   if (hasAward && awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc)) && price > 0 && teamsMax > 0) {
-    guaranteeText = `L'importo indicato è calcolato su un numero di <strong>${teamsMax} ${entityCount}</strong>. Qualora il numero finale di partecipanti dovesse variare, il montepremi verrà proporzionalmente adeguato (sia in eccesso che in difetto), garantendo in ogni caso un valore complessivo pari al <strong>${awardPerc}%</strong> delle quote di iscrizione totali.`;
+    guaranteeText = `Il montepremi indicato è calcolato su un numero di <strong>${teamsMax} ${entityCount}</strong>. Qualora il numero finale di partecipanti dovesse variare, il montepremi verrà proporzionalmente adeguato (sia in eccesso che in difetto), garantendo in ogni caso un valore complessivo pari al <strong>${awardPerc}%</strong> delle quote di iscrizione totali.`;
   } else if (hasAward) {
     guaranteeText = `Le condizioni per l'erogazione del montepremi saranno comunicate prima dell'inizio del torneo.`;
   } else {
