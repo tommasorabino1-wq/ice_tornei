@@ -1621,19 +1621,42 @@ function buildAwardsRule(tournament, ruleNumber) {
   const awardPerc  = String(tournament.award_amount_perc || "NA");
   const price      = toNum(tournament.price, 0);
   const teamsMax   = toNum(tournament.teams_max, 0);
+  const awardSplit = String(tournament.award_split || "").trim();
   const mvpAward   = String(tournament.mvp_award || "none").trim();
   const isIndividual = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
 
-  const entityWinners        = isIndividual ? 'i primi 3 classificati' : 'le prime 3 squadre classificate';
   const entityWinnersGeneric = isIndividual ? 'i vincitori' : 'le squadre vincitrici';
   const entityCount          = isIndividual ? 'giocatori iscritti' : 'squadre iscritte';
+
+  // Analisi award_split per determinare numero premiati e dettaglio
+  let splitData = [];
+  if (awardSplit && awardSplit !== "NA" && awardSplit.toLowerCase() !== "false") {
+    splitData = awardSplit.split(";").map(s => s.trim()).filter(s => s !== "" && !isNaN(Number(s)));
+  }
+
+  // Costruzione della dicitura sui premiati (es: "i primi 2 classificati")
+  const numWinners = splitData.length;
+  let entityWinners = "";
+  if (numWinners > 0) {
+    entityWinners = isIndividual ? `i primi ${numWinners} classificati` : `le prime ${numWinners} squadre classificate`;
+  } else {
+    entityWinners = isIndividual ? 'i primi classificati' : 'le prime squadre classificate';
+  }
 
   let mainAwardText = "";
   if (hasAward) {
     if (awardPerc && awardPerc !== "NA" && !isNaN(Number(awardPerc)) && price > 0 && teamsMax > 0) {
       const percValue  = Number(awardPerc) / 100;
       const totalPrize = Math.round(teamsMax * price * percValue);
-      mainAwardText = `È previsto un montepremi pari a <strong>€${totalPrize}</strong>, che sarà suddiviso tra ${entityWinners}.`;
+      
+      let detailText = "";
+      if (numWinners > 0) {
+        // Crea il dettaglio discorsivo: (1° €500, 2° €250...)
+        const details = splitData.map((amount, index) => `${index + 1}° €${amount}`).join(", ");
+        detailText = ` (${details})`;
+      }
+
+      mainAwardText = `È previsto un montepremi pari a <strong>€${totalPrize}</strong>, che sarà suddiviso tra ${entityWinners}${detailText}.`;
     } else {
       mainAwardText = `È previsto un montepremi per ${entityWinnersGeneric}. L'importo e la suddivisione saranno comunicati prima dell'inizio del torneo.`;
     }
@@ -1650,25 +1673,21 @@ function buildAwardsRule(tournament, ruleNumber) {
     guaranteeText = `I premi simbolici saranno consegnati a ${entityWinnersGeneric} al termine del torneo.`;
   }
 
-  // =====================================================
-  // MVP / premi individuali — se "none" o "NA" non mostrare nulla
-  // =====================================================
+  let mvpAwardText = "";
+  if (mvpAward && mvpAward.toLowerCase() !== "none" && mvpAward.toLowerCase() !== "na") {
+    const awardsList = mvpAward
+      .split("||")
+      .map(item => item.trim())
+      .filter(Boolean);
 
-    let mvpAwardText = "";
-    if (mvpAward && mvpAward.toLowerCase() !== "none" && mvpAward.toLowerCase() !== "na") {
-      const awardsList = mvpAward
-        .split("||")
-        .map(item => item.trim())
-        .filter(Boolean);
-
-      if (awardsList.length > 0) {
-        mvpAwardText = `
-          <ul>
-            ${awardsList.map(item => `<li>${item}</li>`).join("")}
-          </ul>
-        `;
-      }
+    if (awardsList.length > 0) {
+      mvpAwardText = `
+        <ul>
+          ${awardsList.map(item => `<li>${item}</li>`).join("")}
+        </ul>
+      `;
     }
+  }
 
   return `
     <div class="specific-regulation-card">
