@@ -70,43 +70,34 @@ async function loadTeamInfo() {
     const url = `${API_URLS.getTeamInfo}?team_id=${encodeURIComponent(teamId)}&tournament_id=${encodeURIComponent(tournamentId)}`;
 
     console.log('📡 Fetching:', url);
-
     const response = await fetch(url);
-
-    console.log('📥 Response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ API Error:', errorText);
-
       if (response.status === 409) {
-        showError(
-          'Registrazione già completata',
-          'Hai già completato la registrazione per questo torneo. Se hai bisogno di modificare le informazioni, contattaci via WhatsApp.'
-        );
+        showError('Registrazione già completata', 'Hai già completato la registrazione per questo torneo.');
         return;
       }
-
       if (response.status === 404) {
-        showError(
-          'Squadra non trovata',
-          'Non abbiamo trovato questa squadra. Verifica il link o contattaci via WhatsApp.'
-        );
+        showError('Squadra non trovata', 'Non abbiamo trovato questa squadra.');
         return;
       }
-
       throw new Error(errorText);
     }
 
     const data = await response.json();
-
-    console.log('✅ Data received:', data);
-
-    teamData       = data.team;
+    teamData = data.team;
     tournamentData = data.tournament;
 
-    const isIndividual        = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
-    const certificateRequired = toBool(tournamentData.certificate_required);
+    const isIndividual = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
+    
+    // --- LOGICA TRIVALENTE CERTIFICATO ---
+    const certRaw = String(tournamentData.certificate_required || 'NA').toLowerCase().trim();
+    certState = {
+      isRequired: certRaw === 'true',
+      isOptional: certRaw === 'false',
+      isHidden:   certRaw === 'na'
+    };
 
     const teamSizeMin = toNum(tournamentData.team_size_min, 1);
     const teamSizeMax = toNum(tournamentData.team_size_max, 1);
@@ -116,188 +107,121 @@ async function loadTeamInfo() {
       document.getElementById('team-icon').textContent = '👤';
       document.getElementById('team-label').textContent = 'Giocatore';
       document.getElementById('logo-section-title').textContent = 'Logo Personale';
-      document.getElementById('logo-section-description').textContent =
-        'Carica un logo o avatar personale (PNG, JPG, SVG - max 5MB)';
+      document.getElementById('logo-section-description').textContent = 'Carica un logo o avatar personale (PNG, JPG, SVG - max 5MB)';
     } else {
       document.getElementById('page-title').textContent = 'Completa Registrazione Squadra';
       document.getElementById('logo-section-title').textContent = 'Logo Squadra';
     }
 
     document.getElementById('tournament-name').textContent = tournamentData.name;
-    document.getElementById('team-name').textContent       = teamData.team_name;
-    document.getElementById('sport-name').textContent      = tournamentData.sport;
+    document.getElementById('team-name').textContent = teamData.team_name;
+    document.getElementById('sport-name').textContent = tournamentData.sport;
 
-    generatePlayerSections(teamSizeMin, teamSizeMax, isIndividual, certificateRequired);
+    generatePlayerSections(teamSizeMin, teamSizeMax, isIndividual);
 
     loadingSkeleton.classList.add('hidden');
     content.classList.remove('hidden');
 
-    console.log('✅ UI ready');
-
   } catch (error) {
     console.error('❌ Load error:', error);
-    showError(
-      'Errore di caricamento',
-      'Non siamo riusciti a caricare i dati. Riprova più tardi o contattaci via WhatsApp.'
-    );
+    showError('Errore di caricamento', 'Non siamo riusciti a caricare i dati.');
   }
 }
-
 
 
 // ===================================
 // GENERA SEZIONI GIOCATORI
 // 4 casi: individual/team × cert/no-cert
 // ===================================
-function generatePlayerSections(min, max, isIndividual, certificateRequired) {
+function generatePlayerSections(min, max, isIndividual) {
   const container = document.getElementById('players-sections-container');
   container.innerHTML = '';
   playerData = [];
 
-  // -------------------------
-  // BANNER INTRO CONTESTUALE
-  // -------------------------
+  // 1. Banner Intro
   const banner = document.createElement('div');
   banner.className = 'form-intro-banner';
+  let bannerContent = "";
 
-  if (isIndividual && certificateRequired) {
-    banner.innerHTML = `
-      <p>Carica il tuo <strong>certificato medico</strong> (Agonistico o Non Agonistico) per completare l'iscrizione.
-      Puoi anche caricare un logo personale, ma è facoltativo.</p>`;
-  } else if (isIndividual && !certificateRequired) {
-    banner.innerHTML = `
-      <p>Per questo torneo non è richiesto nessun documento. Puoi caricare un <strong>logo personale</strong> opzionale,
-      oppure inviare direttamente senza caricare nulla.</p>`;
-  } else if (!isIndividual && certificateRequired) {
-    banner.innerHTML = `
-      <p>Inserisci i <strong>nomi</strong> di tutti i giocatori e carica il rispettivo <strong>certificato medico</strong>
-      (Agonistico o Non Agonistico). Il logo squadra è facoltativo.</p>`;
+  if (certState.isRequired) {
+    bannerContent = isIndividual 
+      ? "Carica il tuo <strong>certificato medico obbligatorio</strong> (Agonistico o Non Agonistico) per completare l'iscrizione."
+      : "Inserisci i nomi dei giocatori e carica i loro <strong>certificati medici obbligatori</strong> (Agonistico o Non Agonistico).";
+  } else if (certState.isOptional) {
+    bannerContent = isIndividual
+      ? "Puoi caricare il tuo certificato medico se lo desideri (facoltativo). Il logo è opzionale."
+      : "Inserisci i nomi dei giocatori. Il caricamento del certificato medico è <strong>facoltativo</strong>.";
   } else {
-    banner.innerHTML = `
-      <p>Inserisci i <strong>nomi</strong> di tutti i giocatori per completare la registrazione.
-      Il logo squadra è facoltativo.</p>`;
+    bannerContent = "Inserisci i dati richiesti per completare la registrazione. Non è richiesto alcun certificato medico.";
   }
-
+  banner.innerHTML = `<p>${bannerContent}</p>`;
   container.appendChild(banner);
 
-  // -------------------------
-  // CASO 2b: nessuna sezione giocatori
-  // -------------------------
-  if (isIndividual && !certificateRequired) {
+  // 2. Caso Individuale
+  if (isIndividual) {
     playerData.push({ name: teamData.team_name, certificateFile: null });
+
+    if (!certState.isHidden) {
+      const section = document.createElement('div');
+      section.className = 'form-section';
+      section.innerHTML = `
+        <h3 class="section-title"><span class="section-icon">👤</span> ${teamData.team_name}</h3>
+        <div class="player-certificate-group">
+          <label for="player-cert-1">Certificato Medico ${certState.isRequired ? '<span class="required-asterisk">*</span>' : '<span class="optional-label">(Facoltativo)</span>'}</label>
+          <p class="section-description">Formati accettati: PDF, JPG, PNG - max 10MB</p>
+          <label class="file-upload-btn">
+            <input type="file" id="player-cert-1" accept="application/pdf,image/jpeg,image/png" ${certState.isRequired ? 'required' : ''}>
+            <span class="btn secondary">Seleziona file</span>
+          </label>
+          <div id="player-cert-preview-1" class="file-preview hidden"></div>
+        </div>`;
+      container.appendChild(section);
+      document.getElementById('player-cert-1').addEventListener('change', (e) => handleCertificateUpload(e, 0));
+    }
     return;
   }
 
-  // -------------------------
-  // CASO 2a: individual + cert
-  // -------------------------
-  if (isIndividual && certificateRequired) {
-    playerData.push({ name: teamData.team_name, certificateFile: null });
-
-    const section = document.createElement('div');
-    section.className = 'form-section';
-    section.innerHTML = `
-      <h3 class="section-title">
-        <span class="section-icon">👤</span>
-        ${teamData.team_name}
-      </h3>
-
-      <div class="player-name-group">
-        <label>Nome e Cognome</label>
-        <input
-          type="text"
-          value="${escapeHTML(teamData.team_name)}"
-          disabled
-          class="input-disabled"
-        >
-      </div>
-
-      <div class="player-certificate-group">
-        <label for="player-cert-1">Certificato Medico Agonistico o Non Agonistico <span class="required-asterisk">*</span></label>
-        <p class="section-description">Formati accettati: PDF, JPG, PNG - max 10MB</p>
-        <label class="file-upload-btn">
-          <input
-            type="file"
-            id="player-cert-1"
-            accept="application/pdf,image/jpeg,image/jpg,image/png"
-          >
-          <span class="btn secondary">Seleziona file</span>
-        </label>
-        <div id="player-cert-preview-1" class="file-preview hidden"></div>
-      </div>
-    `;
-
-    container.appendChild(section);
-
-    document.getElementById('player-cert-1').addEventListener('change', (e) => handleCertificateUpload(e, 0));
-    return;
-  }
-
-  // -------------------------
-  // CASO 2c e 2d: team
-  // -------------------------
+  // 3. Caso Squadra
   for (let i = 1; i <= max; i++) {
-    const isRequired = i <= min;
-
+    const isNameRequired = i <= min;
     playerData.push({ name: '', certificateFile: null });
 
     const section = document.createElement('div');
     section.className = 'form-section';
-    section.id = `player-section-${i}`;
-
-    const certBlock = certificateRequired ? `
-      <div class="player-certificate-group" id="player-cert-group-${i}">
-        <label for="player-cert-${i}" id="player-cert-label-${i}">
-          Certificato Medico Agonistico o Non Agonistico${isRequired ? ' <span class="required-asterisk">*</span>' : ''}
-        </label>
-        <p class="section-description">Formati accettati: PDF, JPG, PNG - max 10MB</p>
-        <label class="file-upload-btn">
-          <input
-            type="file"
-            id="player-cert-${i}"
-            accept="application/pdf,image/jpeg,image/jpg,image/png"
-            ${isRequired ? 'required' : ''}
-          >
-          <span class="btn secondary">Seleziona file</span>
-        </label>
-        <div id="player-cert-preview-${i}" class="file-preview hidden"></div>
-      </div>` : '';
+    
+    let certHtml = "";
+    if (!certState.isHidden) {
+      const isCertRequired = certState.isRequired && isNameRequired;
+      const certLabelExtra = isCertRequired ? '<span class="required-asterisk">*</span>' : '<span class="optional-label">(Facoltativo)</span>';
+      
+      certHtml = `
+        <div class="player-certificate-group">
+          <label for="player-cert-${i}">Certificato Medico ${certLabelExtra}</label>
+          <p class="section-description">Formati accettati: PDF, JPG, PNG - max 10MB</p>
+          <label class="file-upload-btn">
+            <input type="file" id="player-cert-${i}" accept="application/pdf,image/jpeg,image/png" ${isCertRequired ? 'required' : ''}>
+            <span class="btn secondary">Seleziona file</span>
+          </label>
+          <div id="player-cert-preview-${i}" class="file-preview hidden"></div>
+        </div>`;
+    }
 
     section.innerHTML = `
-      <h3 class="section-title">
-        <span class="section-icon">👤</span>
-        Giocatore ${i} ${isRequired ? '<span class="required-asterisk">*</span>' : '<span class="optional-label">(Facoltativo)</span>'}
-      </h3>
-
+      <h3 class="section-title"><span class="section-icon">👤</span> Giocatore ${i} ${isNameRequired ? '<span class="required-asterisk">*</span>' : '<span class="optional-label">(Facoltativo)</span>'}</h3>
       <div class="player-name-group">
-        <label for="player-name-${i}">Nome e Cognome${isRequired ? ' <span class="required-asterisk">*</span>' : ''}</label>
-        <input
-          type="text"
-          id="player-name-${i}"
-          placeholder="Es: Mario Rossi"
-          ${isRequired ? 'required' : ''}
-        >
+        <label for="player-name-${i}">Nome e Cognome ${isNameRequired ? '<span class="required-asterisk">*</span>' : ''}</label>
+        <input type="text" id="player-name-${i}" placeholder="Es: Mario Rossi" ${isNameRequired ? 'required' : ''}>
       </div>
-
-      ${certBlock}
-    `;
+      ${certHtml}`;
 
     container.appendChild(section);
 
-    const nameInput = document.getElementById(`player-name-${i}`);
-    nameInput.addEventListener('input', (e) => {
+    document.getElementById(`player-name-${i}`).addEventListener('input', (e) => {
       playerData[i - 1].name = e.target.value.trim();
-
-      // FIX 2: se il giocatore è facoltativo e ha il certificato richiesto,
-      // rendere il certificato obbligatorio non appena viene inserito il nome
-      if (certificateRequired && !isRequired) {
-        updateCertificateRequirement(i);
-      }
     });
 
-    if (certificateRequired) {
-      const certInput = document.getElementById(`player-cert-${i}`);
-      certInput.addEventListener('change', (e) => handleCertificateUpload(e, i - 1));
+    if (!certState.isHidden) {
+      document.getElementById(`player-cert-${i}`).addEventListener('change', (e) => handleCertificateUpload(e, i - 1));
     }
   }
 }
@@ -456,30 +380,30 @@ form.addEventListener('submit', async (e) => {
 
   console.log('📤 Form submit started');
 
-  const isIndividual        = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
-  const certificateRequired = toBool(tournamentData.certificate_required);
-  const teamSizeMin         = toNum(tournamentData.team_size_min, 1);
+  const isIndividual = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
+  const teamSizeMin = toNum(tournamentData.team_size_min, 1);
 
-  // FIX 3: valida e mostra errori prima di procedere
-  const isValid = highlightMissingFields();
-  if (!isValid) return;
+  // 1. Valida campi required HTML (inclusi i file se certState.isRequired è true)
+  if (!highlightMissingFields()) return;
 
-  // Validazioni custom aggiuntive
-  if (isIndividual && certificateRequired) {
-    if (!playerData[0]?.certificateFile) {
+  // 2. Validazioni logiche custom
+  if (isIndividual) {
+    if (certState.isRequired && !playerData[0]?.certificateFile) {
       alert('Devi caricare il tuo certificato medico per completare la registrazione.');
       return;
     }
-  } else if (!isIndividual) {
+  } else {
     const validPlayers = playerData.filter(p => p.name);
     if (validPlayers.length < teamSizeMin) {
-      alert(`Devi inserire almeno ${teamSizeMin} giocatori`);
+      alert(`Devi inserire almeno ${teamSizeMin} giocatori.`);
       return;
     }
-    if (certificateRequired) {
-      const validWithCert = playerData.filter(p => p.name && p.certificateFile);
-      if (validWithCert.length < teamSizeMin) {
-        alert(`Devi caricare il certificato medico per almeno ${teamSizeMin} giocatori`);
+
+    if (certState.isRequired) {
+      const playersNeedingCert = Math.min(validPlayers.length, teamSizeMin);
+      const playersWithCert = validPlayers.filter(p => p.certificateFile).length;
+      if (playersWithCert < playersNeedingCert) {
+        alert(`Devi caricare il certificato medico per i ${teamSizeMin} giocatori obbligatori.`);
         return;
       }
     }
@@ -488,78 +412,38 @@ form.addEventListener('submit', async (e) => {
   showLoading('Preparazione file...');
 
   try {
-    let logoBase64   = null;
-    let logoFilename = null;
-
-    if (logoFile) {
-      loadingText.textContent = 'Caricamento logo...';
-      logoBase64   = await fileToBase64(logoFile);
-      logoFilename = logoFile.name;
-      console.log('🖼️ Logo converted');
-    }
-
-    loadingText.textContent = 'Caricamento dati...';
+    let logoBase64 = logoFile ? await fileToBase64(logoFile) : null;
+    let logoFilename = logoFile ? logoFile.name : null;
 
     const players = [];
-
-    if (isIndividual) {
-      const p      = playerData[0];
-      const player = { name: p.name };
-      if (p.certificateFile) {
-        player.certificate_base64    = await fileToBase64(p.certificateFile);
-        player.certificate_filename  = p.certificateFile.name;
-      }
-      players.push(player);
-    } else {
-      for (const player of playerData) {
-        if (!player.name) continue;
-        const p = { name: player.name };
-        if (certificateRequired && player.certificateFile) {
-          loadingText.textContent      = 'Caricamento certificati...';
-          p.certificate_base64         = await fileToBase64(player.certificateFile);
-          p.certificate_filename       = player.certificateFile.name;
+    for (const p of playerData) {
+      if (isIndividual || p.name) {
+        const playerObj = { name: p.name };
+        if (p.certificateFile) {
+          playerObj.certificate_base64 = await fileToBase64(p.certificateFile);
+          playerObj.certificate_filename = p.certificateFile.name;
         }
-        players.push(p);
+        players.push(playerObj);
       }
     }
 
-    console.log('👥 Players ready:', players.length);
-
-    loadingText.textContent = 'Salvataggio informazioni...';
-
     const payload = {
-      team_id:       teamId,
+      team_id: teamId,
       tournament_id: tournamentId,
       players,
-      logo_base64:   logoBase64,
+      logo_base64: logoBase64,
       logo_filename: logoFilename
     };
 
-    console.log('📦 Payload structure:', {
-      team_id:       payload.team_id,
-      tournament_id: payload.tournament_id,
-      players_count: payload.players.length,
-      has_logo:      !!payload.logo_base64
-    });
-
     const response = await fetch(API_URLS.submitTeamInfo, {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload)
+      body: JSON.stringify(payload)
     });
 
-    console.log('📥 Response status:', response.status);
+    if (!response.ok) throw new Error(await response.text());
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Submit error:', errorText);
-      throw new Error(errorText);
-    }
-
-    console.log('✅ Submit success');
     hideLoading();
-
-    // FIX 1: scroll in cima prima di mostrare il messaggio di successo
     window.scrollTo({ top: 0, behavior: 'smooth' });
     showSuccess();
 
@@ -569,6 +453,8 @@ form.addEventListener('submit', async (e) => {
     alert('Errore durante l\'invio. Riprova più tardi o contattaci via WhatsApp.');
   }
 });
+
+
 
 // ===================================
 // HELPER: File to Base64
