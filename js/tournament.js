@@ -1127,6 +1127,7 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   const isFlexible = fixed === "false";
 
   const entityPlural = isIndividual ? "partecipanti" : "squadre";
+  const entitySubject = isIndividual ? "i partecipanti" : "le squadre";
   const qualifiedPlural = isIndividual ? "i partecipanti qualificati" : "le squadre qualificate";
   const venuePlural = courtType === "bar" ? "location" : "campi";
   const venueSingular = courtType === "bar" ? "location" : "campo";
@@ -1253,12 +1254,10 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   function buildFixedConstraintsText() {
     const hoursText = parseHours(hoursRaw);
     
-    // Costruiamo i pezzi singolarmente per avere controllo sulle congiunzioni
     const locationPart = location ? wrapStrong(location) : "";
     const datePart = dateText ? `il ${wrapStrong(dateText)}` : "";
     const hoursPart = hoursText ? hoursText : "";
 
-    // Uniamo location e data con una virgola, poi aggiungiamo l'orario
     let mainText = "";
     if (locationPart && datePart) {
       mainText = `${locationPart}, ${datePart}`;
@@ -1277,6 +1276,13 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
 
   function buildDeferredFinalsConstraintsText() {
     return `${capitalizeFirst(venueSingular)}, data e orari delle partite della fase finale saranno comunicati dall'organizzazione al termine della fase a gironi e definiti in accordo con ${qualifiedPlural}.`;
+  }
+
+  // ===============================
+  // TESTO "PRESENTAZIONE" (NUOVO REQUISITO)
+  // ===============================
+  function buildPunctualityItem() {
+    return `<li><strong>Presentazione:</strong> ${entitySubject} dovranno presentarsi sul luogo di gara almeno <strong>10 minuti prima</strong> dell'orario indicato per l'inizio del match.</li>`;
   }
 
   // ===============================
@@ -1310,7 +1316,8 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
           <li>Ulteriori dettagli su luogo, giorni e orari delle partite saranno comunicati prima dell'inizio del torneo.</li>
         </ul>
       </li>`,
-      `<li><strong>Durata:</strong> La durata e la distribuzione delle partite saranno comunicate prima dell'inizio del torneo.</li>`
+      `<li><strong>Durata:</strong> La durata e la distribuzione delle partite saranno comunicate prima dell'inizio del torneo.</li>`,
+      buildPunctualityItem()
     ];
   }
 
@@ -1363,6 +1370,7 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
         <li><strong>Durata:</strong> ${buildSimpleDailyDurationText()}</li>
       `);
     }
+    items.push(buildPunctualityItem());
   }
 
   // -------------------------------
@@ -1410,6 +1418,7 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
           items.push(`<li><strong>Durata:</strong> ${buildSeasonalBothPhasesDurationText()}</li>`);
         }
       }
+      items.push(buildPunctualityItem());
     }
   }
 
@@ -1447,6 +1456,7 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
       } else if (isLong) {
         items.push(`<li><strong>Durata:</strong> ${buildSeasonalBothPhasesDurationText()}</li>`);
       }
+      items.push(buildPunctualityItem());
     }
   }
 
