@@ -1184,7 +1184,7 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
     const endFormatted = formatHour(end);
 
     if (!startFormatted || !endFormatted) return "";
-    return `tra le ${startFormatted} e le ${endFormatted}`;
+    return `dalle ${startFormatted} alle ${endFormatted}`;
   }
 
   function wrapStrong(text) {
