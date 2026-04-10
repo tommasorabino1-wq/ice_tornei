@@ -80,18 +80,12 @@ async function loadTeamInfo() {
       console.error('❌ API Error:', errorText);
 
       if (response.status === 409) {
-        showError(
-          'Registrazione già completata',
-          'Hai già completato la registrazione per questo torneo. Se hai bisogno di modificare le informazioni, contattaci via WhatsApp.'
-        );
+        showError('Registrazione già completata', 'Hai già completato la registrazione per questo torneo. Se hai bisogno di modificare le informazioni, contattaci via WhatsApp.');
         return;
       }
 
       if (response.status === 404) {
-        showError(
-          'Squadra non trovata',
-          'Non abbiamo trovato questa squadra. Verifica il link o contattaci via WhatsApp.'
-        );
+        showError('Squadra non trovata', 'Non abbiamo trovato questa squadra. Verifica il link o contattaci via WhatsApp.');
         return;
       }
 
@@ -106,13 +100,18 @@ async function loadTeamInfo() {
 
     const isIndividual = String(tournamentData.individual_or_team || 'team').toLowerCase() === 'individual';
     
-    // --- LOGICA TRIVALENTE CERTIFICATO ---
-    const certRaw = String(tournamentData.certificate_required || 'NA').toLowerCase().trim();
+    // --- LOGICA TRIVALENTE CORRETTA (String e Boolean) ---
+    const rawVal = tournamentData.certificate_required;
+    // Trasformiamo in stringa per gestire uniformemente true, "true", false, "false", "NA"
+    const certString = String(rawVal ?? 'na').toLowerCase().trim();
+
     certState = {
-      isRequired: certRaw === 'true',
-      isOptional: certRaw === 'false',
-      isHidden:   certRaw === 'na'
+      isRequired: certString === 'true',
+      isOptional: certString === 'false',
+      isHidden:   certString === 'na'
     };
+
+    console.log('🛠️ Cert State:', certState);
 
     const teamSizeMin = toNum(tournamentData.team_size_min, 1);
     const teamSizeMax = toNum(tournamentData.team_size_max, 1);
@@ -122,8 +121,7 @@ async function loadTeamInfo() {
       document.getElementById('team-icon').textContent = '👤';
       document.getElementById('team-label').textContent = 'Giocatore';
       document.getElementById('logo-section-title').textContent = 'Logo Personale';
-      document.getElementById('logo-section-description').textContent =
-        'Carica un logo o avatar personale (PNG, JPG, SVG - max 5MB)';
+      document.getElementById('logo-section-description').textContent = 'Carica un logo o avatar personale (PNG, JPG, SVG - max 5MB)';
     } else {
       document.getElementById('page-title').textContent = 'Completa Registrazione Squadra';
       document.getElementById('logo-section-title').textContent = 'Logo Squadra';
@@ -142,12 +140,10 @@ async function loadTeamInfo() {
 
   } catch (error) {
     console.error('❌ Load error:', error);
-    showError(
-      'Errore di caricamento',
-      'Non siamo riusciti a caricare i dati. Riprova più tardi o contattaci via WhatsApp.'
-    );
+    showError('Errore di caricamento', 'Non siamo riusciti a caricare i dati. Riprova più tardi o contattaci via WhatsApp.');
   }
 }
+
 
 
 // ===================================
@@ -211,6 +207,7 @@ function generatePlayerSections(min, max, isIndividual) {
 
     let certHtml = "";
     if (!certState.isHidden) {
+      // Obbligatorio solo se certState è isRequired E il giocatore è obbligatorio
       const mustUpload = certState.isRequired && isNameRequired;
       const labelSuffix = mustUpload ? '<span class="required-asterisk">*</span>' : '<span class="optional-label">(Facoltativo)</span>';
       
@@ -241,9 +238,19 @@ function generatePlayerSections(min, max, isIndividual) {
     const nameInput = document.getElementById(`player-name-${i}`);
     nameInput.addEventListener('input', (e) => {
       playerData[i - 1].name = e.target.value.trim();
-      // Gestione dinamica obbligatorietà per giocatori extra
+      // Se il certificato è richiesto e il giocatore è extra (>min), lo rendiamo obbligatorio solo se inserisce il nome
       if (certState.isRequired && !isNameRequired) {
-        updateCertificateRequirement(i);
+        const cInput = document.getElementById(`player-cert-${i}`);
+        const cLabel = document.getElementById(`player-cert-label-${i}`);
+        if (cInput && cLabel) {
+          if (e.target.value.trim()) {
+            cInput.setAttribute('required', '');
+            cLabel.innerHTML = `Certificato Medico <span class="required-asterisk">*</span>`;
+          } else {
+            cInput.removeAttribute('required');
+            cLabel.innerHTML = `Certificato Medico <span class="optional-label">(Facoltativo)</span>`;
+          }
+        }
       }
     });
 
@@ -253,6 +260,8 @@ function generatePlayerSections(min, max, isIndividual) {
     }
   }
 }
+
+
 
 // ===================================
 // FIX 2: Aggiorna obbligatorietà certificato
