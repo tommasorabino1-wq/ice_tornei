@@ -447,7 +447,7 @@ async function sendTeamInfoRequestEmails(tournamentId) {
     const subscriptionsSnapshot = await db.collection('subscriptions').where('tournament_id', '==', tournamentId).get();
     if (subscriptionsSnapshot.empty) return;
 
-    const mailerUrl   = "https://script.google.com/macros/s/AKfycbzZCR67pfMZqESZrxAmTuGoJ4lUHCdY3czvsmZbuwuA3Kcor56eWSC-Q2r0p7FEDpVM/exec";
+    const mailerUrl   = "https://script.google.com/macros/s/AKfycbwjhOgOgv24eVTdhdR0_yqELcHIiAqUyCXY0niyDSrvJK6Z6mbQnqyQ2GX614UmeWPJ/exec";
     const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
     const emailPromises = subscriptionsSnapshot.docs.map(async (doc) => {
