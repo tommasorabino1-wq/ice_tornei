@@ -424,100 +424,58 @@ const { updateRanking } = require('./helpers/rankingCalculator');
 async function sendTeamInfoRequestEmails(tournamentId) {
   try {
     console.log(`📧 Checking team info request emails for ${tournamentId}`);
-
     const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
-    if (!tournamentDoc.exists) {
-      throw new Error('Tournament not found');
-    }
+    if (!tournamentDoc.exists) throw new Error('Tournament not found');
 
     const tournament = tournamentDoc.data();
-    
-    // 1. Leggiamo la variabile "mail" (default a stringa vuota se non presente)
     const mailConfig = toStringSafe(tournament.mail, "").toLowerCase();
 
-    // 2. Controllo se la configurazione prevede l'invio delle info
-    //    Procediamo solo se mail contiene "info" (es. pay_info, info_rules, info, pay_info_rules)
     if (!mailConfig.includes("info")) {
       console.log(`ℹ️ Skipping team info emails: "info" not present in mail config (${mailConfig})`);
       return; 
     }
 
-    console.log(`📧 Proceeding with team info request emails for ${tournamentId}`);
+    const tournamentName   = toStringSafe(tournament.name);
+    const teamSizeMin      = toNumberSafe(tournament.team_size_min, 2);
+    const teamSizeMax      = toNumberSafe(tournament.team_size_max, 2);
+    const sport            = toStringSafe(tournament.sport, "Sport");
+    const individualOrTeam = toStringSafe(tournament.individual_or_team, 'team').toLowerCase();
+    
+    // MODIFICA QUI: Normalizziamo in stringa
+    const certificateRequired = toStringSafe(tournament.certificate_required, 'na').toLowerCase();
 
-    const tournamentName        = toStringSafe(tournament.name);
-    const teamSizeMin           = toNumberSafe(tournament.team_size_min, 2);
-    const teamSizeMax           = toNumberSafe(tournament.team_size_max, 2);
-    const sport                 = toStringSafe(tournament.sport, "Sport");
-    const individualOrTeam      = toStringSafe(tournament.individual_or_team, 'team').toLowerCase();
-    const certificateRequired   = toBooleanSafe(tournament.certificate_required);
-
-    const subscriptionsSnapshot = await db.collection('subscriptions')
-      .where('tournament_id', '==', tournamentId)
-      .get();
-
-    if (subscriptionsSnapshot.empty) {
-      console.log('⚠️ No subscriptions found');
-      return;
-    }
+    const subscriptionsSnapshot = await db.collection('subscriptions').where('tournament_id', '==', tournamentId).get();
+    if (subscriptionsSnapshot.empty) return;
 
     const mailerUrl   = "https://script.google.com/macros/s/AKfycbzZCR67pfMZqESZrxAmTuGoJ4lUHCdY3czvsmZbuwuA3Kcor56eWSC-Q2r0p7FEDpVM/exec";
     const mailerToken = "wEcqf3I7RBhXUv2QXhyhkrvfwUZCGWt9IXLnGA6koyTKqHHD9phsP0sKV7kxJO";
 
     const emailPromises = subscriptionsSnapshot.docs.map(async (doc) => {
-      const subscription = doc.data();
-      const email    = subscription.email;
-      const teamName = subscription.team_name;
-      const teamId   = subscription.team_id;
-
+      const sub = doc.data();
       const payload = {
         token: mailerToken,
-        to: email,
-        team_name: teamName,
-        team_id: teamId,
+        to: sub.email,
+        team_name: sub.team_name,
+        team_id: sub.team_id,
         tournament_id: tournamentId,
         tournament_name: tournamentName,
         team_size_min: teamSizeMin,
         team_size_max: teamSizeMax,
         sport: sport,
         individual_or_team: individualOrTeam,
-        certificate_required: certificateRequired
+        certificate_required: certificateRequired // Passa la stringa ("true", "false", "na")
       };
 
       try {
-        const response = await axios.post(mailerUrl, payload, {
-          headers: { "Content-Type": "application/json" },
-          timeout: 30000
-        });
-
+        const response = await axios.post(mailerUrl, payload, { timeout: 30000 });
         if (response.data === "OK") {
-          console.log(`✅ Team info email sent to ${email}`);
-          await doc.ref.update({
-            teamInfoEmailStatus: "sent",
-            teamInfoEmailSentAt: new Date().toISOString()
-          });
-        } else {
-          console.error(`❌ Email failed for ${email}: ${response.data}`);
-          await doc.ref.update({
-            teamInfoEmailStatus: "error",
-            teamInfoEmailError: `mailer_response_${response.data}`
-          });
+          await doc.ref.update({ teamInfoEmailStatus: "sent", teamInfoEmailSentAt: new Date().toISOString() });
         }
-      } catch (error) {
-        console.error(`❌ Email error for ${email}:`, error.message);
-        await doc.ref.update({
-          teamInfoEmailStatus: "error",
-          teamInfoEmailError: error.message
-        });
-      }
+      } catch (error) { console.error(`❌ Email error for ${sub.email}:`, error.message); }
     });
 
     await Promise.all(emailPromises);
-    console.log(`✅ All team info emails processed for ${tournamentId}`);
-
-  } catch (error) {
-    console.error('sendTeamInfoRequestEmails error:', error);
-    throw error;
-  }
+  } catch (error) { console.error('sendTeamInfoRequestEmails error:', error); throw error; }
 }
 
 
@@ -786,7 +744,8 @@ exports.submitSubscription = onRequest(async (req, res) => {
     const needsPreferences    = fixedCourtDaysHours !== 'fixed_all';
 
     const isIndividual        = toStringSafe(tournament.individual_or_team, 'team').toLowerCase() === 'individual';
-    const certificateRequired = toBooleanSafe(tournament.certificate_required);
+    const certValue = toStringSafe(tournament.certificate_required, 'na').toLowerCase();
+    const isCertRequired = certValue !== 'na';
     const teamSizeMax         = toNumberSafe(tournament.team_size_max, 2);
 
     const normalizedTeamName  = normalizeTeamNameForCheck(team_name);
@@ -886,21 +845,17 @@ exports.submitSubscription = onRequest(async (req, res) => {
 
     if (isIndividual) {
       teamData['name_player_1'] = team_name.trim();
-      if (certificateRequired) {
-        teamData['certificato_player_1'] = null;
-      }
+      if (isCertRequired) teamData['certificato_player_1'] = null;
     } else {
       for (let i = 1; i <= teamSizeMax; i++) {
         teamData[`name_player_${i}`] = null;
-        if (certificateRequired) {
-          teamData[`certificato_player_${i}`] = null;
-        }
+        if (isCertRequired) teamData[`certificato_player_${i}`] = null;
       }
     }
 
     await db.collection('teams').doc(teamId).set(teamData);
 
-    console.log(`✅ Team ${teamId} created (individual: ${isIndividual}, certificate_required: ${certificateRequired})`);
+    console.log(`✅ Team ${teamId} created (individual: ${isIndividual}, cert_config: ${certValue})`);
 
     return res.status(200).send('SUBSCRIPTION_SAVED');
 
@@ -979,16 +934,17 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
       return res.status(404).send('TOURNAMENT_NOT_FOUND');
     }
 
-    const tournament      = tournamentDoc.data();
-    const teamSizeMax     = toNumberSafe(tournament.team_size_max, 2);
-    const isIndividual    = toStringSafe(tournament.individual_or_team, 'team').toLowerCase() === 'individual';
-    const certificateRequired = toBooleanSafe(tournament.certificate_required);
+    const tournamentDataFromDb = tournamentDoc.data();
+    const teamSizeMax     = toNumberSafe(tournamentDataFromDb.team_size_max, 2);
+    const isIndividual    = toStringSafe(tournamentDataFromDb.individual_or_team, 'team').toLowerCase() === 'individual';
+    const certValue       = toStringSafe(tournamentDataFromDb.certificate_required, 'na').toLowerCase();
+    const isCertVisible   = certValue !== 'na';
 
     console.log('📋 Tournament info:', {
-      name: tournament.name,
+      name: tournamentDataFromDb.name,
       team_size_max: teamSizeMax,
       is_individual: isIndividual,
-      certificate_required: certificateRequired
+      cert_config: certValue
     });
 
     const updateData = {
@@ -1042,7 +998,7 @@ exports.submitTeamInfo = onRequest(async (req, res) => {
         console.log(`ℹ️ Individual tournament - skipping name update for player ${playerIndex}`);
       }
 
-      if (certificateRequired) {
+      if (isCertVisible) {
         if (player.certificate_base64 && player.certificate_filename) {
           try {
             console.log(`📤 Uploading certificate for player ${playerIndex}:`, player.certificate_filename);
@@ -1252,7 +1208,8 @@ exports.getTeamInfo = onRequest(async (req, res) => {
         team_size_min:        toNumberSafe(tournamentData.team_size_min, 2),
         team_size_max:        toNumberSafe(tournamentData.team_size_max, 2),
         individual_or_team:   toStringSafe(tournamentData.individual_or_team, 'team'),
-        certificate_required: toBooleanSafe(tournamentData.certificate_required)
+        // MODIFICA QUI: Forza stringa per NA, true, false
+        certificate_required: toStringSafe(tournamentData.certificate_required, 'na')
       }
     };
 
