@@ -423,7 +423,7 @@ const { updateRanking } = require('./helpers/rankingCalculator');
 // ===============================
 async function sendTeamInfoRequestEmails(tournamentId) {
   try {
-    console.log(`📧 Sending team info request emails for ${tournamentId}`);
+    console.log(`📧 Checking team info request emails for ${tournamentId}`);
 
     const tournamentDoc = await db.collection('tournaments').doc(tournamentId).get();
     if (!tournamentDoc.exists) {
@@ -431,6 +431,19 @@ async function sendTeamInfoRequestEmails(tournamentId) {
     }
 
     const tournament = tournamentDoc.data();
+    
+    // 1. Leggiamo la variabile "mail" (default a stringa vuota se non presente)
+    const mailConfig = toStringSafe(tournament.mail, "").toLowerCase();
+
+    // 2. Controllo se la configurazione prevede l'invio delle info
+    //    Procediamo solo se mail contiene "info" (es. pay_info, info_rules, info, pay_info_rules)
+    if (!mailConfig.includes("info")) {
+      console.log(`ℹ️ Skipping team info emails: "info" not present in mail config (${mailConfig})`);
+      return; 
+    }
+
+    console.log(`📧 Proceeding with team info request emails for ${tournamentId}`);
+
     const tournamentName        = toStringSafe(tournament.name);
     const teamSizeMin           = toNumberSafe(tournament.team_size_min, 2);
     const teamSizeMax           = toNumberSafe(tournament.team_size_max, 2);
@@ -506,7 +519,6 @@ async function sendTeamInfoRequestEmails(tournamentId) {
     throw error;
   }
 }
-
 
 
 
@@ -1080,15 +1092,7 @@ exports.onSubscriptionCreated = onDocumentCreated(
     const subscription   = event.data.data();
     const subscriptionId = event.params.subscriptionId;
 
-    // ===============================
-    // 🔇 INVIO EMAIL PAGAMENTO TEMPORANEAMENTE DISATTIVATO
-    // ===============================
-    console.log(`📭 Payment email disabled — skipping for subscription ${subscriptionId}`);
-    return null;
-
-    // --- CODICE DISATTIVATO ---
-    // FIX BUG 3: toBooleanSafe + confronto stringa normalizzato
-    // per evitare reinvii se il campo ha casing diverso o tipo diverso
+    // 1. Controllo se l'email è già stata inviata (prevenzione doppioni)
     if (toBooleanSafe(subscription.emailStatus) ||
         toStringSafe(subscription.emailStatus).toLowerCase() === 'sent') {
       console.log(`Email già inviata per subscription ${subscriptionId}`);
@@ -1114,13 +1118,25 @@ exports.onSubscriptionCreated = onDocumentCreated(
         return null;
       }
 
-      const tournament     = tournamentDoc.data();
-      const amount         = toNumberSafe(tournament.price, null);
-      const tournamentName = toStringSafe(tournament.name);
+      const tournament = tournamentDoc.data();
+
+      // =====================================================
+      // 2. LOGICA DI FILTRO BASATA SULLA VARIABILE "MAIL"
+      // =====================================================
+      const mailConfig = toStringSafe(tournament.mail, "").toLowerCase().trim();
+      
+      // Se la parola "pay" non è presente nella configurazione, usciamo senza inviare
+      if (!mailConfig.includes("pay")) {
+        console.log(`ℹ️ Invio mail pagamento saltato: configurazione mail "${mailConfig}" non include "pay"`);
+        // Aggiorniamo comunque lo stato per evitare che il trigger riparta o sembri in errore
+        await event.data.ref.update({ emailStatus: "skipped_by_config" });
+        return null;
+      }
+
+      const amount          = toNumberSafe(tournament.price, null);
+      const tournamentName  = toStringSafe(tournament.name);
       const individualOrTeam = toStringSafe(tournament.individual_or_team, 'team').toLowerCase();
 
-      // FIX BUG 5: controllo esplicito su null invece di !amount
-      // Così i tornei gratuiti (price = 0) non vengono bloccati
       if (amount === null) {
         console.error(`Prezzo non definito per tournament ${tournamentId}`);
         await event.data.ref.update({ emailStatus: "error", emailError: "price_not_defined" });
@@ -1154,13 +1170,13 @@ exports.onSubscriptionCreated = onDocumentCreated(
       });
 
       if (response.data === "OK") {
-        console.log(`Email inviata con successo a ${email} per subscription ${subscriptionId}`);
+        console.log(`✅ Email inviata con successo a ${email} per subscription ${subscriptionId}`);
         await event.data.ref.update({
           emailStatus: "sent",
           emailSentAt: new Date().toISOString()
         });
       } else {
-        console.error(`Risposta mailer non OK: ${response.data}`);
+        console.error(`❌ Risposta mailer non OK: ${response.data}`);
         await event.data.ref.update({
           emailStatus: "error",
           emailError: `mailer_response_${response.data}`
@@ -1168,7 +1184,7 @@ exports.onSubscriptionCreated = onDocumentCreated(
       }
 
     } catch (error) {
-      console.error(`Errore invio email per subscription ${subscriptionId}:`, error.message);
+      console.error(`❌ Errore invio email per subscription ${subscriptionId}:`, error.message);
       await event.data.ref.update({
         emailStatus: "error",
         emailError: error.message
@@ -1178,7 +1194,6 @@ exports.onSubscriptionCreated = onDocumentCreated(
     return null;
   }
 );
-
 
 
 // ===============================
