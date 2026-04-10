@@ -2496,25 +2496,48 @@ function buildRefundRule(ruleNumber) {
 // ===============================
 function buildCommunicationsRule(tournament, ruleNumber) {
   const isIndividual       = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
-  // FIX BUG 3: toBool per certificate_required
   const certificateRequired = toBool(tournament.certificate_required);
+  
+  // Recupero la configurazione delle mail (default a pay_info_rules se non specificato)
+  const mailConfig = String(tournament.mail || "pay_info_rules").toLowerCase().trim();
 
-  const introText        = `Tutte le comunicazioni ufficiali relative al torneo verranno inviate all'indirizzo email indicato in fase di iscrizione.`;
-  const emailPaymentText = `<strong>Email per il pagamento</strong> della quota di iscrizione, inviata dopo il completamento del form di iscrizione.`;
+  const introText = `Tutte le comunicazioni ufficiali relative al torneo verranno inviate all'indirizzo email indicato in fase di iscrizione.`;
+  
+  // 1. Definizione dei blocchi mail
+  const emailPaymentText = `<li><strong>Email per il pagamento</strong> della quota di iscrizione, inviata dopo il completamento del form di iscrizione.</li>`;
 
-  let emailTeamText;
+  let emailTeamText = "";
   if (isIndividual && certificateRequired) {
-    emailTeamText = `<strong>Email per i dati del giocatore</strong> e per l'invio del certificato medico, inviata circa 2 settimane prima dell'inizio del torneo.`;
+    emailTeamText = `<li><strong>Email per i dati del giocatore</strong> e per l'invio del certificato medico, inviata circa 2 settimane prima dell'inizio del torneo.</li>`;
   } else if (isIndividual && !certificateRequired) {
-    emailTeamText = `<strong>Email per i dati del giocatore</strong>, inviata circa 2 settimane prima dell'inizio del torneo.`;
+    emailTeamText = `<li><strong>Email per i dati del giocatore</strong>, inviata circa 2 settimane prima dell'inizio del torneo.</li>`;
   } else if (!isIndividual && certificateRequired) {
-    emailTeamText = `<strong>Email per i componenti della squadra</strong> e per l'invio dei certificati medici, inviata circa 2 settimane prima dell'inizio del torneo.`;
+    emailTeamText = `<li><strong>Email per i componenti della squadra</strong> e per l'invio dei certificati medici, inviata circa 2 settimane prima dell'inizio del torneo.</li>`;
   } else {
-    emailTeamText = `<strong>Email per i componenti della squadra</strong>, inviata circa 2 settimane prima dell'inizio del torneo.`;
+    emailTeamText = `<li><strong>Email per i componenti della squadra</strong>, inviata circa 2 settimane prima dell'inizio del torneo.</li>`;
   }
 
-  const emailRulesText = `<strong>Email riepilogativa delle regole</strong> del torneo, inviata nei giorni precedenti all'inizio delle partite.`;
-  const whatsappText   = `A iscrizioni chiuse, i partecipanti verranno inseriti in un gruppo WhatsApp ufficiale del torneo, gestito dall'organizzazione, per comunicazioni operative e trasmissione dei risultati.`;
+  const emailRulesText = `<li><strong>Email riepilogativa delle regole</strong> del torneo, inviata nei giorni precedenti all'inizio delle partite.</li>`;
+  
+  const whatsappText = `A iscrizioni chiuse, i partecipanti verranno inseriti in un gruppo WhatsApp ufficiale del torneo, gestito dall'organizzazione, per comunicazioni operative e trasmissione dei risultati.`;
+
+  // 2. Composizione dinamica della lista email
+  let activeEmails = [];
+  
+  // Controllo se includere la mail di pagamento
+  if (mailConfig.includes("pay")) {
+    activeEmails.push(emailPaymentText);
+  }
+  
+  // Controllo se includere la mail di info/dati squadra
+  if (mailConfig.includes("info")) {
+    activeEmails.push(emailTeamText);
+  }
+  
+  // Controllo se includere la mail delle regole
+  if (mailConfig.includes("rules")) {
+    activeEmails.push(emailRulesText);
+  }
 
   return `
     <div class="specific-regulation-card">
@@ -2523,11 +2546,7 @@ function buildCommunicationsRule(tournament, ruleNumber) {
         <p><strong>Comunicazioni ufficiali</strong></p>
         <ul>
           <li><strong>Email:</strong> ${introText}
-            <ul>
-              <li>${emailPaymentText}</li>
-              <li>${emailTeamText}</li>
-              <li>${emailRulesText}</li>
-            </ul>
+            ${activeEmails.length > 0 ? `<ul>${activeEmails.join("")}</ul>` : ""}
           </li>
           <li><strong>Gruppo WhatsApp:</strong> ${whatsappText}</li>
         </ul>
@@ -2535,7 +2554,6 @@ function buildCommunicationsRule(tournament, ruleNumber) {
     </div>
   `;
 }
-
 
 
 
