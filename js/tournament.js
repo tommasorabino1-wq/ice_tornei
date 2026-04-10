@@ -1282,7 +1282,7 @@ function buildCourtDaysHoursRule(tournament, ruleNumber) {
   // TESTO "PRESENTAZIONE" (NUOVO REQUISITO)
   // ===============================
   function buildPunctualityItem() {
-    return `<li><strong>Presentazione:</strong> ${entitySubject} dovranno presentarsi sul luogo di gara almeno <strong>10 minuti prima</strong> dell'orario indicato per l'inizio del match.</li>`;
+    return `<li><strong>Presentazione:</strong> ${entitySubject} dovranno presentarsi sul luogo di gara almeno <strong>15 minuti prima</strong> dell'orario indicato per l'inizio del match.</li>`;
   }
 
   // ===============================
