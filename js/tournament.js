@@ -380,7 +380,8 @@ function sanitizeEventHTML(html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
-  const allowedTags = new Set(['P', 'STRONG', 'EM', 'BR', 'UL', 'LI', 'DIV', 'SPAN']);
+  // 1. Aggiunto 'A' qui
+  const allowedTags = new Set(['P', 'STRONG', 'EM', 'BR', 'UL', 'LI', 'DIV', 'SPAN', 'A']);
 
   function sanitizeNode(node) {
     if (node.nodeType === Node.TEXT_NODE) return node.cloneNode();
@@ -389,6 +390,7 @@ function sanitizeEventHTML(html) {
 
     const clean = document.createElement(node.tagName);
 
+    // Gestione classi sicure
     if (node.hasAttribute('class')) {
       const safeClasses = node.getAttribute('class')
         .split(' ')
@@ -396,6 +398,19 @@ function sanitizeEventHTML(html) {
         .join(' ');
       if (safeClasses) clean.setAttribute('class', safeClasses);
     }
+
+    // --- COMINCIA IL PEZZO NUOVO ---
+    // Gestione specifica per i link (attributo href)
+    if (node.tagName === 'A' && node.hasAttribute('href')) {
+      const href = node.getAttribute('href');
+      // Opzionale: un minimo di controllo che sia un link valido
+      if (href.startsWith('http') || href.startsWith('/')) {
+        clean.setAttribute('href', href);
+        clean.setAttribute('target', '_blank');
+        clean.setAttribute('rel', 'noopener noreferrer'); // Sicurezza extra per i link esterni
+      }
+    }
+    // --- FINISCE IL PEZZO NUOVO ---
 
     for (const child of node.childNodes) {
       const sanitized = sanitizeNode(child);
