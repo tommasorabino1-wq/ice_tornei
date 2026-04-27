@@ -123,7 +123,7 @@ function sportHasDraws(sport) {
 // PREFETCH BACKGROUND
 // ===============================
 async function prefetchRankingInBackground() {
-  const sports  = ['calcio', 'padel', 'beach_volley', 'scacchi'];
+  const sports = ['calcio', 'padel', 'beach_volley', 'scacchi', 'pickleball'];
   const types   = ['teams', 'players'];
   const orderBy = 'punti';
 
@@ -599,6 +599,7 @@ function getSportLabel(sport) {
     padel:        'Padel',
     beach_volley: 'Beach Volley',
     scacchi:      'Scacchi',
+    pickleball:   'Pickleball',
   };
   return map[sport] || sport;
 }

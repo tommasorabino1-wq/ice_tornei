@@ -1887,7 +1887,7 @@ function buildMatchFormatRule(tournament, ruleNumber) {
   const timeIncrement     = String(tournament.time_increment_seconds || "NA");
 
   const isFootball       = /calcio|calcetto|futsal/i.test(sport);
-  const isPadel          = /padel/i.test(sport);
+  const isPadel          = /padel|pickleball/i.test(sport);
   const isVolley         = /volley|beach/i.test(sport);
   const isChess          = /scacchi|chess/i.test(sport);
 
@@ -2129,7 +2129,7 @@ function buildStandingsRule(tournament, ruleNumber) {
   const tieStandingGironi = String(tournament.tie_standing_gironi_criteria || "").toLowerCase();
   const isIndividual  = String(tournament.individual_or_team || 'team').toLowerCase() === 'individual';
 
-  const isGameBasedSport = sport.includes("padel") || sport.includes("volley") || sport.includes("beach");
+  const isGameBasedSport = sport.includes("padel") || sport.includes("volley") || sport.includes("beach") || sport.includes("pickleball");
   const isSetBased    = ["1su1", "2su3", "3su5"].includes(matchFormatGironi);
   const isChess       = sport.includes("scacchi") || sport.includes("chess");
 
@@ -2401,7 +2401,7 @@ function buildFacilitiesRule(tournament, ruleNumber) {
   const boardCron      = String(tournament.board_cron     || "na").toLowerCase();
   const pranzoCenaPrice = String(tournament.pranzo_cena_price || "na").toLowerCase().trim();
 
-  const isRacketSport    = sport.includes("padel") || sport.includes("tennis");
+  const isRacketSport = sport.includes("padel") || sport.includes("tennis") || sport.includes("pickleball");
   const ballTerminology  = isRacketSport ? "le palline" : "i palloni";
 
   const items = [];

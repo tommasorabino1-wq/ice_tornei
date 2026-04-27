@@ -145,7 +145,7 @@ function getMatchProfile(sport, matchFormat) {
   const isChess     = s.includes('scacchi') || s.includes('chess');
   const isSetBased  = f.includes('su'); // 1su1, 2su3, 3su5
   const isCalcio    = !isChess && (s.includes('calcio') || s.includes('football') || s.includes('soccer'));
-  const isPadel     = s.includes('padel');
+  const isPadel     = s.includes('padel') || s.includes('pickleball');
   const isBeach     = s.includes('beach') || s.includes('volley');
 
   // sport normalizzato (compatibilità con codice esistente)

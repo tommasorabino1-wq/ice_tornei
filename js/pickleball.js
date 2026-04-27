@@ -1,16 +1,17 @@
 // ===============================
 // SIDEBAR NAVIGATION
 // ===============================
-const menuToggle = document.querySelector(".mobile-menu-toggle");
-const mainNav    = document.getElementById("main-navigation");
-const navOverlay = document.getElementById("nav-overlay");
+
+const menuToggle   = document.querySelector(".mobile-menu-toggle");
+const mainNav      = document.getElementById("main-navigation");
+const navOverlay   = document.getElementById("nav-overlay");
 
 function openNav() {
   mainNav.classList.add("active");
   navOverlay.classList.add("active");
   menuToggle.classList.add("active");
   menuToggle.setAttribute("aria-expanded", "true");
-  document.body.style.overflow = "hidden";
+  document.body.style.overflow = "hidden"; // blocca scroll pagina
 }
 
 function closeNav() {
@@ -22,13 +23,22 @@ function closeNav() {
 }
 
 if (menuToggle && mainNav && navOverlay) {
+
+  // apri con hamburger
   menuToggle.addEventListener("click", () => {
     mainNav.classList.contains("active") ? closeNav() : openNav();
   });
+
+  // chiudi cliccando l'overlay
   navOverlay.addEventListener("click", closeNav);
+
+  // chiudi con ESC
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && mainNav.classList.contains("active")) closeNav();
+    if (e.key === "Escape" && mainNav.classList.contains("active")) {
+      closeNav();
+    }
   });
+
 }
 
 // ===============================
@@ -52,7 +62,7 @@ const toggleCalcio      = subdropdownCalcio?.querySelector(":scope > .nav-subdro
 
 if (toggleCalcio && subdropdownCalcio) {
   toggleCalcio.addEventListener("click", (e) => {
-    e.stopPropagation(); // evita che il click risalga al dropdown Tornei
+    e.stopPropagation();
     const isActive = subdropdownCalcio.classList.toggle("active");
     toggleCalcio.setAttribute("aria-expanded", String(isActive));
   });
@@ -61,19 +71,11 @@ if (toggleCalcio && subdropdownCalcio) {
 
 
 
-
-
-
-
-
-
-
 // ===============================
-// HOMEPAGE - TORNEI (ICE PLATFORM)
+// TORNEI PICKLEBALL
 // ===============================
 
 const container = document.getElementById("tournaments");
-const sportFilter = document.getElementById("sport-filter");
 
 const API_URL = "https://gettournaments-dzvezz2yhq-uc.a.run.app";
 
@@ -102,7 +104,6 @@ function toNum(val, fallback = 0) {
 
 
 
-
 // ===============================
 // FETCH TORNEI DAL BACKEND
 // ===============================
@@ -118,7 +119,10 @@ fetch(API_URL)
       throw new Error("Formato dati non valido");
     }
 
-    ALL_TOURNAMENTS = tournaments.filter(t => t.status !== "hidden");
+    ALL_TOURNAMENTS = tournaments.filter(t =>
+      String(t.sport).toLowerCase() === "pickleball" &&
+      t.status !== "hidden"
+    );
 
     const skeletons = container.querySelectorAll(".tournament-card.skeleton");
     skeletons.forEach(card => card.classList.add("fade-out"));
@@ -126,7 +130,6 @@ fetch(API_URL)
     setTimeout(() => {
       container.innerHTML = "";
       renderTournaments(ALL_TOURNAMENTS);
-      populateSportFilter(ALL_TOURNAMENTS);
     }, 350);
 
   })
@@ -134,42 +137,6 @@ fetch(API_URL)
     console.error("Errore nel caricamento dei tornei:", err);
     container.innerHTML = "<p>Errore nel caricamento dei tornei. Riprova più tardi.</p>";
   });
-
-// ===============================
-// POPOLA FILTRO SPORT DINAMICAMENTE
-// ===============================
-function populateSportFilter(tournaments) {
-  const sports = [...new Set(tournaments.map(t => t.sport))].filter(Boolean).sort();
-  
-  sportFilter.innerHTML = '<option value="all">Tutti</option>';
-  
-  sports.forEach(sport => {
-    const option = document.createElement("option");
-    option.value = sport;
-    option.textContent = sport;
-    sportFilter.appendChild(option);
-  });
-}
-
-// ===============================
-// EVENT LISTENER FILTRO SPORT
-// ===============================
-sportFilter.addEventListener("change", (e) => {
-  const selectedSport = e.target.value;
-  
-  if (selectedSport === "all") {
-    renderTournaments(ALL_TOURNAMENTS);
-  } else {
-    const filtered = ALL_TOURNAMENTS.filter(t => t.sport === selectedSport);
-    renderTournaments(filtered);
-  }
-});
-
-
-
-
-
-
 
 
 
@@ -199,7 +166,7 @@ function renderTournaments(tournaments) {
   container.innerHTML = "";
 
   if (tournaments.length === 0) {
-    container.innerHTML = "<p class='placeholder'>Nessun torneo trovato per questo sport.</p>";
+    container.innerHTML = "<p class='placeholder'>Nessun torneo di pickleball disponibile al momento.</p>";
     return;
   }
 
@@ -211,56 +178,30 @@ function renderTournaments(tournaments) {
 
     if (t.status === "finished") card.classList.add("finished");
 
-    const statusLabel       = buildStatusLabel(t.status);
-    const iscrizioniAperte  = t.status === "open";
-    const isIndividual      = String(t.individual_or_team || 'team').toLowerCase() === 'individual';
+    const statusLabel      = buildStatusLabel(t.status);
+    const iscrizioniAperte = t.status === "open";
+    const isIndividual     = String(t.individual_or_team || "team").toLowerCase() === "individual";
 
-    const rowPrice          = buildPriceInfoText(t);
-    const rowDiscount       = buildDiscountInfoText(t);
-    const rowLocation       = buildLocationInfoText(t);
-    const rowDateLines      = buildDateInfoText(t);
-    const rowParticipants   = buildParticipantsInfoText(t);
-    const rowAward          = buildAwardInfoText(t);
-    const rowFormat         = buildFormatInfoText(t);
+    const rowPrice        = buildPriceInfoText(t);
+    const rowLocation     = buildLocationInfoText(t);
+    const rowDateLines    = buildDateInfoText(t);   // array: 1 o 2 stringhe
+    const rowParticipants = buildParticipantsInfoText(t);
+    const rowAward        = buildAwardInfoText(t);
+    const rowFormat       = buildFormatInfoText(t);
 
     const teamsCurrent      = toNum(t.teams_current, 0);
     const teamsMax          = toNum(t.teams_max, 0);
-    const participantsIcon  = isIndividual ? "👤" : "👥";
     const participantsLabel = isIndividual ? "giocatori iscritti" : "squadre iscritte";
     const rowSignups        = `${teamsCurrent} / ${teamsMax} ${participantsLabel}`;
 
-    const primaryDateHTML = rowDateLines.length === 2
+    const dateRowsHTML = rowDateLines.length === 2
       ? `
-        <div class="card-primary-item primary-date">
-          <span class="row-icon">📅</span>
-          <div class="card-primary-text">
-            <span class="card-primary-label">Data</span>
-            <span class="card-primary-value">${rowDateLines[0]}</span>
-            <span class="card-primary-subvalue">Disponibilità: ${rowDateLines[1]}</span>
-          </div>
-        </div>
+        <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
+        <div class="card-info-row"><span class="row-icon">🕒</span><span><strong>Disponibilità:</strong> ${rowDateLines[1]}</span></div>
       `
       : `
-        <div class="card-primary-item primary-date">
-          <span class="row-icon">📅</span>
-          <div class="card-primary-text">
-            <span class="card-primary-label">Data</span>
-            <span class="card-primary-value">${rowDateLines[0]}</span>
-          </div>
-        </div>
+        <div class="card-info-row"><span class="row-icon">📅</span><span><strong>Data:</strong> ${rowDateLines[0]}</span></div>
       `;
-
-    const discountPrimaryHTML = rowDiscount
-      ? `
-        <div class="card-primary-item">
-          <span class="row-icon">🏷️</span>
-          <div class="card-primary-text">
-            <span class="card-primary-label">Sconti</span>
-            <span class="card-primary-value">${rowDiscount}</span>
-          </div>
-        </div>
-      `
-      : "";
 
     card.innerHTML = `
       <div class="card-header">
@@ -271,35 +212,14 @@ function renderTournaments(tournaments) {
       </div>
 
       <div class="card-body">
-        <div class="card-primary-info">
-          <div class="card-primary-item">
-            <span class="row-icon">💰</span>
-            <div class="card-primary-text">
-              <span class="card-primary-label">Quota</span>
-              <span class="card-primary-value">${rowPrice}</span>
-            </div>
-          </div>
-
-          ${discountPrimaryHTML}
-
-          <div class="card-primary-item primary-location">
-            <span class="row-icon">📍</span>
-            <div class="card-primary-text">
-              <span class="card-primary-label">Luogo</span>
-              <span class="card-primary-value">${rowLocation}</span>
-            </div>
-          </div>
-
-          ${primaryDateHTML}
-        </div>
-
-        <div class="card-secondary-info">
-          <div class="card-info-rows">
-            <div class="card-info-row"><span class="row-icon">${participantsIcon}</span><span><strong>Partecipanti:</strong> ${rowParticipants}</span></div>
-            <div class="card-info-row"><span class="row-icon">🏆</span><span><strong>Montepremi:</strong> ${rowAward}</span></div>
-            <div class="card-info-row"><span class="row-icon">📋</span><span><strong>Formato:</strong> ${rowFormat}</span></div>
-            <div class="card-info-row"><span class="row-icon">✅</span><span><strong>Iscritti:</strong> ${rowSignups}</span></div>
-          </div>
+        <div class="card-info-rows">
+          <div class="card-info-row"><span class="row-icon">💰</span><span><strong>Quota:</strong> ${rowPrice}</span></div>
+          <div class="card-info-row"><span class="row-icon">📍</span><span><strong>Luogo:</strong> ${rowLocation}</span></div>
+          ${dateRowsHTML}
+          <div class="card-info-row"><span class="row-icon">👥</span><span><strong>Partecipanti:</strong> ${rowParticipants}</span></div>
+          <div class="card-info-row"><span class="row-icon">🏆</span><span><strong>Montepremi:</strong> ${rowAward}</span></div>
+          <div class="card-info-row"><span class="row-icon">📋</span><span><strong>Formato:</strong> ${rowFormat}</span></div>
+          <div class="card-info-row"><span class="row-icon">✅</span><span><strong>Iscritti:</strong> ${rowSignups}</span></div>
         </div>
       </div>
 
@@ -319,8 +239,6 @@ function renderTournaments(tournaments) {
 
   animateCards();
 }
-
-
 
 
 // ===============================
@@ -350,9 +268,6 @@ function buildPriceInfoText(t) {
   const courtPrice     = String(t.court_price     || "non_compreso").toLowerCase().trim();
   const refereePrice   = String(t.referee_price   || "na").toLowerCase().trim();
   const aperitivoPrice = String(t.aperitivo_price || "na").toLowerCase().trim();
-  
-  // Gestione variabile pranzo/cena
-  const mealPrice      = String(t.pranzo_cena_price || "na").toLowerCase().trim();
 
   const courtMap = {
     compreso_gironi_finals: "Campi inclusi",
@@ -374,72 +289,10 @@ function buildPriceInfoText(t) {
   else if (aperitivoPrice === "compreso_gironi")        aperitivoText = "Aperitivo incluso (solo gironi)";
   else if (aperitivoPrice === "compreso_finals")        aperitivoText = "Aperitivo incluso (solo finali)";
 
-  // Mapping per pranzo e cena
-  const mealMap = {
-    pranzo_compreso_gironi:        "Pranzo incluso (solo gironi)",
-    pranzo_compreso_finals:        "Pranzo incluso (solo finali)",
-    pranzo_compreso_gironi_finals: "Pranzo incluso",
-    cena_compreso_gironi:          "Cena inclusa (solo gironi)",
-    cena_compreso_finals:          "Cena inclusa (solo finali)",
-    cena_compreso_gironi_finals:   "Cena inclusa",
-    non_compreso:                  "",
-    na:                            ""
-  };
-  const mealText = mealMap[mealPrice] || "";
-
-  // Integrazione di mealText nell'array degli extra
-  const extras     = [courtText, refereeText, aperitivoText, mealText].filter(Boolean);
+  const extras     = [courtText, refereeText, aperitivoText].filter(Boolean);
   const extrasText = extras.length > 0 ? ` · ${extras.join(" · ")}` : "";
-
   return `€${price} ${perLabel}${extrasText}`;
 }
-
-
-
-// ===============================
-// BUILD DISCOUNT INFO TEXT
-// ===============================
-function buildDiscountInfoText(t) {
-  const raw = t?.discount;
-
-  if (raw === undefined || raw === null) return "";
-
-  const discountRaw = String(raw).trim();
-  if (!discountRaw || discountRaw.toLowerCase() === "false") return "";
-
-  const parts = discountRaw
-    .split(";")
-    .map(s => s.trim())
-    .filter(Boolean);
-
-  // Ammessi solo:
-  // 1) "25"
-  // 2) "25; 0"
-  // 3) "25; 12"
-  if (parts.length !== 1 && parts.length !== 2) return "";
-  if (parts.some(p => isNaN(Number(p)))) return "";
-
-  const isIndividual = String(t.individual_or_team || "team").toLowerCase() === "individual";
-
-  const entity = isIndividual ? "giocatore" : "squadra";
-  const entityPlural = isIndividual ? "giocatori" : "squadre";
-
-  const formatPrice = (value) => Number(value) === 0 ? "gratis" : `€${Number(value)}`;
-
-  const d1 = Number(parts[0]);
-
-  // Caso: "25"
-  if (parts.length === 1) {
-    return `Porti 1 ${entity}: ${formatPrice(d1)}`;
-  }
-
-  // Caso: "25; 0" oppure "25; 12"
-  const d2 = Number(parts[1]);
-  return `Porti 1 ${entity}: ${formatPrice(d1)} · Porti 2 ${entityPlural}: ${formatPrice(d2)}`;
-}
-
-
-
 
 
 // ===============================
@@ -465,7 +318,6 @@ function buildDateInfoText(t) {
 
   const durationLabel = timeRange === "short" ? "Giornaliero" : "Stagionale";
 
-  // --- Parse available_days ---
   const daysRaw = String(t.available_days || "").toLowerCase().trim();
 
   const dayLabels = {
@@ -500,7 +352,6 @@ function buildDateInfoText(t) {
     return dayLabels[raw] || "";
   }
 
-  // --- Parse available_hours ---
   const hoursRaw = String(t.available_hours || "").toLowerCase().trim();
 
   function parseHours(raw) {
@@ -545,33 +396,22 @@ function buildDateInfoText(t) {
 function buildParticipantsInfoText(t) {
   const parts = [];
 
-  // 1. GENERE
   const genderMap = {
-    only_male:             "Solo ragazzi",
-    only_female:           "Solo ragazze",
-    mixed_strict:          "Misto obbligatorio",
-    mixed_female_allowed:  "Misto o femminile",
-    open:                  "Aperto a tutti"
+    only_male:            "Solo ragazzi",
+    only_female:          "Solo ragazze",
+    mixed_strict:         "Misto obbligatorio",
+    mixed_female_allowed: "Misto o femminile",
+    open:                 "Aperto a tutti"
   };
   parts.push(genderMap[String(t.gender || 'open').toLowerCase()] || "Aperto a tutti");
 
-  // 2. ETÀ (DINAMICA)
-  const ageRaw = String(t.age || 'open').toLowerCase().trim();
-  let ageText = "Tutte le età";
+  const ageMap = {
+    under_18: "Under 18",
+    over_35:  "Over 35",
+    open:     "Tutte le età"
+  };
+  parts.push(ageMap[String(t.age || 'open').toLowerCase()] || "Tutte le età");
 
-  if (ageRaw !== "open") {
-    const underMatch = ageRaw.match(/^under_(\d+)$/);
-    const overMatch  = ageRaw.match(/^over_(\d+)$/);
-
-    if (underMatch) {
-      ageText = `Under ${underMatch[1]}`;
-    } else if (overMatch) {
-      ageText = `Over ${overMatch[1]}`;
-    }
-  }
-  parts.push(ageText);
-
-  // 3. LIVELLO
   const expertiseMap = {
     open:   "Livello amatoriale",
     expert: "Livello agonistico"
@@ -590,39 +430,17 @@ function buildAwardInfoText(t) {
 
   if (!hasAward) return "Premi simbolici";
 
-  const perc      = t.award_amount_perc;
-  const price     = toNum(t.price, 0);
-  const teamsMax  = toNum(t.teams_max, 0);
-  const awardSplit = String(t.award_split || "").trim();
+  const perc     = t.award_amount_perc;
+  const price    = toNum(t.price, 0);
+  const teamsMax = toNum(t.teams_max, 0);
 
-  let totalPrizeText = "";
-
-  // 1. Calcolo del Montepremi Totale
   if (perc && perc !== "NA" && !isNaN(Number(perc)) && price > 0 && teamsMax > 0) {
     const percValue  = Number(perc) / 100;
     const totalPrize = Math.round(teamsMax * price * percValue);
-    totalPrizeText = `€${totalPrize}`;
-  } else {
-    totalPrizeText = "Montepremi garantito";
+    return `€${totalPrize}`;
   }
 
-  // 2. Gestione award_split (1°, 2°, 3°...)
-  if (awardSplit && awardSplit !== "NA" && awardSplit.toLowerCase() !== "false") {
-    const prizes = awardSplit
-      .split(";")
-      .map(s => s.trim())
-      .filter(s => s !== "" && !isNaN(Number(s)));
-
-    if (prizes.length > 0) {
-      const splitText = prizes
-        .map((amount, index) => `${index + 1}° €${amount}`)
-        .join(", ");
-
-      return `${totalPrizeText} · ${splitText}`;
-    }
-  }
-
-  return totalPrizeText;
+  return "Montepremi garantito";
 }
 
 
@@ -651,12 +469,6 @@ function buildFormatInfoText(t) {
 
 
 
-
-
-
-
-
-
 // ===============================
 // ESCAPE HTML
 // ===============================
@@ -673,9 +485,7 @@ function escapeHTML(str) {
 // CLICK HANDLING (EVENT DELEGATION)
 // ===============================
 container.addEventListener("click", e => {
-  if (e.target.closest("a") || e.target.closest(".btn")) {
-    return;
-  }
+  if (e.target.closest("a") || e.target.closest(".btn")) return;
 
   const card = e.target.closest(".tournament-card");
   if (!card) return;
@@ -684,68 +494,24 @@ container.addEventListener("click", e => {
   window.location.href = `/regolamento?tournament_id=${tournamentId}`;
 });
 
-
-
 // ===============================
 // FAQ ACCORDION (single open)
 // ===============================
-
 document.querySelectorAll(".faq-question").forEach(btn => {
-
   btn.addEventListener("click", () => {
-
     const item = btn.parentElement;
 
     document.querySelectorAll(".faq-item").forEach(faq => {
-
-      if (faq !== item) {
-        faq.classList.remove("active");
-      }
-
+      if (faq !== item) faq.classList.remove("active");
     });
 
     item.classList.toggle("active");
-
   });
-
 });
-
-
-// ===============================
-// HERO TYPING ANIMATION
-// ===============================
-
-document.addEventListener("DOMContentLoaded", function () {
-  if (document.querySelector(".typed-sport")) {
-    new Typed(".typed-sport", {
-      strings: [
-        "Padel",
-        "Pickleball",
-        "Beach Volley",
-        "Calcio",
-        "Scacchi"
-      ],
-      typeSpeed: 70,
-      backSpeed: 45,
-      backDelay: 1400,
-      startDelay: 400,
-      loop: true,
-      showCursor: true,
-      cursorChar: "|",
-      onStringTyped: () => {
-        const el = document.querySelector(".typed-sport");
-        void el.offsetWidth;
-      }
-    });
-  }
-});
-
-
 
 // ===============================
 // CARD STAGGER ANIMATION
 // ===============================
-
 function animateCards() {
   const cards = document.querySelectorAll(".tournament-card");
   cards.forEach((card, index) => {
@@ -755,21 +521,15 @@ function animateCards() {
   });
 }
 
-
 // ===============================
-// SCROLL REVEAL (section only)
+// SCROLL REVEAL (sections)
 // ===============================
-
 gsap.registerPlugin(ScrollTrigger);
 
 gsap.utils.toArray(".reveal-section").forEach(section => {
-
   gsap.fromTo(
     section,
-    {
-      opacity: 0,
-      y: 40
-    },
+    { opacity: 0, y: 40 },
     {
       opacity: 1,
       y: 0,
@@ -782,12 +542,7 @@ gsap.utils.toArray(".reveal-section").forEach(section => {
       }
     }
   );
-
 });
-
-
-
-
 
 
 // ===============================
