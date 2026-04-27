@@ -380,7 +380,6 @@ function sanitizeEventHTML(html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
-  // 1. Aggiunto 'A' qui
   const allowedTags = new Set(['P', 'STRONG', 'EM', 'BR', 'UL', 'LI', 'DIV', 'SPAN', 'A']);
 
   function sanitizeNode(node) {
@@ -399,18 +398,26 @@ function sanitizeEventHTML(html) {
       if (safeClasses) clean.setAttribute('class', safeClasses);
     }
 
-    // --- COMINCIA IL PEZZO NUOVO ---
-    // Gestione specifica per i link (attributo href)
+    // --- LOGICA AGGIORNATA PER LINK, MAIL E TEL ---
     if (node.tagName === 'A' && node.hasAttribute('href')) {
-      const href = node.getAttribute('href');
-      // Opzionale: un minimo di controllo che sia un link valido
-      if (href.startsWith('http') || href.startsWith('/')) {
+      const href = node.getAttribute('href').trim();
+      
+      // Definiamo i pattern permessi
+      const isWeb = href.startsWith('http') || href.startsWith('/');
+      const isMail = href.startsWith('mailto:');
+      const isTel = href.startsWith('tel:');
+
+      if (isWeb || isMail || isTel) {
         clean.setAttribute('href', href);
-        clean.setAttribute('target', '_blank');
-        clean.setAttribute('rel', 'noopener noreferrer'); // Sicurezza extra per i link esterni
+        
+        // Apriamo in una nuova scheda solo i link web esterni
+        if (isWeb && href.startsWith('http')) {
+          clean.setAttribute('target', '_blank');
+          clean.setAttribute('rel', 'noopener noreferrer');
+        }
       }
     }
-    // --- FINISCE IL PEZZO NUOVO ---
+    // --- FINE LOGICA AGGIORNATA ---
 
     for (const child of node.childNodes) {
       const sanitized = sanitizeNode(child);
