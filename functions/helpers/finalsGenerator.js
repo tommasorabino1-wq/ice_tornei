@@ -2,39 +2,43 @@ const admin = require('firebase-admin');
 const db = admin.firestore();
 
 
+
 // ===============================
 // HELPER: Match profile (sport + format)
+// Allineato a generateMatches e generateStandings.
 // ===============================
 function getMatchProfile(sport, matchFormat) {
   const s = String(sport || '').toLowerCase().trim();
   const f = String(matchFormat || '').toLowerCase().trim();
 
-  const isChess    = s.includes('scacchi') || s.includes('chess');
-  const isSetBased = f.includes('su'); // 1su1, 2su3, 3su5
-  const isCalcio   = !isChess && (s.includes('calcio') || s.includes('football') || s.includes('soccer'));
-  const isPadel    = s.includes('padel');
-  const isBeach    = s.includes('beach') || s.includes('volley');
+  // Allineato agli altri file
+  const isSetBased =
+    f.includes('su')       ||
+    f.includes('set')      ||
+    f.includes('best of')  ||
+    /\bbo\d+\b/.test(f)    ||
+    f.includes('al meglio');
+
+  const isChess = s.includes('scacchi') || s.includes('chess');
+
+  // hasGames: padel e beach in ENTRAMBI i formati
+  const hasGames = s.includes('padel') ||
+                   s.includes('beach volley') ||
+                   s.includes('beach_volley');
+
+  const hasGoals   = !isChess && !hasGames;
+  const hasScorers = !isChess && !hasGames && !isSetBased;
 
   let normalizedSport = 'calcio';
-  if (isChess) normalizedSport = 'scacchi';
-  else if (isPadel) normalizedSport = 'padel';
-  else if (isBeach) normalizedSport = 'beach_volley';
+  if (isChess)                                                        normalizedSport = 'scacchi';
+  else if (s.includes('padel'))                                       normalizedSport = 'padel';
+  else if (s.includes('beach volley') || s.includes('beach_volley')) normalizedSport = 'beach_volley';
 
-  const hasGoals   = isCalcio;
-  const hasGames   = (isPadel || isBeach) && !isSetBased;
-  const hasScorers = isCalcio;
+  if (!['calcio', 'padel', 'beach_volley', 'scacchi'].includes(normalizedSport)) {
+    console.warn(`⚠️ getMatchProfile: sport non riconosciuto "${sport}"`);
+  }
 
-  return {
-    isChess,
-    isSetBased,
-    isCalcio,
-    isPadel,
-    isBeach,
-    normalizedSport,
-    hasGoals,
-    hasGames,
-    hasScorers,
-  };
+  return { isSetBased, isChess, hasGames, hasGoals, hasScorers, normalizedSport };
 }
 
 
@@ -76,8 +80,9 @@ function isPowerOfTwo(n) {
 
 // ===============================
 // HELPER: Criteri pareggio cross-group
+// hasGames: true per padel/beach (entrambi i formati)
 // ===============================
-function areEquivalentForCrossGroup(A, B, standingsIsSetBased, standingsIsChess) {
+function areEquivalentForCrossGroup(A, B, standingsIsSetBased, standingsIsChess, hasGames) {
   if (!A || !B) return false;
 
   if (standingsIsChess) {
@@ -86,16 +91,26 @@ function areEquivalentForCrossGroup(A, B, standingsIsSetBased, standingsIsChess)
 
   if (standingsIsSetBased) {
     return (
-      A.points === B.points &&
-      A.set_diff === B.set_diff &&
-      A.sets_for === B.sets_for &&
+      A.points    === B.points    &&
+      A.set_diff  === B.set_diff  &&
+      A.sets_for  === B.sets_for  &&
       A.game_diff === B.game_diff &&
       A.games_for === B.games_for
     );
   }
 
+  if (hasGames) {
+    // Padel / Beach a tempo
+    return (
+      A.points    === B.points    &&
+      A.game_diff === B.game_diff &&
+      A.games_for === B.games_for
+    );
+  }
+
+  // Calcio
   return (
-    A.points === B.points &&
+    A.points    === B.points    &&
     A.goal_diff === B.goal_diff &&
     A.goals_for === B.goals_for
   );
@@ -104,8 +119,9 @@ function areEquivalentForCrossGroup(A, B, standingsIsSetBased, standingsIsChess)
 
 // ===============================
 // HELPER: Ordina squadre per criteri cross-girone
+// hasGames: true per padel/beach (entrambi i formati)
 // ===============================
-function sortCrossGroup(teams, standingsIsSetBased, standingsIsChess) {
+function sortCrossGroup(teams, standingsIsSetBased, standingsIsChess, hasGames) {
   if (standingsIsChess) {
     return [...teams].sort((a, b) =>
       b.points - a.points ||
@@ -115,17 +131,28 @@ function sortCrossGroup(teams, standingsIsSetBased, standingsIsChess) {
 
   if (standingsIsSetBased) {
     return [...teams].sort((a, b) =>
-      b.points - a.points ||
-      b.set_diff - a.set_diff ||
-      b.sets_for - a.sets_for ||
+      b.points    - a.points    ||
+      b.set_diff  - a.set_diff  ||
+      b.sets_for  - a.sets_for  ||
       b.game_diff - a.game_diff ||
       b.games_for - a.games_for ||
       String(a.team_id).localeCompare(String(b.team_id))
     );
   }
 
+  if (hasGames) {
+    // Padel / Beach a tempo
+    return [...teams].sort((a, b) =>
+      b.points    - a.points    ||
+      b.game_diff - a.game_diff ||
+      b.games_for - a.games_for ||
+      String(a.team_id).localeCompare(String(b.team_id))
+    );
+  }
+
+  // Calcio
   return [...teams].sort((a, b) =>
-    b.points - a.points ||
+    b.points    - a.points    ||
     b.goal_diff - a.goal_diff ||
     b.goals_for - a.goals_for ||
     String(a.team_id).localeCompare(String(b.team_id))
@@ -174,8 +201,23 @@ function validateStandings(standings) {
 }
 
 function validateStandingsFlagsConsistency(standings) {
-  const standingsIsSetBased = toBool(standings[0]?.is_set_based);
-  const standingsIsChess    = toBool(standings[0]?.is_chess);
+  const first = standings[0];
+
+  // BUG 2 FIX: verifica che il primo documento abbia i flag prima di usarli come riferimento
+  if (!first || first.is_set_based === undefined || first.is_set_based === null) {
+    throw new Error('E_MISSING_IS_SET_BASED_FLAG');
+  }
+  if (first.is_chess === undefined || first.is_chess === null) {
+    throw new Error('E_MISSING_IS_CHESS_FLAG');
+  }
+
+  const standingsIsSetBased = toBool(first.is_set_based);
+  const standingsIsChess    = toBool(first.is_chess);
+
+  // BUG 1 FIX: estrae hasGames dal primo documento e lo valida
+  // hasGames non è un flag esplicito negli standings — va derivato dal sport
+  const sport = toStringSafe(first.sport);
+  const hasGames = sport === 'padel' || sport === 'beach_volley';
 
   for (const s of standings) {
     if (toBool(s.is_set_based) !== standingsIsSetBased) {
@@ -184,10 +226,17 @@ function validateStandingsFlagsConsistency(standings) {
     if (toBool(s.is_chess) !== standingsIsChess) {
       throw new Error('E_INCONSISTENT_IS_CHESS');
     }
+    // Verifica coerenza sport
+    const sSport = toStringSafe(s.sport);
+    const sHasGames = sSport === 'padel' || sSport === 'beach_volley';
+    if (sHasGames !== hasGames) {
+      throw new Error('E_INCONSISTENT_SPORT');
+    }
   }
 
-  return { standingsIsSetBased, standingsIsChess };
+  return { standingsIsSetBased, standingsIsChess, hasGames };
 }
+
 
 
 // ===============================
@@ -296,7 +345,8 @@ function generateGroupPrefixes(group, maxPositions, maxPrefixesPerGroup = 5000) 
 // applica la regola reale di qualificazione "per layer"
 // (posizione 1 di ogni girone, poi posizione 2, ecc.)
 // ===============================
-function qualifyFromResolvedGroupOrders(groupOrders, slots, standingsIsSetBased, standingsIsChess) {
+// hasGames aggiunto come parametro
+function qualifyFromResolvedGroupOrders(groupOrders, slots, standingsIsSetBased, standingsIsChess, hasGames) {
   const qualified = [];
   let remaining = slots;
 
@@ -305,9 +355,7 @@ function qualifyFromResolvedGroupOrders(groupOrders, slots, standingsIsSetBased,
       .map(order => order[position])
       .filter(Boolean);
 
-    if (candidates.length === 0) {
-      break;
-    }
+    if (candidates.length === 0) break;
 
     if (candidates.length <= remaining) {
       qualified.push(...candidates);
@@ -315,11 +363,13 @@ function qualifyFromResolvedGroupOrders(groupOrders, slots, standingsIsSetBased,
       continue;
     }
 
-    const sorted = sortCrossGroup(candidates, standingsIsSetBased, standingsIsChess);
+    // BUG 1 FIX: aggiunto hasGames
+    const sorted = sortCrossGroup(candidates, standingsIsSetBased, standingsIsChess, hasGames);
     const A = sorted[remaining - 1];
     const B = sorted[remaining];
 
-    if (areEquivalentForCrossGroup(A, B, standingsIsSetBased, standingsIsChess)) {
+    // BUG 1 FIX: aggiunto hasGames
+    if (areEquivalentForCrossGroup(A, B, standingsIsSetBased, standingsIsChess, hasGames)) {
       console.error(
         `❌ Cross-group ambiguity at position ${position + 1}, cutoff ${remaining}: ${A.team_name} vs ${B.team_name}`
       );
@@ -338,11 +388,8 @@ function qualifyFromResolvedGroupOrders(groupOrders, slots, standingsIsSetBased,
 }
 
 
-// ===============================
-// HELPER: Ordine finale deterministico dei qualificati
-// per costruire il bracket senza dipendere da una permutazione casuale dei tie
-// ===============================
-function sortQualifiedForBracket(qualified, standingsIsSetBased, standingsIsChess) {
+// hasGames aggiunto come parametro
+function sortQualifiedForBracket(qualified, standingsIsSetBased, standingsIsChess, hasGames) {
   const byRank = {};
 
   qualified.forEach(team => {
@@ -356,7 +403,8 @@ function sortQualifiedForBracket(qualified, standingsIsSetBased, standingsIsChes
 
   for (const rank of ranks) {
     const teamsAtRank = byRank[rank];
-    const sorted = sortCrossGroup(teamsAtRank, standingsIsSetBased, standingsIsChess);
+    // BUG 2 FIX: aggiunto hasGames
+    const sorted = sortCrossGroup(teamsAtRank, standingsIsSetBased, standingsIsChess, hasGames);
     ordered.push(...sorted);
   }
 
@@ -364,23 +412,15 @@ function sortQualifiedForBracket(qualified, standingsIsSetBased, standingsIsChes
 }
 
 
-// ===============================
-// HELPER: Seleziona qualificati in modo robusto
-// Idea:
-// - genera tutte le risoluzioni locali dei tie nei soli posti rilevanti
-// - applica la logica reale di qualificazione
-// - se i qualificati possibili non sono univoci, blocca
-// ===============================
-function selectQualifiedTeams(byGroup, slots, standingsIsSetBased, standingsIsChess) {
+// BUG 3 FIX: hasGames aggiunto come parametro
+function selectQualifiedTeams(byGroup, slots, standingsIsSetBased, standingsIsChess, hasGames) {
   const groups = Object.entries(byGroup)
     .sort(([a], [b]) => String(a).localeCompare(String(b)));
 
-  if (groups.length === 0) {
-    throw new Error('E_NO_GROUPS');
-  }
+  if (groups.length === 0) throw new Error('E_NO_GROUPS');
 
-  const maxPositionsPerGroup = slots;
-  const maxTotalCombinations = 50000;
+  const maxPositionsPerGroup  = slots;
+  const maxTotalCombinations  = 50000;
 
   const groupPrefixOptions = groups.map(([groupId, group]) => ({
     groupId,
@@ -398,11 +438,13 @@ function selectQualifiedTeams(byGroup, slots, standingsIsSetBased, standingsIsCh
         throw new Error('E_TOO_MANY_TIE_SCENARIOS');
       }
 
+      // BUG 4 FIX: aggiunto hasGames
       const qualified = qualifyFromResolvedGroupOrders(
         chosenOrders,
         slots,
         standingsIsSetBased,
-        standingsIsChess
+        standingsIsChess,
+        hasGames
       );
 
       const setKey = qualified
@@ -412,12 +454,10 @@ function selectQualifiedTeams(byGroup, slots, standingsIsSetBased, standingsIsCh
 
       if (!distinctQualifiedSetKeys.has(setKey)) {
         distinctQualifiedSetKeys.add(setKey);
-
         if (distinctQualifiedSetKeys.size > 1) {
           console.error('❌ Ambiguous qualifiers across tie resolutions');
           throw new Error('E_AMBIGUOUS_QUALIFIERS');
         }
-
         canonicalQualified = qualified;
       }
 
@@ -437,15 +477,11 @@ function selectQualifiedTeams(byGroup, slots, standingsIsSetBased, standingsIsCh
   }
 
   const qualifiedIds = canonicalQualified.map(q => toStringSafe(q.team_id)).filter(Boolean);
-  if (qualifiedIds.length !== slots) {
-    throw new Error('E_INVALID_QUALIFIED_TEAM_IDS');
-  }
+  if (qualifiedIds.length !== slots) throw new Error('E_INVALID_QUALIFIED_TEAM_IDS');
+  if (new Set(qualifiedIds).size !== qualifiedIds.length) throw new Error('E_DUPLICATE_QUALIFIED_TEAMS');
 
-  if (new Set(qualifiedIds).size !== qualifiedIds.length) {
-    throw new Error('E_DUPLICATE_QUALIFIED_TEAMS');
-  }
-
-  return sortQualifiedForBracket(canonicalQualified, standingsIsSetBased, standingsIsChess);
+  // BUG 4 FIX: aggiunto hasGames
+  return sortQualifiedForBracket(canonicalQualified, standingsIsSetBased, standingsIsChess, hasGames);
 }
 
 
@@ -454,38 +490,41 @@ function selectQualifiedTeams(byGroup, slots, standingsIsSetBased, standingsIsCh
 // ===============================
 function createEmptyMatchDoc(matchId, tournamentId, roundId, sport, matchFormatFinals, profile) {
   const base = {
-    match_id: matchId,
-    tournament_id: tournamentId,
-    round_id: roundId,
-    team_a: null,
-    team_b: null,
-    team_a_name: null,
-    team_b_name: null,
-    score_a: null,
-    score_b: null,
+    match_id:       matchId,
+    tournament_id:  tournamentId,
+    round_id:       roundId,
+    leg:            1,          // BUG 3 FIX: sempre 1 per le finals (no andata/ritorno)
+    team_a:         null,
+    team_b:         null,
+    team_a_name:    null,
+    team_b_name:    null,
+    score_a:        null,
+    score_b:        null,
     winner_team_id: null,
-    played: false,
-    court: 'none',
-    day: 'none',
-    hour: 'none',
+    played:         false,
+    court:          'none',
+    day:            'none',
+    hour:           'none',
     sport,
-    match_format: matchFormatFinals,
-    is_set_based: profile.isSetBased,
-    is_chess: profile.isChess,
+    match_format:   matchFormatFinals,
+    is_set_based:   profile.isSetBased,
+    is_chess:       profile.isChess,
     source_matches: [],
   };
 
+  // Campi specifici formato a set
   if (profile.isSetBased) {
     base.sets_detail = null;
+  }
+
+  // BUG 1 FIX: games_a/games_b scritti una volta sola
+  // presenti per set-based E per padel/beach a tempo (hasGames true in entrambi i formati)
+  if (profile.isSetBased || profile.hasGames) {
     base.games_a = null;
     base.games_b = null;
   }
 
-  if (profile.hasGames) {
-    base.games_a = null;
-    base.games_b = null;
-  }
-
+  // Marcatori: solo calcio a tempo
   if (profile.hasScorers) {
     base.scorers_a = null;
     base.scorers_b = null;
@@ -493,7 +532,6 @@ function createEmptyMatchDoc(matchId, tournamentId, roundId, sport, matchFormatF
 
   return base;
 }
-
 
 // ===============================
 // HELPER: Calcola numero di round necessari
@@ -524,7 +562,7 @@ async function generateFinalsIfReady(tournamentId) {
 
     const tournament = tournamentDoc.data();
     const formatType = toStringSafe(tournament.format_type).toLowerCase();
-    const has3x4 = toBool(tournament['3_4_posto']);
+    const has3x4     = toBool(tournament['3_4_posto']);
 
     if (!formatHasFinals(formatType)) {
       console.log(`⛔ Tournament format "${formatType}" does not support finals - blocked`);
@@ -536,12 +574,11 @@ async function generateFinalsIfReady(tournamentId) {
       toStringSafe(tournament.match_format_finals)
     );
 
-    const sport = profile.normalizedSport;
-    const matchFormatFinals = toStringSafe(tournament.match_format_finals).toLowerCase();
-    const isSetBased = profile.isSetBased;
-    const isChess = profile.isChess;
+    const sport             = profile.normalizedSport;
+    const matchFormatFinals = toStringSafe(tournament.match_format_finals).toLowerCase().trim();
+    const hasGames = profile.hasGames;
 
-    console.log(`🏆 Sport: ${sport}, Format Finals: ${matchFormatFinals}, Set-based: ${isSetBased}, Chess: ${isChess}, 3/4 posto: ${has3x4}`);
+    console.log(`🏆 Sport: ${sport}, Format Finals: ${matchFormatFinals}, Set-based: ${profile.isSetBased}, Chess: ${profile.isChess}, hasGames: ${hasGames}, 3/4 posto: ${has3x4}`);
 
     const existingFinals = await db.collection('finals')
       .where('tournament_id', '==', tournamentId)
@@ -566,72 +603,83 @@ async function generateFinalsIfReady(tournamentId) {
 
     validateStandings(standings);
 
-    const { standingsIsSetBased, standingsIsChess } = validateStandingsFlagsConsistency(standings);
+    // BUG 3 FIX: destruttura anche hasGames
+    const { standingsIsSetBased, standingsIsChess, hasGames: standingsHasGames } =
+      validateStandingsFlagsConsistency(standings);
 
     const slots = toNumber(tournament.teams_in_final, 0);
-    if (!slots || slots <= 0) throw new Error('E_INVALID_SLOTS');
-    if (!isPowerOfTwo(slots)) throw new Error('E_SLOTS_NOT_POWER_OF_TWO');
-    if (has3x4 && slots < 4) throw new Error('E_3X4_REQUIRES_AT_LEAST_4_TEAMS');
+    if (!slots || slots <= 0)  throw new Error('E_INVALID_SLOTS');
+    if (!isPowerOfTwo(slots))  throw new Error('E_SLOTS_NOT_POWER_OF_TWO');
+    if (has3x4 && slots < 4)  throw new Error('E_3X4_REQUIRES_AT_LEAST_4_TEAMS');
 
     const byGroup = buildGroups(standings);
 
     const teamNamesMap = {};
     standings.forEach(s => {
-      teamNamesMap[s.team_id] = s.team_name;
+      teamNamesMap[toStringSafe(s.team_id)] = toStringSafe(s.team_name);
     });
 
-    const qualified = selectQualifiedTeams(byGroup, slots, standingsIsSetBased, standingsIsChess);
+    // BUG 4 FIX: passato standingsHasGames
+    const qualified = selectQualifiedTeams(
+      byGroup, slots,
+      standingsIsSetBased, standingsIsChess, standingsHasGames
+    );
 
     console.log(`✅ Qualified: ${qualified.map(q => q.team_name).join(', ')}`);
 
     const numRounds = computeRounds(slots);
-    const batch = db.batch();
-    const teams = qualified.map(q => q.team_id);
+    const teams     = qualified.map(q => q.team_id);
 
-    const roundMatchIds = {};
+    // BUG 5 FIX: raccoglie operazioni per batch chunking
+    const allOperations  = [];
+    const roundMatchIds  = {};
 
     // --- ROUND 1: squadre reali ---
     roundMatchIds[1] = [];
     let matchIndex = 1;
 
     for (let i = 0; i < Math.floor(teams.length / 2); i++) {
-      const teamA = teams[i];
-      const teamB = teams[teams.length - 1 - i];
+      const teamA   = teams[i];
+      const teamB   = teams[teams.length - 1 - i];
       const matchId = `${tournamentId}_FINAL_R1_M${matchIndex}`;
       roundMatchIds[1].push(matchId);
 
       const finalRef = db.collection('finals').doc(matchId);
-      const doc = createEmptyMatchDoc(matchId, tournamentId, 1, sport, matchFormatFinals, profile);
-      doc.team_a = teamA;
-      doc.team_b = teamB;
-      doc.team_a_name = teamNamesMap[teamA] || teamA;
-      doc.team_b_name = teamNamesMap[teamB] || teamB;
-      batch.set(finalRef, doc);
+      const doc      = createEmptyMatchDoc(matchId, tournamentId, 1, sport, matchFormatFinals, profile);
 
-      console.log(`   ✓ R1_M${matchIndex}: ${teamNamesMap[teamA]} vs ${teamNamesMap[teamB]}`);
+      doc.team_a      = teamA;
+      doc.team_b      = teamB;
+      // BUG 6 FIX: ?? invece di ||, con log se mancante
+      if (!teamNamesMap[teamA]) console.warn(`⚠️ team_name mancante per ${teamA}`);
+      if (!teamNamesMap[teamB]) console.warn(`⚠️ team_name mancante per ${teamB}`);
+      doc.team_a_name = teamNamesMap[teamA] ?? teamA;
+      doc.team_b_name = teamNamesMap[teamB] ?? teamB;
+
+      allOperations.push({ ref: finalRef, data: doc });
+      console.log(`   ✓ R1_M${matchIndex}: ${doc.team_a_name} vs ${doc.team_b_name}`);
       matchIndex++;
     }
 
     // --- ROUND 2..N: vuoti, con source_matches ---
     for (let round = 2; round <= numRounds; round++) {
-      const prevMatches = roundMatchIds[round - 1];
+      const prevMatches   = roundMatchIds[round - 1];
       roundMatchIds[round] = [];
       matchIndex = 1;
 
       for (let i = 0; i < Math.floor(prevMatches.length / 2); i++) {
-        const srcA = prevMatches[i];
-        const srcB = prevMatches[prevMatches.length - 1 - i];
+        const srcA    = prevMatches[i];
+        const srcB    = prevMatches[prevMatches.length - 1 - i];
         const matchId = `${tournamentId}_FINAL_R${round}_M${matchIndex}`;
         roundMatchIds[round].push(matchId);
 
         const finalRef = db.collection('finals').doc(matchId);
-        const doc = createEmptyMatchDoc(matchId, tournamentId, round, sport, matchFormatFinals, profile);
+        const doc      = createEmptyMatchDoc(matchId, tournamentId, round, sport, matchFormatFinals, profile);
         doc.source_matches = [
           { match_id: srcA, role: 'winner' },
           { match_id: srcB, role: 'winner' },
         ];
-        batch.set(finalRef, doc);
 
+        allOperations.push({ ref: finalRef, data: doc });
         console.log(`   ✓ R${round}_M${matchIndex}: TBD vs TBD (src: ${srcA}, ${srcB})`);
         matchIndex++;
       }
@@ -640,29 +688,50 @@ async function generateFinalsIfReady(tournamentId) {
     // --- FINALE 3°/4° POSTO ---
     if (has3x4 && numRounds >= 2) {
       const semifinalRound = numRounds - 1;
-      const semiMatches = roundMatchIds[semifinalRound];
+      const semiMatches    = roundMatchIds[semifinalRound];
 
       if (semiMatches && semiMatches.length >= 2) {
-        const srcA = semiMatches[0];
-        const srcB = semiMatches[1];
+        const srcA    = semiMatches[0];
+        const srcB    = semiMatches[1];
         const matchId = `${tournamentId}_FINAL_3X4`;
 
         const finalRef = db.collection('finals').doc(matchId);
-        const doc = createEmptyMatchDoc(matchId, tournamentId, numRounds, sport, matchFormatFinals, profile);
+        const doc      = createEmptyMatchDoc(matchId, tournamentId, numRounds, sport, matchFormatFinals, profile);
         doc.source_matches = [
           { match_id: srcA, role: 'loser' },
           { match_id: srcB, role: 'loser' },
         ];
         doc.is_third_place_match = true;
-        batch.set(finalRef, doc);
 
+        allOperations.push({ ref: finalRef, data: doc });
         console.log(`   ✓ 3x4: TBD vs TBD (loser of ${srcA}, loser of ${srcB})`);
       } else {
         console.log('⚠️ Not enough semi-final matches to generate 3/4 place match');
       }
     }
 
-    await batch.commit();
+    // BUG 5 FIX: commit in batch da 499 operazioni
+    const BATCH_LIMIT = 499;
+    let operationCount = 0;
+    let currentBatch   = db.batch();
+
+    for (const op of allOperations) {
+      currentBatch.set(op.ref, op.data);
+      operationCount++;
+
+      if (operationCount === BATCH_LIMIT) {
+        await currentBatch.commit();
+        console.log(`💾 Batch committed (${operationCount} ops)`);
+        currentBatch   = db.batch();
+        operationCount = 0;
+      }
+    }
+
+    if (operationCount > 0) {
+      await currentBatch.commit();
+      console.log(`💾 Final batch committed (${operationCount} ops)`);
+    }
+
     console.log(`✅ [SUCCESS] Full finals bracket generated for ${tournamentId} (${numRounds} rounds${has3x4 ? ' + 3/4 posto' : ''})`);
 
   } catch (error) {
@@ -692,17 +761,17 @@ async function propagateFinalsResult(tournamentId, completedMatchId) {
       return;
     }
 
-    const winner = completed.winner_team_id;
-
-    const winnerIsA = toStringSafe(winner) !== '' && toStringSafe(winner) === toStringSafe(completed.team_a);
-    const loser = winnerIsA ? completed.team_b : completed.team_a;
-    const winnerName = winnerIsA ? completed.team_a_name : completed.team_b_name;
-    const loserName = winnerIsA ? completed.team_b_name : completed.team_a_name;
-
+    // BUG 1 FIX: valida winner PRIMA di usarlo
+    const winner = toStringSafe(completed.winner_team_id);
     if (!winner) {
       console.log('⚠️ No winner set on completed match');
       return;
     }
+
+    const winnerIsA  = winner === toStringSafe(completed.team_a);
+    const loser      = toStringSafe(winnerIsA ? completed.team_b      : completed.team_a);
+    const winnerName = toStringSafe(winnerIsA ? completed.team_a_name : completed.team_b_name);
+    const loserName  = toStringSafe(winnerIsA ? completed.team_b_name : completed.team_a_name);
 
     console.log(`🏆 Winner: ${winnerName}, Loser: ${loserName}`);
 
@@ -710,48 +779,64 @@ async function propagateFinalsResult(tournamentId, completedMatchId) {
       .where('tournament_id', '==', tournamentId)
       .get();
 
-    const batch = db.batch();
-    let updateCount = 0;
+    // BUG 2 FIX: raccoglie operazioni per batch chunking
+    const allOperations = [];
 
     for (const doc of dependentSnapshot.docs) {
       const data = doc.data();
       if (!Array.isArray(data.source_matches) || data.source_matches.length === 0) continue;
 
-      const sources = data.source_matches;
-      const srcA = sources[0];
-      const srcB = sources[1];
-
-      let updates = {};
+      const srcA = data.source_matches[0];
+      const srcB = data.source_matches[1];
+      const updates = {};
 
       if (srcA && srcA.match_id === completedMatchId) {
-        const teamId = srcA.role === 'winner' ? winner : loser;
-        const teamName = srcA.role === 'winner' ? winnerName : loserName;
-        updates.team_a = teamId;
-        updates.team_a_name = teamName;
-        console.log(`   → ${doc.id}: team_a = ${teamName} (${srcA.role} of ${completedMatchId})`);
+        updates.team_a      = srcA.role === 'winner' ? winner     : loser;
+        updates.team_a_name = srcA.role === 'winner' ? winnerName : loserName;
+        console.log(`   → ${doc.id}: team_a = ${updates.team_a_name} (${srcA.role} of ${completedMatchId})`);
       }
 
       if (srcB && srcB.match_id === completedMatchId) {
-        const teamId = srcB.role === 'winner' ? winner : loser;
-        const teamName = srcB.role === 'winner' ? winnerName : loserName;
-        updates.team_b = teamId;
-        updates.team_b_name = teamName;
-        console.log(`   → ${doc.id}: team_b = ${teamName} (${srcB.role} of ${completedMatchId})`);
+        updates.team_b      = srcB.role === 'winner' ? winner     : loser;
+        updates.team_b_name = srcB.role === 'winner' ? winnerName : loserName;
+        console.log(`   → ${doc.id}: team_b = ${updates.team_b_name} (${srcB.role} of ${completedMatchId})`);
       }
 
       if (Object.keys(updates).length > 0) {
-        batch.update(doc.ref, updates);
-        updateCount++;
+        allOperations.push({ ref: doc.ref, updates });
       }
     }
 
-    if (updateCount > 0) {
-      await batch.commit();
-      console.log(`✅ [SUCCESS] Propagated result to ${updateCount} future match(es)`);
-    } else {
+    if (allOperations.length === 0) {
       console.log('ℹ️ No dependent matches found to update');
+      return;
     }
 
+    // BUG 2 FIX: commit in batch da 499 operazioni
+    const BATCH_LIMIT = 499;
+    let operationCount = 0;
+    let currentBatch   = db.batch();
+
+    for (const op of allOperations) {
+      currentBatch.update(op.ref, op.updates);
+      operationCount++;
+
+      if (operationCount === BATCH_LIMIT) {
+        await currentBatch.commit();
+        console.log(`💾 Batch committed (${operationCount} ops)`);
+        currentBatch   = db.batch();
+        operationCount = 0;
+      }
+    }
+
+    if (operationCount > 0) {
+      await currentBatch.commit();
+      console.log(`💾 Final batch committed (${operationCount} ops)`);
+    }
+
+    console.log(`✅ [SUCCESS] Propagated result to ${allOperations.length} future match(es)`);
+
+    // BUG 3 FIX: chiamata solo se ci sono stati aggiornamenti
     await updateFinalRankings(tournamentId);
 
   } catch (error) {
@@ -769,6 +854,9 @@ async function tryGenerateNextFinalRound(tournamentId) {
   console.log('   All rounds are now pre-generated by generateFinalsIfReady.');
   console.log('   Use propagateFinalsResult to populate team names as matches are played.');
 }
+
+
+
 
 
 async function updateFinalRankings(tournamentId) {
@@ -793,62 +881,111 @@ async function updateFinalRankings(tournamentId) {
     }
 
     const regularFinals = finals.filter(f => !toBool(f.is_third_place_match));
-    const maxRound = Math.max(...regularFinals.map(f => toNumber(f.round_id, 0)));
 
+    // BUG 2 FIX: controlla che ci siano partite regolari
+    if (regularFinals.length === 0) {
+      console.log('⚠️ No regular finals found');
+      return;
+    }
+
+    const maxRound  = Math.max(...regularFinals.map(f => toNumber(f.round_id, 0)));
     const finalMatch = regularFinals.find(f => toNumber(f.round_id, 0) === maxRound);
+
     if (!finalMatch || !finalMatch.winner_team_id) {
       console.log('⚠️ Final match not found or winner not set');
       return;
     }
 
-    const winner = toStringSafe(finalMatch.winner_team_id);
+    const winner    = toStringSafe(finalMatch.winner_team_id);
     const winnerIsA = winner !== '' && winner === toStringSafe(finalMatch.team_a);
+
+    // BUG 3 FIX: valida runnerUp prima di usarlo
     const runnerUp = toStringSafe(winnerIsA ? finalMatch.team_b : finalMatch.team_a);
+    if (!winner || !runnerUp) {
+      console.log('⚠️ Winner or runner-up missing in final match');
+      return;
+    }
 
     const finalRankMap = {};
-    finalRankMap[winner] = 1;
+    finalRankMap[winner]   = 1;
     finalRankMap[runnerUp] = 2;
 
     const thirdPlaceMatch = finals.find(f => toBool(f.is_third_place_match));
 
     if (thirdPlaceMatch && thirdPlaceMatch.winner_team_id) {
       const thirdWinner = toStringSafe(thirdPlaceMatch.winner_team_id);
-      const thirdIsA = thirdWinner !== '' && thirdWinner === toStringSafe(thirdPlaceMatch.team_a);
+      const thirdIsA    = thirdWinner !== '' && thirdWinner === toStringSafe(thirdPlaceMatch.team_a);
       const fourthPlace = toStringSafe(thirdIsA ? thirdPlaceMatch.team_b : thirdPlaceMatch.team_a);
-      finalRankMap[thirdWinner] = 3;
-      finalRankMap[fourthPlace] = 4;
+
+      if (!thirdWinner || !fourthPlace) {
+        console.log('⚠️ Third or fourth place missing in 3/4 match');
+      } else {
+        finalRankMap[thirdWinner] = 3;
+        finalRankMap[fourthPlace] = 4;
+      }
     } else {
+      // BUG 1 FIX: entrambi i perdenti delle semifinali → rank 3 ex-aequo, esplicitamente
       const semiMatches = regularFinals.filter(
         f => toNumber(f.round_id, 0) === maxRound - 1
       );
+
+      const semiLosers = [];
       semiMatches.forEach(m => {
         const mWinner = toStringSafe(m.winner_team_id);
-        const mIsA = mWinner !== '' && mWinner === toStringSafe(m.team_a);
-        const loser = toStringSafe(mIsA ? m.team_b : m.team_a);
-        if (loser && !finalRankMap[loser]) {
-          finalRankMap[loser] = 3;
-        }
+        const mIsA    = mWinner !== '' && mWinner === toStringSafe(m.team_a);
+        const loser   = toStringSafe(mIsA ? m.team_b : m.team_a);
+        if (loser) semiLosers.push(loser);
       });
+
+      // Entrambi i perdenti delle semifinali: ex-aequo al 3° posto
+      semiLosers.forEach(loser => {
+        if (!finalRankMap[loser]) finalRankMap[loser] = 3;
+      });
+
+      if (semiLosers.length === 0) {
+        console.warn('⚠️ No semi-final losers found for rank 3 assignment');
+      }
     }
 
     console.log('🏅 Final rank map:', finalRankMap);
 
-    const batch = db.batch();
-    let updateCount = 0;
-
+    // BUG 4 FIX: batch chunking da 499
+    const allOperations = [];
     for (const [teamId, rank] of Object.entries(finalRankMap)) {
       if (!teamId) continue;
-      const standingId = `standings_${tournamentId}_${teamId}`;
+      const standingId  = `standings_${tournamentId}_${teamId}`;
       const standingRef = db.collection('standings').doc(standingId);
-      batch.update(standingRef, { final_rank: rank });
+      allOperations.push({ ref: standingRef, rank });
       console.log(`   ✓ ${teamId} → final_rank: ${rank}`);
-      updateCount++;
     }
 
-    if (updateCount > 0) {
-      await batch.commit();
-      console.log(`✅ [SUCCESS] Updated final_rank for ${updateCount} teams`);
+    if (allOperations.length === 0) {
+      console.log('⚠️ No rankings to update');
+      return;
     }
+
+    const BATCH_LIMIT  = 499;
+    let operationCount = 0;
+    let currentBatch   = db.batch();
+
+    for (const op of allOperations) {
+      currentBatch.update(op.ref, { final_rank: op.rank });
+      operationCount++;
+
+      if (operationCount === BATCH_LIMIT) {
+        await currentBatch.commit();
+        console.log(`💾 Batch committed (${operationCount} ops)`);
+        currentBatch   = db.batch();
+        operationCount = 0;
+      }
+    }
+
+    if (operationCount > 0) {
+      await currentBatch.commit();
+      console.log(`💾 Final batch committed (${operationCount} ops)`);
+    }
+
+    console.log(`✅ [SUCCESS] Updated final_rank for ${allOperations.length} teams`);
 
   } catch (error) {
     console.error('❌ [ERROR] updateFinalRankings failed:', error.message);
