@@ -231,18 +231,17 @@ function rankGroupTeamsBase(teamsStats, groupMatches, winPoints, drawPoints, sor
     if (bucket.length === 1) {
       bucket[0].h2h_points = 0;
       finalOrdered.push(bucket[0]);
-      return;
+    } else {
+      const ids    = bucket.map(x => x.team_id);
+      const h2hMap = buildH2HPoints(ids, groupMatches, winPoints, drawPoints);
+
+      bucket.forEach(t => {
+        t.h2h_points = h2hMap[t.team_id]?.h2h_points ?? 0;
+      });
+
+      bucket.sort(sortFn);
+      finalOrdered.push(...bucket);
     }
-
-    const ids    = bucket.map(x => x.team_id);
-    const h2hMap = buildH2HPoints(ids, groupMatches, winPoints, drawPoints);
-
-    bucket.forEach(t => {
-      t.h2h_points = h2hMap[t.team_id]?.h2h_points ?? 0;
-    });
-
-    bucket.sort(sortFn);
-    finalOrdered.push(...bucket);
   });
 
   // Assegna rank_level
@@ -414,7 +413,7 @@ async function generateStandingsBackend(tournamentId) {
     const profile        = getMatchProfile(rawSport, rawMatchFormat);
 
     const sport             = profile.normalizedSport;
-    const matchFormatGironi = rawMatchFormat.toLowerCase();
+    const matchFormatGironi = rawMatchFormat;
     const isSetBased        = profile.isSetBased;
     const isChess           = profile.isChess;
     const hasGames          = profile.hasGames;
@@ -484,16 +483,7 @@ async function generateStandingsBackend(tournamentId) {
         wins:           0,
         draws:          0,
         losses:         0,
-        goals_for:      0,
-        goals_against:  0,
-        goal_diff:      0,
-        sets_for:       0,
-        sets_against:   0,
-        set_diff:       0,
-        games_for:      0,
-        games_against:  0,
-        game_diff:      0,
-        h2h_points:     0,   // unico campo H2H rimasto
+        h2h_points:     0,
         rank_level:     0,
         sport,
         match_format_gironi:  matchFormatGironi,
@@ -501,6 +491,33 @@ async function generateStandingsBackend(tournamentId) {
         is_chess:             isChess,
         individual_or_team:   toStringSafe(tournament.individual_or_team, 'team')
       };
+
+      // Campi calcio
+      if (!hasGames && !isSetBased && !isChess) {
+        stats.goals_for     = 0;
+        stats.goals_against = 0;
+        stats.goal_diff     = 0;
+      }
+
+      // Campi game: padel/beach in entrambi i formati
+      if (hasGames) {
+        stats.games_for     = 0;
+        stats.games_against = 0;
+        stats.game_diff     = 0;
+      }
+
+      // Campi set: solo formato a set
+      if (isSetBased) {
+        stats.sets_for     = 0;
+        stats.sets_against = 0;
+        stats.set_diff     = 0;
+        // game per set-based non-hasGames (es. calcio a set, raro)
+        if (!hasGames) {
+          stats.games_for     = 0;
+          stats.games_against = 0;
+          stats.game_diff     = 0;
+        }
+      }
 
       matches.forEach(m => {
         if (!toBooleanSafe(m.played)) return;
@@ -624,53 +641,52 @@ async function generateStandingsBackend(tournamentId) {
           }});
           console.log(`   ✓ Standing ${standingId}: ${t.team_name} (rank 1, INIT)`);
         });
-        return;
-      }
 
-      const groupMatches = matches.filter(m => toStringSafe(m.group_id) === groupId);
-
-      // BUG 6 FIX: dispatcher aggiornato con nuove funzioni e drawPoints
-      let ordered;
-      if (isChess) {
-        ordered = rankGroupTeamsChess(groupTeams, groupMatches, pointSystem.win);
-      } else if (isSetBased) {
-        ordered = rankGroupTeamsSet(groupTeams, groupMatches, pointSystem.win, pointSystem.draw);
-      } else if (hasGames) {
-        ordered = rankGroupTeamsGamesTempo(groupTeams, groupMatches, pointSystem.win, pointSystem.draw);
       } else {
-        ordered = rankGroupTeamsCalcio(groupTeams, groupMatches, pointSystem.win, pointSystem.draw);
-      }
 
-      ordered.forEach(t => {
-        // BUG 7 FIX: rankGroupKey aggiornato con nuovi criteri
-        let rankGroupKey;
+        const groupMatches = matches.filter(m => toStringSafe(m.group_id) === groupId);
+
+        let ordered;
         if (isChess) {
-          rankGroupKey = [t.points, `H${t.h2h_points}`].join('|');
+          ordered = rankGroupTeamsChess(groupTeams, groupMatches, pointSystem.win);
         } else if (isSetBased) {
-          rankGroupKey = [
-            t.points, `H${t.h2h_points}`,
-            `S${t.set_diff}`, `SF${t.sets_for}`,
-            `G${t.game_diff}`, `GF${t.games_for}`
-          ].join('|');
+          ordered = rankGroupTeamsSet(groupTeams, groupMatches, pointSystem.win, pointSystem.draw);
         } else if (hasGames) {
-          rankGroupKey = [
-            t.points, `H${t.h2h_points}`,
-            `G${t.game_diff}`, `GF${t.games_for}`
-          ].join('|');
+          ordered = rankGroupTeamsGamesTempo(groupTeams, groupMatches, pointSystem.win, pointSystem.draw);
         } else {
-          rankGroupKey = [
-            t.points, `H${t.h2h_points}`,
-            `GD${t.goal_diff}`, `GF${t.goals_for}`
-          ].join('|');
+          ordered = rankGroupTeamsCalcio(groupTeams, groupMatches, pointSystem.win, pointSystem.draw);
         }
 
-        const standingId  = `standings_${tournamentId}_${t.team_id}`;
-        const standingRef = db.collection('standings').doc(standingId);
-        allOperations.push({ type: 'set', ref: standingRef, data: {
-          standing_id: standingId, ...t, rank_group: rankGroupKey
-        }});
-        console.log(`   ✓ Standing ${standingId}: ${t.team_name} (rank ${t.rank_level}, ${t.points} pts)`);
-      });
+        ordered.forEach(t => {
+          let rankGroupKey;
+          if (isChess) {
+            rankGroupKey = [t.points, `H${t.h2h_points}`].join('|');
+          } else if (isSetBased) {
+            rankGroupKey = [
+              t.points, `H${t.h2h_points}`,
+              `S${t.set_diff}`, `SF${t.sets_for}`,
+              `G${t.game_diff}`, `GF${t.games_for}`
+            ].join('|');
+          } else if (hasGames) {
+            rankGroupKey = [
+              t.points, `H${t.h2h_points}`,
+              `G${t.game_diff}`, `GF${t.games_for}`
+            ].join('|');
+          } else {
+            rankGroupKey = [
+              t.points, `H${t.h2h_points}`,
+              `GD${t.goal_diff}`, `GF${t.goals_for}`
+            ].join('|');
+          }
+
+          const standingId  = `standings_${tournamentId}_${t.team_id}`;
+          const standingRef = db.collection('standings').doc(standingId);
+          allOperations.push({ type: 'set', ref: standingRef, data: {
+            standing_id: standingId, ...t, rank_group: rankGroupKey
+          }});
+          console.log(`   ✓ Standing ${standingId}: ${t.team_name} (rank ${t.rank_level}, ${t.points} pts)`);
+        });
+      }
     });
 
     // BUG 8 FIX: commit in batch da 499 operazioni
