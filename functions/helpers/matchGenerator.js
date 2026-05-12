@@ -12,7 +12,7 @@ function toStringSafe(val, fallback = '') {
   return String(val).trim();
 }
 
-function toNumber(val, fallback = 0) {
+function toNumberSafe(val, fallback = 0) {
   if (val === null || val === undefined) return fallback;
   const n = Number(String(val).trim());
   return isNaN(n) ? fallback : n;
@@ -264,32 +264,33 @@ function normalizeSport(sport) {
 // Riceve sport già normalizzato da normalizeSport().
 // ===============================
 function getMatchProfile(sport, matchFormat) {
-  const fmt = String(matchFormat || '').toLowerCase().trim();
+  const s = String(sport || '').toLowerCase().trim();
+  const f = String(matchFormat || '').toLowerCase().trim();
 
-  // Rilevamento formato a set: più robusto della sola presenza di "su"
   const isSetBased =
-    fmt.includes('su')         ||  // "al meglio su 3"
-    fmt.includes('set')        ||  // "3 set", "sets"
-    fmt.includes('best of')    ||  // "best of 3"
-    /\bbo\d+\b/.test(fmt)      ||  // "bo3", "bo5"
-    fmt.includes('al meglio');     // "al meglio dei 3"
+    f.includes('su')       ||
+    f.includes('set')      ||
+    f.includes('best of')  ||
+    /\bbo\d+\b/.test(f)    ||
+    f.includes('al meglio');
 
-  const isChess    = sport === 'scacchi';
-  const hasGoals   = sport === 'calcio';
-  const hasScorers = sport === 'calcio';
+  const isChess    = s.includes('scacchi') || s.includes('chess');
+  const hasGames   = s.includes('padel') ||
+                     s.includes('beach volley') ||
+                     s.includes('beach_volley');
+  const hasGoals   = !isChess && !hasGames;
+  const hasScorers = !isChess && !hasGames && !isSetBased;
 
-  // I game esistono per padel e beach volley in ENTRAMBI i formati:
-  // - formato a tempo: score_a/score_b contengono direttamente i game
-  // - formato a set:   games_a/games_b contengono i game per set
-  const hasGames = sport === 'padel' || sport === 'beach_volley';
+  let normalizedSport = 'calcio';
+  if (isChess)                                                         normalizedSport = 'scacchi';
+  else if (s.includes('padel'))                                        normalizedSport = 'padel';
+  else if (s.includes('beach volley') || s.includes('beach_volley'))  normalizedSport = 'beach_volley';
 
-  // Validazione: sport non riconosciuto dopo normalizzazione
-  const knownSports = ['calcio', 'padel', 'beach_volley', 'scacchi'];
-  if (!knownSports.includes(sport)) {
+  if (!['calcio', 'padel', 'beach_volley', 'scacchi'].includes(normalizedSport)) {
     console.warn(`⚠️ getMatchProfile: sport non riconosciuto "${sport}"`);
   }
 
-  return { isSetBased, isChess, hasGoals, hasGames, hasScorers };
+  return { isSetBased, isChess, hasGames, hasGoals, hasScorers, normalizedSport };
 }
 
 
@@ -406,28 +407,8 @@ function buildStandingData({
     }
   }
 
-  // h2h_points: presente per tutti gli sport, scritto una volta sola
+  // h2h_points: unico campo H2H, presente per tutti gli sport
   base.h2h_points = 0;
-
-  // Campi H2H specifici per sport
-  if (profile.hasGoals) {
-    base.h2h_goal_diff = 0;
-    base.h2h_goals_for = 0;
-  }
-
-  if (profile.hasGames && !profile.isSetBased) {
-    // Padel/beach a TEMPO: H2H sui game
-    base.h2h_game_diff = 0;
-    base.h2h_games_for = 0;
-  }
-
-  if (profile.isSetBased) {
-    // Formato a SET: H2H su set e game
-    base.h2h_set_diff  = 0;
-    base.h2h_sets_for  = 0;
-    base.h2h_game_diff = 0;
-    base.h2h_games_for = 0;
-  }
 
   return base;
 }
@@ -449,7 +430,7 @@ async function generateMatchesIfReady(tournamentId) {
 
     const tournament = tournamentDoc.data();
 
-    const preferredTeamsPerGroup = toNumber(tournament.teams_per_group, 0);
+    const preferredTeamsPerGroup = toNumberSafe(tournament.teams_per_group, 0);
     const formatType             = toStringSafe(tournament.format_type).toLowerCase();
     const isDouble               = formatType.startsWith('double_');
     const sport                  = normalizeSport(toStringSafe(tournament.sport));

@@ -33,31 +33,30 @@ function getMatchProfile(sport, matchFormat) {
   const s = String(sport || '').toLowerCase().trim();
   const f = String(matchFormat || '').toLowerCase().trim();
 
-  // Allineato al file generateMatches
   const isSetBased =
-    f.includes('su')          ||
-    f.includes('set')         ||
-    f.includes('best of')     ||
-    /\bbo\d+\b/.test(f)       ||
+    f.includes('su')       ||
+    f.includes('set')      ||
+    f.includes('best of')  ||
+    /\bbo\d+\b/.test(f)    ||
     f.includes('al meglio');
 
-  const isChess = s.includes('scacchi') || s.includes('chess');
-
-  // hasGames: padel e beach in ENTRAMBI i formati (allineato a generateMatches)
-  const hasGames = s.includes('padel') ||
-                   s.includes('beach volley') ||
-                   s.includes('beach_volley');
+  const isChess    = s.includes('scacchi') || s.includes('chess');
+  const hasGames   = s.includes('padel') ||
+                     s.includes('beach volley') ||
+                     s.includes('beach_volley');
+  const hasGoals   = !isChess && !hasGames;
+  const hasScorers = !isChess && !hasGames && !isSetBased;
 
   let normalizedSport = 'calcio';
-  if (isChess)           normalizedSport = 'scacchi';
-  else if (s.includes('padel'))                                     normalizedSport = 'padel';
-  else if (s.includes('beach volley') || s.includes('beach_volley')) normalizedSport = 'beach_volley';
+  if (isChess)                                                         normalizedSport = 'scacchi';
+  else if (s.includes('padel'))                                        normalizedSport = 'padel';
+  else if (s.includes('beach volley') || s.includes('beach_volley'))  normalizedSport = 'beach_volley';
 
-  if (!['calcio','padel','beach_volley','scacchi'].includes(normalizedSport)) {
+  if (!['calcio', 'padel', 'beach_volley', 'scacchi'].includes(normalizedSport)) {
     console.warn(`⚠️ getMatchProfile: sport non riconosciuto "${sport}"`);
   }
 
-  return { isSetBased, isChess, hasGames, normalizedSport };
+  return { isSetBased, isChess, hasGames, hasGoals, hasScorers, normalizedSport };
 }
 
 
@@ -413,7 +412,7 @@ async function generateStandingsBackend(tournamentId) {
     const profile        = getMatchProfile(rawSport, rawMatchFormat);
 
     const sport             = profile.normalizedSport;
-    const matchFormatGironi = rawMatchFormat;
+    const matchFormat = rawMatchFormat;
     const isSetBased        = profile.isSetBased;
     const isChess           = profile.isChess;
     const hasGames          = profile.hasGames;
@@ -486,7 +485,7 @@ async function generateStandingsBackend(tournamentId) {
         h2h_points:     0,
         rank_level:     0,
         sport,
-        match_format_gironi:  matchFormatGironi,
+        match_format: matchFormat,
         is_set_based:         isSetBased,
         is_chess:             isChess,
         individual_or_team:   toStringSafe(tournament.individual_or_team, 'team')

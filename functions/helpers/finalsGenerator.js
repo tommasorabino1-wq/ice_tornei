@@ -54,17 +54,19 @@ function formatHasFinals(formatType) {
 // ===============================
 // HELPER: Primitive safe parsers
 // ===============================
-function toBool(val) {
-  if (val === true) return true;
-  if (val === false) return false;
-
-  const v = String(val ?? '').toLowerCase().trim();
-  return v === 'true' || v === '1' || v === 'yes';
+function toBooleanSafe(val, fallback = false) {
+  if (typeof val === 'boolean') return val;
+  if (typeof val === 'string') {
+    const v = val.toLowerCase().trim();
+    if (v === 'true' || v === '1' || v === 'yes') return true;
+    if (v === 'false' || v === '0' || v === 'no') return false;
+  }
+  return fallback;
 }
 
-function toNumber(val, fallback = 0) {
-  if (val === null || val === undefined) return fallback;
-  const n = Number(String(val).trim());
+function toNumberSafe(val, fallback = 0) {
+  if (val === null || val === undefined || val === '') return fallback;
+  const n = Number(val);
   return isNaN(n) ? fallback : n;
 }
 
@@ -191,7 +193,7 @@ function validateStandings(standings) {
     const teamId = toStringSafe(s.team_id);
     const groupId = toStringSafe(s.group_id);
     const teamName = toStringSafe(s.team_name);
-    const rank = toNumber(s.rank_level, NaN);
+    const rank = toNumberSafe(s.rank_level, NaN);
 
     if (!teamId) throw new Error('E_INVALID_STANDING_TEAM_ID');
     if (!groupId) throw new Error('E_INVALID_STANDING_GROUP_ID');
@@ -211,8 +213,8 @@ function validateStandingsFlagsConsistency(standings) {
     throw new Error('E_MISSING_IS_CHESS_FLAG');
   }
 
-  const standingsIsSetBased = toBool(first.is_set_based);
-  const standingsIsChess    = toBool(first.is_chess);
+  const standingsIsSetBased = toBooleanSafe(first.is_set_based);
+  const standingsIsChess    = toBooleanSafe(first.is_chess);
 
   // BUG 1 FIX: estrae hasGames dal primo documento e lo valida
   // hasGames non è un flag esplicito negli standings — va derivato dal sport
@@ -220,10 +222,10 @@ function validateStandingsFlagsConsistency(standings) {
   const hasGames = sport === 'padel' || sport === 'beach_volley';
 
   for (const s of standings) {
-    if (toBool(s.is_set_based) !== standingsIsSetBased) {
+    if (toBooleanSafe(s.is_set_based) !== standingsIsSetBased) {
       throw new Error('E_INCONSISTENT_IS_SET_BASED');
     }
-    if (toBool(s.is_chess) !== standingsIsChess) {
+    if (toBooleanSafe(s.is_chess) !== standingsIsChess) {
       throw new Error('E_INCONSISTENT_IS_CHESS');
     }
     // Verifica coerenza sport
@@ -246,7 +248,7 @@ function buildRankBlocks(group) {
   const byRank = {};
 
   group.forEach(team => {
-    const rank = toNumber(team.rank_level, NaN);
+    const rank = toNumberSafe(team.rank_level, NaN);
     if (!Number.isFinite(rank)) {
       throw new Error('E_INVALID_STANDING_RANK');
     }
@@ -393,7 +395,7 @@ function sortQualifiedForBracket(qualified, standingsIsSetBased, standingsIsChes
   const byRank = {};
 
   qualified.forEach(team => {
-    const rank = toNumber(team.rank_level, 999999);
+    const rank = toNumberSafe(team.rank_level, 999999);
     if (!byRank[rank]) byRank[rank] = [];
     byRank[rank].push(team);
   });
@@ -562,7 +564,7 @@ async function generateFinalsIfReady(tournamentId) {
 
     const tournament = tournamentDoc.data();
     const formatType = toStringSafe(tournament.format_type).toLowerCase();
-    const has3x4     = toBool(tournament['3_4_posto']);
+    const has3x4     = toBooleanSafe(tournament['3_4_posto']);
 
     if (!formatHasFinals(formatType)) {
       console.log(`⛔ Tournament format "${formatType}" does not support finals - blocked`);
@@ -607,7 +609,7 @@ async function generateFinalsIfReady(tournamentId) {
     const { standingsIsSetBased, standingsIsChess, hasGames: standingsHasGames } =
       validateStandingsFlagsConsistency(standings);
 
-    const slots = toNumber(tournament.teams_in_final, 0);
+    const slots = toNumberSafe(tournament.teams_in_final, 0);
     if (!slots || slots <= 0)  throw new Error('E_INVALID_SLOTS');
     if (!isPowerOfTwo(slots))  throw new Error('E_SLOTS_NOT_POWER_OF_TWO');
     if (has3x4 && slots < 4)  throw new Error('E_3X4_REQUIRES_AT_LEAST_4_TEAMS');
@@ -756,7 +758,7 @@ async function propagateFinalsResult(tournamentId, completedMatchId) {
 
     const completed = completedDoc.data();
 
-    if (!toBool(completed.played)) {
+    if (!toBooleanSafe(completed.played)) {
       console.log('⚠️ Match not yet played');
       return;
     }
@@ -874,13 +876,13 @@ async function updateFinalRankings(tournamentId) {
 
     const finals = finalsSnapshot.docs.map(doc => doc.data());
 
-    const allPlayed = finals.every(f => toBool(f.played));
+    const allPlayed = finals.every(f => toBooleanSafe(f.played));
     if (!allPlayed) {
       console.log('ℹ️ Not all finals matches played yet - skipping');
       return;
     }
 
-    const regularFinals = finals.filter(f => !toBool(f.is_third_place_match));
+    const regularFinals = finals.filter(f => !toBooleanSafe(f.is_third_place_match));
 
     // BUG 2 FIX: controlla che ci siano partite regolari
     if (regularFinals.length === 0) {
@@ -888,8 +890,8 @@ async function updateFinalRankings(tournamentId) {
       return;
     }
 
-    const maxRound  = Math.max(...regularFinals.map(f => toNumber(f.round_id, 0)));
-    const finalMatch = regularFinals.find(f => toNumber(f.round_id, 0) === maxRound);
+    const maxRound  = Math.max(...regularFinals.map(f => toNumberSafe(f.round_id, 0)));
+    const finalMatch = regularFinals.find(f => toNumberSafe(f.round_id, 0) === maxRound);
 
     if (!finalMatch || !finalMatch.winner_team_id) {
       console.log('⚠️ Final match not found or winner not set');
@@ -910,7 +912,7 @@ async function updateFinalRankings(tournamentId) {
     finalRankMap[winner]   = 1;
     finalRankMap[runnerUp] = 2;
 
-    const thirdPlaceMatch = finals.find(f => toBool(f.is_third_place_match));
+    const thirdPlaceMatch = finals.find(f => toBooleanSafe(f.is_third_place_match));
 
     if (thirdPlaceMatch && thirdPlaceMatch.winner_team_id) {
       const thirdWinner = toStringSafe(thirdPlaceMatch.winner_team_id);
@@ -926,7 +928,7 @@ async function updateFinalRankings(tournamentId) {
     } else {
       // BUG 1 FIX: entrambi i perdenti delle semifinali → rank 3 ex-aequo, esplicitamente
       const semiMatches = regularFinals.filter(
-        f => toNumber(f.round_id, 0) === maxRound - 1
+        f => toNumberSafe(f.round_id, 0) === maxRound - 1
       );
 
       const semiLosers = [];
